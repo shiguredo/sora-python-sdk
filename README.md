@@ -25,12 +25,12 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 - 物体検出などの入力に Sora 経由で受信した映像が利用できる
 - 音声認識などの入力に Sora 経由で受信した音声を利用できる
 
-## 利用想定
+## 利用イメージ
 
-- データチャンネルを利用して Python において映像、音声を解析した結果を Sora 経由で配信できる
-- Text to Speech の音声を Sora 経由で配信できる
-- 映像入力に対して Pillow などで加工した映像を Sora を経由で配信できる
-- A チャンネルの参加者からの映像と音声を B チャンネルに対して加工した上で Sora 経由で配信できる
+- データチャンネルを利用して Python において映像、音声を解析した結果を Sora 経由で配信する
+- Text to Speech の音声を Sora 経由で配信する
+- 映像入力に対して Pillow などで加工した映像を Sora を経由で配信する
+- A チャンネルの参加者からの映像と音声を B チャンネルに対して加工した上で Sora 経由で配信する
 
 ## ドキュメント
 
@@ -43,6 +43,7 @@ TBD
 ## システム条件
 
 - WebRTC SFU Sora 2022.2.0 以降
+- Python 3.8 以上
 
 ## 対応プラットフォーム
 
