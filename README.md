@@ -25,16 +25,28 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 - 物体検出などの入力に Sora 経由で受信した映像が利用できる
 - 音声認識などの入力に Sora 経由で受信した音声を利用できる
 
-## 利用想定
+## 利用イメージ
 
-- データチャンネルを利用して Python において映像、音声を解析した結果を Sora 経由で配信できる
-- Text to Speech の音声を Sora 経由で配信できる
-- 映像入力に対して Pillow などで加工した映像を Sora を経由で配信できる
-- A チャンネルの参加者からの映像と音声を B チャンネルに対して加工した上で Sora 経由で配信できる
+- データチャンネルを利用して Python において映像、音声を解析した結果を Sora 経由で配信する
+- Text to Speech の音声を Sora 経由で配信する
+- 映像入力に対して Pillow などで加工した映像を Sora を経由で配信する
+- A チャンネルの参加者からの映像と音声を B チャンネルに対して加工した上で Sora 経由で配信する
 
 ## ドキュメント
 
 TBD
+
+### ビルド
+
+Linux のみ以下のインストールが必要です。
+
+```
+sudo apt install libdrm-dev libva-dev
+```
+
+```
+pip install .
+```
 
 ## サンプル
 
@@ -43,23 +55,26 @@ TBD
 ## システム条件
 
 - WebRTC SFU Sora 2022.2.0 以降
+- Python 3.8 以上
 
 ## 対応プラットフォーム
 
-- Windows 10 1809 x86_64 以降
 - macOS 12.4 arm64 以降
 - Ubuntu 20.04 x86_64
 - Ubuntu 22.04 x86_64
 - Ubuntu 20.04 arm64
 - Ubuntu 22.04 arm64
 
+### 対応未定
+
+- Windows 10 1809 x86_64 以降
 ## 対応機能
 
 TBD
 
 ## 優先実装
 
-優先実装とは Sora のライセンスを契約頂いているお客様限定で Sora C++ SDK の実装予定機能を有償にて前倒しで実装することです。
+優先実装とは Sora のライセンスを契約頂いているお客様限定で Sora Python SDK の実装予定機能を有償にて前倒しで実装することです。
 
 ### 優先実装が可能な機能一覧
 
@@ -103,3 +118,5 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。

@@ -1,0 +1,41 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - "doc/**"
+      - "**.md"
+
+jobs:
+  build_linux_x64_job:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: sudo apt-get update
+      - run: sudo apt-get -y install libva-dev libdrm-dev
+      - run: pip install -v .
+      - name: Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_TITLE: Failure test
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  # build_macos_arm64_job:
+  #   runs-on: [self-hosted, macos, arm64]
+  #   timeout-minutes: 10
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Build
+  #       run: |
+  #         python3 -m venv .venv
+  #         source .venv/bin/activate
+  #         pip3 install -v .
