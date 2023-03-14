@@ -14,6 +14,24 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 利用前に https://github.com/shiguredo/oss をお読みください。
 
+## Sora Python SDK について
+
+様々なプラットフォームに対応した WebRTC SFU Sora 向けの Python SDK です。
+
+## 特徴
+
+- [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
+- WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
+- 物体検出などの入力に Sora 経由で受信した映像が利用できる
+- 音声認識などの入力に Sora 経由で受信した音声を利用できる
+
+## 利用想定
+
+- データチャンネルを利用して Python において映像、音声を解析した結果を Sora 経由で配信できる
+- Text to Speech の音声を Sora 経由で配信できる
+- 映像入力に対して Pillow などで加工した映像を Sora を経由で配信できる
+- A チャンネルの参加者からの映像と音声を B チャンネルに対して加工した上で Sora 経由で配信できる
+
 ## ドキュメント
 
 TBD
@@ -38,6 +56,32 @@ TBD
 ## 対応機能
 
 TBD
+
+## 優先実装
+
+優先実装とは Sora のライセンスを契約頂いているお客様限定で Sora C++ SDK の実装予定機能を有償にて前倒しで実装することです。
+
+### 優先実装が可能な機能一覧
+
+**詳細は Discord やメールなどでお気軽にお問い合わせください**
+
+TBD
+
+## サポートについて
+
+### Discord
+
+- **サポートしません**
+- アドバイスします
+- フィードバック歓迎します
+
+最新の状況などは Discord で共有しています。質問や相談も Discord でのみ受け付けています。
+
+https://discord.gg/shiguredo
+
+### バグ報告
+
+Discord へお願いします。
 
 ## ライセンス
 
