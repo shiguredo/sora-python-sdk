@@ -62,12 +62,16 @@ TBD
 - macOS 12.4 arm64 以降
 - Ubuntu 20.04 x86_64
 - Ubuntu 22.04 x86_64
+
+### 未検証
+
 - Ubuntu 20.04 arm64
 - Ubuntu 22.04 arm64
 
-### 対応未定
+### 未対応
 
 - Windows 10 1809 x86_64 以降
+
 ## 対応機能
 
 TBD
