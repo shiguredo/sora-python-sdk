@@ -171,7 +171,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def(nb::init<SoraTrackInterface*, int, size_t>(), "track"_a,
            "output_frequency"_a = -1, "output_channels"_a = 0)
       .def("__del__", &SoraAudioSinkImpl::Del)
-      .def("read", &SoraAudioSinkImpl::Read, "frames"_a, "timeout"_a = 1,
+      .def("read", &SoraAudioSinkImpl::Read, "frames"_a = 0, "timeout"_a = 1,
            nb::rv_policy::move)
       .def_rw("on_data", &SoraAudioSinkImpl::on_data_)
       .def_rw("on_format", &SoraAudioSinkImpl::on_format_);
