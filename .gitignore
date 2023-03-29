@@ -1,0 +1,10 @@
+/_install
+/_build
+/_source
+/_package
+__pycache__/
+.pytest_cache/
+.venv/
+*.egg-info/
+/_skbuild
+build
