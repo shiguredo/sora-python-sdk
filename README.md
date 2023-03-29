@@ -36,6 +36,18 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 TBD
 
+### ビルド
+
+Linux のみ以下のインストールが必要です。
+
+```
+sudo apt install libdrm-dev libva-dev
+```
+
+```
+pip install .
+```
+
 ## サンプル
 
 TBD
