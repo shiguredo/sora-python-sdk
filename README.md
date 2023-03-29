@@ -55,7 +55,7 @@ TBD
 ## システム条件
 
 - WebRTC SFU Sora 2022.2.0 以降
-- Python 3.8 以上
+- Python 3. 以上
 
 ## 対応プラットフォーム
 
