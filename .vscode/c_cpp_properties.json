@@ -1,0 +1,34 @@
+{
+    "configurations": [
+        {
+            "includePath": [
+                "${workspaceFolder}/_install/boost/include",
+                "${workspaceFolder}/_install/llvm/libcxx/include",
+                "${workspaceFolder}/_install/nanobind/include",
+                "${workspaceFolder}/_install/sora/include",
+                "${workspaceFolder}/_install/webrtc/include",
+                "${workspaceFolder}/_install/webrtc/include/third_party/abseil-cpp",
+                "${workspaceFolder}/_install/webrtc/include/third_party/boringssl/src/include",
+                "${workspaceFolder}/_install/webrtc/include/third_party/libyuv/include",
+                "${workspaceFolder}/_install/webrtc/include/third_party/zlib",
+                "/usr/include/python3.8"
+            ],
+            "defines": [
+                "WEBRTC_POSIX",
+                "_LIBCPP_ABI_UNSTABLE",
+                "_LIBCPP_DISABLE_AVAILABILITY",
+                "OPENSSL_IS_BORINGSSL",
+                "SORA_CPP_SDK_UBUNTU_2004",
+                "USE_NVCODEC_ENCODER=1"
+            ],
+            "compilerPath": "${workspaceFolder}/_install/llvm/clang/bin/clang++",
+            "compilerArgs": [
+                "-nostdinc++"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
