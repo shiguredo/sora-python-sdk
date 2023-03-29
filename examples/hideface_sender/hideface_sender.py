@@ -1,4 +1,3 @@
-import json
 import math
 import signal
 from pathlib import Path
@@ -7,6 +6,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from PIL import Image
+
 from sora_sdk import Sora
 
 mp_face_detection = mp.solutions.face_detection
@@ -18,7 +18,7 @@ connection = sora.create_connection(
     role="sendonly",
     channel_id="channel_id",
     client_id="sendonly",
-    metadata=json.dumps({'access_token': 'access_token'}),
+    metadata={'access_token': 'access_token'},
     video_source=video_source
 )
 
