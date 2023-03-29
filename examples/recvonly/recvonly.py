@@ -7,7 +7,7 @@ from sora_sdk import Sora, SoraAudioSink, SoraVideoSink
 
 use_hardware_encoder = False
 output_frequency = 16000
-output_channels = 2
+output_channels = 1
 
 sora = Sora(use_hardware_encoder)
 connection = sora.create_connection(
