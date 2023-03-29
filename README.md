@@ -36,6 +36,18 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 TBD
 
+### ビルド
+
+Linux のみ以下のインストールが必要です。
+
+```
+sudo apt install libdrm-dev libva-dev
+```
+
+```
+pip install .
+```
+
 ## サンプル
 
 TBD
@@ -47,20 +59,22 @@ TBD
 
 ## 対応プラットフォーム
 
-- Windows 10 1809 x86_64 以降
 - macOS 12.4 arm64 以降
 - Ubuntu 20.04 x86_64
 - Ubuntu 22.04 x86_64
 - Ubuntu 20.04 arm64
 - Ubuntu 22.04 arm64
 
+### 対応未定
+
+- Windows 10 1809 x86_64 以降
 ## 対応機能
 
 TBD
 
 ## 優先実装
 
-優先実装とは Sora のライセンスを契約頂いているお客様限定で Sora C++ SDK の実装予定機能を有償にて前倒しで実装することです。
+優先実装とは Sora のライセンスを契約頂いているお客様限定で Sora Python SDK の実装予定機能を有償にて前倒しで実装することです。
 
 ### 優先実装が可能な機能一覧
 
@@ -104,3 +118,5 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
