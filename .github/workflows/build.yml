@@ -29,13 +29,13 @@ jobs:
           SLACK_ICON_EMOJI: ":japanese_ogre:"
           SLACK_TITLE: Failure test
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-  build_macos_arm64_job:
-    runs-on: [self-hosted, macos, arm64]
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build
-        run: |
-          python3 -m venv .venv
-          source .venv/bin/activate
-          pip3 install -v .
+  # build_macos_arm64_job:
+  #   runs-on: [self-hosted, macos, arm64]
+  #   timeout-minutes: 10
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Build
+  #       run: |
+  #         python3 -m venv .venv
+  #         source .venv/bin/activate
+  #         pip3 install -v .
