@@ -1,5 +1,11 @@
 # whispercpp のインストール
 
+## 注意
+
+macOS 13.x の Apple Silicon でのみ動作を確認しています。
+
+## セットアップ
+
 https://pypi.org/project/whispercpp/
 
 ```console
