@@ -31,7 +31,9 @@ list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})
 list(APPEND CMAKE_MODULE_PATH ${SORA_DIR}/share/cmake)
 
 set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_STATIC_RUNTIME ON)
+if(TARGET_OS STREQUAL "windows")
+  set(Boost_USE_STATIC_RUNTIME ON)
+endif()
 
 find_package(Boost REQUIRED COMPONENTS json filesystem)
 find_package(Lyra REQUIRED)
