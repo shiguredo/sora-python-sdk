@@ -29,6 +29,16 @@ jobs:
           SLACK_ICON_EMOJI: ":japanese_ogre:"
           SLACK_TITLE: Failure test
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  build_windows_job:
+    runs-on: windows-2019
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -v .
   # build_macos_arm64_job:
   #   runs-on: [self-hosted, macos, arm64]
   #   timeout-minutes: 10
