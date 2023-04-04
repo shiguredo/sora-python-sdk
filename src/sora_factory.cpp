@@ -38,6 +38,7 @@ SoraFactory::SoraFactory(bool use_hardware_encoder) {
          cricket::MediaEngineDependencies& media_dependencies) {
         media_dependencies.audio_mixer =
             DummyAudioMixer::Create(media_dependencies.task_queue_factory);
+        media_dependencies.audio_processing = nullptr;
       };
   context_ = sora::SoraClientContext::Create(context_config);
 }
