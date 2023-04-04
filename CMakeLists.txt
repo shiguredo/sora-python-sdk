@@ -31,6 +31,9 @@ list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})
 list(APPEND CMAKE_MODULE_PATH ${SORA_DIR}/share/cmake)
 
 set(Boost_USE_STATIC_LIBS ON)
+if(TARGET_OS STREQUAL "windows")
+  set(Boost_USE_STATIC_RUNTIME ON)
+endif()
 
 find_package(Boost REQUIRED COMPONENTS json filesystem)
 find_package(Lyra REQUIRED)
@@ -74,11 +77,9 @@ elseif(TARGET_OS STREQUAL "ubuntu")
 elseif(TARGET_OS STREQUAL "windows")
   # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
-  set_target_properties(sora_sdk_ext
-    PROPERTIES
-      # CRTライブラリを静的リンクさせる
-      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-  )
+  # CRTライブラリを静的リンクさせる
+  # MSVC_RUNTIME_LIBRARY で設定ても反映されないため CMAKE_CXX_FLAGS を用いた
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
   target_compile_definitions(sora_sdk_ext
     PRIVATE
       _CONSOLE

@@ -24,7 +24,11 @@ SoraFactory::SoraFactory(bool use_hardware_encoder) {
   // Lyra のモデルファイルを読み込むため SORA_LYRA_MODEL_COEFFS_PATH が設定されていない場合は
   // この共有ライブラリ直下に配置されているモデルファイルを利用する
   auto path = boost::dll::this_line_location().parent_path() / "model_coeffs";
+#ifdef _WIN32
+  _putenv_s("SORA_LYRA_MODEL_COEFFS_PATH", path.string().c_str());
+#else
   setenv("SORA_LYRA_MODEL_COEFFS_PATH", path.string().c_str(), 0);
+#endif
 
   rtc::InitializeSSL();
 
