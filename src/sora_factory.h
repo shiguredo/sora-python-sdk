@@ -6,20 +6,19 @@
 #include <pc/connection_context.h>
 #include <rtc_base/thread.h>
 
+// Sora
+#include <sora/sora_client_context.h>
+
 class SoraFactory {
  public:
   SoraFactory(bool use_hardware_encoder);
-  ~SoraFactory();
 
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-  GetPeerConnectionFactory();
-  rtc::scoped_refptr<webrtc::ConnectionContext> GetConnectionContext();
+  GetPeerConnectionFactory() const;
+  rtc::scoped_refptr<webrtc::ConnectionContext> GetConnectionContext() const;
 
  private:
-  std::unique_ptr<rtc::Thread> network_thread_;
-  std::unique_ptr<rtc::Thread> worker_thread_;
-  std::unique_ptr<rtc::Thread> signaling_thread_;
-  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> factory_;
-  rtc::scoped_refptr<webrtc::ConnectionContext> connection_context_;
+  std::shared_ptr<sora::SoraClientContext> context_;
 };
+
 #endif

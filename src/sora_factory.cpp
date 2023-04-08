@@ -30,89 +30,25 @@ SoraFactory::SoraFactory(bool use_hardware_encoder) {
   setenv("SORA_LYRA_MODEL_COEFFS_PATH", path.string().c_str(), 0);
 #endif
 
-  rtc::InitializeSSL();
-
-  network_thread_ = rtc::Thread::CreateWithSocketServer();
-  network_thread_->Start();
-  worker_thread_ = rtc::Thread::Create();
-  worker_thread_->Start();
-  signaling_thread_ = rtc::Thread::Create();
-  signaling_thread_->Start();
-
-  webrtc::PeerConnectionFactoryDependencies dependencies;
-  dependencies.network_thread = network_thread_.get();
-  dependencies.worker_thread = worker_thread_.get();
-  dependencies.signaling_thread = signaling_thread_.get();
-  dependencies.task_queue_factory = webrtc::CreateDefaultTaskQueueFactory();
-  dependencies.call_factory = webrtc::CreateCallFactory();
-  dependencies.event_log_factory =
-      absl::make_unique<webrtc::RtcEventLogFactory>(
-          dependencies.task_queue_factory.get());
-
-  // media_dependencies
-  cricket::MediaEngineDependencies media_dependencies;
-  media_dependencies.task_queue_factory = dependencies.task_queue_factory.get();
-  media_dependencies.adm = worker_thread_->BlockingCall([&] {
-    sora::AudioDeviceModuleConfig config;
-    config.audio_layer = webrtc::AudioDeviceModule::kDummyAudio;
-    config.task_queue_factory = dependencies.task_queue_factory.get();
-    return sora::CreateAudioDeviceModule(config);
-  });
-
-  media_dependencies.audio_encoder_factory =
-      sora::CreateBuiltinAudioEncoderFactory();
-  media_dependencies.audio_decoder_factory =
-      sora::CreateBuiltinAudioDecoderFactory();
-
-  auto cuda_context = sora::CudaContext::Create();
-  {
-    auto config = use_hardware_encoder
-                      ? sora::GetDefaultVideoEncoderFactoryConfig(cuda_context)
-                      : sora::GetSoftwareOnlyVideoEncoderFactoryConfig();
-    config.use_simulcast_adapter = true;
-    media_dependencies.video_encoder_factory =
-        absl::make_unique<sora::SoraVideoEncoderFactory>(std::move(config));
-  }
-  {
-    auto config = use_hardware_encoder
-                      ? sora::GetDefaultVideoDecoderFactoryConfig(cuda_context)
-                      : sora::GetSoftwareOnlyVideoDecoderFactoryConfig();
-    media_dependencies.video_decoder_factory =
-        absl::make_unique<sora::SoraVideoDecoderFactory>(std::move(config));
-  }
-
-  media_dependencies.audio_mixer =
-      DummyAudioMixer::Create(dependencies.task_queue_factory.get());
-  media_dependencies.audio_processing = nullptr;
-
-  dependencies.media_engine =
-      cricket::CreateMediaEngine(std::move(media_dependencies));
-
-  factory_ = sora::CreateModularPeerConnectionFactoryWithContext(
-      std::move(dependencies), connection_context_);
-
-  webrtc::PeerConnectionFactoryInterface::Options factory_options;
-  factory_options.disable_encryption = false;
-  factory_options.ssl_max_version = rtc::SSL_PROTOCOL_DTLS_12;
-  factory_options.crypto_options.srtp.enable_gcm_crypto_suites = true;
-  factory_->SetOptions(factory_options);
-}
-
-SoraFactory::~SoraFactory() {
-  factory_ = nullptr;
-  network_thread_->Stop();
-  worker_thread_->Stop();
-  signaling_thread_->Stop();
-
-  rtc::CleanupSSL();
+  sora::SoraClientContextConfig context_config;
+  context_config.use_audio_device = false;
+  context_config.use_hardware_encoder = use_hardware_encoder;
+  context_config.configure_media_dependencies =
+      [](const webrtc::PeerConnectionFactoryDependencies& dependencies,
+         cricket::MediaEngineDependencies& media_dependencies) {
+        media_dependencies.audio_mixer =
+            DummyAudioMixer::Create(media_dependencies.task_queue_factory);
+        media_dependencies.audio_processing = nullptr;
+      };
+  context_ = sora::SoraClientContext::Create(context_config);
 }
 
 rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-SoraFactory::GetPeerConnectionFactory() {
-  return factory_;
+SoraFactory::GetPeerConnectionFactory() const {
+  return context_->peer_connection_factory();
 };
 
 rtc::scoped_refptr<webrtc::ConnectionContext>
-SoraFactory::GetConnectionContext() {
-  return connection_context_;
+SoraFactory::GetConnectionContext() const {
+  return context_->connection_context();
 };
