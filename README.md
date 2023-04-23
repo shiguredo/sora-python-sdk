@@ -50,7 +50,7 @@ pip install .
 
 ## サンプル
 
-TBD
+サンプルは examples ディレクトリ以下に配置してあります。詳しくは [examples の README.md](./examples/README.md) を参照してください。
 
 ## システム条件
 

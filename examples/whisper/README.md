@@ -1,61 +1,100 @@
-# whispercpp のインストール
+# 音声認識(whisper)サンプル
 
-## 注意
+Open AI の高精度な音声認識モデルである [Whisper](https://github.com/openai/whisper) を使用して、受信した音声を認識しコンソールに表示するサンプルです。
 
-macOS 13.x の Apple Silicon でのみ動作を確認しています。
+十分な音声認識精度を得るためには一定の長さの音声データが必要なため、すでに認識結果を表示した音声データを再利用します。そのため認識結果が一部重複します。
 
-## セットアップ
+### 注意
 
-https://pypi.org/project/whispercpp/
+Whisper は認識精度は高いものも、非常に重い音声認識エンジンです。動作は macOS 13.x の Apple Silicon でのみ確認しています。
 
-```console
-$ pip install whispercpp
-```
+## サンプルを実行するにあたって
 
-これだけで実行可能になっているはず。
-実行できなかった場合は、下記のようにソースからビルドしてインストールする。
+[examples の README.md のサンプルを実行するにあたって](../README.md#サンプルを実行するにあたって)を完了していない場合は、先にこちらを完了させてください。
 
-## エラーとその対処
+## 依存するパッケージのインストール
 
-### `GLIBCXX_3.4.29` not found
-
-libstdc++6 が古い可能性があるためアップデートを行う。
+以下のコマンドを Sora Python SDK のルートディレクトリ(setup.py のあるディレクトリ)から実行し、依存するパッケージをインストールしてください。
 
 ```console
-$ sudo apt update libstdc++6
+pip3 install -r examples/whisper/requirements.txt
 ```
 
-下記のコマンドを実行し確認する。
+また、このサンプルでは上記コマンドではインストールされない whispercpp を使用しますので後述の手順に従ってインストールしてください。
+
+## whispercpp のインストール
+
+このサンプルでは Whisper を利用するにあたって十分な実行速度を稼ぐため [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) を使用しています。 Whisper.cpp を Python から実行するため binding には[こちら](https://github.com/aarnphm/whispercpp)を使用しました。
+
+### pip でのインストール
+
+以下のコマンドで Whisper.cpp の Python binding を pip でインストールできます。
 
 ```console
-$ strings /lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX_3.4.29
+pip3 install whispercpp
 ```
 
-出力がある場合は実行可能になっている。
-出力がない場合は次を確認する。
+### pip でインストールした場合のエラーとその対処
 
-### `GLIBCXX_3.4.29` がインストールされない場合
+インストールしてもサンプルを実行できなかった場合は以下を確認してください。
 
-#### ビルドを行った Python のバージョンと一致しないと表示され実行できない場合
+#### `GLIBCXX_3.4.29` not found と表示される
 
-pip で配布されているものをそのまま実行することはできない。
-pip でインストールされているものを削除する。
+libstdc++6 が古い可能性があるため下記のコマンドでアップデートを行ってください。
 
+```console
+sudo apt update libstdc++6
 ```
-$ pip uninstall whispercpp
+
+アップデートを行った後に下記のコマンドを実行することで確認することができます。
+
+```console
+strings /lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX_3.4.29
+```
+
+出力がある場合には実行可能になっていますので、再度サンプルを実行してください。
+
+出力がない場合は `GLIBCXX_3.4.29` がインストールできないため後述のソースからビルドしてのインストールをお試しください。
+
+#### 実行時にビルドを行った Python のバージョンと一致しないと表示された場合
+
+pip で配布されているものを実行することはできません。
+pip でインストールされているものを以下のコマンドでアンインストールしてください。
+
+```console
+pip3 uninstall whispercpp
 ``` 
 
-ソースからビルドしてインストールする
+アンインストール後に後述のソースからビルドしてのインストールをお試しください。
+
+### ソースからビルドしてのインストール
+
+以下のコマンドを実行してインストールしてください。
 
 ```console
-$ pip install git+https://github.com/aarnphm/whispercpp.git@v0.0.17 -vv
+pip3 install git+https://github.com/aarnphm/whispercpp.git@v0.0.17 -vv
 ```
+
+### ソースからビルドしてのインストールした場合のエラーとその対処
+
+ソースからビルドしてのインストールが失敗する場合は以下を確認してください。
 
 #### `f'spec_for_{name}'` で SyntaxError: invalid syntax というエラーがでる
 
-python が python2.7 を見に行っている場合に生じる。
-再度ソースからビルドしてのインストールを試す。
+ビルド時に実行される python が python2.7 を参照しているため生じています。
+
+以下のコマンドで python を python3 に紐づけることで解決します。
 
 ```console
-$ sudo apt install python-is-python3
+sudo apt install python-is-python3
 ```
+
+## サンプルを実行する
+
+サンプルを以下のコマンドで実行してください。
+
+```console
+python3 ./examples/whisper/whisper.py
+```
+
+Ctrl + C で終了できます。
