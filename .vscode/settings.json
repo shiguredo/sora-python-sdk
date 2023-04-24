@@ -125,5 +125,6 @@
     "__memory": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
-  "editor.tabSize": 2 // nanobind 周りでエラーが消えないので全部消す
+  "editor.tabSize": 2,
+  "python.analysis.typeCheckingMode": "basic" // nanobind 周りでエラーが消えないので全部消す
 }
