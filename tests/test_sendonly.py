@@ -18,13 +18,14 @@ def test_sendonly():
     audio_source = sora.create_audio_source(channels, samplerate)
     video_source = sora.create_video_source()
 
-    signaling_url = os.environ.get('SIGNALING_URL')
-    access_token = os.environ.get('ACCESS_TOKEN')
+    signaling_url = os.environ.get('TEST_SIGNALING_URL')
+    access_token = os.environ.get('TEST_ACCESS_TOKEN')
+    channel_id_prefix = os.environ.get('TEST_CHANNEL_ID_PREFIX')
 
     connection = sora.create_connection(
         signaling_url=signaling_url,
         role="sendonly",
-        channel_id="channel_id",
+        channel_id=f'{channel_id_prefix}_sendonly',
         client_id="sendonly",
         metadata={'access_token': access_token},
         audio_source=audio_source,
