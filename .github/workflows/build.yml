@@ -3,6 +3,8 @@ name: build
 on:
   workflow_dispatch:
   push:
+    branches-ignore:
+      - "feature/e2e-test"
     paths-ignore:
       - "doc/**"
       - "**.md"
