@@ -7,7 +7,7 @@ from sora_sdk import Sora
 
 
 class SendOnly:
-    def __init__(self, signaling_url, channel_id, access_token,
+    def __init__(self, signaling_url, channel_id, metadata,
                  use_hardware_encoder=False, channels=1, samplerate=16000):
         self.running = True
         self.channels = channels
@@ -23,7 +23,7 @@ class SendOnly:
             role="sendonly",
             channel_id=channel_id,
             client_id="sendonly",
-            metadata={'access_token': access_token},
+            metadata=metadata,
             audio_source=self.audio_source,
             video_source=self.video_source
         )
@@ -57,6 +57,7 @@ if __name__ == '__main__':
     signaling_url = "signaling_url"
     channel_id = "channel_id"
     access_token = "access_token"
+    metadata = {"access_token": access_token}
 
-    sendonly = SendOnly(signaling_url, channel_id, access_token)
+    sendonly = SendOnly(signaling_url, channel_id, metadata)
     sendonly.run()

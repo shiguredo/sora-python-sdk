@@ -9,7 +9,7 @@ from sora_sdk import Sora, SoraAudioSink, SoraVideoSink
 
 class Recvonly:
     def __init__(self, signaling_url, channel_id, client_id,
-                 access_token, use_hardware_encoder=False,
+                 metadata, use_hardware_encoder=False,
                  output_frequency=16000, output_channels=1):
         self.use_hardware_encoder = use_hardware_encoder
         self.output_frequency = output_frequency
@@ -21,7 +21,7 @@ class Recvonly:
             role="recvonly",
             channel_id=channel_id,
             client_id=client_id,
-            metadata={'access_token': access_token}
+            metadata=metadata
         )
 
         self.disconnected = False
@@ -82,6 +82,7 @@ if __name__ == '__main__':
     channel_id = "channel_id"
     client_id = "recvonly"
     access_token = "access_token"
+    metadata = {'access_token': access_token}
 
-    recvonly = Recvonly(signaling_url, channel_id, client_id, access_token)
+    recvonly = Recvonly(signaling_url, channel_id, client_id, metadata)
     recvonly.run()

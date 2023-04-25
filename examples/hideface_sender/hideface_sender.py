@@ -11,7 +11,7 @@ from sora_sdk import Sora
 
 
 class LogoStreamer:
-    def __init__(self, signaling_url, role, channel_id, client_id, access_token):
+    def __init__(self, signaling_url, role, channel_id, client_id, metadata):
         self.mp_face_detection = mp.solutions.face_detection
 
         self.sora = Sora()
@@ -21,7 +21,7 @@ class LogoStreamer:
             role=role,
             channel_id=channel_id,
             client_id=client_id,
-            metadata={"access_token": access_token},
+            metadata=metadata,
             video_source=self.video_source,
         )
 
@@ -112,6 +112,6 @@ if __name__ == "__main__":
         role="sendonly",
         channel_id="channel_id",
         client_id="sendonly",
-        access_token="access_token",
+        metadata={"access_token": "access_token"},
     )
     streamer.run()
