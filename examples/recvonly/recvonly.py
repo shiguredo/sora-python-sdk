@@ -62,6 +62,7 @@ class Recvonly:
     def exit_gracefully(self, signal_number, frame):
         print("\nCtrl+Cが押されました。終了します。")
         self.connection.disconnect()
+        # これが必要なのかはよくわかっていない
         cv2.destroyAllWindows()
         exit(0)
 
