@@ -1,4 +1,5 @@
 import queue
+import signal
 import time
 
 import cv2
@@ -58,7 +59,14 @@ class Recvonly:
             else:
                 print("CAN_NOT_GET_AUDIO_DATA")
 
+    def exit_gracefully(self, signal_number, frame):
+        print("\nCtrl+Cが押されました。終了します。")
+        self.connection.disconnect()
+        cv2.destroyAllWindows()
+        exit(0)
+
     def run(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
         with sounddevice.OutputStream(channels=self.output_channels, callback=self.callback,
                                       samplerate=self.output_frequency, dtype='int16'):
             self.connection.connect()
