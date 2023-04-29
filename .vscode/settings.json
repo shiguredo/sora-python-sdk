@@ -126,5 +126,6 @@
   },
   "C_Cpp.errorSquiggles": "disabled",
   "editor.tabSize": 2, // nanobind 周りでエラーが消えないので全部消す
-  "python.analysis.typeCheckingMode": "off"
+  "python.analysis.typeCheckingMode": "off",
+  "cSpell.words": ["dtype", "imshow", "samplerate", "sounddevice"]
 }
