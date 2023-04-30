@@ -73,7 +73,12 @@ class Recvonly:
             self.connection.connect()
 
             while True:
-                frame = self.q_out.get()
+                # Windows 環境の場合 timeout を入れておかないと Queue.get() で
+                # ブロックしたときに脱出方法がなくなる。
+                try:
+                    frame = self.q_out.get(timeout=1)
+                except queue.Empty:
+                    continue
                 cv2.imshow('frame', frame.data())
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
