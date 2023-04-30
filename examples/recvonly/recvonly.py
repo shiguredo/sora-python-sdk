@@ -54,20 +54,21 @@ class Recvonly:
             success, data = self.audio_sink.read(frames)
             if success:
                 if data.shape[0] != frames:
-                    print("AUDIO_DATA_NOT_ENOUGH", data.shape, frames)
+                    print("音声データが十分ではありません", data.shape, frames)
                 outdata[:] = data
             else:
-                print("CAN_NOT_GET_AUDIO_DATA")
+                print("音声データを取得できません")
 
     def exit_gracefully(self, signal_number, frame):
-        print("\nCtrl+Cが押されました。終了します。")
+        print("\nCtrl+Cが押されました。終了します")
         self.connection.disconnect()
-        # これが必要なのかはよくわかっていない
         cv2.destroyAllWindows()
         exit(0)
 
     def run(self):
+        # シグナルを登録し、プログラムが終了するときに正常に処理が行われるようにする
         signal.signal(signal.SIGINT, self.exit_gracefully)
+        # サウンドデバイスのOutputStreamを使って音声出力を設定
         with sounddevice.OutputStream(channels=self.output_channels, callback=self.callback,
                                       samplerate=self.output_frequency, dtype='int16'):
             self.connection.connect()
@@ -80,14 +81,17 @@ class Recvonly:
                 except queue.Empty:
                     continue
                 cv2.imshow('frame', frame.data())
+                # これは削除してよさそう
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
             self.connection.disconnect()
 
+            # 切断が完了するまで待機
             while not self.disconnected:
                 time.sleep(0.01)
 
+        # すべてのウィンドウを破棄
         cv2.destroyAllWindows()
 
 
