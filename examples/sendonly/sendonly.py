@@ -2,50 +2,62 @@ import signal
 
 import cv2
 import sounddevice
+
 from sora_sdk import Sora
 
-use_hardware_encoder = False
-channels = 1
-samplerate = 16000
 
-sora = Sora(use_hardware_encoder)
-audio_source = sora.create_audio_source(channels, samplerate)
-video_source = sora.create_video_source()
-connection = sora.create_connection(
-    signaling_url="signaling_url",
-    role="sendonly",
-    channel_id="channel_id",
-    client_id="sendonly",
-    metadata={'access_token': 'access_token'},
-    audio_source=audio_source,
-    video_source=video_source
-)
+class SendOnly:
+    def __init__(self, signaling_url, channel_id, metadata,
+                 use_hardware_encoder=False, channels=1, samplerate=16000):
+        self.running = True
+        self.channels = channels
+        self.samplerate = samplerate
+        self.use_hardware_encoder = use_hardware_encoder
 
-video_capture = cv2.VideoCapture(0)
-running = True
+        self.sora = Sora(self.use_hardware_encoder)
+        self.audio_source = self.sora.create_audio_source(
+            self.channels, self.samplerate)
+        self.video_source = self.sora.create_video_source()
+        self.connection = self.sora.create_connection(
+            signaling_url=signaling_url,
+            role="sendonly",
+            channel_id=channel_id,
+            client_id="sendonly",
+            metadata=metadata,
+            audio_source=self.audio_source,
+            video_source=self.video_source
+        )
+
+        self.video_capture = cv2.VideoCapture(0)
+
+    def handler(self, signum, frame):
+        self.running = False
+
+    def callback(self, indata, frames, time, status):
+        self.audio_source.on_data(indata)
+
+    def run(self):
+        signal.signal(signal.SIGINT, self.handler)
+
+        with sounddevice.InputStream(samplerate=self.samplerate, channels=self.channels,
+                                     dtype='int16', callback=self.callback):
+            self.connection.connect()
+
+            while self.running:
+                success, frame = self.video_capture.read()
+                if not success:
+                    continue
+                self.video_source.on_captured(frame)
+
+        self.connection.disconnect()
+        self.video_capture.release()
 
 
-def handler(signum, frame):
-    global running
-    running = False
+if __name__ == '__main__':
+    signaling_url = "signaling_url"
+    channel_id = "channel_id"
+    access_token = "access_token"
+    metadata = {"access_token": access_token}
 
-
-signal.signal(signal.SIGINT, handler)
-
-
-def callback(indata, frames, time, status):
-    global audio_source
-    audio_source.on_data(indata)
-
-
-with sounddevice.InputStream(samplerate=samplerate, channels=channels, dtype='int16', callback=callback):
-    connection.connect()
-
-    while running:
-        success, frame = video_capture.read()
-        if not success:
-            continue
-        video_source.on_captured(frame)
-
-connection.disconnect()
-video_capture.release()
+    sendonly = SendOnly(signaling_url, channel_id, metadata)
+    sendonly.run()
