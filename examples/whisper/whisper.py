@@ -149,7 +149,7 @@ class RealTimeRecognition:
             time.sleep(0.01)
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     real_time_recognition = RealTimeRecognition(
         signaling_url="signaling_url",
         channel_id="channel_id",
