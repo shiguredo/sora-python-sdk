@@ -2,7 +2,7 @@
 
 Web カメラより取得した映像とマイクより取得した音声を Sora に送信するサンプルです。
 
-Web カメラからのフレーム取得には OpenCV を使用しており、取得したフレームをそのまま Sora Python SDK で送信できるため。 `cv2.VideoCapture` と `cv2.imshow` を利用した機械学習サンプルを容易に移植可能です。
+Web カメラからのフレーム取得には OpenCV を使用しており、取得したフレームをそのまま Sora Python SDK で送信できます。そのため `cv2.VideoCapture` と `cv2.imshow` を利用した機械学習サンプルを容易に移植可能です。
 
 マイクからの音声取得には [python-sounddevice](https://github.com/spatialaudio/python-sounddevice) を使用しています。
 

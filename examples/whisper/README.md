@@ -6,7 +6,7 @@ Open AI の高精度な音声認識モデルである [Whisper](https://github.c
 
 ### 注意
 
-Whisper は認識精度は高いものも、非常に重い音声認識エンジンです。動作は macOS 13.x の Apple Silicon でのみ確認しています。
+Whisper は認識精度は高いものの、非常に重い音声認識エンジンです。動作は macOS 13.x の Apple Silicon でのみ確認しています。
 
 ## サンプルを実行するにあたって
 
@@ -20,9 +20,9 @@ Whisper は認識精度は高いものも、非常に重い音声認識エンジ
 pip3 install -r examples/whisper/requirements.txt
 ```
 
-また、このサンプルでは上記コマンドではインストールされない whispercpp を使用しますので後述の手順に従ってインストールしてください。
+また、このサンプルでは上記コマンドではインストールされない Whisper.cpp を使用しますので後述の手順に従ってインストールしてください。
 
-## whispercpp のインストール
+## Whisper.cpp のインストール
 
 このサンプルでは Whisper を利用するにあたって十分な実行速度を稼ぐため [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) を使用しています。 Whisper.cpp を Python から実行するため binding には[こちら](https://github.com/aarnphm/whispercpp)を使用しました。
 
