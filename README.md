@@ -45,7 +45,7 @@ sudo apt install libdrm-dev libva-dev
 ```
 
 ```
-pip install .
+pip3 install .
 ```
 
 ## サンプル

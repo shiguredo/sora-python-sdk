@@ -20,15 +20,15 @@ Whisper は認識精度は高いものの、非常に重い音声認識エンジ
 pip3 install -r examples/whisper/requirements.txt
 ```
 
-また、このサンプルでは上記コマンドではインストールされない Whisper.cpp を使用しますので後述の手順に従ってインストールしてください。
+また、このサンプルでは上記コマンドではインストールされない whisper.cpp を使用しますので後述の手順に従ってインストールしてください。
 
-## Whisper.cpp のインストール
+## whisper.cpp のインストール
 
-このサンプルでは Whisper を利用するにあたって十分な実行速度を稼ぐため [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) を使用しています。 Whisper.cpp を Python から実行するため binding には[こちら](https://github.com/aarnphm/whispercpp)を使用しました。
+このサンプルでは whisper の推論に [whisper.cpp](https://github.com/ggerganov/whisper.cpp) を使用しています。 whisper.cpp を Python から実行するため binding には[こちら](https://github.com/aarnphm/whispercpp)を使用しました。
 
 ### pip でのインストール
 
-以下のコマンドで Whisper.cpp の Python binding を pip でインストールできます。
+以下のコマンドで whisper.cpp の Python binding を pip でインストールできます。
 
 ```console
 pip3 install whispercpp
