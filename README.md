@@ -66,8 +66,7 @@ TBD
 
 ### 未検証
 
-- Ubuntu 20.04 arm64
-- Ubuntu 22.04 arm64
+- Ubuntu 20.04 arm64 (NVIDIA Jetson シリーズ)
 
 ## 対応機能
 
