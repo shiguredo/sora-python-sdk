@@ -17,7 +17,7 @@ jobs:
       - run: sudo apt-get -y install libva-dev libdrm-dev
       - run: curl -sSf https://rye-up.com/get | sed -e 's/self install/self install -y/' | bash
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
-      - run: sync
+      - run: rye sync
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
