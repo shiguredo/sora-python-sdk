@@ -10,7 +10,7 @@ on:
 jobs:
   build_linux_x64_job:
     runs-on: ubuntu-22.04
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
       - run: sudo apt-get update
