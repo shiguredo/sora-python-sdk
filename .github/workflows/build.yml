@@ -13,13 +13,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-          cache: "pip"
       - run: sudo apt-get update
       - run: sudo apt-get -y install libva-dev libdrm-dev
-      - run: pip install -v .
+      - run: curl -sSf https://rye-up.com/get | sed -e 's/self install/self install -y/' | bash
+      - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
+      - run: sync
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
