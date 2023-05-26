@@ -44,13 +44,22 @@ Linux のみ以下のインストールが必要です。
 sudo apt install libdrm-dev libva-dev
 ```
 
-```
-pip install .
+#### Rye
+
+[Rye](https://github.com/mitsuhiko/rye) というパッケージマネージャーを利用しています。
+
+Linux と macOS の場合は `curl -sSf https://rye-up.com/get | bash` でインストール可能です。
+Windows は https://rye-up.com/ の Installation Instructions を確認してください。
+
+```console
+$ rye sync
 ```
 
 ## サンプル
 
-TBD
+```console
+$ rye run python examples/recvonly.py
+```
 
 ## システム条件
 
@@ -104,6 +113,7 @@ Discord へお願いします。
 Apache License 2.0
 
 ```
+
 Copyright 2023-2023, tnoho (Original Author)
 Copyright 2023-2023, Shiguredo Inc.
 
@@ -118,6 +128,11 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 ```
 
 このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
+
+```
+
+```
