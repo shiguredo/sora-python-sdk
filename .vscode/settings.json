@@ -16,7 +16,8 @@
     "editor.formatOnSaveMode": "file",
     "editor.codeActionsOnSave": {
       "source.organizeImports": true
-    }
+    },
+    "editor.defaultFormatter": "ms-python.autopep8"
   },
   "[cpp]": {
     "editor.formatOnSave": true
@@ -127,5 +128,7 @@
   "C_Cpp.errorSquiggles": "disabled",
   "editor.tabSize": 2, // nanobind 周りでエラーが消えないので全部消す
   "python.analysis.typeCheckingMode": "off",
-  "cSpell.words": ["dtype", "imshow", "samplerate", "sounddevice"]
+  "cSpell.words": ["dtype", "imshow", "samplerate", "sounddevice"],
+  "python.formatting.provider": "none",
+  "ansible.python.interpreterPath": "/Users/voluntas/.venvs/default/bin/python"
 }
