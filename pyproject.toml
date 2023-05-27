@@ -1,4 +1,11 @@
-tool = { rye = { dev-dependencies = ["opencv-python~=4.7.0.72", "opencv-python-headless~=4.7.0.72", "sounddevice~=0.4.6", "mediapipe~=0.10.0"] } }
+[tool.rye]
+dev-dependencies = [
+    "opencv-python~=4.7.0.72",
+    "opencv-python-headless~=4.7.0.72",
+    "sounddevice~=0.4.6",
+    "mediapipe~=0.10.0",
+]
+
 [build-system]
 requires = [
     "setuptools>=42",
