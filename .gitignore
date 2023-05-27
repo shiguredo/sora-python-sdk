@@ -8,3 +8,7 @@ __pycache__/
 *.egg-info/
 /_skbuild
 build
+
+# パッケージ
+/dist
+MANIFEST.in
