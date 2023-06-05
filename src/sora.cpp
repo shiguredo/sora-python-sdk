@@ -28,7 +28,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.audio = true;
   config.video_codec_type = "VP8";
   config.audio_codec_type = "OPUS";
-  config.metadata = CovertJsonValue(metadata);
+  config.metadata = ConvertJsonValue(metadata);
   config.network_manager =
       factory_->GetConnectionContext()->default_network_manager();
   config.socket_factory =
@@ -67,7 +67,7 @@ SoraVideoSource* Sora::CreateVideoSource() {
   return video_source;
 }
 
-boost::json::value Sora::CovertJsonValue(nb::handle value) {
+boost::json::value Sora::ConvertJsonValue(nb::handle value) {
   if (value.is_none()) {
     return nullptr;
   } else if (nb::isinstance<bool>(value)) {
@@ -82,13 +82,13 @@ boost::json::value Sora::CovertJsonValue(nb::handle value) {
     nb::list nb_list = nb::cast<nb::list>(value);
     boost::json::array json_array;
     for (auto v : nb_list)
-      json_array.emplace_back(CovertJsonValue(value));
+      json_array.emplace_back(ConvertJsonValue(value));
     return json_array;
   } else if (nb::isinstance<nb::dict>(value)) {
     nb::dict nb_dict = nb::cast<nb::dict>(value);
     boost::json::object json_object;
     for (auto [k, v] : nb_dict)
-      json_object.emplace(nb::cast<const char*>(k), CovertJsonValue(v));
+      json_object.emplace(nb::cast<const char*>(k), ConvertJsonValue(v));
     return json_object;
   }
   throw nb::type_error("Invalid JSON value in metadata");
