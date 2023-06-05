@@ -421,22 +421,40 @@ def get_build_platform() -> PlatformTarget:
     return PlatformTarget(os, osver, arch)
 
 
-def install_deps(platform: PlatformTarget, source_dir, build_dir, install_dir):
+def install_deps(build_platform: PlatformTarget, target_platform: PlatformTarget, source_dir, build_dir, install_dir):
     version = read_version_file('VERSION')
 
+    # WebRTC
+    if target_platform.os == 'windows':
+        webrtc_platform = f'windows_{target_platform.arch}'
+    elif target_platform.os == 'macos':
+        webrtc_platform = f'macos_{target_platform.arch}'
+    elif target_platform.os == 'ios':
+        webrtc_platform = 'ios'
+    elif target_platform.os == 'android':
+        webrtc_platform = 'android'
+    elif target_platform.os == 'ubuntu':
+        webrtc_platform = f'ubuntu-{target_platform.osver}_{target_platform.arch}'
+    elif target_platform.os == 'raspberry-pi-os':
+        webrtc_platform = f'raspberry-pi-os_{target_platform.arch}'
+    elif target_platform.os == 'jetson':
+        webrtc_platform = 'ubuntu-20.04_armv8'
+    else:
+        raise Exception(f'Unknown platform {target_platform.os}')
+    
     install_webrtc_args = {
         'version': version['WEBRTC_BUILD_VERSION'],
         'version_file': os.path.join(install_dir, 'webrtc.version'),
         'source_dir': source_dir,
         'install_dir': install_dir,
-        'platform': platform.package_name,
+        'platform': webrtc_platform,
     }
     install_webrtc(**install_webrtc_args)
 
     webrtc_info = get_webrtc_info(False, source_dir, build_dir, install_dir)
     webrtc_version = read_version_file(webrtc_info.version_file)
 
-    if platform.os == 'ubuntu':
+    if build_platform.os == 'ubuntu':
         # LLVM
         tools_url = webrtc_version['WEBRTC_SRC_TOOLS_URL']
         tools_commit = webrtc_version['WEBRTC_SRC_TOOLS_COMMIT']
@@ -467,7 +485,7 @@ def install_deps(platform: PlatformTarget, source_dir, build_dir, install_dir):
         'source_dir': source_dir,
         'install_dir': install_dir,
         'sora_version': version['SORA_CPP_SDK_VERSION'],
-        'platform': platform.package_name,
+        'platform': target_platform.package_name,
     }
     install_boost(**install_boost_args)
 
@@ -478,7 +496,7 @@ def install_deps(platform: PlatformTarget, source_dir, build_dir, install_dir):
         'source_dir': source_dir,
         'install_dir': install_dir,
         'sora_version': version['SORA_CPP_SDK_VERSION'],
-        'platform': platform.package_name,
+        'platform': target_platform.package_name,
     }
     install_lyra(**install_lyra_args)
 
@@ -488,7 +506,7 @@ def install_deps(platform: PlatformTarget, source_dir, build_dir, install_dir):
         'version_file': os.path.join(install_dir, 'sora.version'),
         'source_dir': source_dir,
         'install_dir': install_dir,
-        'platform': platform.package_name,
+        'platform': target_platform.package_name,
     }
     install_sora(**install_sora_args)
 
@@ -507,7 +525,7 @@ def cmdcap(args, **kwargs):
     return cmd(args, **kwargs).stdout.strip()
 
 
-def run_setup(build_platform, deps_dir):
+def run_setup(build_platform, target_platform, deps_dir):
     try:
         import nanobind  # noqa: F401
         from skbuild import setup
@@ -524,7 +542,7 @@ def run_setup(build_platform, deps_dir):
     mkdir_p(build_dir)
     mkdir_p(install_dir)
 
-    install_deps(build_platform, source_dir, build_dir, install_dir)
+    install_deps(build_platform, target_platform, source_dir, build_dir, install_dir)
 
     configuration = 'Release'
 
@@ -532,7 +550,7 @@ def run_setup(build_platform, deps_dir):
 
     cmake_args = []
     cmake_args.append(f'-DCMAKE_BUILD_TYPE={configuration}')
-    cmake_args.append(f'-DTARGET_OS={build_platform.os}')
+    cmake_args.append(f'-DTARGET_OS={target_platform.os}')
     cmake_args.append(
         f"-DBOOST_ROOT={cmake_path(os.path.join(install_dir, 'boost'))}")
     cmake_args.append(
@@ -544,7 +562,7 @@ def run_setup(build_platform, deps_dir):
     cmake_args.append(
         f"-DSORA_DIR={cmake_path(os.path.join(install_dir, 'sora'))}")
 
-    if build_platform.os == 'ubuntu':
+    if target_platform.os == 'ubuntu':
         # クロスコンパイルの設定。
         # 本来は toolchain ファイルに書く内容
         cmake_args += [
@@ -552,7 +570,7 @@ def run_setup(build_platform, deps_dir):
             f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
             f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
         ]
-    elif build_platform.os == 'macos':
+    elif target_platform.os == 'macos':
         sysroot = cmdcap(['xcrun', '--sdk', 'macosx', '--show-sdk-path'])
         cmake_args += [
             "-DCMAKE_SYSTEM_PROCESSOR=arm64",
@@ -562,6 +580,23 @@ def run_setup(build_platform, deps_dir):
             "-DCMAKE_CXX_COMPILER=clang++",
             "-DCMAKE_CXX_COMPILER_TARGET=aarch64-apple-darwin",
             f"-DCMAKE_SYSROOT={sysroot}",
+        ]
+    elif target_platform.os == 'jetson':
+        sysroot = '/mnt/SSD1/jetson-t194'
+        cmake_args += [
+            '-DCMAKE_SYSTEM_NAME=Linux',
+            '-DCMAKE_SYSTEM_PROCESSOR=aarch64',
+            f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
+            '-DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu',
+            f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+            '-DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu',
+            f'-DCMAKE_FIND_ROOT_PATH={sysroot}',
+            '-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER',
+            '-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH',
+            '-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH',
+            '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
+            f'-DCMAKE_SYSROOT={sysroot}',
+            f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
         ]
 
     setup(
@@ -582,13 +617,22 @@ def run_setup(build_platform, deps_dir):
 
 
 def main():
-    deps_dir = os.getenv('SORA_SDK_DEPS_DIR')
     build_platform = get_build_platform()
+
+    target = os.getenv('SORA_SDK_TARGET')
+    if target is None:
+        target_platform = build_platform
+    elif target == 'ubuntu-20.04_armv8_jetson':
+        target_platform = PlatformTarget('jetson', None, 'armv8')
+    else:
+        raise Exception(f'Unknown target {target}')
+
+    deps_dir = os.getenv('SORA_SDK_DEPS_DIR')
     if deps_dir is None:
         with tempfile.TemporaryDirectory(prefix="sora-python-sdk-") as temp_dir:
-            run_setup(build_platform, temp_dir)
+            run_setup(build_platform, target_platform, temp_dir)
     else:
-        run_setup(build_platform, deps_dir)
+        run_setup(build_platform, target_platform, deps_dir)
 
 
 if __name__ == '__main__':

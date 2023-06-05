@@ -1,12 +1,7 @@
 import os
-from setup import (
-    download,
-    extract,
-    get_build_platform,
-    install_deps,
-    mkdir_p,
-    rm_rf
-)
+
+from setup import (PlatformTarget, download, extract, get_build_platform,
+                   install_deps, mkdir_p, rm_rf)
 
 
 def get_nanobind_version() -> str:
@@ -32,7 +27,15 @@ def install_nanobind(version, source_dir, install_dir, platform: str):
 
 
 def main():
-    platform = get_build_platform()
+    build_platform = get_build_platform()
+
+    target = os.getenv('SORA_SDK_TARGET')
+    if target is None:
+        target_platform = build_platform
+    elif target == 'ubuntu-20.04_armv8_jetson':
+        target_platform = PlatformTarget('jetson', None, 'armv8')
+    else:
+        raise Exception(f'Unknown target {target}')
 
     base_dir = os.getcwd()
     source_dir = os.path.join(base_dir, '_source')
@@ -42,14 +45,14 @@ def main():
     mkdir_p(build_dir)
     mkdir_p(install_dir)
 
-    install_deps(platform, source_dir, build_dir, install_dir)
+    install_deps(build_platform, target_platform, source_dir, build_dir, install_dir)
 
     # nanobind
     install_nanobind_args = {
         'version': get_nanobind_version(),
         'source_dir': source_dir,
         'install_dir': install_dir,
-        'platform': platform.package_name,
+        'platform': build_platform.package_name,
     }
     install_nanobind(**install_nanobind_args)
 
