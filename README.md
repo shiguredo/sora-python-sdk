@@ -53,12 +53,13 @@ Windows は https://rye-up.com/ の Installation Instructions を確認してく
 
 ```console
 $ rye sync
+$ rye run python setup.py build
 ```
 
-## サンプルの実行
+## テストの実行
 
 ```console
-$ rye run python examples/recvonly/recvonly.py
+$ rye run python test/recvonly.py
 ```
 
 ## システム条件
