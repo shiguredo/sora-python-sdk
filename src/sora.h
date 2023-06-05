@@ -23,7 +23,9 @@ class Sora : public DisposePublisher {
       const std::string& client_id,
       const nb::handle& metadata,
       SoraTrackInterface* audio_source,
-      SoraTrackInterface* video_source);
+      SoraTrackInterface* video_source,
+      bool data_channel_signaling,
+      bool ignore_disconnect_websocket);
 
   SoraAudioSource* CreateAudioSource(size_t channels, int sample_rate);
   SoraVideoSource* CreateVideoSource();
