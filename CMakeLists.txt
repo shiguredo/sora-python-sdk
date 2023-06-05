@@ -62,7 +62,7 @@ nanobind_add_module(
   src/sora_video_source.cpp
 )
 
-set_target_properties(sora_sdk_ext PROPERTIES CXX_STANDARD 17 C_STANDARD 17)
+set_target_properties(sora_sdk_ext PROPERTIES CXX_STANDARD 20 C_STANDARD 20)
 set_target_properties(sora_sdk_ext PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 
@@ -74,6 +74,13 @@ elseif(TARGET_OS STREQUAL "ubuntu")
       "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
   )
+elseif(TARGET_OS STREQUAL "jetson")
+  target_compile_options(sora_sdk_ext
+    PRIVATE
+      "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+  )
+  target_link_directories(sora_sdk_ext PRIVATE ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/tegra)
 elseif(TARGET_OS STREQUAL "windows")
   # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
