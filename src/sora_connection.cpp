@@ -80,6 +80,10 @@ void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
   video_source_ = video_source;
 }
 
+bool SoraConnection::SendDataChannel(const std::string& label, const std::string& data) {
+  return conn_->SendDataChannel(label, data);
+}
+
 void SoraConnection::OnSetOffer(std::string offer) {
   std::string stream_id = rtc::CreateRandomString(16);
   if (audio_source_) {

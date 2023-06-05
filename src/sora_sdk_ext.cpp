@@ -16,7 +16,7 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-/* 
+/*
  * コールバック関数のメンバー変数は Py_tp_traverse で visit コールバックを呼び出すようにする
  * やっておかないと終了時にリークエラーが発生する
  */
@@ -189,6 +189,7 @@ NB_MODULE(sora_sdk_ext, m) {
                              nb::type_slots(connection_slots))
       .def("connect", &SoraConnection::Connect)
       .def("disconnect", &SoraConnection::Disconnect)
+      .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a, "data"_a)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
       .def_rw("on_notify", &SoraConnection::on_notify_)

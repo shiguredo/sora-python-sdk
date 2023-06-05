@@ -36,6 +36,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   void Disconnect();
   void SetAudioTrack(SoraTrackInterface* audio_source);
   void SetVideoTrack(SoraTrackInterface* video_source);
+  bool SendDataChannel(const std::string& label, const std::string& data);
 
   // sora::SoraSignalingObserver
   void OnSetOffer(std::string offer) override;
