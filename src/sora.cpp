@@ -31,7 +31,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.audio = true;
   config.video_codec_type = "VP8";
   config.audio_codec_type = "OPUS";
-  config.metadata = ConvertJsonValue(metadata);
+  config.metadata = ConvertJsonValue(metadata, "Invalid JSON value in metadata");
   if (data_channel_signaling) {
     config.data_channel_signaling.emplace(*data_channel_signaling);
   }
@@ -44,7 +44,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
       factory_->GetConnectionContext()->default_socket_factory();
 
   // TODO: 関数化
-  auto data_channels_value = ConvertJsonValue(data_channels);
+  auto data_channels_value = ConvertJsonValue(data_channels, "Invalid JSON value in data_channels");
   if (!data_channels_value.is_null()) {
     if (!data_channels_value.is_array()) {
       throw nb::type_error("Invalid data_channels");
@@ -126,7 +126,7 @@ SoraVideoSource* Sora::CreateVideoSource() {
   return video_source;
 }
 
-boost::json::value Sora::ConvertJsonValue(nb::handle value) {
+boost::json::value Sora::ConvertJsonValue(nb::handle value, const char* error_message) {
   if (value.is_none()) {
     return nullptr;
   } else if (nb::isinstance<bool>(value)) {
@@ -141,16 +141,15 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value) {
     nb::list nb_list = nb::cast<nb::list>(value);
     boost::json::array json_array;
     for (auto v : nb_list)
-      json_array.emplace_back(ConvertJsonValue(v));
+      json_array.emplace_back(ConvertJsonValue(v, error_message));
     return json_array;
   } else if (nb::isinstance<nb::dict>(value)) {
     nb::dict nb_dict = nb::cast<nb::dict>(value);
     boost::json::object json_object;
     for (auto [k, v] : nb_dict)
-      json_object.emplace(nb::cast<const char*>(k), ConvertJsonValue(v));
+      json_object.emplace(nb::cast<const char*>(k), ConvertJsonValue(v, error_message));
     return json_object;
   }
 
-  // TODO: replace 'metadata'
-  throw nb::type_error("Invalid JSON value in metadata");
+  throw nb::type_error(error_message);
 }
