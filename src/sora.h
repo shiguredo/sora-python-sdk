@@ -33,7 +33,10 @@ class Sora : public DisposePublisher {
   SoraVideoSource* CreateVideoSource();
 
  private:
-  boost::json::value ConvertJsonValue(nb::handle value, const char* error_message);
+  boost::json::value ConvertJsonValue(nb::handle value,
+                                      const char* error_message);
+  std::vector<sora::SoraSignalingConfig::DataChannel> ConvertDataChannels(
+      const nb::handle value);
 
   std::unique_ptr<SoraFactory> factory_;
 };
