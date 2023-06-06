@@ -57,9 +57,8 @@ if __name__ == '__main__':
     parser.add_argument("--label", required=True, help="送信するデータチャネルのラベル名")
     parser.add_argument("--data", required=True, help="送信するデータ")
 
-
     # オプション引数
-    parser.add_argument("--client_id",default='',  help="クライアントID")
+    parser.add_argument("--client_id", default='',  help="クライアントID")
     parser.add_argument("--metadata", help="メタデータ JSON")
     args = parser.parse_args()
 

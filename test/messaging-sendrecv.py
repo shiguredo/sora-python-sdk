@@ -81,7 +81,7 @@ if __name__ == '__main__':
                         help="使用するデータチャネルを JSON で指定する (例: '[{\"label\": \"#spam\", \"direction\": \"sendrecv\"}]')")
 
     # オプション引数
-    parser.add_argument("--client_id",default='',  help="クライアントID")
+    parser.add_argument("--client_id", default='',  help="クライアントID")
     parser.add_argument("--metadata", help="メタデータ JSON")
     args = parser.parse_args()
 

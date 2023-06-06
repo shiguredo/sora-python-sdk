@@ -62,7 +62,7 @@ if __name__ == '__main__':
                         help="受信するデータチャネルのラベル名（複数指定可能）")
 
     # オプション引数
-    parser.add_argument("--client_id",default='',  help="クライアントID")
+    parser.add_argument("--client_id", default='',  help="クライアントID")
     parser.add_argument("--metadata", help="メタデータ JSON")
     args = parser.parse_args()
 
