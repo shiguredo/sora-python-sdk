@@ -73,5 +73,5 @@ if __name__ == '__main__':
                                            args.label,
                                            metadata)
     messaging_sendonly.connect()
-    messaging_sendonly.send(args.data)
+    messaging_sendonly.send(args.data.encode("utf-8"))
     messaging_sendonly.disconnect()
