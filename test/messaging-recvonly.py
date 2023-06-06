@@ -18,7 +18,7 @@ class MessagingRecvonly:
             client_id=client_id,
             data_channels=[{"label": label, "direction": "recvonly"}
                            for label in labels],
-            data_channe_signaling=data_channel_signaling,
+            data_channel_signaling=data_channel_signaling,
             ignore_disconnect_websocket=ignore_disconnect_websocket,
             metadata=metadata,
         )
