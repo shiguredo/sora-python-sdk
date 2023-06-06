@@ -7,20 +7,18 @@ from sora_sdk import Sora, SoraAudioSink, SoraVideoSink
 
 
 class MessagingRecvonly:
-    def __init__(self, signaling_url, channel_id, client_id,
-                 labels, data_channel_signaling, ignore_disconnect_websocket,
-                 metadata):
+    def __init__(self, signaling_url, channel_id, client_id, labels, metadata):
         self.sora = Sora()
         self.connection = self.sora.create_connection(
             signaling_url=signaling_url,
             role="recvonly",
             channel_id=channel_id,
             client_id=client_id,
+            metadata=metadata,
             data_channels=[{"label": label, "direction": "recvonly"}
                            for label in labels],
-            data_channel_signaling=data_channel_signaling,
-            ignore_disconnect_websocket=ignore_disconnect_websocket,
-            metadata=metadata,
+            data_channel_signaling=True,
+            ignore_disconnect_websocket=True,
         )
 
         self.disconnected = False
@@ -66,10 +64,6 @@ if __name__ == '__main__':
     # オプション引数
     parser.add_argument("--client_id",default='',  help="クライアントID")
     parser.add_argument("--metadata", help="メタデータ JSON")
-    parser.add_argument("--data-channel-signaling",
-                        action="store_true", help="データチャネルを使ったシグナリングを有効にする")
-    parser.add_argument("--ignore-disconnect-websocket",
-                        action="store_true", help="WebSocket の切断を無視する")
     args = parser.parse_args()
 
     metadata = None
@@ -80,7 +74,5 @@ if __name__ == '__main__':
                                            args.channel_id,
                                            args.client_id,
                                            args.labels,
-                                           args.data_channel_signaling,
-                                           args.ignore_disconnect_websocket,
                                            metadata)
     messaging_recvonly.run()
