@@ -16,8 +16,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const nb::handle& metadata,
     SoraTrackInterface* audio_source,
     SoraTrackInterface* video_source,
-    bool data_channel_signaling,
-    bool ignore_disconnect_websocket) {
+    std::optional<bool> data_channel_signaling,
+    std::optional<bool> ignore_disconnect_websocket) {
   std::shared_ptr<SoraConnection> conn = std::make_shared<SoraConnection>(this);
   sora::SoraSignalingConfig config;
   config.pc_factory = factory_->GetPeerConnectionFactory();
@@ -31,8 +31,12 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.video_codec_type = "VP8";
   config.audio_codec_type = "OPUS";
   config.metadata = ConvertJsonValue(metadata);
-  config.data_channel_signaling = data_channel_signaling;
-  config.ignore_disconnect_websocket = ignore_disconnect_websocket;
+  if (data_channel_signaling) {
+    config.data_channel_signaling.emplace(*data_channel_signaling);
+  }
+  if (ignore_disconnect_websocket) {
+    config.ignore_disconnect_websocket.emplace(*ignore_disconnect_websocket);
+  }
   config.network_manager =
       factory_->GetConnectionContext()->default_network_manager();
   config.socket_factory =
