@@ -16,6 +16,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const nb::handle& metadata,
     SoraTrackInterface* audio_source,
     SoraTrackInterface* video_source,
+    const nb::handle& data_channels,
     std::optional<bool> data_channel_signaling,
     std::optional<bool> ignore_disconnect_websocket) {
   std::shared_ptr<SoraConnection> conn = std::make_shared<SoraConnection>(this);
@@ -41,6 +42,56 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
       factory_->GetConnectionContext()->default_network_manager();
   config.socket_factory =
       factory_->GetConnectionContext()->default_socket_factory();
+
+  // TODO: 関数化
+  auto data_channels_value = ConvertJsonValue(data_channels);
+  if (!data_channels_value.is_null()) {
+    if (!data_channels_value.is_array()) {
+      throw nb::type_error("Invalid data_channels");
+    }
+
+    for (auto data_channel_value : data_channels_value.as_array()) {
+      if (!data_channel_value.is_object()) {
+        throw nb::type_error("Invalid data_channels");
+      }
+
+      auto data_channel_object = data_channel_value.as_object();
+      sora::SoraSignalingConfig::DataChannel data_channel;
+
+      if (!data_channel_object["label"].is_string()) {
+        throw nb::type_error("Invalid data_channels");
+      }
+      data_channel.label = data_channel_object["label"].as_string();
+
+      if (!data_channel_object["direction"].is_string()) {
+        throw nb::type_error("Invalid data_channels");
+      }
+      data_channel.direction = data_channel_object["direction"].as_string();
+
+      // TODO: validate
+      if (data_channel_object["protocol"].is_string()) {
+        data_channel.protocol.emplace(
+            data_channel_object["protocol"].as_string());
+      }
+      if (data_channel_object["ordered"].is_bool()) {
+        data_channel.ordered = data_channel_object["ordered"].as_bool();
+      }
+      if (data_channel_object["compress"].is_bool()) {
+        data_channel.compress = data_channel_object["compress"].as_bool();
+      }
+      if (data_channel_object["max_packet_life_time"].is_number()) {
+        data_channel.max_packet_life_time = boost::json::value_to<int32_t>(
+            data_channel_object["max_packet_life_time"]);
+      }
+      if (data_channel_object["max_retransmits"].is_number()) {
+        data_channel.max_retransmits = boost::json::value_to<int32_t>(
+            data_channel_object["max_retransmits"]);
+      }
+
+      config.data_channels.push_back(data_channel);
+    }
+  }
+
   conn->Init(config);
   if (audio_source) {
     conn->SetAudioTrack(audio_source);
@@ -90,7 +141,7 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value) {
     nb::list nb_list = nb::cast<nb::list>(value);
     boost::json::array json_array;
     for (auto v : nb_list)
-      json_array.emplace_back(ConvertJsonValue(value));
+      json_array.emplace_back(ConvertJsonValue(v));
     return json_array;
   } else if (nb::isinstance<nb::dict>(value)) {
     nb::dict nb_dict = nb::cast<nb::dict>(value);
@@ -99,5 +150,7 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value) {
       json_object.emplace(nb::cast<const char*>(k), ConvertJsonValue(v));
     return json_object;
   }
+
+  // TODO: replace 'metadata'
   throw nb::type_error("Invalid JSON value in metadata");
 }
