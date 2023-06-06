@@ -80,7 +80,8 @@ void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
   video_source_ = video_source;
 }
 
-bool SoraConnection::SendDataChannel(const std::string& label, const std::string& data) {
+bool SoraConnection::SendDataChannel(const std::string& label,
+                                     const std::string& data) {
   return conn_->SendDataChannel(label, data);
 }
 
