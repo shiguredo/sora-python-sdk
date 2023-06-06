@@ -189,7 +189,8 @@ NB_MODULE(sora_sdk_ext, m) {
                              nb::type_slots(connection_slots))
       .def("connect", &SoraConnection::Connect)
       .def("disconnect", &SoraConnection::Disconnect)
-      .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a, "data"_a)
+      .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a,
+           "data"_a)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
       .def_rw("on_notify", &SoraConnection::on_notify_)
