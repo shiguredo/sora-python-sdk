@@ -2,6 +2,7 @@
 #define SORA_H_
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "dispose_listener.h"
@@ -24,8 +25,8 @@ class Sora : public DisposePublisher {
       const nb::handle& metadata,
       SoraTrackInterface* audio_source,
       SoraTrackInterface* video_source,
-      bool data_channel_signaling,
-      bool ignore_disconnect_websocket);
+      std::optional<bool> data_channel_signaling,
+      std::optional<bool> ignore_disconnect_websocket);
 
   SoraAudioSource* CreateAudioSource(size_t channels, int sample_rate);
   SoraVideoSource* CreateVideoSource();
