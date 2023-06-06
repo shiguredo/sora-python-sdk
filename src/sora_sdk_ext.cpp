@@ -2,6 +2,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/function.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 
@@ -204,7 +205,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("create_connection", &Sora::CreateConnection, "signaling_url"_a,
            "role"_a, "channel_id"_a, "client_id"_a = "", "metadata"_a = "",
            "audio_source"_a = nb::none(), "video_source"_a = nb::none(),
-           "data_channel_signaling"_a = std::nullopt, "ignore_disconnect_websocket"_a = std::nullopt)
+           "data_channel_signaling"_a = nb::none(),
+           "ignore_disconnect_websocket"_a = nb::none())
       .def("create_audio_source", &Sora::CreateAudioSource)
       .def("create_video_source", &Sora::CreateVideoSource);
 }
