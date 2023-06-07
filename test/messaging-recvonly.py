@@ -1,5 +1,9 @@
 # Sora のデータチャネル機能を使ってメッセージを受信するサンプルスクリプト。
+#
 # コマンドライン引数で指定されたチャネルおよびラベルに届いたメッセージを標準出力に表示する。
+#
+# 実行例:
+# $ rye run python test/messaging-recvonly.py --signaling-url ws://localhost:5000/signaling --channel-id sora --labels '#foo' '#bar'
 import argparse
 import json
 import signal

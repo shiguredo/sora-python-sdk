@@ -5,6 +5,9 @@
 # 具体的には、
 # - `direction` が `recvonly` または `sendrecv` のデータチャネルに対して、メッセージを受信したら標準出力に出力する
 # - `direction` が `sendonly` または `sendrecv` のデータチャネルに対して、1 秒ごとに自動生成したメッセージを送信する
+#
+# 実行例:
+# $ rye run python test/messaging-sendrecv.py --signaling-url ws://localhost:5000/signaling --channel-id sora --data-channels '[{"label": "#foo", "direction":"sendrecv"}, {"label":"#bar", "direction": "recvonly"}]'
 import argparse
 import json
 import random
