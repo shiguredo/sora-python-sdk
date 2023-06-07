@@ -44,7 +44,6 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
       factory_->GetConnectionContext()->default_network_manager();
   config.socket_factory =
       factory_->GetConnectionContext()->default_socket_factory();
-
   conn->Init(config);
   if (audio_source) {
     conn->SetAudioTrack(audio_source);
@@ -128,55 +127,54 @@ std::vector<sora::SoraSignalingConfig::DataChannel> Sora::ConvertDataChannels(
       throw nb::type_error("Invalid data_channels");
     }
 
-    auto data_channel_object = data_channel_value.as_object();
+    auto object = data_channel_value.as_object();
     sora::SoraSignalingConfig::DataChannel data_channel;
 
-    if (!data_channel_object["label"].is_string()) {
+    if (!object["label"].is_string()) {
       throw nb::type_error("Invalid data_channels");
     }
-    data_channel.label = data_channel_object["label"].as_string();
+    data_channel.label = object["label"].as_string();
 
-    if (!data_channel_object["direction"].is_string()) {
+    if (!object["direction"].is_string()) {
       throw nb::type_error("Invalid data_channels");
     }
-    data_channel.direction = data_channel_object["direction"].as_string();
+    data_channel.direction = object["direction"].as_string();
 
-    if (!data_channel_object["protocol"].is_null()) {
-      if (!data_channel_object["protocol"].is_string()) {
+    if (!object["protocol"].is_null()) {
+      if (!object["protocol"].is_string()) {
         throw nb::type_error("Invalid data_channels");
       }
-      data_channel.protocol.emplace(
-          data_channel_object["protocol"].as_string());
+      data_channel.protocol = object["protocol"].as_string();
     }
 
-    if (!data_channel_object["ordered"].is_null()) {
-      if (!data_channel_object["ordered"].is_bool()) {
+    if (!object["ordered"].is_null()) {
+      if (!object["ordered"].is_bool()) {
         throw nb::type_error("Invalid data_channels");
       }
-      data_channel.ordered = data_channel_object["ordered"].as_bool();
+      data_channel.ordered = object["ordered"].as_bool();
     }
 
-    if (!data_channel_object["compress"].is_null()) {
-      if (!data_channel_object["compress"].is_bool()) {
+    if (!object["compress"].is_null()) {
+      if (!object["compress"].is_bool()) {
         throw nb::type_error("Invalid data_channels");
       }
-      data_channel.compress = data_channel_object["compress"].as_bool();
+      data_channel.compress = object["compress"].as_bool();
     }
 
-    if (!data_channel_object["max_packet_life_time"].is_null()) {
-      if (!data_channel_object["max_packet_life_time"].is_number()) {
+    if (!object["max_packet_life_time"].is_null()) {
+      if (!object["max_packet_life_time"].is_number()) {
         throw nb::type_error("Invalid data_channels");
       }
-      data_channel.max_packet_life_time = boost::json::value_to<int32_t>(
-          data_channel_object["max_packet_life_time"]);
+      data_channel.max_packet_life_time =
+          boost::json::value_to<int32_t>(object["max_packet_life_time"]);
     }
 
-    if (!data_channel_object["max_retransmits"].is_null()) {
-      if (!data_channel_object["max_retransmits"].is_number()) {
+    if (!object["max_retransmits"].is_null()) {
+      if (!object["max_retransmits"].is_number()) {
         throw nb::type_error("Invalid data_channels");
       }
-      data_channel.max_retransmits = boost::json::value_to<int32_t>(
-          data_channel_object["max_retransmits"]);
+      data_channel.max_retransmits =
+          boost::json::value_to<int32_t>(object["max_retransmits"]);
     }
     data_channels.push_back(data_channel);
   }
