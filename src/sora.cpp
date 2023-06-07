@@ -144,7 +144,7 @@ std::vector<sora::SoraSignalingConfig::DataChannel> Sora::ConvertDataChannels(
       if (!object["protocol"].is_string()) {
         throw nb::type_error("Invalid data_channels");
       }
-      data_channel.protocol = object["protocol"].as_string();
+      data_channel.protocol.emplace(object["protocol"].as_string());
     }
 
     if (!object["ordered"].is_null()) {
