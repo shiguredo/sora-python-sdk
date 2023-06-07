@@ -13,9 +13,9 @@
 
 - [ADD] データチャネルを使ったサンプルを追加する
     - 以下の三つを追加:
-        - test/messaging-readonly.py
-        - test/messaging-sendonly.py
-        - test/messaging-sendrecv.py
+        - test/messaging_readonly.py
+        - test/messaging_sendonly.py
+        - test/messaging_sendrecv.py
     - @sile
 - [CHANGE] `SoraConnection.on_message()` コールバックの第二引数の方を `str` から `bytes` に変更する
     - 文字列以外の任意のバイト列が送受信可能なため
