@@ -1,3 +1,5 @@
+# Sora のデータチャネル機能を使ってメッセージを送信するサンプルスクリプト。
+# コマンドライン引数で指定されたチャネルおよびラベルに、同じくコマンドライン引数で指定されたデータを送信する。
 import argparse
 import json
 import time
@@ -35,6 +37,7 @@ class MessagingSendonly:
         self.connection.connect()
 
     def send(self, data):
+        # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
         while not self.is_data_channel_ready:
             time.sleep(0.01)
 
