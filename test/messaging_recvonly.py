@@ -17,7 +17,7 @@ class MessagingRecvonly:
         self.sora = Sora()
         self.connection = self.sora.create_connection(
             signaling_url=signaling_url,
-            role="recvonly",
+            role="sendrecv",
             channel_id=channel_id,
             client_id=client_id,
             metadata=metadata,
