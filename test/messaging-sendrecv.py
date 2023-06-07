@@ -68,7 +68,8 @@ class MessagingSendrecv:
         while not self.shutdown:
             if i % 100 == 0:
                 for label in self.sendable_data_channels:
-                    data = f"sender={self.sender_id}, no={i // 100}".encode("utf-8")
+                    data = f"sender={self.sender_id}, no={i // 100}".encode(
+                        "utf-8")
                     self.connection.send_data_channel(label, data)
                     print(f"メッセージを送信しました: label={label}, data={data}")
 
