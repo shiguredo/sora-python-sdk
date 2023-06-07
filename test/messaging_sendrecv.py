@@ -26,6 +26,8 @@ class MessagingSendrecv:
             channel_id=channel_id,
             client_id=client_id,
             metadata=metadata,
+            audio=False,
+            video=False,
             data_channels=data_channels,
             data_channel_signaling=True,
         )
