@@ -40,6 +40,7 @@ class MessagingSendrecv:
         self.connection.on_disconnect = self.on_disconnect
 
     def on_disconnect(self, ec, message):
+        print(f"Sora から切断されました: message='{message}'")
         self.disconnected = True
 
     def on_message(self, label, data):
@@ -68,7 +69,7 @@ class MessagingSendrecv:
 
         # 一秒毎に sendonly ないし sendrecv のラベルにメッセージを送信する
         i = 0
-        while not self.shutdown:
+        while not self.shutdown and not self.disconnected:
             if i % 100 == 0:
                 for label in self.sendable_data_channels:
                     data = f"sender={self.sender_id}, no={i // 100}".encode(
