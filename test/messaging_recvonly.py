@@ -32,6 +32,7 @@ class MessagingRecvonly:
         self.connection.on_disconnect = self.on_disconnect
 
     def on_disconnect(self, ec, message):
+        print(f"Sora から切断されました: message='{message}'")
         self.disconnected = True
 
     def on_message(self, label, data):
@@ -49,16 +50,17 @@ class MessagingRecvonly:
         # Sora に接続する
         self.connection.connect()
 
-        # Ctrl+C が押されるまで待機
-        while not self.shutdown:
+        # Ctrl+C が押される or 切断されるまでメッセージ受信を待機
+        while not self.shutdown and not self.disconnected:
             time.sleep(0.01)
 
         # Sora から切断する
-        self.connection.disconnect()
+        if not self.disconnected:
+            self.connection.disconnect()
 
-        # 切断が完了するまで待機
-        while not self.disconnected:
-            time.sleep(0.01)
+            # 切断が完了するまで待機
+            while not self.disconnected:
+                time.sleep(0.01)
 
 
 if __name__ == '__main__':

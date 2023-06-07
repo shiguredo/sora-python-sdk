@@ -31,6 +31,7 @@ class MessagingSendonly:
         self.connection.on_disconnect = self.on_disconnect
 
     def on_disconnect(self, ec, message):
+        print(f"Sora から切断されました: message='{message}'")
         self.disconnected = True
 
     def on_data_channel(self, label):
@@ -42,10 +43,11 @@ class MessagingSendonly:
 
     def send(self, data):
         # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
-        while not self.is_data_channel_ready:
+        while not self.is_data_channel_ready and not self.disconnected:
             time.sleep(0.01)
 
         self.connection.send_data_channel(self.label, data)
+        print(f"メッセージを送信しました: label={self.label}, data={data}")
 
     def disconnect(self):
         self.connection.disconnect()
