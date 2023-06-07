@@ -25,6 +25,10 @@ class Sora : public DisposePublisher {
       const nb::handle& metadata,
       SoraTrackInterface* audio_source,
       SoraTrackInterface* video_source,
+      bool audio,
+      bool video,
+      const std::string& audio_codec_type,
+      const std::string& video_codec_type,
       const nb::handle& data_channels,
       std::optional<bool> data_channel_signaling,
       std::optional<bool> ignore_disconnect_websocket);

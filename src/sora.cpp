@@ -16,6 +16,10 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const nb::handle& metadata,
     SoraTrackInterface* audio_source,
     SoraTrackInterface* video_source,
+    bool audio,
+    bool video,
+    const std::string& audio_codec_type,
+    const std::string& video_codec_type,
     const nb::handle& data_channels,
     std::optional<bool> data_channel_signaling,
     std::optional<bool> ignore_disconnect_websocket) {
@@ -27,10 +31,10 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.role = role;
   config.channel_id = channel_id;
   config.client_id = client_id;
-  config.video = true;
-  config.audio = true;
-  config.video_codec_type = "VP8";
-  config.audio_codec_type = "OPUS";
+  config.video = video;
+  config.audio = audio;
+  config.video_codec_type = video_codec_type;
+  config.audio_codec_type = audio_codec_type;
   config.metadata =
       ConvertJsonValue(metadata, "Invalid JSON value in metadata");
   config.data_channels = ConvertDataChannels(data_channels);
