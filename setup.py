@@ -1,3 +1,4 @@
+import hashlib
 import os
 import platform
 import shutil
@@ -277,6 +278,41 @@ def get_webrtc_info(webrtcbuild: bool, source_dir: str, build_dir: str, install_
         )
 
 
+@versioned
+def install_rootfs(version, install_dir, conf):
+    rootfs_dir = os.path.join(install_dir, 'rootfs')
+    rm_rf(rootfs_dir)
+    cmd(['multistrap', '--no-auth', '-a', 'arm64', '-d', rootfs_dir, '-f', conf])
+    # 絶対パスのシンボリックリンクを相対パスに置き換えていく
+    for dir, _, filenames in os.walk(rootfs_dir):
+        for filename in filenames:
+            linkpath = os.path.join(dir, filename)
+            # symlink かどうか
+            if not os.path.islink(linkpath):
+                continue
+            target = os.readlink(linkpath)
+            # 絶対パスかどうか
+            if not os.path.isabs(target):
+                continue
+            # rootfs_dir を先頭に付けることで、
+            # rootfs の外から見て正しい絶対パスにする
+            targetpath = rootfs_dir + target
+            # 参照先の絶対パスが存在するかどうか
+            if not os.path.exists(targetpath):
+                continue
+            # 相対パスに置き換える
+            relpath = os.path.relpath(targetpath, dir)
+            # logging.debug(f'{linkpath[len(rootfs_dir):]} targets {target} to {relpath}')
+            os.remove(linkpath)
+            os.symlink(relpath, linkpath)
+
+    # なぜかシンボリックリンクが登録されていないので作っておく
+    link = os.path.join(rootfs_dir, 'usr', 'lib', 'aarch64-linux-gnu', 'tegra', 'libnvbuf_fdmap.so')
+    file = os.path.join(rootfs_dir, 'usr', 'lib', 'aarch64-linux-gnu', 'tegra', 'libnvbuf_fdmap.so.1.0.0')
+    if os.path.exists(file) and not os.path.exists(link):
+        os.symlink(os.path.basename(file), link)
+
+
 class ChangeDirectory(object):
     def __init__(self, cwd):
         self._cwd = cwd
@@ -424,6 +460,19 @@ def get_build_platform() -> PlatformTarget:
 def install_deps(build_platform: PlatformTarget, target_platform: PlatformTarget, source_dir, build_dir, install_dir):
     version = read_version_file('VERSION')
 
+    # multistrap を使った sysroot の構築
+    if target_platform.os == 'jetson':
+        conf = os.path.join('multistrap', f'{target_platform.package_name}.conf')
+        # conf ファイルのハッシュ値をバージョンとする
+        version_md5 = hashlib.md5(open(conf, 'rb').read()).hexdigest()
+        install_rootfs_args = {
+            'version': version_md5,
+            'version_file': os.path.join(install_dir, 'rootfs.version'),
+            'install_dir': install_dir,
+            'conf': conf,
+        }
+        install_rootfs(**install_rootfs_args)
+
     # WebRTC
     if target_platform.os == 'windows':
         webrtc_platform = f'windows_{target_platform.arch}'
@@ -441,7 +490,7 @@ def install_deps(build_platform: PlatformTarget, target_platform: PlatformTarget
         webrtc_platform = 'ubuntu-20.04_armv8'
     else:
         raise Exception(f'Unknown platform {target_platform.os}')
-    
+
     install_webrtc_args = {
         'version': version['WEBRTC_BUILD_VERSION'],
         'version_file': os.path.join(install_dir, 'webrtc.version'),
@@ -525,85 +574,92 @@ def cmdcap(args, **kwargs):
     return cmd(args, **kwargs).stdout.strip()
 
 
-def run_setup(build_platform, target_platform, deps_dir):
+def run_setup(command, build_platform, target_platform, deps_dir):
     try:
         import nanobind  # noqa: F401
         from skbuild import setup
+        from skbuild.constants import set_skbuild_plat_name
     except ImportError:
         print("このプロジェクトでは 'pip install .' のように 'setup.py' は pip 経由で実行することを推奨しています。"
               "もしセットアップスクリプトを直接実行したい場合は始めに pyproject.toml に記載した依存をインストールしてください！",
               file=sys.stderr)
         raise
 
-    source_dir = os.path.join(deps_dir, '_source')
-    build_dir = os.path.join(deps_dir, '_build')
-    install_dir = os.path.join(deps_dir, '_install')
-    mkdir_p(source_dir)
-    mkdir_p(build_dir)
-    mkdir_p(install_dir)
-
-    install_deps(build_platform, target_platform, source_dir, build_dir, install_dir)
-
-    configuration = 'Release'
-
-    webrtc_info = get_webrtc_info(False, source_dir, build_dir, install_dir)
-
     cmake_args = []
-    cmake_args.append(f'-DCMAKE_BUILD_TYPE={configuration}')
-    cmake_args.append(f'-DTARGET_OS={target_platform.os}')
-    cmake_args.append(
-        f"-DBOOST_ROOT={cmake_path(os.path.join(install_dir, 'boost'))}")
-    cmake_args.append(
-        f"-DLYRA_DIR={cmake_path(os.path.join(install_dir, 'lyra'))}")
-    cmake_args.append(
-        f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
-    cmake_args.append(
-        f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
-    cmake_args.append(
-        f"-DSORA_DIR={cmake_path(os.path.join(install_dir, 'sora'))}")
+    options = {}
 
-    if target_platform.os == 'ubuntu':
-        # クロスコンパイルの設定。
-        # 本来は toolchain ファイルに書く内容
-        cmake_args += [
-            f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
-            f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
-            f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
-        ]
-    elif target_platform.os == 'macos':
-        sysroot = cmdcap(['xcrun', '--sdk', 'macosx', '--show-sdk-path'])
-        cmake_args += [
-            "-DCMAKE_SYSTEM_PROCESSOR=arm64",
-            "-DCMAKE_OSX_ARCHITECTURES=arm64",
-            "-DCMAKE_C_COMPILER=clang",
-            "-DCMAKE_C_COMPILER_TARGET=aarch64-apple-darwin",
-            "-DCMAKE_CXX_COMPILER=clang++",
-            "-DCMAKE_CXX_COMPILER_TARGET=aarch64-apple-darwin",
-            f"-DCMAKE_SYSROOT={sysroot}",
-        ]
-    elif target_platform.os == 'jetson':
-        sysroot = '/mnt/SSD1/jetson-t194'
-        cmake_args += [
-            '-DCMAKE_SYSTEM_NAME=Linux',
-            '-DCMAKE_SYSTEM_PROCESSOR=aarch64',
-            f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
-            '-DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu',
-            f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
-            '-DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu',
-            f'-DCMAKE_FIND_ROOT_PATH={sysroot}',
-            '-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER',
-            '-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH',
-            '-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH',
-            '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
-            f'-DCMAKE_SYSROOT={sysroot}',
-            f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
-        ]
+    # bdist_wheel の時にインストールする
+    if command == 'bdist_wheel':
+        source_dir = os.path.join(deps_dir, '_source', target_platform.package_name)
+        build_dir = os.path.join(deps_dir, '_build', target_platform.package_name)
+        install_dir = os.path.join(deps_dir, '_install', target_platform.package_name)
+        mkdir_p(source_dir)
+        mkdir_p(build_dir)
+        mkdir_p(install_dir)
+
+        install_deps(build_platform, target_platform, source_dir, build_dir, install_dir)
+
+        configuration = 'Release'
+
+        webrtc_info = get_webrtc_info(False, source_dir, build_dir, install_dir)
+
+        cmake_args.append(f'-DCMAKE_BUILD_TYPE={configuration}')
+        cmake_args.append(f'-DTARGET_OS={target_platform.os}')
+        cmake_args.append(
+            f"-DBOOST_ROOT={cmake_path(os.path.join(install_dir, 'boost'))}")
+        cmake_args.append(
+            f"-DLYRA_DIR={cmake_path(os.path.join(install_dir, 'lyra'))}")
+        cmake_args.append(
+            f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
+        cmake_args.append(
+            f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
+        cmake_args.append(
+            f"-DSORA_DIR={cmake_path(os.path.join(install_dir, 'sora'))}")
+
+        if target_platform.os == 'ubuntu':
+            # クロスコンパイルの設定。
+            # 本来は toolchain ファイルに書く内容
+            cmake_args += [
+                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
+                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+                f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
+            ]
+        elif target_platform.os == 'macos':
+            sysroot = cmdcap(['xcrun', '--sdk', 'macosx', '--show-sdk-path'])
+            cmake_args += [
+                "-DCMAKE_SYSTEM_PROCESSOR=arm64",
+                "-DCMAKE_OSX_ARCHITECTURES=arm64",
+                "-DCMAKE_C_COMPILER=clang",
+                "-DCMAKE_C_COMPILER_TARGET=aarch64-apple-darwin",
+                "-DCMAKE_CXX_COMPILER=clang++",
+                "-DCMAKE_CXX_COMPILER_TARGET=aarch64-apple-darwin",
+                f"-DCMAKE_SYSROOT={sysroot}",
+            ]
+        elif target_platform.os == 'jetson':
+            sysroot = os.path.join(install_dir, 'rootfs')
+            cmake_args += [
+                '-DCMAKE_SYSTEM_NAME=Linux',
+                '-DCMAKE_SYSTEM_PROCESSOR=aarch64',
+                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
+                '-DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu',
+                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+                '-DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu',
+                f'-DCMAKE_FIND_ROOT_PATH={sysroot}',
+                '-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER',
+                '-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH',
+                '-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH',
+                '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
+                f'-DCMAKE_SYSROOT={sysroot}',
+                f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
+            ]
+
+        if target_platform.os == 'jetson':
+            set_skbuild_plat_name('linux-aarch64')
+            options = {'bdist_wheel': {'plat_name': 'linux-aarch64'}}
 
     setup(
         name="sora_sdk",
         version="2023.0.1",
-        author="Shiguredo Inc.",
-        author_email="contact+github@shiguredo.jp",
         description="WebRTC SFU Sora Python SDK",
         url="https://github.com/shiguredo/sora-python-sdk",
         license="Apache License 2.0",
@@ -612,11 +668,23 @@ def run_setup(build_platform, target_platform, deps_dir):
         cmake_install_dir="src/sora_sdk",
         cmake_args=cmake_args,
         include_package_data=True,
-        python_requires=">=3.8"
+        python_requires=">=3.8",
+        data_files=[('multistrap', ['multistrap/ubuntu-20.04_armv8_jetson.conf'])],
+        options=options
     )
 
 
 def main():
+    # 以下の順序で setup.py が呼ばれる（[] 内はカレントディレクトリ）。
+    #
+    # [/path/to/sora-python-sdk] setup.py egg_info
+    # [/path/to/sora-python-sdk] setup.py sdist --formats gztar --dist-dir /path/to/sora-python-sdk/dist/.tmp-pgfwdcsz
+    # [/tmp/build-via-sdist-l759roo3/sora_sdk-2023.1.0] setup.py egg_info
+    # [/tmp/build-via-sdist-l759roo3/sora_sdk-2023.1.0] setup.py bdist_wheel --dist-dir /path/to/sora-python-sdk/dist/.tmp-ma2mpnnn
+    #
+    # この egg_info や sdist, bdist_wheel を判定するために sys.argv[1] を見る
+    command = sys.argv[1]
+
     build_platform = get_build_platform()
 
     target = os.getenv('SORA_SDK_TARGET')
@@ -630,9 +698,9 @@ def main():
     deps_dir = os.getenv('SORA_SDK_DEPS_DIR')
     if deps_dir is None:
         with tempfile.TemporaryDirectory(prefix="sora-python-sdk-") as temp_dir:
-            run_setup(build_platform, target_platform, temp_dir)
+            run_setup(command, build_platform, target_platform, temp_dir)
     else:
-        run_setup(build_platform, target_platform, deps_dir)
+        run_setup(command, build_platform, target_platform, deps_dir)
 
 
 if __name__ == '__main__':
