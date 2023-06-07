@@ -1,5 +1,13 @@
+# Sora のデータチャネル機能を使ってメッセージを送受信するサンプルスクリプト。
+#
+# コマンドライン引数で指定されたデータチャネル JSON (e.g, `[{"label": "#foo", "direction": "recvonly"}, {"label": "#bar", "direction": "sendonly"}]`) に従って、メッセージの送信および受信を行う。
+#
+# 具体的には、
+# - `direction` が `recvonly` または `sendrecv` のデータチャネルに対して、メッセージを受信したら標準出力に出力する
+# - `direction` が `sendonly` または `sendrecv` のデータチャネルに対して、1 秒ごとに自動生成したメッセージを送信する
 import argparse
 import json
+import random
 import signal
 import time
 
@@ -19,6 +27,7 @@ class MessagingSendrecv:
             data_channel_signaling=True,
         )
 
+        self.sender_id = random.randint(1, 10000)
         self.data_channels = data_channels
         self.disconnected = False
         self.shutdown = False
@@ -38,7 +47,7 @@ class MessagingSendrecv:
             if data_channel["label"] != label:
                 continue
 
-            if data_channel["direction"] == "sendrecv" or data_channel["direction"] == "sendonly":
+            if data_channel["direction"] in ["sendrecv", "sendonly"]:
                 self.sendable_data_channels.add(label)
                 break
 
@@ -51,19 +60,22 @@ class MessagingSendrecv:
         # シグナルを登録し、プログラムが終了するときに正常に処理が行われるようにする
         signal.signal(signal.SIGINT, self.exit_gracefully)
 
+        # Sora に接続する
         self.connection.connect()
 
+        # 一秒毎に sendonly ないし sendrecv のラベルにメッセージを送信する
         i = 0
         while not self.shutdown:
             if i % 100 == 0:
                 for label in self.sendable_data_channels:
-                    data = f"No. {i / 100}".encode("utf-8")
-                    print(f"メッセージを送信します: label={label}, data={data}")
+                    data = f"sender={self.sender_id}, no={i // 100}".encode("utf-8")
                     self.connection.send_data_channel(label, data)
+                    print(f"メッセージを送信しました: label={label}, data={data}")
 
             time.sleep(0.01)
             i += 1
 
+        # Sora から切断する
         self.connection.disconnect()
 
         # 切断が完了するまで待機

@@ -1,3 +1,5 @@
+# Sora のデータチャネル機能を使ってメッセージを受信するサンプルスクリプト。
+# コマンドライン引数で指定されたチャネルおよびラベルに届いたメッセージを標準出力に表示する。
 import argparse
 import json
 import signal
@@ -40,11 +42,14 @@ class MessagingRecvonly:
         # シグナルを登録し、プログラムが終了するときに正常に処理が行われるようにする
         signal.signal(signal.SIGINT, self.exit_gracefully)
 
+        # Sora に接続する
         self.connection.connect()
 
+        # Ctrl+C が押されるまで待機
         while not self.shutdown:
             time.sleep(0.01)
 
+        # Sora から切断する
         self.connection.disconnect()
 
         # 切断が完了するまで待機
