@@ -3,7 +3,7 @@
 # コマンドライン引数で指定されたチャネルおよびラベルに、同じくコマンドライン引数で指定されたデータを送信する。
 #
 # 実行例:
-# $ rye run python test/messaging-sendonly.py --signaling-url ws://localhost:5000/signaling --channel-id sora --label '#foo' --data hello
+# $ rye run python test/messaging_sendonly.py --signaling-url ws://localhost:5000/signaling --channel-id sora --label '#foo' --data hello
 import argparse
 import json
 import time
