@@ -31,6 +31,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.role = role;
   config.channel_id = channel_id;
   config.client_id = client_id;
+  config.multistream = true;
   config.video = video;
   config.audio = audio;
   config.video_codec_type = video_codec_type;
