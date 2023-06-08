@@ -20,6 +20,12 @@ SoraConnection::~SoraConnection() {
     publisher_->RemoveSubscriber(this);
   }
   Disposed();
+
+  // 元々は OnDisconnect() の先頭で呼び出していたが、
+  // そのタイミングだと「シグナリング URL に不正な値（404 になるようなもの）を指定した切断された」場合に
+  // SIGSEGV が発生してしまったので、ここで呼び出すようにしている
+  // (詳しい原因は不明)
+  ioc_->stop();
 }
 
 void SoraConnection::Disposed() {
@@ -48,7 +54,14 @@ void SoraConnection::Disconnect() {
   if (thread_) {
     // Disconnect の中で OnDisconnect が呼ばれるので GIL をリリースする
     nb::gil_scoped_release release;
-    conn_->Disconnect();
+    if (conn_->GetPeerConnection() != nullptr) {
+      // 切断済みではない場合は切断する
+      //
+      // TODO(sile): ioc_ が別スレッドで動作している関係上、上のチェックでは完璧ではなくレースコンディションが存在するはず
+      // レースコンディションを完全になくすためには C++ SDK 側での対応が必要なものと思われる
+      // (e.g., 切断済みの場合に conn_->Disconnect() が呼ばれた場合には単に無視する仕様にする、など）
+      conn_->Disconnect();
+    }
     thread_->join();
     thread_ = nullptr;
   }
@@ -110,7 +123,6 @@ void SoraConnection::OnSetOffer(std::string offer) {
 
 void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
                                   std::string message) {
-  ioc_->stop();
   if (on_disconnect_) {
     on_disconnect_(ec, message);
   }
