@@ -117,8 +117,8 @@ void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
 }
 
 void SoraConnection::OnNotify(std::string text) {
-  if (on_set_offer_) {
-    on_set_offer_(text);
+  if (on_notify_) {
+    on_notify_(text);
   }
 }
 
