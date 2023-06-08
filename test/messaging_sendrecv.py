@@ -57,7 +57,6 @@ class MessagingSendrecv:
 
     def exit_gracefully(self, signal_number, frame):
         print("\nCtrl+Cが押されました。終了します")
-        self.connection.disconnect()
         self.shutdown = True
 
     def run(self):
