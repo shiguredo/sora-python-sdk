@@ -34,7 +34,7 @@ void SoraConnection::Disposed() {
   publisher_ = nullptr;
 }
 
-void SoraConnection::PubliserDisposed() {
+void SoraConnection::PublisherDisposed() {
   Disposed();
 }
 
