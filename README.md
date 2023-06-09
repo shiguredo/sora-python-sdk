@@ -58,8 +58,14 @@ $ rye sync
 ## サンプルの実行
 
 ```console
-$ rye run python examples/recvonly/recvonly.py
+$ rye run python test/recvonly.py
 ```
+
+## 実装上の注意
+
+- コールバックの中で例外を使う場合には、必ずコールバック内でキャッチして外に漏らしてはいけません
+  - Sora Python SDK のコールバック関数は、Python ランタイムとは独立した独自のスレッドで実行されるため、例外が漏れると Python プログラムが異常終了します
+- 一度切断された Sora インスタンスを使い回して、新しい接続を始めることはできません
 
 ## システム条件
 
