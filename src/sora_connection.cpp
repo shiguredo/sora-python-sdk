@@ -20,12 +20,6 @@ SoraConnection::~SoraConnection() {
     publisher_->RemoveSubscriber(this);
   }
   Disposed();
-
-  // 元々は OnDisconnect() の先頭で呼び出していたが、
-  // そのタイミングだと「シグナリング URL に不正な値（404 になるようなもの）を指定した切断された」場合に
-  // SIGSEGV が発生してしまったので、ここで呼び出すようにしている
-  // (詳しい原因は不明)
-  ioc_->stop();
 }
 
 void SoraConnection::Disposed() {
@@ -64,6 +58,12 @@ void SoraConnection::Disconnect() {
     }
     thread_->join();
     thread_ = nullptr;
+
+    // 元々は OnDisconnect() の先頭で呼び出していたが、
+    // そのタイミングだと「シグナリング URL に不正な値（404 になるようなもの）を指定した切断された」場合に
+    // SIGSEGV が発生してしまったので、ここで呼び出すようにしている
+    // (詳しい原因は不明)
+    ioc_->stop();
   }
   // Connection から生成したものは、ここで消す
   audio_sender_ = nullptr;
