@@ -9,7 +9,7 @@ from sora_sdk import Sora
 
 
 class SendOnly:
-    def __init__(self, signaling_url, channel_id, client_id, metadata,
+    def __init__(self, signaling_url, channel_id, client_id, metadata, camera_id,
                  use_hardware_encoder=False, channels=1, samplerate=16000):
         self.running = True
         self.channels = channels
@@ -31,7 +31,7 @@ class SendOnly:
         )
         self.connection.on_disconnect = self.on_disconnect
 
-        self.video_capture = cv2.VideoCapture(0)
+        self.video_capture = cv2.VideoCapture(camera_id)
 
     def on_disconnect(self, ec, message):
         self.running = False
@@ -70,6 +70,7 @@ if __name__ == '__main__':
     # オプション引数
     parser.add_argument("--client_id", default='',  help="クライアントID")
     parser.add_argument("--metadata", help="メタデータ JSON")
+    parser.add_argument("--camera-id", type=int, default=0, help="cv2.VideoCapture() に渡すカメラ ID")
     args = parser.parse_args()
 
     metadata = None
@@ -77,5 +78,5 @@ if __name__ == '__main__':
         metadata = json.loads(args.metadata)
 
     sendonly = SendOnly(args.signaling_url, args.channel_id,
-                        args.client_id, args.metadata)
+                        args.client_id, args.metadata, args.camera_id)
     sendonly.run()
