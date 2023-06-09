@@ -32,7 +32,6 @@ class MessagingSendrecv:
 
         self.sender_id = random.randint(1, 10000)
         self.data_channels = data_channels
-        self.disconnected = False
         self.shutdown = False
         self.sendable_data_channels = set()
         self.connection.on_data_channel = self.on_data_channel
@@ -41,7 +40,7 @@ class MessagingSendrecv:
 
     def on_disconnect(self, ec, message):
         print(f"Sora から切断されました: message='{message}'")
-        self.disconnected = True
+        self.shutdown = True
 
     def on_message(self, label, data):
         print(f"メッセージを受信しました: label={label}, data={data}")
@@ -65,26 +64,22 @@ class MessagingSendrecv:
 
         # Sora に接続する
         self.connection.connect()
+        try:
+            # 一秒毎に sendonly ないし sendrecv のラベルにメッセージを送信する
+            i = 0
+            while not self.shutdown:
+                if i % 100 == 0:
+                    for label in self.sendable_data_channels:
+                        data = f"sender={self.sender_id}, no={i // 100}".encode(
+                            "utf-8")
+                        self.connection.send_data_channel(label, data)
+                        print(f"メッセージを送信しました: label={label}, data={data}")
 
-        # 一秒毎に sendonly ないし sendrecv のラベルにメッセージを送信する
-        i = 0
-        while not self.shutdown and not self.disconnected:
-            if i % 100 == 0:
-                for label in self.sendable_data_channels:
-                    data = f"sender={self.sender_id}, no={i // 100}".encode(
-                        "utf-8")
-                    self.connection.send_data_channel(label, data)
-                    print(f"メッセージを送信しました: label={label}, data={data}")
-
-            time.sleep(0.01)
-            i += 1
-
-        # Sora から切断する
-        self.connection.disconnect()
-
-        # 切断が完了するまで待機
-        while not self.disconnected:
-            time.sleep(0.01)
+                time.sleep(0.01)
+                i += 1
+        finally:
+            # Sora から切断する（すでに切断済みの場合には無視される）
+            self.connection.disconnect()
 
 
 if __name__ == '__main__':

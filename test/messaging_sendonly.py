@@ -52,10 +52,6 @@ class MessagingSendonly:
     def disconnect(self):
         self.connection.disconnect()
 
-        # 切断が完了するまで待機
-        while not self.disconnected:
-            time.sleep(0.01)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
