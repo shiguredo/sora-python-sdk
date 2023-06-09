@@ -1,3 +1,4 @@
+import argparse
 import signal
 
 import cv2
@@ -7,7 +8,7 @@ from sora_sdk import Sora
 
 
 class SendOnly:
-    def __init__(self, signaling_url, channel_id, metadata,
+    def __init__(self, signaling_url, channel_id, client_id, metadata,
                  use_hardware_encoder=False, channels=1, samplerate=16000):
         self.running = True
         self.channels = channels
@@ -22,13 +23,17 @@ class SendOnly:
             signaling_url=signaling_url,
             role="sendonly",
             channel_id=channel_id,
-            client_id="sendonly",
+            client_id=client_id,
             metadata=metadata,
             audio_source=self.audio_source,
             video_source=self.video_source
         )
+        self.connection.on_disconnect = self.on_disconnect
 
         self.video_capture = cv2.VideoCapture(0)
+
+    def on_disconnect(self, ec, message):
+        self.running = False
 
     def handler(self, signum, frame):
         self.running = False
@@ -43,21 +48,33 @@ class SendOnly:
                                      dtype='int16', callback=self.callback):
             self.connection.connect()
 
-            while self.running:
-                success, frame = self.video_capture.read()
-                if not success:
-                    continue
-                self.video_source.on_captured(frame)
-
-        self.connection.disconnect()
-        self.video_capture.release()
+            try:
+                while self.running:
+                    success, frame = self.video_capture.read()
+                    if not success:
+                        continue
+                    self.video_source.on_captured(frame)
+            finally:
+                self.connection.disconnect()
+                self.video_capture.release()
 
 
 if __name__ == '__main__':
-    signaling_url = "signaling_url"
-    channel_id = "channel_id"
-    access_token = "access_token"
-    metadata = {"access_token": access_token}
+    parser = argparse.ArgumentParser()
 
-    sendonly = SendOnly(signaling_url, channel_id, metadata)
+    # 必須引数
+    parser.add_argument("--signaling-url", required=True, help="シグナリング URL")
+    parser.add_argument("--channel-id", required=True, help="チャネルID")
+
+    # オプション引数
+    parser.add_argument("--client_id", default='',  help="クライアントID")
+    parser.add_argument("--metadata", help="メタデータ JSON")
+    args = parser.parse_args()
+
+    metadata = None
+    if args.metadata:
+        metadata = json.loads(args.metadata)
+
+    sendonly = SendOnly(args.signaling_url, args.channel_id,
+                        args.client_id, args.metadata)
     sendonly.run()
