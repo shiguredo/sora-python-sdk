@@ -668,9 +668,8 @@ def run_setup(command, build_platform, target_platform, deps_dir):
         cmake_install_dir="src/sora_sdk",
         cmake_args=cmake_args,
         include_package_data=True,
-        python_requires=">=3.8",
         data_files=[('multistrap', ['multistrap/ubuntu-20.04_armv8_jetson.conf'])],
-        options=options
+        options=options,
     )
 
 
