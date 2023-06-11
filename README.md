@@ -53,19 +53,33 @@ Windows は https://rye-up.com/ の Installation Instructions を確認してく
 
 ```console
 $ rye sync
+$ rye run python run.py
+$ rye run python -m build
 ```
+
+これで dist/ 以下に `*.whl` ファイルが作成されます。
 
 ## サンプルの実行
 
 ```console
-$ rye run python examples/recvonly/recvonly.py
+$ pip install dist/sora_sdk-<さっき生成したwhlファイル>.whl
+# signaling_url や channel_id などの情報を書き換える
+$ vim test/recvonly.py
+$ rye run python test/recvonly.py
+```
+
+Ubuntu の場合は追加で以下の準備が必要：
+
+```console
+$ sudo apt install libportaudio2
+$ pip install opencv-python opencv-python-headless sounddevice
 ```
 
 Jetson の場合は以下の準備が必要：
 
 ```console
-sudo apt install libopencv libopencv-python libportaudio2
-pip install sounddevice
+$ sudo apt install libopencv libopencv-python libportaudio2
+$ pip install sounddevice
 ```
 
 Python は Ubuntu 20.04 標準の Python (Python 3.8) を利用して下さい。
