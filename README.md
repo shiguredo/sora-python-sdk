@@ -61,6 +61,16 @@ $ rye sync
 $ rye run python examples/recvonly/recvonly.py
 ```
 
+Jetson の場合は以下の準備が必要：
+
+```console
+sudo apt install libopencv libopencv-python libportaudio2
+pip install sounddevice
+```
+
+Python は Ubuntu 20.04 標準の Python (Python 3.8) を利用して下さい。
+また、venv は利用せずに実行して下さい。
+
 ## システム条件
 
 - WebRTC SFU Sora 2022.2.0 以降
