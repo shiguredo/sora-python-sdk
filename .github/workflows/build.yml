@@ -27,7 +27,7 @@ jobs:
       - run: rye run python run.py
       - run: rye run python -m build
         if: ${{ matrix.name != 'ubuntu-20.04_armv8_jetson' }}
-      - run: package.ubuntu-20.04_armv8_jetson.sh
+      - run: ./package.ubuntu-20.04_armv8_jetson.sh
         if: ${{ matrix.name == 'ubuntu-20.04_armv8_jetson' }}
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
