@@ -579,125 +579,6 @@ def cmdcap(args, **kwargs):
     return cmd(args, **kwargs).stdout.strip()
 
 
-def run_setup(command, build_platform, target_platform, deps_dir):
-    try:
-        import nanobind  # noqa: F401
-        # from skbuild import setup
-        from setuptools import setup
-        # from skbuild.constants import set_skbuild_plat_name
-    except ImportError:
-        print("このプロジェクトでは 'pip install .' のように 'setup.py' は pip 経由で実行することを推奨しています。"
-              "もしセットアップスクリプトを直接実行したい場合は始めに pyproject.toml に記載した依存をインストールしてください！",
-              file=sys.stderr)
-        raise
-
-    cmake_args = []
-    plat_name = None
-
-    # bdist_wheel の時にインストールする
-    if command == 'bdist_wheel':
-        source_dir = os.path.join(deps_dir, '_source', target_platform.package_name)
-        build_dir = os.path.join(deps_dir, '_build', target_platform.package_name)
-        install_dir = os.path.join(deps_dir, '_install', target_platform.package_name)
-        mkdir_p(source_dir)
-        mkdir_p(build_dir)
-        mkdir_p(install_dir)
-
-        install_deps(build_platform, target_platform, source_dir, build_dir, install_dir)
-
-        configuration = 'Release'
-
-        webrtc_info = get_webrtc_info(False, source_dir, build_dir, install_dir)
-
-        cmake_args.append(f'-DCMAKE_BUILD_TYPE={configuration}')
-        cmake_args.append(f'-DTARGET_OS={target_platform.os}')
-        cmake_args.append(
-            f"-DBOOST_ROOT={cmake_path(os.path.join(install_dir, 'boost'))}")
-        cmake_args.append(
-            f"-DLYRA_DIR={cmake_path(os.path.join(install_dir, 'lyra'))}")
-        cmake_args.append(
-            f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
-        cmake_args.append(
-            f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
-        cmake_args.append(
-            f"-DSORA_DIR={cmake_path(os.path.join(install_dir, 'sora'))}")
-
-        if target_platform.os == 'ubuntu':
-            # クロスコンパイルの設定。
-            # 本来は toolchain ファイルに書く内容
-            cmake_args += [
-                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
-                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
-                f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
-            ]
-        elif target_platform.os == 'macos':
-            sysroot = cmdcap(['xcrun', '--sdk', 'macosx', '--show-sdk-path'])
-            cmake_args += [
-                "-DCMAKE_SYSTEM_PROCESSOR=arm64",
-                "-DCMAKE_OSX_ARCHITECTURES=arm64",
-                "-DCMAKE_C_COMPILER=clang",
-                "-DCMAKE_C_COMPILER_TARGET=aarch64-apple-darwin",
-                "-DCMAKE_CXX_COMPILER=clang++",
-                "-DCMAKE_CXX_COMPILER_TARGET=aarch64-apple-darwin",
-                f"-DCMAKE_SYSROOT={sysroot}",
-            ]
-        elif target_platform.os == 'jetson':
-            sysroot = os.path.join(install_dir, 'rootfs')
-            cmake_args += [
-                '-DCMAKE_SYSTEM_NAME=Linux',
-                '-DCMAKE_SYSTEM_PROCESSOR=aarch64',
-                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
-                '-DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu',
-                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
-                '-DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu',
-                f'-DCMAKE_FIND_ROOT_PATH={sysroot}',
-                '-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER',
-                '-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH',
-                '-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH',
-                '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
-                f'-DCMAKE_SYSROOT={sysroot}',
-                f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
-            ]
-
-        cwd = os.getcwd()
-        mkdir_p(os.path.join(build_dir, 'sora_sdk'))
-        with cd(os.path.join(build_dir, 'sora_sdk')):
-            cmd(['cmake', cwd, *cmake_args])
-            cmd(['cmake', '--build', '.', '--config', configuration])
-
-        shutil.copyfile('_build/ubuntu-20.04_armv8_jetson/sora_sdk/sora_sdk_ext.cpython-38-aarch64-linux-gnu.so',
-                        'src/sora_sdk/sora_sdk_ext.cpython-38-aarch64-linux-gnu.so')
-
-        if target_platform.os == 'jetson':
-            plat_name = 'linux-aarch64'
-
-    class bdist_wheel(_bdist_wheel):
-        def finalize_options(self):
-            self.plat_name = plat_name
-            super().finalize_options()
-            self.root_is_pure = False
-
-    # TODO: so のビルドを setup.py から移動する
-
-    setup(
-        name="sora_sdk",
-        version="2023.0.1",
-        description="WebRTC SFU Sora Python SDK",
-        url="https://github.com/shiguredo/sora-python-sdk",
-        license="Apache License 2.0",
-        packages=['sora_sdk', 'sora_sdk.model_coeffs'],
-        package_dir={'': 'src'},
-        package_data={
-            'sora_sdk': ['sora_sdk_ext.cpython-38-aarch64-linux-gnu.so']
-        },
-        include_package_data=True,
-        data_files=[('multistrap', ['multistrap/ubuntu-20.04_armv8_jetson.conf'])],
-        cmdclass={
-            'bdist_wheel': bdist_wheel,
-        },
-    )
-
-
 def main():
     build_platform = get_build_platform()
 
@@ -719,7 +600,7 @@ def main():
     with cd(BASE_DIR):
         install_deps(build_platform, target_platform, source_dir, build_dir, install_dir)
 
-        configuration = 'Release'
+        configuration = 'Debug'
 
         webrtc_info = get_webrtc_info(False, source_dir, build_dir, install_dir)
 

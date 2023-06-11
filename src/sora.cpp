@@ -1,6 +1,9 @@
 #include "sora.h"
 
 Sora::Sora(bool use_hardware_encoder) {
+  rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_INFO);
+  rtc::LogMessage::LogTimestamps();
+  rtc::LogMessage::LogThreads();
   factory_.reset(new SoraFactory(use_hardware_encoder));
 }
 
@@ -29,10 +32,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.video_codec_type = "VP8";
   config.audio_codec_type = "OPUS";
   config.metadata = CovertJsonValue(metadata);
-  config.network_manager =
-      factory_->GetConnectionContext()->default_network_manager();
-  config.socket_factory =
-      factory_->GetConnectionContext()->default_socket_factory();
+  config.network_manager = factory_->default_network_manager();
+  config.socket_factory = factory_->default_socket_factory();
   conn->Init(config);
   if (audio_source) {
     conn->SetAudioTrack(audio_source);
