@@ -63,8 +63,8 @@ class SoraConnection : public sora::SoraSignalingObserver,
   std::unique_ptr<boost::asio::io_context> ioc_;
   std::shared_ptr<sora::SoraSignaling> conn_;
   std::unique_ptr<std::thread> thread_;
-  SoraTrackInterface* audio_source_;
-  SoraTrackInterface* video_source_;
+  SoraTrackInterface* audio_source_ = nullptr;
+  SoraTrackInterface* video_source_ = nullptr;
   rtc::scoped_refptr<webrtc::RtpSenderInterface> audio_sender_;
   rtc::scoped_refptr<webrtc::RtpSenderInterface> video_sender_;
 };

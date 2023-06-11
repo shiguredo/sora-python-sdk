@@ -1,9 +1,5 @@
 [tool.rye]
 dev-dependencies = [
-    "opencv-python~=4.7.0.72",
-    "opencv-python-headless~=4.7.0.72",
-    "sounddevice~=0.4.6",
-    "mediapipe~=0.10.0",
     "nanobind>=0.1.0",
     "setuptools>=42",
     "build~=0.10.0",
