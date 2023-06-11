@@ -600,7 +600,7 @@ def main():
     with cd(BASE_DIR):
         install_deps(build_platform, target_platform, source_dir, build_dir, install_dir)
 
-        configuration = 'Debug'
+        configuration = 'Release'
 
         webrtc_info = get_webrtc_info(False, source_dir, build_dir, install_dir)
 
