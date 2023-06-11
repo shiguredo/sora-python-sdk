@@ -25,10 +25,18 @@ jobs:
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye sync
       - run: rye run python run.py
+
+      # Jetson 以外
       - run: rye run python -m build
         if: ${{ matrix.name != 'ubuntu-20.04_armv8_jetson' }}
+
+      # Jetson 向け
+      - name: Set up QEMU
+        if: ${{ matrix.name == 'ubuntu-20.04_armv8_jetson' }}
+        uses: docker/setup-qemu-action@v2
       - run: ./package.ubuntu-20.04_armv8_jetson.sh
         if: ${{ matrix.name == 'ubuntu-20.04_armv8_jetson' }}
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
