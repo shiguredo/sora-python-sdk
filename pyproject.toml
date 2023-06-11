@@ -4,19 +4,10 @@ dev-dependencies = [
     "opencv-python-headless~=4.7.0.72",
     "sounddevice~=0.4.6",
     "mediapipe~=0.10.0",
-]
-
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel",
-    "scikit-build==0.14.0",
-    "cmake>=3.18",
     "nanobind>=0.1.0",
-    "ninja; platform_system!='Windows'",
+    "setuptools>=42",
+    "build~=0.10.0",
 ]
-
-build-backend = "setuptools.build_meta"
 
 [project]
 name = "sora_sdk"

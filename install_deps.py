@@ -1,7 +1,7 @@
 import os
 
 from setup import (PlatformTarget, download, extract, get_build_platform,
-                   install_deps, mkdir_p, rm_rf)
+                   install_deps, mkdir_p, rm_rf, versioned)
 
 
 def get_nanobind_version() -> str:
@@ -15,6 +15,7 @@ def get_nanobind_version() -> str:
         return line.rsplit("=", 1)[1]
 
 
+@versioned
 def install_nanobind(version, source_dir, install_dir, platform: str):
     win = platform.startswith("windows_")
     filename = f'v{version}.{"zip" if win else "tar.gz"}'
@@ -38,9 +39,9 @@ def main():
         raise Exception(f'Unknown target {target}')
 
     base_dir = os.getcwd()
-    source_dir = os.path.join(base_dir, '_source')
-    build_dir = os.path.join(base_dir, '_build')
-    install_dir = os.path.join(base_dir, '_install')
+    source_dir = os.path.join(base_dir, '_source', target_platform.package_name)
+    build_dir = os.path.join(base_dir, '_build', target_platform.package_name)
+    install_dir = os.path.join(base_dir, '_install', target_platform.package_name)
     mkdir_p(source_dir)
     mkdir_p(build_dir)
     mkdir_p(install_dir)
@@ -50,6 +51,7 @@ def main():
     # nanobind
     install_nanobind_args = {
         'version': get_nanobind_version(),
+        'version_file': os.path.join(install_dir, 'nanobind.version'),
         'source_dir': source_dir,
         'install_dir': install_dir,
         'platform': build_platform.package_name,
