@@ -41,7 +41,10 @@ void SoraConnection::Init(sora::SoraSignalingConfig& config) {
 void SoraConnection::Connect() {
   conn_->Connect();
 
-  thread_.reset(new std::thread([this]() { ioc_->run(); }));
+  thread_.reset(new std::thread([this]() {
+    auto guard = boost::asio::make_work_guard(*ioc_);
+    ioc_->run();
+  }));
 }
 
 void SoraConnection::Disconnect() {
@@ -58,12 +61,6 @@ void SoraConnection::Disconnect() {
     }
     thread_->join();
     thread_ = nullptr;
-
-    // 元々は OnDisconnect() の先頭で呼び出していたが、
-    // そのタイミングだと「シグナリング URL に不正な値（404 になるようなもの）を指定した切断された」場合に
-    // SIGSEGV が発生してしまったので、ここで呼び出すようにしている
-    // (詳しい原因は不明)
-    ioc_->stop();
   }
   // Connection から生成したものは、ここで消す
   audio_sender_ = nullptr;
@@ -123,6 +120,7 @@ void SoraConnection::OnSetOffer(std::string offer) {
 
 void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
                                   std::string message) {
+  ioc_->stop();
   if (on_disconnect_) {
     on_disconnect_(ec, message);
   }
