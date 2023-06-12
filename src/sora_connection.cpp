@@ -66,6 +66,10 @@ void SoraConnection::Disconnect() {
   audio_sender_ = nullptr;
   video_sender_ = nullptr;
   conn_ = nullptr;
+
+  // ここで nullptr を設定しておかないと、シグナリング URL に不正な値を指定した場合に、
+  // 切断後に何故か SIGSEGV が発生する（macOS 以外の OS で発生するかどうかは不明）
+  ioc_ = nullptr;
 }
 
 void SoraConnection::SetAudioTrack(SoraTrackInterface* audio_source) {
