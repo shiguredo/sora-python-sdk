@@ -32,11 +32,11 @@ jobs:
               name: ubuntu-20.04_armv8_jetson
               runs_on: ubuntu-20.04
             python_version: "3.9"
-          - platform: ubuntu-20.04_armv8_jetson
+          - platform:
               name: ubuntu-20.04_armv8_jetson
               runs_on: ubuntu-20.04
             python_version: "3.10"
-          - platform: ubuntu-20.04_armv8_jetson
+          - platform:
               name: ubuntu-20.04_armv8_jetson
               runs_on: ubuntu-20.04
             python_version: "3.11"
