@@ -1,6 +1,7 @@
 #include "sora_connection.h"
 
 #include <chrono>
+#include <stdexcept>
 
 // Boost
 #include <boost/asio/signal_set.hpp>
@@ -39,6 +40,13 @@ void SoraConnection::Init(sora::SoraSignalingConfig& config) {
 }
 
 void SoraConnection::Connect() {
+  if (thread_ != nullptr) {
+    throw std::runtime_error("Already connected");
+  }
+  if (conn_ == nullptr) {
+    throw std::runtime_error("Already disconnected. Please create another Sora instance to establish a new connection.");
+  }
+
   conn_->Connect();
 
   thread_.reset(new std::thread([this]() {
