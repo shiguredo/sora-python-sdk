@@ -15,12 +15,20 @@ jobs:
         platform:
           - name: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
+            os: ubuntu
           - name: ubuntu-20.04_armv8_jetson
             runs_on: ubuntu-20.04
-          - name: macos-12
+            os: ubuntu
+          - name: macos-12_arm64
             runs_on: macos-12
-          - name: macos-13
-            runs_on: macos-12
+            os: macos
+            python_host_platform: "macosx-12.0-arm64"
+            archflags: "-arch arm64"
+          - name: macos-13_arm64
+            runs_on: macos-13
+            os: macos
+            python_host_platform: "macosx-13.0-arm64"
+            archflags: "-arch arm64"
         python_version:
           - "3.8"
           - "3.9"
@@ -28,33 +36,29 @@ jobs:
           - "3.11"
         exclude:
           # Jetson は Python 3.8 のみ作成する
-          - platform:
-              name: ubuntu-20.04_armv8_jetson
-              runs_on: ubuntu-20.04
+          - platform: {name: ubuntu-20.04_armv8_jetson}
             python_version: "3.9"
-          - platform:
-              name: ubuntu-20.04_armv8_jetson
-              runs_on: ubuntu-20.04
+          - platform: { name: ubuntu-20.04_armv8_jetson}
             python_version: "3.10"
-          - platform:
-              name: ubuntu-20.04_armv8_jetson
-              runs_on: ubuntu-20.04
+          - platform: {name: ubuntu-20.04_armv8_jetson}
             python_version: "3.11"
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
-      - run: sudo apt-get update
-      - run: sudo apt-get -y install libva-dev libdrm-dev
+      - run: |
+          sudo apt-get update
+          sudo apt-get -y install libva-dev libdrm-dev
+        if: ${{ matrix.platform.os == 'ubuntu' }}
       - run: curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" bash
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py
 
-      # Jetson 以外
+      # Jetson 以外の Ubuntu 向け
       - run: rye run python -m build
-        if: ${{ matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
 
       # Jetson 向け
       - name: Set up QEMU
@@ -62,6 +66,13 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - run: ./package.ubuntu-20.04_armv8_jetson.sh
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
+
+      # macOS 向け
+      - run: rye run python -m build
+        if: ${{ matrix.platform.os == 'macos' }}
+        env:
+          _PYTHON_HOST_PLATFORM: matrix.platform.python_host_platform
+          ARCHFLAGS: matrix.platform.archflags
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
