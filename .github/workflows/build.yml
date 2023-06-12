@@ -8,14 +8,39 @@ on:
       - "**.md"
 
 jobs:
-  build_linux:
+  build_linux_macos:
     strategy:
       fail-fast: false
       matrix:
-        name:
-          - ubuntu-22.04_x86_64
-          - ubuntu-20.04_armv8_jetson
-    runs-on: ${{ matrix.name == 'ubuntu-22.04_x86_64' && 'ubuntu-22.04' || 'ubuntu-20.04' }}
+        platform:
+          - name: ubuntu-22.04_x86_64
+            runs_on: ubuntu-22.04
+          - name: ubuntu-20.04_armv8_jetson
+            runs_on: ubuntu-20.04
+          - name: macos-12
+            runs_on: macos-12
+          - name: macos-13
+            runs_on: macos-12
+        python_version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+        exclude:
+          # Jetson は Python 3.8 のみ作成する
+          - platform:
+              name: ubuntu-20.04_armv8_jetson
+              runs_on: ubuntu-20.04
+            python_version: "3.9"
+          - platform: ubuntu-20.04_armv8_jetson
+              name: ubuntu-20.04_armv8_jetson
+              runs_on: ubuntu-20.04
+            python_version: "3.10"
+          - platform: ubuntu-20.04_armv8_jetson
+              name: ubuntu-20.04_armv8_jetson
+              runs_on: ubuntu-20.04
+            python_version: "3.11"
+    runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
@@ -23,44 +48,54 @@ jobs:
       - run: sudo apt-get -y install libva-dev libdrm-dev
       - run: curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" bash
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
+      - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py
 
       # Jetson 以外
       - run: rye run python -m build
-        if: ${{ matrix.name != 'ubuntu-20.04_armv8_jetson' }}
+        if: ${{ matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
 
       # Jetson 向け
       - name: Set up QEMU
-        if: ${{ matrix.name == 'ubuntu-20.04_armv8_jetson' }}
+        if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
         uses: docker/setup-qemu-action@v2
       - run: ./package.ubuntu-20.04_armv8_jetson.sh
-        if: ${{ matrix.name == 'ubuntu-20.04_armv8_jetson' }}
+        if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.name }}
+          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist/
-      - name: Slack Notification
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: sora-python-sdk
-          SLACK_COLOR: danger
-          SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_TITLE: Failure test
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-  # build_windows:
-  #   runs-on: windows-2019
-  #   timeout-minutes: 10
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-python@v4
-  #       with:
-  #         python-version: "3.11"
-  #         cache: "pip"
-  #     - run: pip install -v .
+
+  build_windows:
+    runs-on: windows-2019
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "${{ matrix.python_version }}"
+          cache: "pip"
+      - run: pip install -r requirements-dev.lock
+      - run: python run.py
+      - run: python -m build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-2019_python-${{ matrix.python_version }}
+          path: dist/
+
   # build_macos_arm64_job:
   #   runs-on: [self-hosted, macos, arm64]
   #   timeout-minutes: 10
