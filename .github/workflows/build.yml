@@ -71,8 +71,8 @@ jobs:
       - run: rye run python -m build
         if: ${{ matrix.platform.os == 'macos' }}
         env:
-          _PYTHON_HOST_PLATFORM: matrix.platform.python_host_platform
-          ARCHFLAGS: matrix.platform.archflags
+          _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
+          ARCHFLAGS: ${{ matrix.platform.archflags }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
