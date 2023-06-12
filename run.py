@@ -590,6 +590,10 @@ def main():
     else:
         raise Exception(f'Unknown target {target}')
 
+    if target_platform.os == 'macos':
+        # macOS のターゲットは必ず arm64 として扱う
+        target_platform = PlatformTarget(build_platform.os, build_platform.osver, 'arm64')
+
     source_dir = os.path.join(BASE_DIR, '_source', target_platform.package_name)
     build_dir = os.path.join(BASE_DIR, '_build', target_platform.package_name)
     install_dir = os.path.join(BASE_DIR, '_install', target_platform.package_name)
