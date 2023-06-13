@@ -11,6 +11,14 @@
 
 ## develop
 
+- [UPDATE] `Sora.connect()` メソッドにバリデーションを追加する
+    - 以下のケースでは例外を送出するようにする:
+        - `connect()` 呼び出し後に、同じインスタンスで再度 `connect()` を呼び出した場合
+        - `disconnect()` 呼び出し後に、同じインスタンスで `connect()` を呼び出した場合
+    - @sile
+- [UPDATE] SIGSEGV などの異常終了を発生しにくくする
+    - 合わせてサンプルコードの整理（e.g., シグナルハンドラを使わなくする）も行っている
+    - @sile
 - [ADD] データチャネルを使ったサンプルを追加する
     - 以下の三つを追加:
         - test/messaging_readonly.py
