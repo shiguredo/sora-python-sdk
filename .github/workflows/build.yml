@@ -54,7 +54,14 @@ jobs:
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
+
       - run: rye run python run.py
+        if: ${{ matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
+      # Jetson の場合は SORA_SDK_TARGET を指定する
+      - run: rye run python run.py
+        if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
+        env:
+          SORA_SDK_TARGET: ubuntu-20.04_armv8_jetson
 
       # Jetson 以外の Ubuntu 向け
       - run: rye run python -m build
