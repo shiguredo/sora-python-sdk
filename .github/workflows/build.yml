@@ -66,6 +66,7 @@ jobs:
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
         uses: docker/setup-qemu-action@v2
       - run: |
+          sudo apt-get install -y multistrap
           rye run python run.py
           ./package.ubuntu-20.04_armv8_jetson.sh
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
