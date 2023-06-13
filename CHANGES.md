@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] メッセージング系のサンプルでは音声および映像を無効にする
+   - `messaging_{sendrecv,sendonly,recvonly}.py` では `Sora.create_connectoin(audio=False, video=False, ...)` を指定する
+   - @sile
 - [ADD] Python SDK では常にマルチストリームを有効にする
    - デフォルト値を使うのではなく `sora::SoraSignalingConfig::multistream` フィールドに明示的に `true` を指定する
    - @sile
