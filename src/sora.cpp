@@ -18,8 +18,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     SoraTrackInterface* video_source,
     bool audio,
     bool video,
-    const std::string& audio_codec_type,
-    const std::string& video_codec_type,
+    std::optional<std::string> audio_codec_type,
+    std::optional<std::string> video_codec_type,
     const nb::handle& data_channels,
     std::optional<bool> data_channel_signaling,
     std::optional<bool> ignore_disconnect_websocket) {
@@ -34,8 +34,12 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.multistream = true;
   config.video = video;
   config.audio = audio;
-  config.video_codec_type = video_codec_type;
-  config.audio_codec_type = audio_codec_type;
+  if (video_codec_type) {
+    config.video_codec_type = *video_codec_type;
+  }
+  if (audio_codec_type) {
+    config.audio_codec_type = *audio_codec_type;
+  }
   config.metadata =
       ConvertJsonValue(metadata, "Invalid JSON value in metadata");
   config.data_channels = ConvertDataChannels(data_channels);

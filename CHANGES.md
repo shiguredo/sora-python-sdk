@@ -19,7 +19,7 @@
    - @sile
 - [ADD] Sora.create_connection() メソッドに音声・映像コーデックを指定するための引数を追加する
     - `audio_codec_type` および `video_codec_type` 引数
-    - デフォルトはそれぞれ `"OPUS"` および `"VP8"`
+    - デフォルトは未指定
     - @sile
 - [ADD] Sora.create_connection() メソッドに音声・映像の有効無効を指定するための引数を追加する
     - `audio` および `video` 引数
