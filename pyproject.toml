@@ -1,17 +1,15 @@
 [tool.rye]
 dev-dependencies = [
-    "nanobind>=0.1.0",
-    "setuptools>=42",
-    "build~=0.10.0",
-    "wheel~=0.40.0",
+  "nanobind>=0.1.0",
+  "setuptools>=42",
+  "build~=0.10.0",
+  "wheel~=0.40.0",
 ]
 
 [project]
 name = "sora_sdk"
-authors = [
-  {name = "Shiguredo Inc.", email = "contact+github@shiguredo.jp"}
-]
-version = "2023.1.0"
+authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
+version = "2023.1.0.dev0"
 description = "WebRTC SFU Sora Python SDK"
 readme = "README.md"
 license = { file = "LICENSE" }
