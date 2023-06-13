@@ -11,6 +11,17 @@
 
 ## develop
 
+- [ADD] Python SDK では常にマルチストリームを有効にする
+   - デフォルト値を使うのではなく `sora::SoraSignalingConfig::multistream` フィールドに明示的に `true` を指定する
+   - @sile
+- [ADD] Sora.create_connection() メソッドに音声・映像コーデックを指定するための引数を追加する
+    - `audio_codec_type` および `video_codec_type` 引数
+    - デフォルトはそれぞれ `"OPUS"` および `"VP8"`
+    - @sile
+- [ADD] Sora.create_connection() メソッドに音声・映像の有効無効を指定するための引数を追加する
+    - `audio` および `video` 引数
+    - デフォルトはどちらも `true`
+    - @sile
 - [ADD] データチャネルを使ったサンプルを追加する
     - 以下の三つを追加:
         - test/messaging_readonly.py
