@@ -24,11 +24,6 @@ def run_setup(build_platform, target_platform):
             self.root_is_pure = False
 
     setup(
-        name="sora_sdk",
-        version="2023.1.0.dev0",
-        description="WebRTC SFU Sora Python SDK",
-        url="https://github.com/shiguredo/sora-python-sdk",
-        license="Apache License 2.0",
         packages=['sora_sdk', 'sora_sdk.model_coeffs'],
         package_dir={'': 'src'},
         package_data={

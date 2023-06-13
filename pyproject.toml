@@ -9,6 +9,7 @@ dev-dependencies = [
 [project]
 name = "sora_sdk"
 authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
+url = "https://github.com/shiguredo/sora-python-sdk"
 version = "2023.1.0.dev0"
 description = "WebRTC SFU Sora Python SDK"
 readme = "README.md"
