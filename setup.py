@@ -24,6 +24,7 @@ def run_setup(build_platform, target_platform):
             self.root_is_pure = False
 
     setup(
+        url="https://github.com/shiguredo/sora-python-sdk",
         packages=['sora_sdk', 'sora_sdk.model_coeffs'],
         package_dir={'': 'src'},
         package_data={
