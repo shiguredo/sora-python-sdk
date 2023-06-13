@@ -10,5 +10,8 @@
     "group:allNonMajor",
     "schedule:weekly"
   ],
+  "ignorePaths": [
+    "**/.python-version"
+  ],
   "dependencyDashboard": false
 }
