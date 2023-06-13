@@ -55,27 +55,27 @@ jobs:
       - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
 
-      - run: rye run python run.py
-        if: ${{ matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
-      # Jetson の場合は SORA_SDK_TARGET を指定する
-      - run: rye run python run.py
-        if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
-        env:
-          SORA_SDK_TARGET: ubuntu-20.04_armv8_jetson
-
       # Jetson 以外の Ubuntu 向け
-      - run: rye run python -m build
+      - run: |
+          rye run python run.py
+          rye run python -m build
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
 
       # Jetson 向け
       - name: Set up QEMU
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
         uses: docker/setup-qemu-action@v2
-      - run: ./package.ubuntu-20.04_armv8_jetson.sh
+      - run: |
+          rye run python run.py
+          ./package.ubuntu-20.04_armv8_jetson.sh
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
+        env:
+          SORA_SDK_TARGET: ubuntu-20.04_armv8_jetson
 
       # macOS 向け
-      - run: rye run python -m build
+      - run: |
+          rye run python run.py
+          rye run python -m build
         if: ${{ matrix.platform.os == 'macos' }}
         env:
           _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
