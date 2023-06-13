@@ -21,6 +21,8 @@
 #include "dispose_listener.h"
 #include "sora_track_interface.h"
 
+namespace nb = nanobind;
+
 class SoraConnection : public sora::SoraSignalingObserver,
                        public DisposePublisher,
                        public DisposeSubscriber {
@@ -36,6 +38,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   void Disconnect();
   void SetAudioTrack(SoraTrackInterface* audio_source);
   void SetVideoTrack(SoraTrackInterface* video_source);
+  bool SendDataChannel(const std::string& label, nb::bytes& data);
 
   // sora::SoraSignalingObserver
   void OnSetOffer(std::string offer) override;
@@ -54,7 +57,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   std::function<void(sora::SoraSignalingErrorCode, std::string)> on_disconnect_;
   std::function<void(std::string)> on_notify_;
   std::function<void(std::string)> on_push_;
-  std::function<void(std::string, std::string)> on_message_;
+  std::function<void(std::string, nb::bytes)> on_message_;
   std::function<void(std::shared_ptr<SoraTrackInterface>)> on_track_;
   std::function<void(std::string)> on_data_channel_;
 

@@ -72,10 +72,10 @@ $ rye run python test/recvonly.py
 - macOS 12.4 arm64 以降
 - Ubuntu 20.04 x86_64
 - Ubuntu 22.04 x86_64
-- Windows 10 1809 x86_64 以降
 
 ### 未検証
 
+- Windows 10 1809 x86_64 以降
 - Ubuntu 20.04 arm64 (NVIDIA Jetson シリーズ)
 
 ## 対応機能

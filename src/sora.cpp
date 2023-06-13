@@ -15,7 +15,10 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const std::string& client_id,
     const nb::handle& metadata,
     SoraTrackInterface* audio_source,
-    SoraTrackInterface* video_source) {
+    SoraTrackInterface* video_source,
+    const nb::handle& data_channels,
+    std::optional<bool> data_channel_signaling,
+    std::optional<bool> ignore_disconnect_websocket) {
   std::shared_ptr<SoraConnection> conn = std::make_shared<SoraConnection>(this);
   sora::SoraSignalingConfig config;
   config.pc_factory = factory_->GetPeerConnectionFactory();
@@ -28,7 +31,15 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.audio = true;
   config.video_codec_type = "VP8";
   config.audio_codec_type = "OPUS";
-  config.metadata = CovertJsonValue(metadata);
+  config.metadata =
+      ConvertJsonValue(metadata, "Invalid JSON value in metadata");
+  config.data_channels = ConvertDataChannels(data_channels);
+  if (data_channel_signaling) {
+    config.data_channel_signaling.emplace(*data_channel_signaling);
+  }
+  if (ignore_disconnect_websocket) {
+    config.ignore_disconnect_websocket.emplace(*ignore_disconnect_websocket);
+  }
   config.network_manager =
       factory_->GetConnectionContext()->default_network_manager();
   config.socket_factory =
@@ -67,7 +78,8 @@ SoraVideoSource* Sora::CreateVideoSource() {
   return video_source;
 }
 
-boost::json::value Sora::CovertJsonValue(nb::handle value) {
+boost::json::value Sora::ConvertJsonValue(nb::handle value,
+                                          const char* error_message) {
   if (value.is_none()) {
     return nullptr;
   } else if (nb::isinstance<bool>(value)) {
@@ -82,14 +94,90 @@ boost::json::value Sora::CovertJsonValue(nb::handle value) {
     nb::list nb_list = nb::cast<nb::list>(value);
     boost::json::array json_array;
     for (auto v : nb_list)
-      json_array.emplace_back(CovertJsonValue(value));
+      json_array.emplace_back(ConvertJsonValue(v, error_message));
     return json_array;
   } else if (nb::isinstance<nb::dict>(value)) {
     nb::dict nb_dict = nb::cast<nb::dict>(value);
     boost::json::object json_object;
     for (auto [k, v] : nb_dict)
-      json_object.emplace(nb::cast<const char*>(k), CovertJsonValue(v));
+      json_object.emplace(nb::cast<const char*>(k),
+                          ConvertJsonValue(v, error_message));
     return json_object;
   }
-  throw nb::type_error("Invalid JSON value in metadata");
+
+  throw nb::type_error(error_message);
+}
+
+std::vector<sora::SoraSignalingConfig::DataChannel> Sora::ConvertDataChannels(
+    const nb::handle value) {
+  std::vector<sora::SoraSignalingConfig::DataChannel> data_channels;
+
+  auto data_channels_value =
+      ConvertJsonValue(value, "Invalid JSON value in data_channels");
+  if (data_channels_value.is_null()) {
+    return data_channels;
+  }
+
+  if (!data_channels_value.is_array()) {
+    throw nb::type_error("Invalid data_channels");
+  }
+
+  for (auto data_channel_value : data_channels_value.as_array()) {
+    if (!data_channel_value.is_object()) {
+      throw nb::type_error("Invalid data_channels");
+    }
+
+    auto object = data_channel_value.as_object();
+    sora::SoraSignalingConfig::DataChannel data_channel;
+
+    if (!object["label"].is_string()) {
+      throw nb::type_error("Invalid data_channels");
+    }
+    data_channel.label = object["label"].as_string();
+
+    if (!object["direction"].is_string()) {
+      throw nb::type_error("Invalid data_channels");
+    }
+    data_channel.direction = object["direction"].as_string();
+
+    if (!object["protocol"].is_null()) {
+      if (!object["protocol"].is_string()) {
+        throw nb::type_error("Invalid data_channels");
+      }
+      data_channel.protocol.emplace(object["protocol"].as_string());
+    }
+
+    if (!object["ordered"].is_null()) {
+      if (!object["ordered"].is_bool()) {
+        throw nb::type_error("Invalid data_channels");
+      }
+      data_channel.ordered = object["ordered"].as_bool();
+    }
+
+    if (!object["compress"].is_null()) {
+      if (!object["compress"].is_bool()) {
+        throw nb::type_error("Invalid data_channels");
+      }
+      data_channel.compress = object["compress"].as_bool();
+    }
+
+    if (!object["max_packet_life_time"].is_null()) {
+      if (!object["max_packet_life_time"].is_number()) {
+        throw nb::type_error("Invalid data_channels");
+      }
+      data_channel.max_packet_life_time =
+          boost::json::value_to<int32_t>(object["max_packet_life_time"]);
+    }
+
+    if (!object["max_retransmits"].is_null()) {
+      if (!object["max_retransmits"].is_number()) {
+        throw nb::type_error("Invalid data_channels");
+      }
+      data_channel.max_retransmits =
+          boost::json::value_to<int32_t>(object["max_retransmits"]);
+    }
+    data_channels.push_back(data_channel);
+  }
+
+  return data_channels;
 }
