@@ -105,13 +105,14 @@ elseif(TARGET_OS STREQUAL "windows")
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
   # CRTライブラリを静的リンクさせる
   # MSVC_RUNTIME_LIBRARY で設定ても反映されないため CMAKE_CXX_FLAGS を用いた
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+  string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
   target_compile_definitions(sora_sdk_ext
     PRIVATE
       _CONSOLE
       _WIN32_WINNT=0x0A00
       NOMINMAX
       WIN32_LEAN_AND_MEAN
+      HAVE_SNPRINTF
   )
 endif()
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
