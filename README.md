@@ -53,9 +53,10 @@ Windows は https://rye-up.com/ の Installation Instructions を確認してく
 
 ```console
 $ rye sync
+$ rye run python setup.py build
 ```
 
-## サンプルの実行
+## テストの実行
 
 ```console
 $ rye run python test/recvonly.py
@@ -137,7 +138,3 @@ limitations under the License.
 ```
 
 このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
-
-```
-
-```
