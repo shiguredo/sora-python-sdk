@@ -64,6 +64,13 @@ $ git clone https://github.com/shiguredo/sora-python-sdk-samples
 ```console
 $ rye sync
 $ rye run python run.py
+```
+
+### サンプル実行
+
+**sora-python-sdk リポジトリで行ってください**
+
+```console
 $ rye run python /path/to/sora-python-sdk-samples/recvonly/recvonly.py
 ```
 
