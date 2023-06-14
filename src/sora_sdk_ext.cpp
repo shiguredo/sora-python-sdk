@@ -201,7 +201,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_data_channel", &SoraConnection::on_data_channel_);
 
   nb::class_<Sora>(m, "Sora")
-      .def(nb::init<bool>(), "use_hardware_encoder"_a = false)
+      .def(nb::init<bool>(), "use_hardware_encoder"_a = true)
       .def("create_connection", &Sora::CreateConnection, "signaling_url"_a,
            "role"_a, "channel_id"_a, "client_id"_a = "",
            "metadata"_a = nb::none(), "audio_source"_a = nb::none(),
