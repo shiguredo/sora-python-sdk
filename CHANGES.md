@@ -19,6 +19,21 @@
 - [UPDATE] SIGSEGV などの異常終了を発生しにくくする
     - 合わせてサンプルコードの整理（e.g., シグナルハンドラを使わなくする）も行っている
     - @sile
+- [CHANGE] メッセージング系のサンプルでは音声および映像を無効にする
+   - `messaging_{sendrecv,sendonly,recvonly}.py` では `Sora.create_connectoin(audio=False, video=False, ...)` を指定する
+   - @sile
+- [ADD] Python SDK では常にマルチストリームを有効にする
+   - デフォルト値を使うのではなく `sora::SoraSignalingConfig::multistream` フィールドに明示的に `true` を指定する
+   - @sile
+- [ADD] Sora.create_connection() メソッドに音声・映像コーデックを指定するための引数を追加する
+    - `audio_codec_type` および `video_codec_type` 引数
+    - デフォルトは未指定
+    - @sile
+- [ADD] Sora.create_connection() メソッドに音声・映像の有効無効を指定するための引数を追加する
+    - `audio` および `video` 引数
+    - デフォルトはどちらも `true`
+- [UPDATE] Sora::ConvertDataChannels() の実装をリファクタリング
+    - @sile
 - [ADD] データチャネルを使ったサンプルを追加する
     - 以下の三つを追加:
         - test/messaging_readonly.py

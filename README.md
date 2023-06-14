@@ -34,15 +34,7 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## ドキュメント
 
-TBD
-
-### ビルド
-
-Linux のみ以下のインストールが必要です。
-
-```
-sudo apt install libdrm-dev libva-dev
-```
+https://sora-python-sdk.shiguredo.jp/
 
 #### Rye
 
@@ -53,12 +45,18 @@ Windows は https://rye-up.com/ の Installation Instructions を確認してく
 
 ```console
 $ rye sync
-$ rye run python setup.py build
+$ rye run python run.py
+$ rye run python -m build
 ```
 
-## テストの実行
+これで dist/ 以下に `*.whl` ファイルが作成されます。
+
+## サンプルの実行
 
 ```console
+$ pip install dist/sora_sdk-<さっき生成したwhlファイル>.whl
+# signaling_url や channel_id などの情報を書き換える
+$ vim test/recvonly.py
 $ rye run python test/recvonly.py
 ```
 
@@ -68,21 +66,38 @@ $ rye run python test/recvonly.py
   - Sora Python SDK のコールバック関数は、Python ランタイムとは独立した独自のスレッドで実行されるため、例外が漏れると Python プログラムが異常終了します
 - 一度切断された Sora インスタンスを使い回して、新しい接続を始めることはできません
 
+
+Ubuntu の場合は追加で以下の準備が必要：
+
+```console
+$ sudo apt install libportaudio2
+$ pip install opencv-python opencv-python-headless sounddevice
+```
+
+Jetson の場合は以下の準備が必要：
+
+```console
+$ sudo apt install libopencv libopencv-python libportaudio2
+$ pip install sounddevice
+```
+
+Python は Ubuntu 20.04 標準の Python (Python 3.8) を利用して下さい。
+また、venv や Rye は利用せずに実行して下さい。
+
 ## システム条件
 
-- WebRTC SFU Sora 2022.2.0 以降
-- Python 3.10 以上
+- WebRTC SFU Sora 2023.1.0 以降
+- Python 3.8 以上
 
 ## 対応プラットフォーム
 
+- Windows 10 1809 x86_64 以降
 - macOS 12.4 arm64 以降
-- Ubuntu 20.04 x86_64
 - Ubuntu 22.04 x86_64
+- Ubuntu 20.04 arm64
+  - NVIDIA Jetson JetPack SDK 5 系
 
 ### 未検証
-
-- Windows 10 1809 x86_64 以降
-- Ubuntu 20.04 arm64 (NVIDIA Jetson シリーズ)
 
 ## 対応機能
 
@@ -119,8 +134,8 @@ Discord へお願いします。
 Apache License 2.0
 
 ```
-
 Copyright 2023-2023, tnoho (Original Author)
+Copyright 2023-2023, Wandbox LLC (Original Author)
 Copyright 2023-2023, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -134,7 +149,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
 ```
 
 このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
+
+```
+
+```

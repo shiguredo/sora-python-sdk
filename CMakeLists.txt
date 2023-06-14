@@ -6,19 +6,38 @@ cmake_policy(SET CMP0054 NEW)
 # MSVC runtime library flags are selected by an abstraction.
 cmake_policy(SET CMP0091 NEW)
 
-set(Python_VERSION "${PYTHON_VERSION_STRING}")
-set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
-set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
-set(Python_LIBRARIES "${PYTHON_LIBRARY}")
+if (NOT CMAKE_CROSSCOMPILING)
+  set(Python_VERSION "${PYTHON_VERSION_STRING}")
+  set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
+  set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
+  set(Python_LIBRARIES "${PYTHON_LIBRARY}")
+  find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+endif()
 
-find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
+if (CMAKE_CROSSCOMPILING)
+  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
+  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
+  set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
+  find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+  set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+endif()
+
+message(STATUS "-- Python_FOUND: ${Python_FOUND}")
+message(STATUS "-- Python_Development.Module_FOUND: ${Python_Development.Module_FOUND}")
+message(STATUS "-- Python_EXECUTABLE: ${Python_EXECUTABLE}")
+message(STATUS "-- Python_INCLUDE_DIR: ${Python_INCLUDE_DIR}")
+message(STATUS "-- Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
+message(STATUS "-- Python_LIBRARIES: ${Python_LIBRARIES}")
+message(STATUS "-- Python_LIBRARY_DIRS: ${Python_LIBRARY_DIRS}")
+message(STATUS "-- Python_RUNTIME_LIBRARY_DIRS: ${Python_RUNTIME_LIBRARY_DIRS}")
+
 
 execute_process(
-  COMMAND
-  "${PYTHON_EXECUTABLE}" -c "import nanobind; print(nanobind.cmake_dir())"
-  OUTPUT_VARIABLE _tmp_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
-list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
+list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 
 set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な値は windows, macos, ubuntu")
 set(WEBRTC_INCLUDE_DIR "" CACHE PATH "WebRTC のインクルードディレクトリ")
@@ -48,6 +67,7 @@ if(TARGET_OS STREQUAL "ubuntu")
   find_package(Libdrm REQUIRED)
 endif()
 
+
 nanobind_add_module(
   sora_sdk_ext
   NB_STATIC
@@ -62,9 +82,8 @@ nanobind_add_module(
   src/sora_video_source.cpp
 )
 
-set_target_properties(sora_sdk_ext PROPERTIES CXX_STANDARD 17 C_STANDARD 17)
+set_target_properties(sora_sdk_ext PROPERTIES CXX_STANDARD 20 C_STANDARD 20)
 set_target_properties(sora_sdk_ext PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
 
 if(TARGET_OS STREQUAL "macos")
   set_target_properties(sora_sdk_ext PROPERTIES CXX_VISIBILITY_PRESET hidden)
@@ -74,6 +93,13 @@ elseif(TARGET_OS STREQUAL "ubuntu")
       "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
   )
+elseif(TARGET_OS STREQUAL "jetson")
+  target_compile_options(sora_sdk_ext
+    PRIVATE
+      "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+  )
+  target_link_directories(sora_sdk_ext PRIVATE ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/tegra)
 elseif(TARGET_OS STREQUAL "windows")
   # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
