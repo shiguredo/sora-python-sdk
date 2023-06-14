@@ -8,35 +8,115 @@ on:
       - "**.md"
 
 jobs:
-  build_linux_x64_job:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 30
+  build_linux_macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: ubuntu-22.04_x86_64
+            runs_on: ubuntu-22.04
+            os: ubuntu
+          - name: ubuntu-20.04_armv8_jetson
+            runs_on: ubuntu-20.04
+            os: ubuntu
+          - name: macos-12_arm64
+            runs_on: macos-12
+            os: macos
+            python_host_platform: "macosx-12.0-arm64"
+            archflags: "-arch arm64"
+          - name: macos-13_arm64
+            runs_on: macos-13
+            os: macos
+            python_host_platform: "macosx-13.0-arm64"
+            archflags: "-arch arm64"
+        python_version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+        exclude:
+          # Jetson は Python 3.8 のみ作成する
+          - platform: {name: ubuntu-20.04_armv8_jetson}
+            python_version: "3.9"
+          - platform: { name: ubuntu-20.04_armv8_jetson}
+            python_version: "3.10"
+          - platform: {name: ubuntu-20.04_armv8_jetson}
+            python_version: "3.11"
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
-      - run: sudo apt-get update
-      - run: sudo apt-get -y install libva-dev libdrm-dev
+      - run: |
+          sudo apt-get update
+          sudo apt-get -y install libva-dev libdrm-dev
+        if: ${{ matrix.platform.os == 'ubuntu' }}
       - run: curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" bash
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
+      - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
-      - name: Slack Notification
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
+
+      # Jetson 以外の Ubuntu 向け
+      - run: |
+          rye run python run.py
+          rye run python -m build
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
+
+      # Jetson 向け
+      - name: Set up QEMU
+        if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
+        uses: docker/setup-qemu-action@v2
+      - run: |
+          sudo apt-get install -y multistrap binutils-aarch64-linux-gnu
+          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
+          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+          rye run python run.py
+          ./package.ubuntu-20.04_armv8_jetson.sh
+        if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
         env:
-          SLACK_CHANNEL: sora-python-sdk
-          SLACK_COLOR: danger
-          SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_TITLE: Failure test
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-  build_windows_job:
+          SORA_SDK_TARGET: ubuntu-20.04_armv8_jetson
+
+      # macOS 向け
+      - run: |
+          rye run python run.py
+          rye run python -m build
+        if: ${{ matrix.platform.os == 'macos' }}
+        env:
+          _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
+          ARCHFLAGS: ${{ matrix.platform.archflags }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+          path: dist/
+
+  build_windows:
     runs-on: windows-2019
-    timeout-minutes: 10
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "${{ matrix.python_version }}"
           cache: "pip"
-      - run: pip install -v .
+      - run: pip install -r requirements-dev.lock
+      - run: python run.py
+      - run: python -m build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-2019_python-${{ matrix.python_version }}
+          path: dist/
+
   # build_macos_arm64_job:
   #   runs-on: [self-hosted, macos, arm64]
   #   timeout-minutes: 10

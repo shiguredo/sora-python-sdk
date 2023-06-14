@@ -24,6 +24,7 @@
 - [ADD] Sora.create_connection() メソッドに音声・映像の有効無効を指定するための引数を追加する
     - `audio` および `video` 引数
     - デフォルトはどちらも `true`
+- [UPDATE] Sora::ConvertDataChannels() の実装をリファクタリング
     - @sile
 - [ADD] データチャネルを使ったサンプルを追加する
     - 以下の三つを追加:
