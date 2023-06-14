@@ -1,6 +1,11 @@
+#include <exception>
+
 #include "sora.h"
 
 Sora::Sora(bool use_hardware_encoder) {
+  rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_INFO);
+  rtc::LogMessage::LogTimestamps();
+  rtc::LogMessage::LogThreads();
   factory_.reset(new SoraFactory(use_hardware_encoder));
 }
 
@@ -127,66 +132,46 @@ std::vector<sora::SoraSignalingConfig::DataChannel> Sora::ConvertDataChannels(
     return data_channels;
   }
 
-  if (!data_channels_value.is_array()) {
+  try {
+    for (auto data_channel_value : data_channels_value.as_array()) {
+      data_channels.push_back(
+          boost::json::value_to<sora::SoraSignalingConfig::DataChannel>(
+              data_channel_value));
+    }
+  } catch (std::exception&) {
     throw nb::type_error("Invalid data_channels");
-  }
-
-  for (auto data_channel_value : data_channels_value.as_array()) {
-    if (!data_channel_value.is_object()) {
-      throw nb::type_error("Invalid data_channels");
-    }
-
-    auto object = data_channel_value.as_object();
-    sora::SoraSignalingConfig::DataChannel data_channel;
-
-    if (!object["label"].is_string()) {
-      throw nb::type_error("Invalid data_channels");
-    }
-    data_channel.label = object["label"].as_string();
-
-    if (!object["direction"].is_string()) {
-      throw nb::type_error("Invalid data_channels");
-    }
-    data_channel.direction = object["direction"].as_string();
-
-    if (!object["protocol"].is_null()) {
-      if (!object["protocol"].is_string()) {
-        throw nb::type_error("Invalid data_channels");
-      }
-      data_channel.protocol.emplace(object["protocol"].as_string());
-    }
-
-    if (!object["ordered"].is_null()) {
-      if (!object["ordered"].is_bool()) {
-        throw nb::type_error("Invalid data_channels");
-      }
-      data_channel.ordered = object["ordered"].as_bool();
-    }
-
-    if (!object["compress"].is_null()) {
-      if (!object["compress"].is_bool()) {
-        throw nb::type_error("Invalid data_channels");
-      }
-      data_channel.compress = object["compress"].as_bool();
-    }
-
-    if (!object["max_packet_life_time"].is_null()) {
-      if (!object["max_packet_life_time"].is_number()) {
-        throw nb::type_error("Invalid data_channels");
-      }
-      data_channel.max_packet_life_time =
-          boost::json::value_to<int32_t>(object["max_packet_life_time"]);
-    }
-
-    if (!object["max_retransmits"].is_null()) {
-      if (!object["max_retransmits"].is_number()) {
-        throw nb::type_error("Invalid data_channels");
-      }
-      data_channel.max_retransmits =
-          boost::json::value_to<int32_t>(object["max_retransmits"]);
-    }
-    data_channels.push_back(data_channel);
   }
 
   return data_channels;
 }
+
+namespace sora {
+SoraSignalingConfig::DataChannel tag_invoke(
+    const boost::json::value_to_tag<SoraSignalingConfig::DataChannel>&,
+    const boost::json::value& value) {
+  auto object = value.as_object();
+
+  SoraSignalingConfig::DataChannel data_channel;
+  data_channel.label = object["label"].as_string();
+  data_channel.direction = object["direction"].as_string();
+  if (!object["protocol"].is_null()) {
+    data_channel.protocol.emplace(object["protocol"].as_string());
+  }
+  if (!object["ordered"].is_null()) {
+    data_channel.ordered = object["ordered"].as_bool();
+  }
+  if (!object["compress"].is_null()) {
+    data_channel.compress = object["compress"].as_bool();
+  }
+  if (!object["max_packet_life_time"].is_null()) {
+    data_channel.max_packet_life_time =
+        boost::json::value_to<int32_t>(object["max_packet_life_time"]);
+  }
+  if (!object["max_retransmits"].is_null()) {
+    data_channel.max_retransmits =
+        boost::json::value_to<int32_t>(object["max_retransmits"]);
+  }
+
+  return data_channel;
+}
+}  // namespace sora

@@ -7,12 +7,11 @@
 #   all-features: false
 
 -e file:.
-autopep8==2.0.2
-cffi==1.15.1
-numpy==1.24.3
-opencv-python==4.7.0.72
-opencv-python-headless==4.7.0.72
-pycodestyle==2.10.0
-pycparser==2.21
-sounddevice==0.4.6
+build==0.10.0
+nanobind==1.4.0
+packaging==23.1
+pyproject-hooks==1.0.0
 tomli==2.0.1
+wheel==0.40.0
+# The following packages are considered to be unsafe in a requirements file:
+setuptools==67.8.0
