@@ -80,6 +80,11 @@ void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
   video_source_ = video_source;
 }
 
+bool SoraConnection::SendDataChannel(const std::string& label,
+                                     nb::bytes& data) {
+  return conn_->SendDataChannel(label, std::string(data.c_str()));
+}
+
 void SoraConnection::OnSetOffer(std::string offer) {
   std::string stream_id = rtc::CreateRandomString(16);
   if (audio_source_) {
@@ -112,8 +117,8 @@ void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
 }
 
 void SoraConnection::OnNotify(std::string text) {
-  if (on_set_offer_) {
-    on_set_offer_(text);
+  if (on_notify_) {
+    on_notify_(text);
   }
 }
 
@@ -125,7 +130,7 @@ void SoraConnection::OnPush(std::string text) {
 
 void SoraConnection::OnMessage(std::string label, std::string data) {
   if (on_message_) {
-    on_message_(label, data);
+    on_message_(label, nb::bytes(data.c_str()));
   }
 }
 
