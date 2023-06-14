@@ -1,26 +1,15 @@
 [tool.rye]
 dev-dependencies = [
-    "opencv-python~=4.7.0.72",
-    "opencv-python-headless~=4.7.0.72",
-    "sounddevice~=0.4.6",
-    "autopep8~=2.0.2",
+  "nanobind>=0.1.0",
+  "setuptools>=42",
+  "build~=0.10.0",
+  "wheel~=0.40.0",
 ]
-
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel",
-    "scikit-build==0.14.0",
-    "cmake>=3.18",
-    "nanobind>=0.1.0",
-    "ninja; platform_system!='Windows'",
-]
-
-build-backend = "setuptools.build_meta"
 
 [project]
 name = "sora_sdk"
-version = "2023.1.0"
+authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
+version = "2023.1.0.dev0"
 description = "WebRTC SFU Sora Python SDK"
 readme = "README.md"
 license = { file = "LICENSE" }
