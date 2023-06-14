@@ -205,7 +205,9 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("create_connection", &Sora::CreateConnection, "signaling_url"_a,
            "role"_a, "channel_id"_a, "client_id"_a = "",
            "metadata"_a = nb::none(), "audio_source"_a = nb::none(),
-           "video_source"_a = nb::none(), "data_channels"_a = nb::none(),
+           "video_source"_a = nb::none(), "audio"_a = true, "video"_a = true,
+           "audio_codec_type"_a = nb::none(), "video_codec_type"_a = nb::none(),
+           "data_channels"_a = nb::none(),
            "data_channel_signaling"_a = nb::none(),
            "ignore_disconnect_websocket"_a = nb::none())
       .def("create_audio_source", &Sora::CreateAudioSource)

@@ -20,6 +20,8 @@ class MessagingSendonly:
             channel_id=channel_id,
             client_id=client_id,
             metadata=metadata,
+            audio=False,
+            video=False,
             data_channels=[{"label": label, "direction": "sendonly"}],
             data_channel_signaling=True,
         )
