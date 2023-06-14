@@ -3,6 +3,9 @@
 #include "sora.h"
 
 Sora::Sora(bool use_hardware_encoder) {
+  rtc::LogMessage::LogToDebug((rtc::LoggingSeverity)rtc::LS_INFO);
+  rtc::LogMessage::LogTimestamps();
+  rtc::LogMessage::LogThreads();
   factory_.reset(new SoraFactory(use_hardware_encoder));
 }
 
