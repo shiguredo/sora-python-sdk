@@ -2,6 +2,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/function.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 
@@ -16,7 +17,7 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-/* 
+/*
  * コールバック関数のメンバー変数は Py_tp_traverse で visit コールバックを呼び出すようにする
  * やっておかないと終了時にリークエラーが発生する
  */
@@ -189,6 +190,8 @@ NB_MODULE(sora_sdk_ext, m) {
                              nb::type_slots(connection_slots))
       .def("connect", &SoraConnection::Connect)
       .def("disconnect", &SoraConnection::Disconnect)
+      .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a,
+           "data"_a)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
       .def_rw("on_notify", &SoraConnection::on_notify_)
@@ -200,8 +203,11 @@ NB_MODULE(sora_sdk_ext, m) {
   nb::class_<Sora>(m, "Sora")
       .def(nb::init<bool>(), "use_hardware_encoder"_a = false)
       .def("create_connection", &Sora::CreateConnection, "signaling_url"_a,
-           "role"_a, "channel_id"_a, "client_id"_a = "", "metadata"_a = "",
-           "audio_source"_a = nb::none(), "video_source"_a = nb::none())
+           "role"_a, "channel_id"_a, "client_id"_a = "",
+           "metadata"_a = nb::none(), "audio_source"_a = nb::none(),
+           "video_source"_a = nb::none(), "data_channels"_a = nb::none(),
+           "data_channel_signaling"_a = nb::none(),
+           "ignore_disconnect_websocket"_a = nb::none())
       .def("create_audio_source", &Sora::CreateAudioSource)
       .def("create_video_source", &Sora::CreateVideoSource);
 }
