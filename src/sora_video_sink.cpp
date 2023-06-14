@@ -50,7 +50,7 @@ void SoraVideoSinkImpl::Disposed() {
   track_ = nullptr;
 }
 
-void SoraVideoSinkImpl::PubliserDisposed() {
+void SoraVideoSinkImpl::PublisherDisposed() {
   Disposed();
 }
 

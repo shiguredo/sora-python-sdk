@@ -6,7 +6,6 @@
 # $ rye run python test/messaging_recvonly.py --signaling-url ws://localhost:5000/signaling --channel-id sora --labels '#foo' '#bar'
 import argparse
 import json
-import signal
 import time
 
 from sora_sdk import Sora
@@ -28,40 +27,29 @@ class MessagingRecvonly:
             data_channel_signaling=True,
         )
 
-        self.disconnected = False
         self.shutdown = False
         self.connection.on_message = self.on_message
         self.connection.on_disconnect = self.on_disconnect
 
     def on_disconnect(self, ec, message):
         print(f"Sora から切断されました: message='{message}'")
-        self.disconnected = True
+        self.shutdown = True
 
     def on_message(self, label, data):
         print(f"メッセージを受信しました: label={label}, data={data}")
 
-    def exit_gracefully(self, signal_number, frame):
-        print("\nCtrl+Cが押されました。終了します")
-        self.shutdown = True
-
     def run(self):
-        # シグナルを登録し、プログラムが終了するときに正常に処理が行われるようにする
-        signal.signal(signal.SIGINT, self.exit_gracefully)
-
         # Sora に接続する
         self.connection.connect()
-
-        # Ctrl+C が押される or 切断されるまでメッセージ受信を待機
-        while not self.shutdown and not self.disconnected:
-            time.sleep(0.01)
-
-        # Sora から切断する
-        if not self.disconnected:
-            self.connection.disconnect()
-
-            # 切断が完了するまで待機
-            while not self.disconnected:
+        try:
+            # Ctrl+C が押される or 切断されるまでメッセージ受信を待機
+            while not self.shutdown:
                 time.sleep(0.01)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            # Sora から切断する（すでに切断済みの場合には無視される）
+            self.connection.disconnect()
 
 
 if __name__ == '__main__':

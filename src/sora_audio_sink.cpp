@@ -41,7 +41,7 @@ void SoraAudioSinkImpl::Disposed() {
   track_ = nullptr;
 }
 
-void SoraAudioSinkImpl::PubliserDisposed() {
+void SoraAudioSinkImpl::PublisherDisposed() {
   Disposed();
 }
 

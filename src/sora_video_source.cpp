@@ -30,7 +30,7 @@ void SoraVideoSource::Disposed() {
   SoraTrackInterface::Disposed();
 }
 
-void SoraVideoSource::PubliserDisposed() {
+void SoraVideoSource::PublisherDisposed() {
   Disposed();
 }
 
