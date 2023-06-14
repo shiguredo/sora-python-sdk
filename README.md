@@ -53,11 +53,18 @@ $ rye run python -m build
 
 ## サンプルの実行
 
+### サンプルの取得
+
 ```console
-$ pip install dist/sora_sdk-<さっき生成したwhlファイル>.whl
-# signaling_url や channel_id などの情報を書き換える
-$ vim test/recvonly.py
-$ rye run python test/recvonly.py
+$ git clone https://github.com/shiguredo/sora-python-sdk-samples
+```
+
+### sora-python-sdk をビルド
+
+```console
+$ rye sync
+$ rye run python run.py
+$ rye run python /path/to/sora-python-sdk-samples/recvonly/recvonly.py
 ```
 
 ## 実装上の注意
@@ -65,7 +72,6 @@ $ rye run python test/recvonly.py
 - コールバックの中で例外を使う場合には、必ずコールバック内でキャッチして外に漏らしてはいけません
   - Sora Python SDK のコールバック関数は、Python ランタイムとは独立した独自のスレッドで実行されるため、例外が漏れると Python プログラムが異常終了します
 - 一度切断された Sora インスタンスを使い回して、新しい接続を始めることはできません
-
 
 Ubuntu の場合は追加で以下の準備が必要：
 
@@ -152,7 +158,3 @@ limitations under the License.
 ```
 
 このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
-
-```
-
-```
