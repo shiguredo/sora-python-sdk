@@ -16,6 +16,8 @@ class SoraFactory {
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
   GetPeerConnectionFactory() const;
   rtc::scoped_refptr<webrtc::ConnectionContext> GetConnectionContext() const;
+  rtc::NetworkManager* default_network_manager();
+  rtc::PacketSocketFactory* default_socket_factory();
 
  private:
   std::shared_ptr<sora::SoraClientContext> context_;
