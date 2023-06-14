@@ -34,15 +34,7 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## ドキュメント
 
-TBD
-
-### ビルド
-
-Linux のみ以下のインストールが必要です。
-
-```
-sudo apt install libdrm-dev libva-dev
-```
+https://sora-python-sdk.shiguredo.jp/
 
 #### Rye
 
@@ -83,23 +75,22 @@ $ pip install sounddevice
 ```
 
 Python は Ubuntu 20.04 標準の Python (Python 3.8) を利用して下さい。
-また、venv は利用せずに実行して下さい。
+また、venv や Rye は利用せずに実行して下さい。
 
 ## システム条件
 
-- WebRTC SFU Sora 2022.2.0 以降
-- Python 3.10 以上
+- WebRTC SFU Sora 2023.1.0 以降
+- Python 3.8 以上
 
 ## 対応プラットフォーム
 
+- Windows 10 1809 x86_64 以降
 - macOS 12.4 arm64 以降
-- Ubuntu 20.04 x86_64
 - Ubuntu 22.04 x86_64
+- Ubuntu 20.04 arm64
+  - NVIDIA Jetson JetPack SDK 5 系
 
 ### 未検証
-
-- Windows 10 1809 x86_64 以降
-- Ubuntu 20.04 arm64 (NVIDIA Jetson シリーズ)
 
 ## 対応機能
 
