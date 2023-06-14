@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] Sora::ConvertDataChannels() の実装をリファクタリング
+
+    - @sile
 - [ADD] データチャネルを使ったサンプルを追加する
     - 以下の三つを追加:
         - test/messaging_readonly.py
