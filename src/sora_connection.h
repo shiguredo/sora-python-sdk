@@ -31,7 +31,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   ~SoraConnection();
 
   void Disposed() override;
-  void PubliserDisposed() override;
+  void PublisherDisposed() override;
 
   void Init(sora::SoraSignalingConfig& config);
   void Connect();

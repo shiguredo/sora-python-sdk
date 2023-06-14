@@ -43,7 +43,7 @@ class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   void OnFrame(const webrtc::VideoFrame& frame) override;
 
   // DisposeSubscriber
-  void PubliserDisposed() override;
+  void PublisherDisposed() override;
 
   // このコールバックは shared_ptr にしないとリークする
   std::function<void(std::shared_ptr<SoraVideoFrame>)> on_frame_;

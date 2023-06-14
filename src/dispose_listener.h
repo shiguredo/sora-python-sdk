@@ -5,7 +5,7 @@
 
 class DisposeSubscriber {
  public:
-  virtual void PubliserDisposed() = 0;
+  virtual void PublisherDisposed() = 0;
 };
 
 class DisposePublisher {
@@ -23,7 +23,7 @@ class DisposePublisher {
   }
   virtual void Disposed() {
     for (DisposeSubscriber* subscriber : subscribers_) {
-      subscriber->PubliserDisposed();
+      subscriber->PublisherDisposed();
     }
   }
 

@@ -29,7 +29,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
 
   void Del();
   void Disposed();
-  void PubliserDisposed() override;
+  void PublisherDisposed() override;
   // webrtc::AudioTrackSinkInterface
   void OnData(const void* audio_data,
               int bits_per_sample,
