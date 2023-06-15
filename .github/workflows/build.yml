@@ -16,6 +16,7 @@ jobs:
           - name: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
             os: ubuntu
+            auditwheel_plat: manylinux_2_35_x86_64
           - name: ubuntu-20.04_armv8_jetson
             runs_on: ubuntu-20.04
             os: ubuntu
@@ -69,7 +70,7 @@ jobs:
             curl -LO https://github.com/NixOS/patchelf/releases/download/0.14.3/patchelf-0.14.3-x86_64.tar.gz
             tar -xf patchelf-0.14.3-x86_64.tar.gz
           popd
-          PATH=`pwd`/patchelf/bin:$PATH rye run python -m auditwheel repair --plat manylinux_2_31_x86_64 dist/*.whl
+          PATH=`pwd`/patchelf/bin:$PATH rye run python -m auditwheel repair --plat ${{ matrix.platform.auditwheel_plat }} dist/*.whl
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
 
       # Jetson 向け
