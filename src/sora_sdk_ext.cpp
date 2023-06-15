@@ -207,7 +207,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),
            "signaling_notify_metadata"_a = nb::none(),
            "audio_source"_a = nb::none(), "video_source"_a = nb::none(),
-           "audio"_a = true, "video"_a = true,
+           "audio"_a = nb::none(), "video"_a = nb::none(),
            "audio_codec_type"_a = nb::none(), "video_codec_type"_a = nb::none(),
            "video_bit_rate"_a = nb::none(), "audio_bit_rate"_a = nb::none(),
            "simulcast"_a = nb::none(), "spotlight"_a = nb::none(),
