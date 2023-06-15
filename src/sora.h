@@ -67,8 +67,8 @@ class Sora : public DisposePublisher {
                                       const char* error_message);
   std::vector<sora::SoraSignalingConfig::DataChannel> ConvertDataChannels(
       const nb::handle value);
-  boost::optional<sora::SoraSignalingConfig::ForwardingFilter> ConvertForwardingFilter(
-      const nb::handle value);
+  boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+  ConvertForwardingFilter(const nb::handle value);
 
   std::unique_ptr<SoraFactory> factory_;
 };
