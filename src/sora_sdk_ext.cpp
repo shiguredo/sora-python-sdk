@@ -10,6 +10,7 @@
 #include "sora_audio_sink.h"
 #include "sora_audio_source.h"
 #include "sora_connection.h"
+#include "sora_log.h"
 #include "sora_track_interface.h"
 #include "sora_video_sink.h"
 #include "sora_video_source.h"
@@ -128,6 +129,15 @@ NB_MODULE(sora_sdk_ext, m) {
                                                            nb::is_arithmetic())
       .value("LIVE", webrtc::MediaStreamTrackInterface::TrackState::kLive)
       .value("ENDED", webrtc::MediaStreamTrackInterface::TrackState::kEnded);
+
+  nb::enum_<rtc::LoggingSeverity>(m, "SoraLoggingSeverity", nb::is_arithmetic())
+      .value("VERBOSE", rtc::LoggingSeverity::LS_VERBOSE)
+      .value("INFO", rtc::LoggingSeverity::LS_INFO)
+      .value("WARNING", rtc::LoggingSeverity::LS_WARNING)
+      .value("ERROR", rtc::LoggingSeverity::LS_ERROR)
+      .value("NONE", rtc::LoggingSeverity::LS_NONE);
+
+  m.def("enable_libwebrtc_log", &EnableLibwebrtcLog);
 
   nb::class_<SoraTrackInterface>(m, "SoraTrackInterface")
       .def_prop_ro("kind", &SoraTrackInterface::kind)
