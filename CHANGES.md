@@ -16,6 +16,8 @@
     - @sile
 - [ADD] C++ SDK が提供して Python SDK が未提供だったシグナリングパラメータを追加する
     - 以下のパラメータを追加する:
+        - bundle_id
+        - signaling_notify_metadata
         - video_bit_rate
         - audio_bit_rate
         - simulcast
