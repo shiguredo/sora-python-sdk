@@ -17,17 +17,43 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const std::string& signaling_url,
     const std::string& role,
     const std::string& channel_id,
-    const std::string& client_id,
+    std::optional<std::string> client_id,
+    std::optional<std::string> bundle_id,
     const nb::handle& metadata,
+    const nb::handle& signaling_notify_metadata,
     SoraTrackInterface* audio_source,
     SoraTrackInterface* video_source,
-    bool audio,
-    bool video,
+    std::optional<bool> audio,
+    std::optional<bool> video,
     std::optional<std::string> audio_codec_type,
     std::optional<std::string> video_codec_type,
+    std::optional<int> video_bit_rate,
+    std::optional<int> audio_bit_rate,
+    std::optional<bool> simulcast,
+    std::optional<bool> spotlight,
+    std::optional<int> spotlight_number,
+    std::optional<std::string> simulcast_rid,
+    std::optional<std::string> spotlight_focus_rid,
+    std::optional<std::string> spotlight_unfocus_rid,
+    const nb::handle& forwarding_filter,
     const nb::handle& data_channels,
     std::optional<bool> data_channel_signaling,
-    std::optional<bool> ignore_disconnect_websocket) {
+    std::optional<bool> ignore_disconnect_websocket,
+    std::optional<int> data_channel_signaling_timeout,
+    std::optional<int> disconnect_wait_timeout,
+    std::optional<int> websocket_close_timeout,
+    std::optional<int> websocket_connection_timeout,
+    std::optional<int> audio_codec_lyra_bitrate,
+    std::optional<bool> audio_codec_lyra_usedtx,
+    std::optional<bool> check_lyra_version,
+    std::optional<std::string> audio_streaming_language_code,
+    std::optional<bool> insecure,
+    std::optional<std::string> client_cert,
+    std::optional<std::string> client_key,
+    std::optional<std::string> proxy_url,
+    std::optional<std::string> proxy_username,
+    std::optional<std::string> proxy_password,
+    std::optional<std::string> proxy_agent) {
   std::shared_ptr<SoraConnection> conn = std::make_shared<SoraConnection>(this);
   sora::SoraSignalingConfig config;
   config.pc_factory = factory_->GetPeerConnectionFactory();
@@ -35,24 +61,106 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.signaling_urls.push_back(signaling_url);
   config.role = role;
   config.channel_id = channel_id;
-  config.client_id = client_id;
+  if (client_id) {
+    config.client_id = *client_id;
+  }
+  if (bundle_id) {
+    config.bundle_id = *bundle_id;
+  }
   config.multistream = true;
-  config.video = video;
-  config.audio = audio;
+  if (video) {
+    config.video = *video;
+  }
+  if (audio) {
+    config.audio = *audio;
+  }
   if (video_codec_type) {
     config.video_codec_type = *video_codec_type;
   }
   if (audio_codec_type) {
     config.audio_codec_type = *audio_codec_type;
   }
+  if (video_bit_rate) {
+    config.video_bit_rate = *video_bit_rate;
+  }
+  if (audio_bit_rate) {
+    config.audio_bit_rate = *audio_bit_rate;
+  }
   config.metadata =
       ConvertJsonValue(metadata, "Invalid JSON value in metadata");
+  config.signaling_notify_metadata =
+      ConvertJsonValue(signaling_notify_metadata,
+                       "Invalid JSON value in signaling_notify_metadata");
+  if (simulcast) {
+    config.simulcast = *simulcast;
+  }
+  if (spotlight) {
+    config.spotlight = *spotlight;
+  }
+  if (spotlight_number) {
+    config.spotlight_number = *spotlight_number;
+  }
+  if (simulcast_rid) {
+    config.simulcast_rid = *simulcast_rid;
+  }
+  if (spotlight_focus_rid) {
+    config.spotlight_focus_rid = *spotlight_focus_rid;
+  }
+  if (spotlight_unfocus_rid) {
+    config.spotlight_unfocus_rid = *spotlight_unfocus_rid;
+  }
+  config.forwarding_filter = ConvertForwardingFilter(forwarding_filter);
   config.data_channels = ConvertDataChannels(data_channels);
   if (data_channel_signaling) {
     config.data_channel_signaling.emplace(*data_channel_signaling);
   }
   if (ignore_disconnect_websocket) {
     config.ignore_disconnect_websocket.emplace(*ignore_disconnect_websocket);
+  }
+  if (data_channel_signaling_timeout) {
+    config.data_channel_signaling_timeout = *data_channel_signaling_timeout;
+  }
+  if (disconnect_wait_timeout) {
+    config.disconnect_wait_timeout = *disconnect_wait_timeout;
+  }
+  if (websocket_close_timeout) {
+    config.websocket_close_timeout = *websocket_close_timeout;
+  }
+  if (websocket_connection_timeout) {
+    config.websocket_connection_timeout = *websocket_connection_timeout;
+  }
+  if (audio_codec_lyra_bitrate) {
+    config.audio_codec_lyra_bitrate = *audio_codec_lyra_bitrate;
+  }
+  if (audio_codec_lyra_usedtx) {
+    config.audio_codec_lyra_usedtx = *audio_codec_lyra_usedtx;
+  }
+  if (check_lyra_version) {
+    config.check_lyra_version = *check_lyra_version;
+  }
+  if (audio_streaming_language_code) {
+    config.audio_streaming_language_code = *audio_streaming_language_code;
+  }
+  if (insecure) {
+    config.insecure = *insecure;
+  }
+  if (client_cert) {
+    config.client_cert = *client_cert;
+  }
+  if (client_key) {
+    config.client_key = *client_key;
+  }
+  if (proxy_url) {
+    config.proxy_url = *proxy_url;
+  }
+  if (proxy_username) {
+    config.proxy_username = *proxy_username;
+  }
+  if (proxy_password) {
+    config.proxy_password = *proxy_password;
+  }
+  if (proxy_agent) {
+    config.proxy_agent = *proxy_agent;
   }
   config.network_manager =
       factory_->GetConnectionContext()->default_network_manager();
@@ -120,6 +228,40 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
   }
 
   throw nb::type_error(error_message);
+}
+
+boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+Sora::ConvertForwardingFilter(const nb::handle value) {
+  auto forwarding_filter_value =
+      ConvertJsonValue(value, "Invalid JSON value in forwarding_filter");
+  if (forwarding_filter_value.is_null()) {
+    return boost::none;
+  }
+
+  sora::SoraSignalingConfig::ForwardingFilter filter;
+
+  try {
+    auto object = forwarding_filter_value.as_object();
+    filter.action = object["action"].as_string();
+    for (auto or_rule : object["rules"].as_array()) {
+      std::vector<sora::SoraSignalingConfig::ForwardingFilter::Rule> rules;
+      for (auto and_rule_value : or_rule.as_array()) {
+        auto and_rule = and_rule_value.as_object();
+        sora::SoraSignalingConfig::ForwardingFilter::Rule rule;
+        rule.field = and_rule["field"].as_string();
+        rule.op = and_rule["op"].as_string();
+        for (auto value : and_rule["values"].as_array()) {
+          rule.values.push_back(value.as_string().c_str());
+        }
+        rules.push_back(rule);
+      }
+      filter.rules.push_back(rules);
+    }
+  } catch (std::exception&) {
+    throw nb::type_error("Invalid forwarding_filter");
+  }
+
+  return filter;
 }
 
 std::vector<sora::SoraSignalingConfig::DataChannel> Sora::ConvertDataChannels(
