@@ -51,52 +51,12 @@ $ rye run python -m build
 
 これで dist/ 以下に `*.whl` ファイルが作成されます。
 
-## サンプルの実行
-
-### サンプルの取得
-
-```console
-$ git clone https://github.com/shiguredo/sora-python-sdk-samples
-```
-
-### sora-python-sdk をビルド
-
-```console
-$ rye sync
-$ rye run python run.py
-```
-
-### サンプル実行
-
-**sora-python-sdk リポジトリで行ってください**
-
-```console
-$ rye run python /path/to/sora-python-sdk-samples/recvonly/recvonly.py
-```
-
 ## 実装上の注意
 
 - Sora Python SDK のコールバックメソッドは、Python ランタイムのスレッドではなく、 C++ で実装された処理を実行するために別に立てたスレッドから呼び出されるため、以下の点に注意する必要があります:
   - コールバックの中で例外を使う場合には、必ずコールバック内でキャッチして外に漏らしてはいけません （例外が外に漏れると Python プログラムが異常終了します）
   - コールバック処理の中にブロックする処理を記述してはいけません （コールバック時呼び出しスレッド上では WebRTC 通信を実現する諸々の処理も走っているので、ブロックするとそれらの実行を阻害してしまう）
 - 一度切断された Sora インスタンスを使い回して、新しい接続を始めることはできません
-
-Ubuntu の場合は追加で以下の準備が必要：
-
-```console
-$ sudo apt install libportaudio2
-$ pip install opencv-python opencv-python-headless sounddevice
-```
-
-Jetson の場合は以下の準備が必要：
-
-```console
-$ sudo apt install libopencv libopencv-python libportaudio2
-$ pip install sounddevice
-```
-
-Python は Ubuntu 20.04 標準の Python (Python 3.8) を利用して下さい。
-また、venv や Rye は利用せずに実行して下さい。
 
 ## システム条件
 
