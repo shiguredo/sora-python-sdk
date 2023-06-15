@@ -11,6 +11,10 @@
 
 ## develop
 
+- [UPDATE] boost のバージョンを 1.82.0 に更新する
+- [UPDATE] libwebrtc のバージョンを m114.5735.2.0 に更新する
+- [UPDATE] Sora C++ SDK のバージョンを 2023.6.0 に更新する
+    - @sile
 - [UPDATE] `Sora.connect()` メソッドにバリデーションを追加する
     - 以下のケースでは例外を送出するようにする:
         - `connect()` 呼び出し後に、同じインスタンスで再度 `connect()` を呼び出した場合
