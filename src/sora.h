@@ -18,9 +18,13 @@ class Sora : public DisposePublisher {
   ~Sora();
 
   std::shared_ptr<SoraConnection> CreateConnection(
+      // 必須パラメータ
       const std::string& signaling_url,
       const std::string& role,
       const std::string& channel_id,
+
+      // オプショナルパラメータ
+      // （Python 側で省略するか None が指定された場合には C++ SDK のデフォルト値が使われる）
       std::optional<std::string> client_id,
       std::optional<std::string> bundle_id,
       const nb::handle& metadata,
