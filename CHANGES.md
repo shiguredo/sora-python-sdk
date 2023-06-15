@@ -11,6 +11,12 @@
 
 ## develop
 
+- [ADD] libwebrtc のログを有効にするための `enable_libwebrtc_log()` 関数を追加する
+    - `sora_sdk.enable_libwebrtc_log(sora_sdk.SoraLoggingSeverity.INFO)` といった感じで使用する
+    - ログレベル (severity) は libwebrtc 準拠で `VERBOSE`, `INFO`, `WARNIGN`, `ERROR`, `NONE` の五段階
+    - @sile
+- [CHANGE] デフォルトでは libwebrtc のログは出さないようにする
+    - @sile
 - [CHANGE] audio および video パラメータが None を受け取れるようにする
     - 今までは `bool` だったのを他のパラメータに合わせて `opitonal<bool>` に変更
     - @sile
