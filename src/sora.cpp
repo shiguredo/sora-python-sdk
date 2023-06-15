@@ -41,7 +41,18 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<int> data_channel_signaling_timeout,
     std::optional<int> disconnect_wait_timeout,
     std::optional<int> websocket_close_timeout,
-    std::optional<int> websocket_connection_timeout) {
+    std::optional<int> websocket_connection_timeout,
+    std::optional<int> audio_codec_lyra_bitrate,
+    std::optional<bool> audio_codec_lyra_usedtx,
+    std::optional<bool> check_lyra_version,
+    std::optional<std::string> audio_streaming_language_code,
+    std::optional<bool> insecure,
+    std::optional<std::string> client_cert,
+    std::optional<std::string> client_key,
+    std::optional<std::string> proxy_url,
+    std::optional<std::string> proxy_username,
+    std::optional<std::string> proxy_password,
+    std::optional<std::string> proxy_agent) {
   std::shared_ptr<SoraConnection> conn = std::make_shared<SoraConnection>(this);
   sora::SoraSignalingConfig config;
   config.pc_factory = factory_->GetPeerConnectionFactory();
@@ -115,6 +126,39 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   }
   if (websocket_connection_timeout) {
     config.websocket_connection_timeout = *websocket_connection_timeout;
+  }
+  if (audio_codec_lyra_bitrate) {
+    config.audio_codec_lyra_bitrate = *audio_codec_lyra_bitrate;
+  }
+  if (audio_codec_lyra_usedtx) {
+    config.audio_codec_lyra_usedtx = *audio_codec_lyra_usedtx;
+  }
+  if (check_lyra_version) {
+    config.check_lyra_version = *check_lyra_version;
+  }
+  if (audio_streaming_language_code) {
+    config.audio_streaming_language_code = *audio_streaming_language_code;
+  }
+  if (insecure) {
+    config.insecure = *insecure;
+  }
+  if (client_cert) {
+    config.client_cert = *client_cert;
+  }
+  if (client_key) {
+    config.client_key = *client_key;
+  }
+  if (proxy_url) {
+    config.proxy_url = *proxy_url;
+  }
+  if (proxy_username) {
+    config.proxy_username = *proxy_username;
+  }
+  if (proxy_password) {
+    config.proxy_password = *proxy_password;
+  }
+  if (proxy_agent) {
+    config.proxy_agent = *proxy_agent;
   }
   config.network_manager =
       factory_->GetConnectionContext()->default_network_manager();
