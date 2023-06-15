@@ -17,17 +17,31 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const std::string& signaling_url,
     const std::string& role,
     const std::string& channel_id,
-    const std::string& client_id,
+    std::optional<std::string> client_id,
+    std::optional<std::string> bundle_id,
     const nb::handle& metadata,
+    const nb::handle& signaling_notify_metadata,
     SoraTrackInterface* audio_source,
     SoraTrackInterface* video_source,
     bool audio,
     bool video,
     std::optional<std::string> audio_codec_type,
     std::optional<std::string> video_codec_type,
+    std::optional<int> video_bit_rate,
+    std::optional<int> audio_bit_rate,
+    std::optional<bool> simulcast,
+    std::optional<bool> spotlight,
+    std::optional<int> spotlight_number,
+    std::optional<std::string> simulcast_rid,
+    std::optional<std::string> spotlight_focus_rid,
+    std::optional<std::string> spotlight_unfocus_rid,
     const nb::handle& data_channels,
     std::optional<bool> data_channel_signaling,
-    std::optional<bool> ignore_disconnect_websocket) {
+    std::optional<bool> ignore_disconnect_websocket,
+    std::optional<int> data_channel_signaling_timeout,
+    std::optional<int> disconnect_wait_timeout,
+    std::optional<int> websocket_close_timeout,
+    std::optional<int> websocket_connection_timeout) {
   std::shared_ptr<SoraConnection> conn = std::make_shared<SoraConnection>(this);
   sora::SoraSignalingConfig config;
   config.pc_factory = factory_->GetPeerConnectionFactory();
@@ -35,7 +49,12 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   config.signaling_urls.push_back(signaling_url);
   config.role = role;
   config.channel_id = channel_id;
-  config.client_id = client_id;
+  if (client_id) {
+    config.client_id = *client_id;
+  }
+  if (bundle_id) {
+    config.bundle_id = *bundle_id;
+  }
   config.multistream = true;
   config.video = video;
   config.audio = audio;
@@ -45,14 +64,53 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   if (audio_codec_type) {
     config.audio_codec_type = *audio_codec_type;
   }
+  if (video_bit_rate) {
+    config.video_bit_rate = *video_bit_rate;
+  }
+  if (audio_bit_rate) {
+    config.audio_bit_rate = *audio_bit_rate;
+  }
   config.metadata =
       ConvertJsonValue(metadata, "Invalid JSON value in metadata");
+  config.signaling_notify_metadata =
+      ConvertJsonValue(signaling_notify_metadata,
+                       "Invalid JSON value in signaling_notify_metadata");
+  if (simulcast) {
+    config.simulcast = *simulcast;
+  }
+  if (spotlight) {
+    config.spotlight = *spotlight;
+  }
+  if (spotlight_number) {
+    config.spotlight_number = *spotlight_number;
+  }
+  if (simulcast_rid) {
+    config.simulcast_rid = *simulcast_rid;
+  }
+  if (spotlight_focus_rid) {
+    config.spotlight_focus_rid = *spotlight_focus_rid;
+  }
+  if (spotlight_unfocus_rid) {
+    config.spotlight_unfocus_rid = *spotlight_unfocus_rid;
+  }
   config.data_channels = ConvertDataChannels(data_channels);
   if (data_channel_signaling) {
     config.data_channel_signaling.emplace(*data_channel_signaling);
   }
   if (ignore_disconnect_websocket) {
     config.ignore_disconnect_websocket.emplace(*ignore_disconnect_websocket);
+  }
+  if (data_channel_signaling_timeout) {
+    config.data_channel_signaling_timeout = *data_channel_signaling_timeout;
+  }
+  if (disconnect_wait_timeout) {
+    config.disconnect_wait_timeout = *disconnect_wait_timeout;
+  }
+  if (websocket_close_timeout) {
+    config.websocket_close_timeout = *websocket_close_timeout;
+  }
+  if (websocket_connection_timeout) {
+    config.websocket_connection_timeout = *websocket_connection_timeout;
   }
   config.network_manager =
       factory_->GetConnectionContext()->default_network_manager();

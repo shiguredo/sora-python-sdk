@@ -21,17 +21,33 @@ class Sora : public DisposePublisher {
       const std::string& signaling_url,
       const std::string& role,
       const std::string& channel_id,
-      const std::string& client_id,
+      std::optional<std::string> client_id,
+      std::optional<std::string> bundle_id,
       const nb::handle& metadata,
+      const nb::handle& signaling_notify_metadata,
       SoraTrackInterface* audio_source,
       SoraTrackInterface* video_source,
       bool audio,
       bool video,
       std::optional<std::string> audio_codec_type,
       std::optional<std::string> video_codec_type,
+      std::optional<int> video_bit_rate,
+      std::optional<int> audio_bit_rate,
+      std::optional<bool> simulcast,
+      std::optional<bool> spotlight,
+      std::optional<int> spotlight_number,
+      std::optional<std::string> simulcast_rid,
+      std::optional<std::string> spotlight_focus_rid,
+      std::optional<std::string> spotlight_unfocus_rid,
       const nb::handle& data_channels,
       std::optional<bool> data_channel_signaling,
-      std::optional<bool> ignore_disconnect_websocket);
+      std::optional<bool> ignore_disconnect_websocket,
+      std::optional<int> data_channel_signaling_timeout,
+      std::optional<int> disconnect_wait_timeout,
+      std::optional<int> websocket_close_timeout,
+      std::optional<int> websocket_connection_timeout
+
+  );
 
   SoraAudioSource* CreateAudioSource(size_t channels, int sample_rate);
   SoraVideoSource* CreateVideoSource();
