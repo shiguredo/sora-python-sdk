@@ -11,6 +11,37 @@
 
 ## develop
 
+- [CHANGE] audio および video パラメータが None を受け取れるようにする
+    - 今までは `bool` だったのを他のパラメータに合わせて `opitonal<bool>` に変更
+    - @sile
+- [ADD] C++ SDK が提供して Python SDK が未提供だったシグナリングパラメータを追加する
+    - 以下のパラメータを追加する:
+        - video_bit_rate
+        - audio_bit_rate
+        - simulcast
+        - spotlight
+        - spotlight_nubmer
+        - simulcast_rid
+        - spotlight_focus_rid
+        - spotlight_unfocus_rid
+        - forwarding_filter
+        - data_channel_signaling_timeout
+        - disconnect_wait_timeout
+        - websocket_close_timeout
+        - websocket_connection_timeout
+        - audio_codec_lyra_bitrate
+        - audio_codec_lyra_usedtx
+        - check_lyra_version
+        - audio_streaming_language_code
+        - insecure
+        - client_cert
+        - client_key
+        - proxy_url
+        - proxy_username
+        - proxy_password
+        - proxy_agent
+    - いずれも未指定の場合には C++ SDK のデフォルト値が採用される
+    - @sile
 - [UPDATE] boost のバージョンを 1.82.0 に更新する
 - [UPDATE] libwebrtc のバージョンを m114.5735.2.0 に更新する
 - [UPDATE] Sora C++ SDK のバージョンを 2023.6.0 に更新する

@@ -44,7 +44,9 @@ void SoraConnection::Connect() {
     throw std::runtime_error("Already connected");
   }
   if (conn_ == nullptr) {
-    throw std::runtime_error("Already disconnected. Please create another Sora instance to establish a new connection.");
+    throw std::runtime_error(
+        "Already disconnected. Please create another Sora instance to "
+        "establish a new connection.");
   }
 
   conn_->Connect();

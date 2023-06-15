@@ -203,13 +203,32 @@ NB_MODULE(sora_sdk_ext, m) {
   nb::class_<Sora>(m, "Sora")
       .def(nb::init<bool>(), "use_hardware_encoder"_a = true)
       .def("create_connection", &Sora::CreateConnection, "signaling_url"_a,
-           "role"_a, "channel_id"_a, "client_id"_a = "",
-           "metadata"_a = nb::none(), "audio_source"_a = nb::none(),
-           "video_source"_a = nb::none(), "audio"_a = true, "video"_a = true,
+           "role"_a, "channel_id"_a, "client_id"_a = nb::none(),
+           "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),
+           "signaling_notify_metadata"_a = nb::none(),
+           "audio_source"_a = nb::none(), "video_source"_a = nb::none(),
+           "audio"_a = nb::none(), "video"_a = nb::none(),
            "audio_codec_type"_a = nb::none(), "video_codec_type"_a = nb::none(),
-           "data_channels"_a = nb::none(),
+           "video_bit_rate"_a = nb::none(), "audio_bit_rate"_a = nb::none(),
+           "simulcast"_a = nb::none(), "spotlight"_a = nb::none(),
+           "spotlight_number"_a = nb::none(), "simulcast_rid"_a = nb::none(),
+           "spotlight_focus_rid"_a = nb::none(),
+           "spotlight_unfocus_rid"_a = nb::none(),
+           "forwarding_filter"_a = nb::none(), "data_channels"_a = nb::none(),
            "data_channel_signaling"_a = nb::none(),
-           "ignore_disconnect_websocket"_a = nb::none())
+           "ignore_disconnect_websocket"_a = nb::none(),
+           "data_channel_signaling_timeout"_a = nb::none(),
+           "disconnect_wait_timeout"_a = nb::none(),
+           "websocket_close_timeout"_a = nb::none(),
+           "websocket_connection_timeout"_a = nb::none(),
+           "audio_codec_lyra_bitrate"_a = nb::none(),
+           "audio_codec_lyra_usedtx"_a = nb::none(),
+           "check_lyra_bitrate"_a = nb::none(),
+           "audio_streaming_language_code"_a = nb::none(),
+           "insecure"_a = nb::none(), "client_cert"_a = nb::none(),
+           "client_key"_a = nb::none(), "proxy_url"_a = nb::none(),
+           "proxy_username"_a = nb::none(), "proxy_password"_a = nb::none(),
+           "proxy_agent"_a = nb::none())
       .def("create_audio_source", &Sora::CreateAudioSource)
       .def("create_video_source", &Sora::CreateVideoSource);
 }
