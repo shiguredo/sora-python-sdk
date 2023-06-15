@@ -16,3 +16,4 @@ src/sora_sdk/model_coeffs/*
 
 # パッケージ
 /dist
+/wheelhouse
