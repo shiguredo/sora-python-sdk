@@ -45,9 +45,18 @@ class Sora : public DisposePublisher {
       std::optional<int> data_channel_signaling_timeout,
       std::optional<int> disconnect_wait_timeout,
       std::optional<int> websocket_close_timeout,
-      std::optional<int> websocket_connection_timeout
-
-  );
+      std::optional<int> websocket_connection_timeout,
+      std::optional<int> audio_codec_lyra_bitrate,
+      std::optional<bool> audio_codec_lyra_usedtx,
+      std::optional<bool> check_lyra_version,
+      std::optional<std::string> audio_streaming_language_code,
+      std::optional<bool> insecure,
+      std::optional<std::string> client_cert,
+      std::optional<std::string> client_key,
+      std::optional<std::string> proxy_url,
+      std::optional<std::string> proxy_username,
+      std::optional<std::string> proxy_password,
+      std::optional<std::string> proxy_agent);
 
   SoraAudioSource* CreateAudioSource(size_t channels, int sample_rate);
   SoraVideoSource* CreateVideoSource();

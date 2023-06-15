@@ -220,7 +220,15 @@ NB_MODULE(sora_sdk_ext, m) {
            "data_channel_signaling_timeout"_a = nb::none(),
            "disconnect_wait_timeout"_a = nb::none(),
            "websocket_close_timeout"_a = nb::none(),
-           "websocket_connection_timeout"_a = nb::none())
+           "websocket_connection_timeout"_a = nb::none(),
+           "audio_codec_lyra_bitrate"_a = nb::none(),
+           "audio_codec_lyra_usedtx"_a = nb::none(),
+           "check_lyra_bitrate"_a = nb::none(),
+           "audio_streaming_language_code"_a = nb::none(),
+           "insecure"_a = nb::none(), "client_cert"_a = nb::none(),
+           "client_key"_a = nb::none(), "proxy_url"_a = nb::none(),
+           "proxy_username"_a = nb::none(), "proxy_password"_a = nb::none(),
+           "proxy_agent"_a = nb::none())
       .def("create_audio_source", &Sora::CreateAudioSource)
       .def("create_video_source", &Sora::CreateVideoSource);
 }
