@@ -1,6 +1,6 @@
 import os
 import sys
-
+import sysconfig
 from setuptools import setup
 from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 
@@ -13,15 +13,13 @@ from run import get_build_platform, PlatformTarget, cd  # noqa: E402
 
 
 def run_setup(build_platform, target_platform):
-    plat_name = None
-    if target_platform.os == 'jetson':
-        plat_name = 'linux-aarch64'
-
     class bdist_wheel(_bdist_wheel):
-        def finalize_options(self):
-            self.plat_name = plat_name
-            super().finalize_options()
+        def get_tag(self):
             self.root_is_pure = False
+            _, _, plat = super().get_tag()
+            self.root_is_pure = True
+            impl = 'cp' + sysconfig.get_config_var("py_version_nodot")
+            return impl, impl, plat
 
     setup(
         url="https://github.com/shiguredo/sora-python-sdk",

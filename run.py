@@ -10,7 +10,6 @@ import zipfile
 from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
 from pypath import get_python_version, get_python_include_dir, get_python_library
-from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 
 
 def mkdir_p(path: str):

@@ -7,9 +7,11 @@
 #   all-features: false
 
 -e file:.
+auditwheel==5.4.0
 build==0.10.0
 nanobind==1.4.0
 packaging==23.1
+pyelftools==0.29
 pyproject-hooks==1.0.0
 tomli==2.0.1
 wheel==0.40.0
