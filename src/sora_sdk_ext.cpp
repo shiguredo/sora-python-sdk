@@ -214,6 +214,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "spotlight_number"_a = nb::none(), "simulcast_rid"_a = nb::none(),
            "spotlight_focus_rid"_a = nb::none(),
            "spotlight_unfocus_rid"_a = nb::none(),
+           "forwarding_filter"_a = nb::none(),
            "data_channels"_a = nb::none(),
            "data_channel_signaling"_a = nb::none(),
            "ignore_disconnect_websocket"_a = nb::none(),

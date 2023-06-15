@@ -35,6 +35,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<std::string> simulcast_rid,
     std::optional<std::string> spotlight_focus_rid,
     std::optional<std::string> spotlight_unfocus_rid,
+    const nb::handle& forwarding_filter,
     const nb::handle& data_channels,
     std::optional<bool> data_channel_signaling,
     std::optional<bool> ignore_disconnect_websocket,
@@ -108,6 +109,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   if (spotlight_unfocus_rid) {
     config.spotlight_unfocus_rid = *spotlight_unfocus_rid;
   }
+  config.forwarding_filter = ConvertForwardingFilter(forwarding_filter);
   config.data_channels = ConvertDataChannels(data_channels);
   if (data_channel_signaling) {
     config.data_channel_signaling.emplace(*data_channel_signaling);
@@ -226,6 +228,42 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
   }
 
   throw nb::type_error(error_message);
+}
+
+boost::optional<sora::SoraSignalingConfig::ForwardingFilter> Sora::ConvertForwardingFilter(
+    const nb::handle value) {
+
+  auto forwarding_filter_value =
+    ConvertJsonValue(value, "Invalid JSON value in forwarding_filter");
+  if (forwarding_filter_value.is_null()) {
+    return boost::none;
+  }
+
+  sora::SoraSignalingConfig::ForwardingFilter filter;
+
+
+  try {
+    auto object = forwarding_filter_value.as_object();
+    filter.action = object["action"].as_string();
+    for (auto or_rule : object["rules"].as_array()) {
+      std::vector<sora::SoraSignalingConfig::ForwardingFilter::Rule> rules;
+      for (auto and_rule_value : or_rule.as_array()) {
+        auto and_rule = and_rule_value.as_object();
+        sora::SoraSignalingConfig::ForwardingFilter::Rule rule;
+        rule.field = and_rule["field"].as_string();
+        rule.op = and_rule["op"].as_string();
+        for (auto value : and_rule["values"].as_array()) {
+          rule.values.push_back(value.as_string().c_str());
+        }
+        rules.push_back(rule);
+      }
+      filter.rules.push_back(rules);
+    }
+  } catch (std::exception&) {
+    throw nb::type_error("Invalid forwarding_filter");
+  }
+
+  return filter;
 }
 
 std::vector<sora::SoraSignalingConfig::DataChannel> Sora::ConvertDataChannels(

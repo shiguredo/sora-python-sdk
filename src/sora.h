@@ -39,6 +39,7 @@ class Sora : public DisposePublisher {
       std::optional<std::string> simulcast_rid,
       std::optional<std::string> spotlight_focus_rid,
       std::optional<std::string> spotlight_unfocus_rid,
+      const nb::handle& forwarding_filter,
       const nb::handle& data_channels,
       std::optional<bool> data_channel_signaling,
       std::optional<bool> ignore_disconnect_websocket,
@@ -65,6 +66,8 @@ class Sora : public DisposePublisher {
   boost::json::value ConvertJsonValue(nb::handle value,
                                       const char* error_message);
   std::vector<sora::SoraSignalingConfig::DataChannel> ConvertDataChannels(
+      const nb::handle value);
+  boost::optional<sora::SoraSignalingConfig::ForwardingFilter> ConvertForwardingFilter(
       const nb::handle value);
 
   std::unique_ptr<SoraFactory> factory_;
