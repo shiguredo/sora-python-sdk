@@ -23,8 +23,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const nb::handle& signaling_notify_metadata,
     SoraTrackInterface* audio_source,
     SoraTrackInterface* video_source,
-    bool audio,
-    bool video,
+    std::optional<bool> audio,
+    std::optional<bool> video,
     std::optional<std::string> audio_codec_type,
     std::optional<std::string> video_codec_type,
     std::optional<int> video_bit_rate,
@@ -56,8 +56,12 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     config.bundle_id = *bundle_id;
   }
   config.multistream = true;
-  config.video = video;
-  config.audio = audio;
+  if (video) {
+    config.video = *video;
+  }
+  if (audio) {
+    config.audio = *audio;
+  }
   if (video_codec_type) {
     config.video_codec_type = *video_codec_type;
   }
