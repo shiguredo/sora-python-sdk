@@ -133,6 +133,10 @@ jobs:
           path: dist/
 
   publish_wheel:
+    # if: contains(github.ref, 'tags/202')
+    needs:
+      - build_linux_macos
+      - build_windows
     strategy:
       fail-fast: false
       matrix:
