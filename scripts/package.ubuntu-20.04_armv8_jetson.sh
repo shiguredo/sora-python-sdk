@@ -2,7 +2,7 @@
 
 set -ex
 
-cd `dirname $0`
+cd `dirname $0`/..
 
 WITH_AUDITWHEEL=0
 if [ "$1" == "--with-auditwheel" ]; then
@@ -40,7 +40,7 @@ if [ $WITH_AUDITWHEEL -ne 0 ]; then
     set -ex
 
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      coreutils python3 python3-pip
+      coreutils python3 python3-pip unzip
 
     pip3 download --only-binary :all: auditwheel
     cp -r *.whl /root/rootfs/
@@ -57,10 +57,13 @@ if [ $WITH_AUDITWHEEL -ne 0 ]; then
     popd
 
     cp -r /root/sora-python-sdk /root/rootfs/sora-python-sdk
+    rm -rf /root/rootfs/sora-python-sdk/wheelhouse
     chroot /root/rootfs /bin/bash -c '\''
+      set -ex
       pip3 install *.whl
       cd /sora-python-sdk
-      PATH=/sora-python-sdk/patchelf/bin:$PATH auditwheel repair --plat manylinux_2_31_aarch64 dist/*.whl
+      LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/aarch64-linux-gnu/tegra ./scripts/fix_shared_lib.sh src/sora_sdk/*.so > excludes
+      PATH=/sora-python-sdk/patchelf/bin:$PATH auditwheel repair --plat manylinux_2_31_aarch64 dist/*.whl `cat excludes`
     '\''
   '
   docker container cp $CONTID:/root/rootfs/sora-python-sdk/wheelhouse/ ./tmp2/
