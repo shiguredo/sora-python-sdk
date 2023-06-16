@@ -106,7 +106,7 @@ void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
 
 bool SoraConnection::SendDataChannel(const std::string& label,
                                      nb::bytes& data) {
-  return conn_->SendDataChannel(label, std::string(data.c_str()));
+  return conn_->SendDataChannel(label, std::string(data.c_str(), data.size()));
 }
 
 void SoraConnection::OnSetOffer(std::string offer) {
@@ -154,7 +154,7 @@ void SoraConnection::OnPush(std::string text) {
 
 void SoraConnection::OnMessage(std::string label, std::string data) {
   if (on_message_) {
-    on_message_(label, nb::bytes(data.c_str()));
+    on_message_(label, nb::bytes(data.c_str(), data.size()));
   }
 }
 
