@@ -160,6 +160,7 @@ jobs:
             python_version: "3.11"
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # テスト用
     environment:
       name: testpypi
       url: https://test.pypi.org/project/sora-sdk/
@@ -176,6 +177,21 @@ jobs:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
           verbose: true
+    # 本番用
+    # environment:
+    #   name: pypi
+    #   url: https://pypi.org/project/sora-sdk/
+    # permissions:
+    #   id-token: write
+    # steps:
+    #   - uses: actions/download-artifact@v3
+    #     with:
+    #       name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+    #       path: dist
+    #   - name: Publish package to TestPyPI
+    #     uses: pypa/gh-action-pypi-publish@release/v1
+    #     with:
+    #       password: ${{ secrets.PYPI_API_TOKEN }}
 
   # build_macos_arm64_job:
   #   runs-on: [self-hosted, macos, arm64]
