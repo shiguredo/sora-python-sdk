@@ -70,7 +70,9 @@ jobs:
             curl -LO https://github.com/NixOS/patchelf/releases/download/0.14.3/patchelf-0.14.3-x86_64.tar.gz
             tar -xf patchelf-0.14.3-x86_64.tar.gz
           popd
-          PATH=`pwd`/patchelf/bin:$PATH rye run python -m auditwheel repair --plat ${{ matrix.platform.auditwheel_plat }} dist/*.whl
+          # 共有ライブラリを除ける
+          ./scripts/fix_shared_lib.sh src/sora_sdk/*.so > excludes
+          PATH=`pwd`/patchelf/bin:$PATH rye run python -m auditwheel repair --plat ${{ matrix.platform.auditwheel_plat }} dist/*.whl `cat excludes`
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
 
       # Jetson 向け
@@ -83,7 +85,7 @@ jobs:
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
           rye run python run.py
           # auditwheel も適用する
-          ./package.ubuntu-20.04_armv8_jetson.sh --with-auditwheel
+          ./scripts/package.ubuntu-20.04_armv8_jetson.sh --with-auditwheel
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
         env:
           SORA_SDK_TARGET: ubuntu-20.04_armv8_jetson
