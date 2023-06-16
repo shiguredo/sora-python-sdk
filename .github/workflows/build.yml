@@ -132,6 +132,47 @@ jobs:
           name: windows-2019_python-${{ matrix.python_version }}
           path: dist/
 
+  publish_wheel:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: ubuntu-22.04_x86_64
+          - name: ubuntu-20.04_armv8_jetson
+          - name: macos-12_arm64
+          - name: macos-13_arm64
+          - name: windows-2019
+        python_version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+        exclude:
+          - platform: {name: ubuntu-20.04_armv8_jetson}
+            python_version: "3.9"
+          - platform: { name: ubuntu-20.04_armv8_jetson}
+            python_version: "3.10"
+          - platform: {name: ubuntu-20.04_armv8_jetson}
+            python_version: "3.11"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/sora-sdk/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+          path: dist
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
   # build_macos_arm64_job:
   #   runs-on: [self-hosted, macos, arm64]
   #   timeout-minutes: 10
