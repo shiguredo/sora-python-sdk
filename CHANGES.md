@@ -11,6 +11,10 @@
 
 ## develop
 
+- [UPDATE] sora_client に "Sora Python SDK {PYTHON_SDK_VERSION}" を設定する
+    - 今までは C++ SDK のデフォルト値が使用されていた
+    - PYTHON_SDK_VERSION の部分には pyproject.toml の project.version に記載の値が使用される
+    - @sile
 - [FIX] 0 を途中で含むデータを送受信すると途中で途切れる問題を修正
     - @sile
 - [ADD] libwebrtc のログを有効にするための `enable_libwebrtc_log()` 関数を追加する

@@ -163,6 +163,20 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
       factory_->GetConnectionContext()->default_network_manager();
   config.socket_factory =
       factory_->GetConnectionContext()->default_socket_factory();
+
+  config.sora_client = "Sora Python SDK";
+  try {
+    nb::module_ importlib_metadata = nb::module_::import_("importlib.metadata");
+    auto version = importlib_metadata.attr("version")("sora_sdk");
+    if (nb::isinstance<const char*>(version)) {
+      config.sora_client += " ";
+      config.sora_client += nb::cast<const char*>(version);
+    }
+  } catch (std::exception&) {
+    // バージョン情報の取得に失敗した場合にはエラーにはせずに単に無視する
+    // なお、基本的にここに来ることはないはずだけど、念の為にハンドリングしている
+  }
+
   conn->Init(config);
   if (audio_source) {
     conn->SetAudioTrack(audio_source);
