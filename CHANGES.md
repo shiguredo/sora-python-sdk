@@ -11,6 +11,8 @@
 
 ## develop
 
+- [FIX] 0 を途中で含むデータを送受信すると途中で途切れる問題を修正
+    - @sile
 - [ADD] libwebrtc のログを有効にするための `enable_libwebrtc_log()` 関数を追加する
     - `sora_sdk.enable_libwebrtc_log(sora_sdk.SoraLoggingSeverity.INFO)` といった感じで使用する
     - ログレベル (severity) は libwebrtc 準拠で `VERBOSE`, `INFO`, `WARNIGN`, `ERROR`, `NONE` の五段階
