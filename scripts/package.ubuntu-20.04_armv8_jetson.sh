@@ -31,7 +31,7 @@ curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" bash
 cd /root/sora-python-sdk
 rm -rf dist/ wheelhouse/
 rye sync
-rye run python -m build
+SORA_SDK_TARGET=ubuntu-20.04_armv8_jetson rye run python -m build
 '
 docker container cp $CONTID:/root/sora-python-sdk/dist/ ./tmp/
 if [ $WITH_AUDITWHEEL -ne 0 ]; then
