@@ -65,8 +65,8 @@ $ rye run python -m build
 
 ## 対応プラットフォーム
 
-- Windows 10 1809 x86_64 以降
-- macOS 12.4 arm64 以降
+- Windows 11 x86_64 以降
+- macOS 13 arm64 以降
 - Ubuntu 22.04 x86_64
 - Ubuntu 20.04 arm64
   - NVIDIA Jetson JetPack SDK 5 系
