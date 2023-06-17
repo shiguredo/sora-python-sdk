@@ -167,7 +167,10 @@ jobs:
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist
-      - run: mv dist/*.tar.gz ./
+      - run: |
+          if [ -e dist/*.tar.gz ]; then
+            mv dist/*.tar.gz ./
+          fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
         if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.8' }}
@@ -183,6 +186,13 @@ jobs:
     #     with:
     #       name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
     #       path: dist
+    #   - run: |
+    #       if [ -e dist/*.tar.gz ]; then
+    #         mv dist/*.tar.gz ./
+    #       fi
+    #   # matrix の中で１個だけソースディストリビューション用のデータを残しておく
+    #   - run: mv *.tar.gz dist/
+    #     if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.8' }}
     #   - name: Publish package to TestPyPI
     #     uses: pypa/gh-action-pypi-publish@release/v1
     #     with:
