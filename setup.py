@@ -15,7 +15,7 @@ from run import get_build_platform, PlatformTarget, cd  # noqa: E402
 def run_setup(build_platform, target_platform):
     plat = None
     if target_platform.os == 'jetson':
-        plat = 'manylinux_2_31_aarch64'
+        plat = 'manylinux_2_17_aarch64.manylinux2014_aarch64'
     elif target_platform.os == 'ubuntu' and target_platform.arch == 'x86_64':
         if target_platform.osver == '20.04':
             plat = 'manylinux_2_31_x86_64'
