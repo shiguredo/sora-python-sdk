@@ -20,11 +20,6 @@ jobs:
           - name: ubuntu-20.04_armv8_jetson
             runs_on: ubuntu-20.04
             os: ubuntu
-          - name: macos-12_arm64
-            runs_on: macos-12
-            os: macos
-            python_host_platform: "macosx-12.0-arm64"
-            archflags: "-arch arm64"
           - name: macos-13_arm64
             runs_on: macos-13
             os: macos
@@ -144,7 +139,6 @@ jobs:
         platform:
           - name: ubuntu-22.04_x86_64
           - name: ubuntu-20.04_armv8_jetson
-          - name: macos-12_arm64
           - name: macos-13_arm64
           - name: windows-2019
         python_version:
@@ -161,7 +155,6 @@ jobs:
             python_version: "3.11"
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    # テスト用
     steps:
       - uses: actions/download-artifact@v3
         with:
@@ -174,37 +167,17 @@ jobs:
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
         if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.8' }}
-      - name: Publish package to TestPyPI
+
+      # テスト用
+      # - name: Publish package to TestPyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      #     repository-url: https://test.pypi.org/legacy/
+      #     verbose: true
+
+      # 本番用
+      - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
-          verbose: true
-    # 本番用
-    # steps:
-    #   - uses: actions/download-artifact@v3
-    #     with:
-    #       name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
-    #       path: dist
-    #   - run: |
-    #       if [ -e dist/*.tar.gz ]; then
-    #         mv dist/*.tar.gz ./
-    #       fi
-    #   # matrix の中で１個だけソースディストリビューション用のデータを残しておく
-    #   - run: mv *.tar.gz dist/
-    #     if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.8' }}
-    #   - name: Publish package to TestPyPI
-    #     uses: pypa/gh-action-pypi-publish@release/v1
-    #     with:
-    #       password: ${{ secrets.PYPI_API_TOKEN }}
-
-  # build_macos_arm64_job:
-  #   runs-on: [self-hosted, macos, arm64]
-  #   timeout-minutes: 10
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Build
-  #       run: |
-  #         python3 -m venv .venv
-  #         source .venv/bin/activate
-  #         pip3 install -v .
+          password: ${{ secrets.PYPI_API_TOKEN }}
