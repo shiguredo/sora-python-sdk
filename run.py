@@ -20,6 +20,24 @@ def mkdir_p(path: str):
     print(f'mkdir -p {path} => directory created')
 
 
+if platform.system() == 'Windows':
+    PATH_SEPARATOR = ';'
+else:
+    PATH_SEPARATOR = ':'
+
+
+def add_path(path: str, is_after=False):
+    # logging.debug(f'add_path: {path}')
+    if 'PATH' not in os.environ:
+        os.environ['PATH'] = path
+        return
+
+    if is_after:
+        os.environ['PATH'] = os.environ['PATH'] + PATH_SEPARATOR + path
+    else:
+        os.environ['PATH'] = path + PATH_SEPARATOR + os.environ['PATH']
+
+
 def read_version_file(path: str) -> Dict[str, str]:
     versions = {}
 
@@ -406,6 +424,13 @@ def install_sora(version, source_dir, install_dir, platform: str):
     extract(archive, output_dir=install_dir, output_dirname='sora')
 
 
+@versioned
+def install_cmake(version, source_dir, install_dir, platform: str, ext):
+    url = f'https://github.com/Kitware/CMake/releases/download/v{version}/cmake-{version}-{platform}.{ext}'
+    path = download(url, source_dir)
+    extract(path, install_dir, 'cmake')
+
+
 class PlatformTarget(object):
     def __init__(self, os, osver, arch):
         self.os = os
@@ -562,6 +587,33 @@ def install_deps(build_platform: PlatformTarget, target_platform: PlatformTarget
         'platform': target_platform.package_name,
     }
     install_sora(**install_sora_args)
+
+    # CMake
+    install_cmake_args = {
+        'version': version['CMAKE_VERSION'],
+        'version_file': os.path.join(install_dir, 'cmake.version'),
+        'source_dir': source_dir,
+        'install_dir': install_dir,
+        'platform': '',
+        'ext': 'tar.gz'
+    }
+    if build_platform.os == 'windows' and build_platform.arch == 'x86_64':
+        install_cmake_args['platform'] = 'windows-x86_64'
+        install_cmake_args['ext'] = 'zip'
+    elif build_platform.os == 'macos':
+        install_cmake_args['platform'] = 'macos-universal'
+    elif build_platform.os == 'ubuntu' and build_platform.arch == 'x86_64':
+        install_cmake_args['platform'] = 'linux-x86_64'
+    elif build_platform.os == 'ubuntu' and build_platform.arch == 'arm64':
+        install_cmake_args['platform'] = 'linux-aarch64'
+    else:
+        raise Exception('Failed to install CMake')
+    install_cmake(**install_cmake_args)
+
+    if build_platform.os == 'macos':
+        add_path(os.path.join(install_dir, 'cmake', 'CMake.app', 'Contents', 'bin'))
+    else:
+        add_path(os.path.join(install_dir, 'cmake', 'bin'))
 
 
 def cmake_path(path: str) -> str:
