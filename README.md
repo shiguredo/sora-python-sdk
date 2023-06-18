@@ -1,7 +1,8 @@
 # Sora Python SDK
 
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/shiguredo/sora-python-sdk.svg)](https://github.com/shiguredo/sora-python-sdk)
+[![PyPI](https://img.shields.io/pypi/v/sora_sdk)](https://pypi.org/project/sora-sdk/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-![PyPI](https://img.shields.io/pypi/v/sora_sdk)
 
 Sora Python SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp/) の Python クライアントアプリケーションを開発するためのライブラリです。[Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) をベースにしています。
 
@@ -53,13 +54,6 @@ $ pip install sora_sdk
 $ rye add sora_sdk
 ```
 
-## 実装上の注意
-
-- Sora Python SDK のコールバックメソッドは、Python ランタイムのスレッドではなく、 C++ で実装された処理を実行するために別に立てたスレッドから呼び出されるため、以下の点に注意する必要があります:
-  - コールバックの中で例外を使う場合には、必ずコールバック内でキャッチして外に漏らしてはいけません （例外が外に漏れると Python プログラムが異常終了します）
-  - コールバック処理の中にブロックする処理を記述してはいけません （コールバック時呼び出しスレッド上では WebRTC 通信を実現する諸々の処理も走っているので、ブロックするとそれらの実行を阻害してしまう）
-- 一度切断された Sora インスタンスを使い回して、新しい接続を始めることはできません
-
 ## システム条件
 
 - WebRTC SFU Sora 2023.1.0 以降
@@ -76,7 +70,7 @@ $ rye add sora_sdk
 
 ## 対応機能
 
-TBD
+- VP8 / VP9 / AV1 / H.264 のハードウェアアクセラレーター (HWA) 対応
 
 ## 優先実装
 
