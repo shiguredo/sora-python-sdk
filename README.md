@@ -37,7 +37,7 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 [Sora Python SDK](https://sora-python-sdk.shiguredo.jp/)
 
-## インストール
+## sora_sdk パッケージの追加
 
 ### pip
 
@@ -51,7 +51,6 @@ $ pip install sora_sdk
 
 ```
 $ rye add sora_sdk
-$ rye sync
 ```
 
 ## 実装上の注意
