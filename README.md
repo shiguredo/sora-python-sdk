@@ -37,20 +37,20 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 https://sora-python-sdk.shiguredo.jp/
 
-#### Rye
+## 利用方法
 
-[Rye](https://github.com/mitsuhiko/rye) というパッケージマネージャーを利用しています。
-
-Linux と macOS の場合は `curl -sSf https://rye-up.com/get | bash` でインストール可能です。
-Windows は https://rye-up.com/ の Installation Instructions を確認してください。
+### pip
 
 ```console
-$ rye sync
-$ rye run python run.py
-$ rye run python -m build
+$ pip install sora_sdk
 ```
 
-これで dist/ 以下に `*.whl` ファイルが作成されます。
+### Rye
+
+```
+$ rye add sora_sdk
+$ rye sync
+```
 
 ## 実装上の注意
 
@@ -70,9 +70,8 @@ $ rye run python -m build
 - macOS 13 arm64 以降
 - Ubuntu 22.04 x86_64
 - Ubuntu 20.04 arm64
+  - Python 3.8 のみ対応
   - NVIDIA Jetson JetPack SDK 5 系
-
-### 未検証
 
 ## 対応機能
 
@@ -80,13 +79,9 @@ TBD
 
 ## 優先実装
 
-優先実装とは Sora のライセンスを契約頂いているお客様限定で Sora Python SDK の実装予定機能を有償にて前倒しで実装することです。
-
-### 優先実装が可能な機能一覧
+優先実装とは Sora のライセンスを契約頂いているお客様向けに Sora Python SDK の実装予定機能を有償にて前倒しで実装することです。
 
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
-
-TBD
 
 ## サポートについて
 
