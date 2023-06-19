@@ -11,6 +11,8 @@
 
 ## develop
 
+- [FIX] 転送フィルターのルールの "operator" フィールドが誤って "op" になっていたのを修正する
+  - @sile
 - [UPDATE] nanobind の最小バージョンを 1.4.0 にする
   - @voluntas
 - [UPDATE] sora_client に "Sora Python SDK {PYTHON_SDK_VERSION}" を設定する
