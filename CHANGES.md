@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] C++ SDK のバージョンを 2023.7.0 に上げる
+  - @sile
 - [UPDATE] 映像コーデックパラメータを指定可能にする
   - `Sora.create_connection()` の引数に以下を追加:
     - `video_vp9_params`
