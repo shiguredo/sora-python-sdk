@@ -52,3 +52,14 @@ rtc::scoped_refptr<webrtc::ConnectionContext>
 SoraFactory::GetConnectionContext() const {
   return context_->connection_context();
 };
+
+rtc::NetworkManager* SoraFactory::default_network_manager() {
+  return context_->signaling_thread()->BlockingCall([this]() {
+    return context_->connection_context()->default_network_manager();
+  });
+}
+rtc::PacketSocketFactory* SoraFactory::default_socket_factory() {
+  return context_->signaling_thread()->BlockingCall([this]() {
+    return context_->connection_context()->default_socket_factory();
+  });
+}
