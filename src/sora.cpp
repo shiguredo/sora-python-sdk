@@ -87,16 +87,16 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     config.audio_bit_rate = *audio_bit_rate;
   }
   if (video_vp9_params) {
-    config.video_vp9_params =
-        ConvertJsonValue(video_vp9_params, "Invalid JSON value in video_vp9_params");
+    config.video_vp9_params = ConvertJsonValue(
+        video_vp9_params, "Invalid JSON value in video_vp9_params");
   }
   if (video_av1_params) {
-    config.video_av1_params =
-        ConvertJsonValue(video_av1_params, "Invalid JSON value in video_av1_params");
+    config.video_av1_params = ConvertJsonValue(
+        video_av1_params, "Invalid JSON value in video_av1_params");
   }
   if (video_h264_params) {
-    config.video_h264_params =
-        ConvertJsonValue(video_h264_params, "Invalid JSON value in video_h264_params");
+    config.video_h264_params = ConvertJsonValue(
+        video_h264_params, "Invalid JSON value in video_h264_params");
   }
   config.metadata =
       ConvertJsonValue(metadata, "Invalid JSON value in metadata");
