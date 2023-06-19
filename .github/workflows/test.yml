@@ -18,6 +18,9 @@ jobs:
     steps:
       - uses: sksat/setup-rye@v0.1.0
       - uses: actions/checkout@v3
+      - run: |
+          sudo apt-get update
+          sudo apt-get -y install libva-dev libdrm-dev
       - run: rye sync
       - run: rye run python run.py
       - run: rye run pytest
