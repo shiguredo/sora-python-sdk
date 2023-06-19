@@ -260,7 +260,7 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
         auto and_rule = and_rule_value.as_object();
         sora::SoraSignalingConfig::ForwardingFilter::Rule rule;
         rule.field = and_rule["field"].as_string();
-        rule.op = and_rule["op"].as_string();
+        rule.op = and_rule["operator"].as_string();
         for (auto value : and_rule["values"].as_array()) {
           rule.values.push_back(value.as_string().c_str());
         }
