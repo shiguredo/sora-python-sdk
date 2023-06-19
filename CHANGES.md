@@ -11,6 +11,12 @@
 
 ## develop
 
+- [UPDATE] 映像コーデックパラメータを指定可能にする
+  - `Sora.create_connection()` の引数に以下を追加:
+    - `video_vp9_params`
+    - `video_av1_params`
+    - `video_h264_params`
+  - @sile
 - [FIX] 転送フィルターのルールの "operator" フィールドが誤って "op" になっていたのを修正する
   - @sile
 - [UPDATE] nanobind の最小バージョンを 1.4.0 にする
