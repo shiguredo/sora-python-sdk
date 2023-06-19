@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] `create_video_source()` と `set_enabled()` の引数に名前をつける（キーワード引数で呼べるようにする）
+  - @sile
 - [UPDATE] C++ SDK のバージョンを 2023.7.0 に上げる
   - @sile
 - [UPDATE] 映像コーデックパラメータを指定可能にする

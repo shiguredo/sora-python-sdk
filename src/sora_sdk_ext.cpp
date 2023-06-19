@@ -144,7 +144,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_ro("id", &SoraTrackInterface::id)
       .def_prop_ro("enabled", &SoraTrackInterface::enabled)
       .def_prop_ro("state", &SoraTrackInterface::state)
-      .def("set_enabled", &SoraTrackInterface::set_enabled);
+      .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
 
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
       .def("on_data", nb::overload_cast<const int16_t*, size_t, double>(
@@ -240,6 +240,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "client_key"_a = nb::none(), "proxy_url"_a = nb::none(),
            "proxy_username"_a = nb::none(), "proxy_password"_a = nb::none(),
            "proxy_agent"_a = nb::none())
-      .def("create_audio_source", &Sora::CreateAudioSource)
+      .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
+           "sample_rate"_a)
       .def("create_video_source", &Sora::CreateVideoSource);
 }
