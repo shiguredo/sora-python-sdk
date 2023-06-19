@@ -8,7 +8,6 @@ def on_disconnect(error_code, message_abc: str):
     print(f'on_disconnect: error_code: {error_code}, message: {message_abc}')
 
 
-# @pytest.mark.timeout(10)
 def test_sendonly():
     sora = Sora()
 
