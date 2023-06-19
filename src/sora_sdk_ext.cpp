@@ -2,6 +2,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/function.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 
@@ -9,6 +10,7 @@
 #include "sora_audio_sink.h"
 #include "sora_audio_source.h"
 #include "sora_connection.h"
+#include "sora_log.h"
 #include "sora_track_interface.h"
 #include "sora_video_sink.h"
 #include "sora_video_source.h"
@@ -16,7 +18,7 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-/* 
+/*
  * コールバック関数のメンバー変数は Py_tp_traverse で visit コールバックを呼び出すようにする
  * やっておかないと終了時にリークエラーが発生する
  */
@@ -128,12 +130,21 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("LIVE", webrtc::MediaStreamTrackInterface::TrackState::kLive)
       .value("ENDED", webrtc::MediaStreamTrackInterface::TrackState::kEnded);
 
+  nb::enum_<rtc::LoggingSeverity>(m, "SoraLoggingSeverity", nb::is_arithmetic())
+      .value("VERBOSE", rtc::LoggingSeverity::LS_VERBOSE)
+      .value("INFO", rtc::LoggingSeverity::LS_INFO)
+      .value("WARNING", rtc::LoggingSeverity::LS_WARNING)
+      .value("ERROR", rtc::LoggingSeverity::LS_ERROR)
+      .value("NONE", rtc::LoggingSeverity::LS_NONE);
+
+  m.def("enable_libwebrtc_log", &EnableLibwebrtcLog);
+
   nb::class_<SoraTrackInterface>(m, "SoraTrackInterface")
       .def_prop_ro("kind", &SoraTrackInterface::kind)
       .def_prop_ro("id", &SoraTrackInterface::id)
       .def_prop_ro("enabled", &SoraTrackInterface::enabled)
       .def_prop_ro("state", &SoraTrackInterface::state)
-      .def("set_enabled", &SoraTrackInterface::set_enabled);
+      .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
 
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
       .def("on_data", nb::overload_cast<const int16_t*, size_t, double>(
@@ -189,6 +200,8 @@ NB_MODULE(sora_sdk_ext, m) {
                              nb::type_slots(connection_slots))
       .def("connect", &SoraConnection::Connect)
       .def("disconnect", &SoraConnection::Disconnect)
+      .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a,
+           "data"_a)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
       .def_rw("on_notify", &SoraConnection::on_notify_)
@@ -198,10 +211,36 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_data_channel", &SoraConnection::on_data_channel_);
 
   nb::class_<Sora>(m, "Sora")
-      .def(nb::init<bool>(), "use_hardware_encoder"_a = false)
+      .def(nb::init<bool>(), "use_hardware_encoder"_a = true)
       .def("create_connection", &Sora::CreateConnection, "signaling_url"_a,
-           "role"_a, "channel_id"_a, "client_id"_a = "", "metadata"_a = "",
-           "audio_source"_a = nb::none(), "video_source"_a = nb::none())
-      .def("create_audio_source", &Sora::CreateAudioSource)
+           "role"_a, "channel_id"_a, "client_id"_a = nb::none(),
+           "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),
+           "signaling_notify_metadata"_a = nb::none(),
+           "audio_source"_a = nb::none(), "video_source"_a = nb::none(),
+           "audio"_a = nb::none(), "video"_a = nb::none(),
+           "audio_codec_type"_a = nb::none(), "video_codec_type"_a = nb::none(),
+           "video_bit_rate"_a = nb::none(), "audio_bit_rate"_a = nb::none(),
+           "video_vp9_params"_a = nb::none(), "video_av1_params"_a = nb::none(),
+           "video_h264_params"_a = nb::none(), "simulcast"_a = nb::none(),
+           "spotlight"_a = nb::none(), "spotlight_number"_a = nb::none(),
+           "simulcast_rid"_a = nb::none(), "spotlight_focus_rid"_a = nb::none(),
+           "spotlight_unfocus_rid"_a = nb::none(),
+           "forwarding_filter"_a = nb::none(), "data_channels"_a = nb::none(),
+           "data_channel_signaling"_a = nb::none(),
+           "ignore_disconnect_websocket"_a = nb::none(),
+           "data_channel_signaling_timeout"_a = nb::none(),
+           "disconnect_wait_timeout"_a = nb::none(),
+           "websocket_close_timeout"_a = nb::none(),
+           "websocket_connection_timeout"_a = nb::none(),
+           "audio_codec_lyra_bitrate"_a = nb::none(),
+           "audio_codec_lyra_usedtx"_a = nb::none(),
+           "check_lyra_bitrate"_a = nb::none(),
+           "audio_streaming_language_code"_a = nb::none(),
+           "insecure"_a = nb::none(), "client_cert"_a = nb::none(),
+           "client_key"_a = nb::none(), "proxy_url"_a = nb::none(),
+           "proxy_username"_a = nb::none(), "proxy_password"_a = nb::none(),
+           "proxy_agent"_a = nb::none())
+      .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
+           "sample_rate"_a)
       .def("create_video_source", &Sora::CreateVideoSource);
 }

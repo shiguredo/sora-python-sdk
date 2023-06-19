@@ -29,7 +29,7 @@ class SoraVideoSource : public SoraTrackInterface {
                   rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track);
 
   void Disposed() override;
-  void PubliserDisposed() override;
+  void PublisherDisposed() override;
   void OnCaptured(nb::ndarray<uint8_t,
                               nb::shape<nb::any, nb::any, 3>,
                               nb::c_contig,

@@ -1,5 +1,7 @@
 # Sora Python SDK
 
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/shiguredo/sora-python-sdk.svg)](https://github.com/shiguredo/sora-python-sdk)
+[![PyPI](https://img.shields.io/pypi/v/sora_sdk)](https://pypi.org/project/sora-sdk/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Sora Python SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp/) の Python クライアントアプリケーションを開発するためのライブラリです。[Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) をベースにしています。
@@ -34,54 +36,47 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## ドキュメント
 
-TBD
+[Sora Python SDK](https://sora-python-sdk.shiguredo.jp/)
 
-### ビルド
+## sora_sdk パッケージの追加
 
-Linux のみ以下のインストールが必要です。
+### pip
 
-```
-sudo apt install libdrm-dev libva-dev
-```
-
-```
-pip install .
+```console
+$ pip install sora_sdk
 ```
 
-## サンプル
+### Rye
 
-TBD
+[Rye](https://rye-up.com/)
+
+```
+$ rye add sora_sdk
+```
 
 ## システム条件
 
-- WebRTC SFU Sora 2022.2.0 以降
-- Python 3.10 以上
+- WebRTC SFU Sora 2023.1.0 以降
+- Python 3.8 以上
 
 ## 対応プラットフォーム
 
-- macOS 12.4 arm64 以降
-- Ubuntu 20.04 x86_64
+- Windows 11 x86_64 以降
+- macOS 13 arm64 以降
 - Ubuntu 22.04 x86_64
-- Windows 10 1809 x86_64 以降
-
-### 未検証
-
 - Ubuntu 20.04 arm64
-- Ubuntu 22.04 arm64
+  - Python 3.8 のみ対応
+  - NVIDIA Jetson JetPack SDK 5 系
 
 ## 対応機能
 
-TBD
+- VP8 / VP9 / AV1 / H.264 のハードウェアアクセラレーター (HWA) 対応
 
 ## 優先実装
 
-優先実装とは Sora のライセンスを契約頂いているお客様限定で Sora Python SDK の実装予定機能を有償にて前倒しで実装することです。
-
-### 優先実装が可能な機能一覧
+優先実装とは Sora のライセンスを契約頂いているお客様向けに Sora Python SDK の実装予定機能を有償にて前倒しで実装することです。
 
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
-
-TBD
 
 ## サポートについて
 
@@ -105,6 +100,7 @@ Apache License 2.0
 
 ```
 Copyright 2023-2023, tnoho (Original Author)
+Copyright 2023-2023, Wandbox LLC (Original Author)
 Copyright 2023-2023, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");

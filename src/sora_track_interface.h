@@ -36,7 +36,7 @@ class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
     publisher_ = nullptr;
     track_ = nullptr;
   }
-  virtual void PubliserDisposed() override { Disposed(); }
+  virtual void PublisherDisposed() override { Disposed(); }
 
  protected:
   DisposePublisher* publisher_;
