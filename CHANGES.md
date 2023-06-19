@@ -119,3 +119,9 @@
     - `data_channel_signaling`
     - `ignore_disconnect_websocket`
   - @sile
+- [ADD] rye を使ってビルドとパッケージングが出来るようにする
+  - @melpon
+- [ADD] PyPI に登録する GitHub Actions を追加する
+  - @melpon
+- [ADD] nanobind を利用して Sora C++ SDK ベースの Python SDK を追加する
+  - @tnoho
