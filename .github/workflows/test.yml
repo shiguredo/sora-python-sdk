@@ -1,0 +1,23 @@
+name: test
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - "doc/**"
+      - "**.md"
+
+jobs:
+  sora_python_sdk_e2e_test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
+      TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+      TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+    steps:
+      - uses: sksat/setup-rye@v0.1.0
+      - uses: actions/checkout@v3
+      - run: rye sync
+      - run: rye run python run.py
+      - run: rye run pytest

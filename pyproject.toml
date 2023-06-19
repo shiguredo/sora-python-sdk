@@ -27,4 +27,5 @@ dev-dependencies = [
     "build~=0.10.0",
     "wheel~=0.40.0",
     "auditwheel~=5.4.0",
+    "pytest~=7.3.2",
 ]
