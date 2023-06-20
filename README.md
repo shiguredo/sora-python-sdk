@@ -18,14 +18,18 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## Sora Python SDK について
 
-様々なプラットフォームに対応した WebRTC SFU Sora 向けの Python SDK です。
+様々なプラットフォームに対応しすぐに使い始められる WebRTC SFU Sora 向けの Python SDK です。
 
 ## 特徴
 
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
+- Windows / macOS / Linux (Ubuntu)
+- NVIDIA Jetson に対応
+- ハードウェアデコーダー/エンコーダーに対応
 - 物体検出などの入力に Sora 経由で受信した映像が利用できる
 - 音声認識などの入力に Sora 経由で受信した音声を利用できる
+- `pip install sora_sdk` でインストール可能
 
 ## 利用イメージ
 
@@ -70,6 +74,7 @@ $ rye add sora_sdk
 
 ## 対応機能
 
+- Sora の機能へ追従
 - VP8 / VP9 / AV1 / H.264 のハードウェアアクセラレーター (HWA) 対応
 
 ## 優先実装
