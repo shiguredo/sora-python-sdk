@@ -4,8 +4,8 @@ import time
 from sora_sdk import Sora
 
 
-def on_disconnect(error_code, message_abc: str):
-    print(f'on_disconnect: error_code: {error_code}, message: {message_abc}')
+def on_disconnect(error_code, message: str):
+    print(f'on_disconnect: error_code: {error_code}, message: {message}')
 
 
 def test_sendonly():
