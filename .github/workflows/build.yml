@@ -3,8 +3,6 @@ name: build
 on:
   workflow_dispatch:
   push:
-    branches-ignore:
-      - "feature/e2e-test"
     paths-ignore:
       - "doc/**"
       - "**.md"
@@ -34,11 +32,11 @@ jobs:
           - "3.11"
         exclude:
           # Jetson は Python 3.8 のみ作成する
-          - platform: {name: ubuntu-20.04_armv8_jetson}
+          - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.9"
-          - platform: { name: ubuntu-20.04_armv8_jetson}
+          - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.10"
-          - platform: {name: ubuntu-20.04_armv8_jetson}
+          - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.11"
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 60
@@ -101,7 +99,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
-          path: 'dist/'
+          path: "dist/"
 
   build_windows:
     runs-on: windows-2019
@@ -149,11 +147,11 @@ jobs:
           - "3.10"
           - "3.11"
         exclude:
-          - platform: {name: ubuntu-20.04_armv8_jetson}
+          - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.9"
-          - platform: { name: ubuntu-20.04_armv8_jetson}
+          - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.10"
-          - platform: {name: ubuntu-20.04_armv8_jetson}
+          - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.11"
     runs-on: ubuntu-latest
     timeout-minutes: 60
