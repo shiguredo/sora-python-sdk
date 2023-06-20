@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2023.1.0
+
+**2023-06-20**
+
 - [UPDATE] `create_video_source()` と `set_enabled()` の引数に名前をつける（キーワード引数で呼べるようにする）
   - @sile
 - [UPDATE] C++ SDK のバージョンを 2023.7.0 に上げる
@@ -119,9 +123,9 @@
     - `data_channel_signaling`
     - `ignore_disconnect_websocket`
   - @sile
-- [ADD] rye を使ってビルドとパッケージングが出来るようにする
-  - @melpon
 - [ADD] PyPI に登録する GitHub Actions を追加する
+  - @melpon
+- [ADD] rye を使ってビルドとパッケージングが出来るようにする
   - @melpon
 - [ADD] nanobind を利用して Sora C++ SDK ベースの Python SDK を追加する
   - @tnoho
