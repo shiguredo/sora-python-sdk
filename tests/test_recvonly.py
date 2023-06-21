@@ -8,6 +8,10 @@ def on_disconnect(error_code, message: str):
     print(f'on_disconnect: error_code: {error_code}, message: {message}')
 
 
+def on_notify(raw_message: str):
+    print(f'on_notify: raw_message: {raw_message}')
+
+
 def test_sendonly():
     sora = Sora()
 
@@ -18,6 +22,7 @@ def test_sendonly():
         metadata={"access_token": os.environ.get("TEST_SECRET_KEY")}
     )
 
+    conn.on_notify = on_notify
     conn.on_disconnect = on_disconnect
     conn.connect()
     time.sleep(3)
