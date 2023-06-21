@@ -1,4 +1,4 @@
-name: test
+name: e2e-test
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
       - "**.md"
 
 jobs:
-  sora_python_sdk_e2e_test:
+  e2e_test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
