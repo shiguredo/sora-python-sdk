@@ -1,6 +1,5 @@
 # Sora Python SDK
 
-[![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-python-sdk.svg)](https://github.com/shiguredo/sora-python-sdk)
 [![PyPI](https://img.shields.io/pypi/v/sora_sdk)](https://pypi.org/project/sora-sdk/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
