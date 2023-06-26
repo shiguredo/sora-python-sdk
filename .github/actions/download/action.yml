@@ -17,15 +17,9 @@ runs:
       with:
         name: ${{ inputs.platform }}_python-${{ inputs.python_version }}
         path: ${{ inputs.platform }}_python-${{ inputs.python_version }}
-    - name: Env to output
+    - name: Append path to package_paths.env
       shell: bash
       run: |
         mv ${{ inputs.platform }}_python-${{ inputs.python_version }}/*.whl ./
         PACKAGE_NAME=`ls -1 *.whl`
-        echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
         echo "$PACKAGE_NAME" >> package_paths.env
-      id: env
-    - uses: actions/download-artifact@v3
-      with:
-        name: ${{ steps.env.outputs.package_name }}
-        path: ${{ steps.env.outputs.package_name }}
