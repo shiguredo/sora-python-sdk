@@ -183,3 +183,50 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+
+  create-release:
+    if: contains(github.ref, 'tags/202')
+    needs:
+      - build_linux_macos
+      - build_windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/download
+        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.8"}
+      - uses: ./.github/actions/download
+        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.9"}
+      - uses: ./.github/actions/download
+        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.10"}
+      - uses: ./.github/actions/download
+        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.11"}
+      - uses: ./.github/actions/download
+        with: {"platform":"ubuntu-20.04_armv8_jetson", "python_version":"3.8"}
+      - uses: ./.github/actions/download
+        with: {"platform":"macos-13_arm64", "python_version":"3.8"}
+      - uses: ./.github/actions/download
+        with: {"platform":"macos-13_arm64", "python_version":"3.9"}
+      - uses: ./.github/actions/download
+        with: {"platform":"macos-13_arm64", "python_version":"3.10"}
+      - uses: ./.github/actions/download
+        with: {"platform":"macos-13_arm64", "python_version":"3.11"}
+      - uses: ./.github/actions/download
+        with: {"platform":"windows-2019", "python_version":"3.8"}
+      - uses: ./.github/actions/download
+        with: {"platform":"windows-2019", "python_version":"3.9"}
+      - uses: ./.github/actions/download
+        with: {"platform":"windows-2019", "python_version":"3.10"}
+      - uses: ./.github/actions/download
+        with: {"platform":"windows-2019", "python_version":"3.11"}
+      - name: Env to output
+        run: |
+          echo "package_paths<<EOF" >> $GITHUB_OUTPUT
+          cat package_paths.env >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        id: env
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files:
+            ${{ steps.env.outputs.package_paths }}
