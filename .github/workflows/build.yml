@@ -128,59 +128,59 @@ jobs:
           name: windows-2019_python-${{ matrix.python_version }}
           path: dist/
 
-  publish_wheel:
-    if: contains(github.ref, 'tags/202')
-    needs:
-      - build_linux_macos
-      - build_windows
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: ubuntu-22.04_x86_64
-          - name: ubuntu-20.04_armv8_jetson
-          - name: macos-13_arm64
-          - name: windows-2019
-        python_version:
-          - "3.8"
-          - "3.9"
-          - "3.10"
-          - "3.11"
-        exclude:
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.9"
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.10"
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.11"
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
-          path: dist
-      - run: |
-          if [ -e dist/*.tar.gz ]; then
-            mv dist/*.tar.gz ./
-          fi
-      # matrix の中で１個だけソースディストリビューション用のデータを残しておく
-      - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.8' }}
+  #publish_wheel:
+  #  if: contains(github.ref, 'tags/202')
+  #  needs:
+  #    - build_linux_macos
+  #    - build_windows
+  #  strategy:
+  #    fail-fast: false
+  #    matrix:
+  #      platform:
+  #        - name: ubuntu-22.04_x86_64
+  #        - name: ubuntu-20.04_armv8_jetson
+  #        - name: macos-13_arm64
+  #        - name: windows-2019
+  #      python_version:
+  #        - "3.8"
+  #        - "3.9"
+  #        - "3.10"
+  #        - "3.11"
+  #      exclude:
+  #        - platform: { name: ubuntu-20.04_armv8_jetson }
+  #          python_version: "3.9"
+  #        - platform: { name: ubuntu-20.04_armv8_jetson }
+  #          python_version: "3.10"
+  #        - platform: { name: ubuntu-20.04_armv8_jetson }
+  #          python_version: "3.11"
+  #  runs-on: ubuntu-latest
+  #  timeout-minutes: 60
+  #  steps:
+  #    - uses: actions/download-artifact@v3
+  #      with:
+  #        name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+  #        path: dist
+  #    - run: |
+  #        if [ -e dist/*.tar.gz ]; then
+  #          mv dist/*.tar.gz ./
+  #        fi
+  #    # matrix の中で１個だけソースディストリビューション用のデータを残しておく
+  #    - run: mv *.tar.gz dist/
+  #      if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.8' }}
 
-      # テスト用
-      # - name: Publish package to TestPyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-      #     repository-url: https://test.pypi.org/legacy/
-      #     verbose: true
+  #    # テスト用
+  #    # - name: Publish package to TestPyPI
+  #    #   uses: pypa/gh-action-pypi-publish@release/v1
+  #    #   with:
+  #    #     password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+  #    #     repository-url: https://test.pypi.org/legacy/
+  #    #     verbose: true
 
-      # 本番用
-      - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+  #    # 本番用
+  #    - name: Publish package to PyPI
+  #      uses: pypa/gh-action-pypi-publish@release/v1
+  #      with:
+  #        password: ${{ secrets.PYPI_API_TOKEN }}
 
   create-release:
     if: contains(github.ref, 'tags/202')
@@ -226,5 +226,6 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
+          draft: true
           files:
             ${{ steps.env.outputs.package_paths }}
