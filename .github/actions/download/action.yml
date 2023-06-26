@@ -1,0 +1,31 @@
+name: download-artifact
+
+description: Download Artifact
+
+inputs:
+  platform:
+    description: Platform
+    required: true
+  python_version:
+    description: Python version
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+        path: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+    - name: Env to output
+      shell: bash
+      run: |
+        mv ${{ matrix.platform.name }}_python-${{ matrix.python_version }}/*.whl ./
+        PACKAGE_NAME=`ls -1 *.whl`
+        echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+        echo "$PACKAGE_NAME" >> package_paths.env
+      id: env
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ steps.env.outputs.package_name }}
+        path: ${{ steps.env.outputs.package_name }}
