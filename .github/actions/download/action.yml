@@ -15,12 +15,12 @@ runs:
   steps:
     - uses: actions/download-artifact@v3
       with:
-        name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
-        path: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+        name: ${{ inputs.platform }}_python-${{ inputs.python_version }}
+        path: ${{ inputs.platform }}_python-${{ inputs.python_version }}
     - name: Env to output
       shell: bash
       run: |
-        mv ${{ matrix.platform.name }}_python-${{ matrix.python_version }}/*.whl ./
+        mv ${{ inputs.platform }}_python-${{ inputs.python_version }}/*.whl ./
         PACKAGE_NAME=`ls -1 *.whl`
         echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
         echo "$PACKAGE_NAME" >> package_paths.env
