@@ -20,6 +20,6 @@ runs:
     - name: Append path to package_paths.env
       shell: bash
       run: |
+        PACKAGE_NAME=$(basename `ls -1 ${{ inputs.platform }}_python-${{ inputs.python_version }}/*.whl`)
         mv ${{ inputs.platform }}_python-${{ inputs.python_version }}/*.whl ./
-        PACKAGE_NAME=`ls -1 *.whl`
         echo "$PACKAGE_NAME" >> package_paths.env
