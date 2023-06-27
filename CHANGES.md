@@ -11,7 +11,13 @@
 
 ## develop
 
-- [UPDATE] C++ SDK のバージョンを 2023.7.1 に上げる
+## 2023.1.1
+
+**2023-06-27**
+
+- [FIX] connect 直後に disconnect すると落ちるのを修正
+  - @melpon
+- [FIX] C++ SDK のバージョンを 2023.7.1 に上げる
   - @voluntas
 
 ## 2023.1.0
