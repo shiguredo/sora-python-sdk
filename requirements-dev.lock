@@ -9,6 +9,7 @@
 -e file:.
 auditwheel==5.4.0
 build==0.10.0
+colorama==0.4.6
 exceptiongroup==1.1.1
 iniconfig==2.0.0
 nanobind==1.4.0
