@@ -83,6 +83,9 @@ $ rye sync
 
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
 
+- DataChannel 対応
+  - [アダワープジャパン株式会社](https://adawarp.com/) 様
+
 ## サポートについて
 
 ### Discord
