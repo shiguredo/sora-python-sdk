@@ -55,6 +55,7 @@ $ pip install sora_sdk
 
 ```
 $ rye add sora_sdk
+$ rye sync
 ```
 
 ## システム条件
