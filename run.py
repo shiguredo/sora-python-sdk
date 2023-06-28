@@ -717,25 +717,31 @@ def main():
                 "-DNB_SUFFIX=.cpython-38-aarch64-linux-gnu.so",
             ]
 
-        mkdir_p(os.path.join(build_dir, 'sora_sdk'))
-        with cd(os.path.join(build_dir, 'sora_sdk')):
+        sora_build_dir = os.path.join(build_dir, 'sora_sdk')
+        if target_platform.os == 'windows':
+            sora_build_dir = os.path.join(sora_build_dir, configuration)
+
+        sora_src_dir = os.path.join('src', 'sora_sdk')
+
+        mkdir_p(sora_build_dir)
+        with cd(sora_build_dir):
             cmd(['cmake', BASE_DIR, *cmake_args])
             cmd(['cmake', '--build', '.', '--config', configuration])
 
-        for file in os.listdir(os.path.join('src', 'sora_sdk')):
+        for file in os.listdir(sora_src_dir):
             if file.startswith('sora_sdk_ext.') and (
-               file.endswith('.so') or file.endswith('.dylib') or file.endswith('.dll')):
-                os.remove(os.path.join('src', 'sora_sdk', file))
+               file.endswith('.so') or file.endswith('.dylib') or file.endswith('.pyd')):
+                os.remove(os.path.join(sora_src_dir, file))
 
-        for file in os.listdir(os.path.join(build_dir, 'sora_sdk')):
+        for file in os.listdir(sora_build_dir):
             if file.startswith('sora_sdk_ext.') and (
-               file.endswith('.so') or file.endswith('.dylib') or file.endswith('.dll')):
-                shutil.copyfile(os.path.join(build_dir, 'sora_sdk', file),
-                                os.path.join('src', 'sora_sdk', file))
+               file.endswith('.so') or file.endswith('.dylib') or file.endswith('.pyd')):
+                shutil.copyfile(os.path.join(sora_build_dir, file),
+                                os.path.join(sora_src_dir, file))
 
         for file in os.listdir(os.path.join(install_dir, 'lyra', 'share', 'model_coeffs')):
             shutil.copyfile(os.path.join(install_dir, 'lyra', 'share', 'model_coeffs', file),
-                            os.path.join('src', 'sora_sdk', 'model_coeffs', file))
+                            os.path.join(sora_src_dir, 'model_coeffs', file))
 
 
 if __name__ == '__main__':
