@@ -19,8 +19,10 @@
 #include <sora/sora_video_encoder_factory.h>
 
 #include "dummy_audio_mixer.h"
+#ifndef _WIN32
 #include "dynamic_h264_decoder.h"
 #include "dynamic_h264_encoder.h"
+#endif
 
 SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
   // Lyra のモデルファイルを読み込むため SORA_LYRA_MODEL_COEFFS_PATH が設定されていない場合は
@@ -43,6 +45,7 @@ SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
             DummyAudioMixer::Create(media_dependencies.task_queue_factory);
         media_dependencies.audio_processing = nullptr;
 
+#ifndef _WIN32
         if (!openh264.empty()) {
           {
             auto config =
@@ -81,6 +84,7 @@ SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
                     std::move(config));
           }
         }
+#endif
       };
   context_ = sora::SoraClientContext::Create(context_config);
 }
