@@ -4,6 +4,7 @@
 #include <memory>
 
 // WebRTC
+#include <common_video/h264/h264_bitstream_parser.h>
 #include <modules/video_coding/codecs/h264/include/h264.h>
 
 class ISVCDecoder;
@@ -33,8 +34,9 @@ class DynamicH264Decoder : public H264Decoder {
   const char* ImplementationName() const override;
 
  private:
-  DecodedImageCallback* callback_;
+  DecodedImageCallback* callback_ = nullptr;
   ISVCDecoder* decoder_ = nullptr;
+  webrtc::H264BitstreamParser h264_bitstream_parser_;
 
   std::string openh264_;
   void* openh264_handle_ = nullptr;

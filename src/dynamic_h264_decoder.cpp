@@ -4,6 +4,7 @@
 
 // WebRTC
 #include <api/video/i420_buffer.h>
+#include <rtc_base/logging.h>
 #include <third_party/libyuv/include/libyuv.h>
 
 // OpenH264
@@ -22,17 +23,20 @@ bool DynamicH264Decoder::Configure(const Settings& settings) {
 
   void* handle = ::dlopen(openh264_.c_str(), RTLD_LAZY);
   if (handle == nullptr) {
+    RTC_LOG(LS_ERROR) << "Failed to dlopen";
     return false;
   }
   openh264_handle_ = handle;
-  create_decoder_ = (CreateDecoderFunc)::dlsym(handle, "WelsCreateSVCDecoder");
+  create_decoder_ = (CreateDecoderFunc)::dlsym(handle, "WelsCreateDecoder");
   if (create_decoder_ == nullptr) {
+    RTC_LOG(LS_ERROR) << "Failed to dlsym(WelsCreateDecoder)";
     Release();
     return false;
   }
   destroy_decoder_ =
-      (DestroyDecoderFunc)::dlsym(handle, "WelsDestroySVCDecoder");
+      (DestroyDecoderFunc)::dlsym(handle, "WelsDestroyDecoder");
   if (destroy_decoder_ == nullptr) {
+    RTC_LOG(LS_ERROR) << "Failed to dlsym(WelsDestroyDecoder)";
     Release();
     return false;
   }
@@ -40,6 +44,7 @@ bool DynamicH264Decoder::Configure(const Settings& settings) {
   ISVCDecoder* decoder = nullptr;
   int r = create_decoder_(&decoder);
   if (r != 0) {
+    RTC_LOG(LS_ERROR) << "Failed to WelsCreateDecoder: r=" << r;
     Release();
     return false;
   }
@@ -47,6 +52,7 @@ bool DynamicH264Decoder::Configure(const Settings& settings) {
   SDecodingParam param = {};
   r = decoder->Initialize(&param);
   if (r != 0) {
+    RTC_LOG(LS_ERROR) << "Failed to ISVCDecoder::Initialize: r=" << r;
     Release();
     return false;
   }
@@ -82,11 +88,15 @@ int32_t DynamicH264Decoder::Decode(const EncodedImage& input_image,
     return WEBRTC_VIDEO_CODEC_UNINITIALIZED;
   }
 
+  h264_bitstream_parser_.ParseBitstream(input_image);
+  absl::optional<int> qp = h264_bitstream_parser_.GetLastSliceQp();
+
   std::array<std::uint8_t*, 3> yuv;
   SBufferInfo info = {};
   int r = decoder_->DecodeFrameNoDelay(input_image.data(), input_image.size(),
                                        yuv.data(), &info);
   if (r != 0) {
+    RTC_LOG(LS_ERROR) << "Failed to ISVCDecoder::DecodeFrameNoDelay: r=" << r;
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
@@ -116,6 +126,8 @@ int32_t DynamicH264Decoder::Decode(const EncodedImage& input_image,
   if (input_image.ColorSpace() != nullptr) {
     video_frame.set_color_space(*input_image.ColorSpace());
   }
+
+  callback_->Decoded(video_frame, absl::nullopt, qp);
 
   return WEBRTC_VIDEO_CODEC_OK;
 }
