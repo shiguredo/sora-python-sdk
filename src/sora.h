@@ -14,7 +14,7 @@
 
 class Sora : public DisposePublisher {
  public:
-  Sora(bool use_hardware_encoder);
+  Sora(bool use_hardware_encoder, std::string openh264);
   ~Sora();
 
   std::shared_ptr<SoraConnection> CreateConnection(

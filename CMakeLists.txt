@@ -1,5 +1,5 @@
+cmake_minimum_required(VERSION 3.18)
 project(sora_sdk)
-cmake_minimum_required(VERSION 3.18...3.23)
 
 # Only interpret if() arguments as variables or keywords when unquoted.
 cmake_policy(SET CMP0054 NEW)
@@ -116,6 +116,16 @@ elseif(TARGET_OS STREQUAL "windows")
       HAVE_SNPRINTF
   )
 endif()
+
+# Windows 以外は OpenH264 の動的呼び出しに対応する
+if (NOT TARGET_OS STREQUAL "windows")
+  target_include_directories(sora_sdk_ext PRIVATE ${OPENH264_DIR}/include)
+  target_sources(sora_sdk_ext
+    PRIVATE
+      src/dynamic_h264_decoder.cpp
+      src/dynamic_h264_encoder.cpp)
+endif()
+
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 
 install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)
