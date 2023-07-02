@@ -19,8 +19,10 @@
 #include <sora/sora_video_encoder_factory.h>
 
 #include "dummy_audio_mixer.h"
+#include "dynamic_h264_decoder.h"
+#include "dynamic_h264_encoder.h"
 
-SoraFactory::SoraFactory(bool use_hardware_encoder) {
+SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
   // Lyra のモデルファイルを読み込むため SORA_LYRA_MODEL_COEFFS_PATH が設定されていない場合は
   // この共有ライブラリ直下に配置されているモデルファイルを利用する
   auto path = boost::dll::this_line_location().parent_path() / "model_coeffs";
@@ -34,11 +36,51 @@ SoraFactory::SoraFactory(bool use_hardware_encoder) {
   context_config.use_audio_device = false;
   context_config.use_hardware_encoder = use_hardware_encoder;
   context_config.configure_media_dependencies =
-      [](const webrtc::PeerConnectionFactoryDependencies& dependencies,
-         cricket::MediaEngineDependencies& media_dependencies) {
+      [use_hardware_encoder, openh264](
+          const webrtc::PeerConnectionFactoryDependencies& dependencies,
+          cricket::MediaEngineDependencies& media_dependencies) {
         media_dependencies.audio_mixer =
             DummyAudioMixer::Create(media_dependencies.task_queue_factory);
         media_dependencies.audio_processing = nullptr;
+
+        if (!openh264.empty()) {
+          {
+            auto config =
+                use_hardware_encoder
+                    ? sora::GetDefaultVideoEncoderFactoryConfig()
+                    : sora::GetSoftwareOnlyVideoEncoderFactoryConfig();
+            config.use_simulcast_adapter = true;
+            config.encoders.insert(
+                config.encoders.begin(),
+                sora::VideoEncoderConfig(
+                    webrtc::kVideoCodecH264,
+                    [openh264 = openh264](
+                        auto format) -> std::unique_ptr<webrtc::VideoEncoder> {
+                      return webrtc::DynamicH264Encoder::Create(
+                          cricket::VideoCodec(format), openh264);
+                    }));
+            media_dependencies.video_encoder_factory =
+                absl::make_unique<sora::SoraVideoEncoderFactory>(
+                    std::move(config));
+          }
+          {
+            auto config =
+                use_hardware_encoder
+                    ? sora::GetDefaultVideoDecoderFactoryConfig()
+                    : sora::GetSoftwareOnlyVideoDecoderFactoryConfig();
+            config.decoders.insert(
+                config.decoders.begin(),
+                sora::VideoDecoderConfig(
+                    webrtc::kVideoCodecH264,
+                    [openh264 = openh264](
+                        auto format) -> std::unique_ptr<webrtc::VideoDecoder> {
+                      return webrtc::DynamicH264Decoder::Create(openh264);
+                    }));
+            media_dependencies.video_decoder_factory =
+                absl::make_unique<sora::SoraVideoDecoderFactory>(
+                    std::move(config));
+          }
+        }
       };
   context_ = sora::SoraClientContext::Create(context_config);
 }
