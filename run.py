@@ -627,14 +627,15 @@ def install_deps(build_platform: PlatformTarget, target_platform: PlatformTarget
     else:
         add_path(os.path.join(install_dir, 'cmake', 'bin'))
 
-    # OpenH264
-    install_openh264_args = {
-        'version': version['OPENH264_VERSION'],
-        'version_file': os.path.join(install_dir, 'openh264.version'),
-        'source_dir': source_dir,
-        'install_dir': install_dir,
-    }
-    install_openh264(**install_openh264_args)
+    if build_platform.os != 'windows':
+        # OpenH264
+        install_openh264_args = {
+            'version': version['OPENH264_VERSION'],
+            'version_file': os.path.join(install_dir, 'openh264.version'),
+            'source_dir': source_dir,
+            'install_dir': install_dir,
+        }
+        install_openh264(**install_openh264_args)
 
 
 def cmake_path(path: str) -> str:
