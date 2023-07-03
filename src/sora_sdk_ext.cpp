@@ -211,7 +211,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_data_channel", &SoraConnection::on_data_channel_);
 
   nb::class_<Sora>(m, "Sora")
-      .def(nb::init<bool>(), "use_hardware_encoder"_a = true)
+      .def(nb::init<std::optional<bool>, std::optional<std::string>>(),
+           "use_hardware_encoder"_a = nb::none(), "openh264"_a = nb::none())
       .def("create_connection", &Sora::CreateConnection, "signaling_url"_a,
            "role"_a, "channel_id"_a, "client_id"_a = nb::none(),
            "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),

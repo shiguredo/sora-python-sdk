@@ -1,6 +1,8 @@
 #ifndef SORA_FACTORY_H_
 #define SORA_FACTORY_H_
 
+#include <optional>
+
 // WebRTC
 #include <api/peer_connection_interface.h>
 #include <pc/connection_context.h>
@@ -11,7 +13,8 @@
 
 class SoraFactory {
  public:
-  SoraFactory(bool use_hardware_encoder);
+  SoraFactory(std::optional<bool> use_hardware_encoder,
+              std::optional<std::string> openh264);
 
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
   GetPeerConnectionFactory() const;

@@ -76,6 +76,8 @@ $ rye sync
 
 - Sora の機能へ追従
 - VP8 / VP9 / AV1 / H.264 のハードウェアアクセラレーター (HWA) 対応
+- OpenH264 を利用した H.264 のソフトウェアエンコーダー/デコーダーへの対応
+  - Ubuntu 22.04 x86_64 でのみ対応
 
 ## 優先実装
 
@@ -125,3 +127,11 @@ limitations under the License.
 ```
 
 このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
+
+## OpenH264
+
+https://www.openh264.org/BINARY_LICENSE.txt
+
+```
+"OpenH264 Video Codec provided by Cisco Systems, Inc."
+```
