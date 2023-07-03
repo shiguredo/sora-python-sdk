@@ -11,7 +11,8 @@
 
 ## develop
 
-- [ADD] OpenH264 に対応（Windows を除く）
+- [ADD] OpenH264 に対応
+  - Ubunut 22.04 x86_64 でのみ対応
   - @melpon
 
 ## 2023.1.2
