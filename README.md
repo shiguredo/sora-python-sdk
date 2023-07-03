@@ -125,3 +125,11 @@ limitations under the License.
 ```
 
 このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
+
+## OpenH264
+
+https://www.openh264.org/BINARY_LICENSE.txt
+
+```
+"OpenH264 Video Codec provided by Cisco Systems, Inc."
+```
