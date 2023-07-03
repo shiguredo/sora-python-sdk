@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] OpenH264 に対応（Windows を除く）
+  - @melpon
+
 ## 2023.1.2
 
 **2023-06-28**
