@@ -11,7 +11,7 @@
 
 class SoraFactory {
  public:
-  SoraFactory(bool use_hardware_encoder);
+  SoraFactory(bool use_hardware_encoder, std::string openh264);
 
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
   GetPeerConnectionFactory() const;
