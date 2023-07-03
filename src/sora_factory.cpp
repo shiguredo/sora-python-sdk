@@ -24,7 +24,8 @@
 #include "dynamic_h264_encoder.h"
 #endif
 
-SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
+SoraFactory::SoraFactory(std::optional<bool> use_hardware_encoder,
+                         std::optional<std::string> openh264) {
   // Lyra のモデルファイルを読み込むため SORA_LYRA_MODEL_COEFFS_PATH が設定されていない場合は
   // この共有ライブラリ直下に配置されているモデルファイルを利用する
   auto path = boost::dll::this_line_location().parent_path() / "model_coeffs";
@@ -36,9 +37,11 @@ SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
 
   sora::SoraClientContextConfig context_config;
   context_config.use_audio_device = false;
-  context_config.use_hardware_encoder = use_hardware_encoder;
+  if (use_hardware_encoder) {
+    context_config.use_hardware_encoder = *use_hardware_encoder;
+  }
   context_config.configure_media_dependencies =
-      [use_hardware_encoder, openh264](
+      [use_hardware_encoder = context_config.use_hardware_encoder, openh264](
           const webrtc::PeerConnectionFactoryDependencies& dependencies,
           cricket::MediaEngineDependencies& media_dependencies) {
         media_dependencies.audio_mixer =
@@ -46,7 +49,7 @@ SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
         media_dependencies.audio_processing = nullptr;
 
 #ifndef _WIN32
-        if (!openh264.empty()) {
+        if (openh264) {
           {
             auto config =
                 use_hardware_encoder
@@ -60,7 +63,7 @@ SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
                     [openh264 = openh264](
                         auto format) -> std::unique_ptr<webrtc::VideoEncoder> {
                       return webrtc::DynamicH264Encoder::Create(
-                          cricket::VideoCodec(format), openh264);
+                          cricket::VideoCodec(format), *openh264);
                     }));
             media_dependencies.video_encoder_factory =
                 absl::make_unique<sora::SoraVideoEncoderFactory>(
@@ -77,7 +80,7 @@ SoraFactory::SoraFactory(bool use_hardware_encoder, std::string openh264) {
                     webrtc::kVideoCodecH264,
                     [openh264 = openh264](
                         auto format) -> std::unique_ptr<webrtc::VideoDecoder> {
-                      return webrtc::DynamicH264Decoder::Create(openh264);
+                      return webrtc::DynamicH264Decoder::Create(*openh264);
                     }));
             media_dependencies.video_decoder_factory =
                 absl::make_unique<sora::SoraVideoDecoderFactory>(
