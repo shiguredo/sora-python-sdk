@@ -2,8 +2,9 @@
 
 #include "sora.h"
 
-Sora::Sora(bool use_hardware_encoder, std::string openh264) {
-  factory_.reset(new SoraFactory(use_hardware_encoder, std::move(openh264)));
+Sora::Sora(std::optional<bool> use_hardware_encoder,
+           std::optional<std::string> openh264) {
+  factory_.reset(new SoraFactory(use_hardware_encoder, openh264));
 }
 
 Sora::~Sora() {
