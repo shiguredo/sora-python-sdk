@@ -1,5 +1,5 @@
+cmake_minimum_required(VERSION 3.18)
 project(sora_sdk)
-cmake_minimum_required(VERSION 3.18...3.23)
 
 # Only interpret if() arguments as variables or keywords when unquoted.
 cmake_policy(SET CMP0054 NEW)
@@ -105,8 +105,10 @@ elseif(TARGET_OS STREQUAL "windows")
   # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
   # CRTライブラリを静的リンクさせる
-  # MSVC_RUNTIME_LIBRARY で設定ても反映されないため CMAKE_CXX_FLAGS を用いた
-  string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+  set_property(TARGET sora_sdk_ext PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  set_property(TARGET nanobind-static PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   target_compile_definitions(sora_sdk_ext
     PRIVATE
       _CONSOLE
@@ -116,6 +118,16 @@ elseif(TARGET_OS STREQUAL "windows")
       HAVE_SNPRINTF
   )
 endif()
+
+# Windows 以外は OpenH264 の動的呼び出しに対応する
+if (NOT TARGET_OS STREQUAL "windows")
+  target_include_directories(sora_sdk_ext PRIVATE ${OPENH264_DIR}/include)
+  target_sources(sora_sdk_ext
+    PRIVATE
+      src/dynamic_h264_decoder.cpp
+      src/dynamic_h264_encoder.cpp)
+endif()
+
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 
 install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)

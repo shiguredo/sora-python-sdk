@@ -2,8 +2,9 @@
 
 #include "sora.h"
 
-Sora::Sora(bool use_hardware_encoder) {
-  factory_.reset(new SoraFactory(use_hardware_encoder));
+Sora::Sora(std::optional<bool> use_hardware_encoder,
+           std::optional<std::string> openh264) {
+  factory_.reset(new SoraFactory(use_hardware_encoder, openh264));
 }
 
 Sora::~Sora() {
@@ -219,8 +220,8 @@ SoraVideoSource* Sora::CreateVideoSource() {
   auto source = rtc::make_ref_counted<sora::ScalableVideoTrackSource>(config);
 
   std::string track_id = rtc::CreateRandomString(16);
-  auto track = factory_->GetPeerConnectionFactory()->CreateVideoTrack(
-      track_id, source.get());
+  auto track =
+      factory_->GetPeerConnectionFactory()->CreateVideoTrack(source, track_id);
 
   SoraVideoSource* video_source = new SoraVideoSource(this, source, track);
   return video_source;
