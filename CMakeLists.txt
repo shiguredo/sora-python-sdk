@@ -105,8 +105,10 @@ elseif(TARGET_OS STREQUAL "windows")
   # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
   # CRTライブラリを静的リンクさせる
-  # MSVC_RUNTIME_LIBRARY で設定ても反映されないため CMAKE_CXX_FLAGS を用いた
-  string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+  set_property(TARGET sora_sdk_ext PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  set_property(TARGET nanobind-static PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   target_compile_definitions(sora_sdk_ext
     PRIVATE
       _CONSOLE
