@@ -12,7 +12,7 @@ Sora::~Sora() {
 }
 
 std::shared_ptr<SoraConnection> Sora::CreateConnection(
-    const std::string& signaling_url,
+    const nb::handle& signaling_urls,
     const std::string& role,
     const std::string& channel_id,
     std::optional<std::string> client_id,
@@ -59,7 +59,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   sora::SoraSignalingConfig config;
   config.pc_factory = factory_->GetPeerConnectionFactory();
   config.observer = conn;
-  config.signaling_urls.push_back(signaling_url);
+  config.signaling_urls = ConvertSignalingUrls(signaling_urls);
   config.role = role;
   config.channel_id = channel_id;
   if (client_id) {
@@ -289,6 +289,27 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
   }
 
   return filter;
+}
+
+std::vector<std::string> Sora::ConvertSignalingUrls(const nb::handle value) {
+  auto signaling_urls_value =
+      ConvertJsonValue(value, "Invalid JSON value in signaling_urls");
+  if (!signaling_urls_value.is_array()) {
+    throw nb::type_error("`signaling_urls` should be a list of strings");
+  }
+
+  std::vector<std::string> signaling_urls;
+  for (auto signaling_url_value : signaling_urls_value.as_array()) {
+    if (!signaling_url_value.is_string()) {
+      throw nb::type_error("`signaling_urls` should be a list of strings");
+    }
+    signaling_urls.push_back(boost::json::value_to<std::string>(signaling_url_value));
+  }
+
+  if (signaling_urls.empty()) {
+    throw nb::type_error("`signaling_urls` should not be empty");
+  }
+  return signaling_urls;
 }
 
 std::vector<sora::SoraSignalingConfig::DataChannel> Sora::ConvertDataChannels(

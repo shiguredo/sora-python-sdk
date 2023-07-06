@@ -20,7 +20,7 @@ class Sora : public DisposePublisher {
 
   std::shared_ptr<SoraConnection> CreateConnection(
       // 必須パラメータ
-      const std::string& signaling_url,
+      const nb::handle& signaling_urls,
       const std::string& role,
       const std::string& channel_id,
 
@@ -75,6 +75,8 @@ class Sora : public DisposePublisher {
                                       const char* error_message);
   std::vector<sora::SoraSignalingConfig::DataChannel> ConvertDataChannels(
       const nb::handle value);
+  std::vector<std::string> ConvertSignalingUrls(const nb::handle value);
+
   boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
   ConvertForwardingFilter(const nb::handle value);
 
