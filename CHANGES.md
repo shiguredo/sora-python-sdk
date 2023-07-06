@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2023.3.0
+
+**2023-07-06**
+
 - [CHANGE] Sora.create_connection() が複数のシグナリング URL を受け取れるようにする
   - C++ SDK の仕様に合わせるための破壊的な変更
   - `signaling_url` は廃止して `signaling_urls` で置き換える
