@@ -12,7 +12,7 @@ def test_sendonly():
     sora = Sora()
 
     conn = sora.create_connection(
-        signaling_url=os.environ.get("TEST_SIGNALING_URL"),
+        signaling_urls=[os.environ.get("TEST_SIGNALING_URL")],
         role="recvonly",
         channel_id=os.environ.get("TEST_CHANNEL_ID_PREFIX") + "sora-python-sdk-test",
         metadata={"access_token": os.environ.get("TEST_SECRET_KEY")}
