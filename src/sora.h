@@ -12,12 +12,28 @@
 #include "sora_track_interface.h"
 #include "sora_video_source.h"
 
+/**
+ * Sora Python SDK のベースになるクラスです。
+ * 
+ * SoraFactory を内包し Connection や AudioSource、VideoSource を生成します。
+ * 一つの Sora インスタンスから複数の Connection、AudioSource、VideoSource が生成できます。
+ * 同じ Sora インスタンス内でしか Connection や AudioSource、VideoSource を共有できないので、
+ * 複数の Sora インスタンスを生成することは不具合の原因になります。
+ */
 class Sora : public DisposePublisher {
  public:
   Sora(std::optional<bool> use_hardware_encoder,
        std::optional<std::string> openh264);
   ~Sora();
 
+  /**
+   * Sora と接続する Connection を生成します。
+   * 
+   * 実装上の留意点：Sora C++ SDK が observer に std::weak_ptr を要求するためポインタで返す Source とは異なり、
+   * std::shared_ptr で返しますが Python での扱いは変わりません。
+   * 
+   * @return SoraConnection インスタンス
+   */
   std::shared_ptr<SoraConnection> CreateConnection(
       // 必須パラメータ
       const nb::handle& signaling_urls,
@@ -67,7 +83,27 @@ class Sora : public DisposePublisher {
       std::optional<std::string> proxy_password,
       std::optional<std::string> proxy_agent);
 
+  /**
+   * Sora に音声データを送る受け口である SoraAudioSource を生成します。
+   * 
+   * AudioSource に音声データを渡すことで、 Sora に音声を送ることができます。
+   * AudioSource は MediaStreamTrack として振る舞うため、
+   * AudioSource と同一の Sora インスタンスから生成された複数の Connection で共用できます。
+   * 
+   * @param channels AudioSource に入力する音声データのチャネル数
+   * @param sample_rate AudioSource に入力する音声データのサンプリングレート
+   * @return SoraAudioSource インスタンス
+   */
   SoraAudioSource* CreateAudioSource(size_t channels, int sample_rate);
+  /**
+   * Sora に映像データを送る受け口である SoraVideoSource を生成します。
+   * 
+   * VideoSource にフレームデータを渡すことで、 Sora に映像を送ることができます。
+   * VideoSource は MediaStreamTrack として振る舞うため、
+   * VideoSource と同一の Sora インスタンスから生成された複数の Connection で共用できます。
+   * 
+   * @return SoraVideoSource インスタンス
+   */
   SoraVideoSource* CreateVideoSource();
 
  private:
