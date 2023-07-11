@@ -18,6 +18,12 @@
 
 namespace nb = nanobind;
 
+/**
+ * SoraAudioSourceInterface は SoraAudioSource の実体です。
+ * 
+ * 実装上の留意点：webrtc::Notifier<webrtc::AudioSourceInterface> を継承しているクラスは
+ * nanobind で直接的な紐付けを行うとエラーが出るため SoraAudioSource とはクラスを分けました。
+ */
 class SoraAudioSourceInterface
     : public webrtc::Notifier<webrtc::AudioSourceInterface> {
  public:
@@ -55,6 +61,13 @@ class SoraAudioSourceInterface
   int64_t last_timestamp_;
 };
 
+/**
+ * Sora に音声データを送る受け口である SoraAudioSource です。
+ * 
+ * AudioSource に音声データを渡すことで、 Sora に音声を送ることができます。
+ * AudioSource は MediaStreamTrack として振る舞うため、
+ * AudioSource と同一の Sora インスタンスから生成された複数の Connection で共用できます。
+ */
 class SoraAudioSource : public SoraTrackInterface {
  public:
   SoraAudioSource(DisposePublisher* publisher,
@@ -63,15 +76,43 @@ class SoraAudioSource : public SoraTrackInterface {
                   size_t channels,
                   int sample_rate);
 
+  /**
+   * Sora に送る音声データを渡します。
+   * 
+   * @param data 送信する 16bit PCM データの参照
+   * @param samples_per_channel チャンネルごとのサンプル数
+   * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
+   */
   void OnData(const int16_t* data,
               size_t samples_per_channel,
               double timestamp);
+  /**
+   * Sora に送る音声データを渡します。
+   * 
+   * タイムスタンプは先に受け取ったデータと連続になっていると想定してサンプル数から自動生成します。
+   * 
+   * @param data 送信する 16bit PCM データの参照
+   * @param samples_per_channel チャンネルごとのサンプル数
+   */
   void OnData(const int16_t* data, size_t samples_per_channel);
+  /**
+   * Sora に送る音声データを渡します。
+   * 
+   * @param ndarray NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
+   * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
+   */
   void OnData(nb::ndarray<int16_t,
                           nb::shape<nb::any, nb::any>,
                           nb::c_contig,
                           nb::device::cpu> ndarray,
               double timestamp);
+  /**
+   * Sora に送る音声データを渡します。
+   * 
+   * タイムスタンプは先に受け取ったデータと連続になっていると想定してサンプル数から自動生成します。
+   * 
+   * @param ndarray NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
+   */
   void OnData(nb::ndarray<int16_t,
                           nb::shape<nb::any, nb::any>,
                           nb::c_contig,
