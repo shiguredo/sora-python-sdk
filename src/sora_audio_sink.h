@@ -19,6 +19,14 @@
 
 namespace nb = nanobind;
 
+/**
+ * Sora からの音声を受け取る SoraAudioSinkImpl です。
+ * 
+ * Connection の OnTrack コールバックから渡されるリモート Track から音声を取り出すことができます。
+ * Track からの音声は SoraAudioSinkImpl 内のバッファに溜め込まれるため、任意のタイミングで音声を取り出すことができます。
+ * 実装上の留意点：Track の参照保持のための Impl のない SoraAudioSink を __init__.py に定義しています。
+ * SoraAudioSinkImpl を直接 Python から呼び出すことは想定していません。
+ */
 class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
                           public DisposeSubscriber {
  public:
@@ -38,11 +46,22 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
               size_t number_of_frames,
               absl::optional<int64_t> absolute_capture_timestamp_ms) override;
 
+  /**
+   * 実装上の留意点：コールバックと Read 関数の共存はパフォーマンスや使い方の面で難しいことが判明したので、
+   * on_data_, on_format_ ともに廃止予定です。
+  */
   std::function<void(
       nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>)>
       on_data_;
   std::function<void(int, size_t)> on_format_;
 
+  /**
+   * 受信済みのデータをバッファから読み出す
+   * 
+   * @param frames 受け取るチャンネルごとのサンプル数。0 を指定した場合には、受信済みのすべてのサンプルを返す
+   * @param timeout 溜まっているサンプル数が frames で指定した数を満たさない場合の待ち時間。秒単位の float で指定する
+   * @return Tuple でインデックス 0 には成否が、成功した場合のみインデックス 1 には NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
+   */
   nb::tuple Read(size_t frames, float timeout);
 
  private:
