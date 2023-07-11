@@ -44,7 +44,7 @@ class SoraVideoSource : public SoraTrackInterface {
    * この関数が呼び出された時点のタイムスタンプでフレームを送信します。
    * 映像になるように一定のタイミングで呼び出さない場合、受信側でコマ送りになります。
    * 
-   * @param ndarray NumPy の配列 numpy.ndarray で W x H x BGR になっているフレームデータ
+   * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    */
   void OnCaptured(nb::ndarray<uint8_t,
                               nb::shape<nb::any, nb::any, 3>,
@@ -58,7 +58,7 @@ class SoraVideoSource : public SoraTrackInterface {
    * timestamp が映像になるように一定の時間差がない場合、受信側で正しく表示されない場合があります。
    * 表示側で音声データの timestamp と同期を取るため遅延が発生する場合があります。
    * 
-   * @param ndarray NumPy の配列 numpy.ndarray で W x H x BGR になっているフレームデータ
+   * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
    */
   void OnCaptured(nb::ndarray<uint8_t,
@@ -74,7 +74,7 @@ class SoraVideoSource : public SoraTrackInterface {
    * timestamp が映像になるように一定の時間差がない場合、受信側で正しく表示されない場合があります。
    * 表示側で音声データの timestamp と同期を取るため遅延が発生する場合があります。
    * 
-   * @param ndarray NumPy の配列 numpy.ndarray で W x H x BGR になっているフレームデータ
+   * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    * @param timestamp_us マイクロ秒単位の整数で表されるフレームのタイムスタンプ
    */
   void OnCaptured(nb::ndarray<uint8_t,
