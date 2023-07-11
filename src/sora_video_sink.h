@@ -31,7 +31,7 @@ class SoraVideoFrame {
   /**
    * SoraVideoFrame 内のフレームデータへの numpy.ndarray での参照を渡します。
    * 
-   * @return NumPy の配列 numpy.ndarray で W x H x BGR になっているフレームデータ
+   * @return NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    */
   nb::ndarray<nb::numpy, uint8_t, nb::shape<nb::any, nb::any, 3>> Data();
 
@@ -45,6 +45,8 @@ class SoraVideoFrame {
  * Sora からの映像を受け取る SoraVideoSinkImpl です。
  * 
  * Connection の OnTrack コールバックから渡されるリモート Track から映像を取り出すことができます。
+ * 実装上の留意点：Track の参照保持のための Impl のない SoraVideoSink を __init__.py に定義しています。
+ * SoraVideoSinkImpl を直接 Python から呼び出すことは想定していません。
  */
 class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
                           public DisposeSubscriber {
