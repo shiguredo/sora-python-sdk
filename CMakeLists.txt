@@ -74,6 +74,7 @@ nanobind_add_module(
   src/dummy_audio_mixer.cpp
   src/sora.cpp
   src/sora_audio_sink.cpp
+  src/sora_audio_sink2.cpp
   src/sora_audio_source.cpp
   src/sora_connection.cpp
   src/sora_factory.cpp
