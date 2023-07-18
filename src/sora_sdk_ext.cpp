@@ -8,6 +8,7 @@
 
 #include "sora.h"
 #include "sora_audio_sink.h"
+#include "sora_audio_sink2.h"
 #include "sora_audio_source.h"
 #include "sora_connection.h"
 #include "sora_log.h"
@@ -42,6 +43,21 @@ int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
 
 PyType_Slot audio_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_sink_tp_traverse},
+    {0, nullptr}};
+
+int audio_sink2_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  SoraAudioSink2Impl* audio_sink = nb::inst_ptr<SoraAudioSink2Impl>(self);
+
+  if (audio_sink->on_frame_) {
+    nb::object on_frame = nb::cast(audio_sink->on_frame_, nb::rv_policy::none);
+    Py_VISIT(on_frame.ptr());
+  }
+
+  return 0;
+}
+
+PyType_Slot audio_sink2_slots[] = {
+    {Py_tp_traverse, (void*)audio_sink2_tp_traverse},
     {0, nullptr}};
 
 int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
@@ -130,6 +146,12 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("LIVE", webrtc::MediaStreamTrackInterface::TrackState::kLive)
       .value("ENDED", webrtc::MediaStreamTrackInterface::TrackState::kEnded);
 
+  nb::enum_<webrtc::AudioFrame::VADActivity>(m, "VADActivity",
+                                             nb::is_arithmetic())
+      .value("ACTIVE", webrtc::AudioFrame::VADActivity::kVadActive)
+      .value("PASSIVE", webrtc::AudioFrame::VADActivity::kVadPassive)
+      .value("UNKNOWN", webrtc::AudioFrame::VADActivity::kVadUnknown);
+
   nb::enum_<rtc::LoggingSeverity>(m, "SoraLoggingSeverity", nb::is_arithmetic())
       .value("VERBOSE", rtc::LoggingSeverity::LS_VERBOSE)
       .value("INFO", rtc::LoggingSeverity::LS_INFO)
@@ -186,6 +208,22 @@ NB_MODULE(sora_sdk_ext, m) {
            nb::rv_policy::move)
       .def_rw("on_data", &SoraAudioSinkImpl::on_data_)
       .def_rw("on_format", &SoraAudioSinkImpl::on_format_);
+
+  nb::class_<SoraAudioFrame>(m, "SoraAudioFrame")
+      .def_prop_ro("samples_per_channel", &SoraAudioFrame::samples_per_channel)
+      .def_prop_ro("num_channels", &SoraAudioFrame::num_channels)
+      .def_prop_ro("sample_rate_hz", &SoraAudioFrame::sample_rate_hz)
+      .def_prop_ro("absolute_capture_timestamp_ms",
+                   &SoraAudioFrame::absolute_capture_timestamp_ms)
+      .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference)
+      .def_prop_ro("vad_activity", &SoraAudioFrame::vad_activity);
+
+  nb::class_<SoraAudioSink2Impl>(m, "SoraAudioSink2Impl",
+                                 nb::type_slots(audio_sink2_slots))
+      .def(nb::init<SoraTrackInterface*, int, size_t>(), "track"_a,
+           "output_frequency"_a = -1, "output_channels"_a = 0)
+      .def("__del__", &SoraAudioSink2Impl::Del)
+      .def_rw("on_frame", &SoraAudioSink2Impl::on_frame_);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
       .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);
