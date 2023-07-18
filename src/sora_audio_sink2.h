@@ -9,6 +9,7 @@
 #include <api/audio/audio_frame.h>
 #include <api/media_stream_interface.h>
 #include <api/scoped_refptr.h>
+#include <common_audio/vad/include/webrtc_vad.h>
 #include <modules/audio_coding/acm2/acm_resampler.h>
 
 #include "sora_track_interface.h"
@@ -59,6 +60,7 @@ class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,
   // ACMResampler の前に std::unique_ptr がなんでも良いので無いと何故かビルドが通らない
   std::unique_ptr<uint8_t> dummy_;
   webrtc::acm2::ACMResampler resampler_;
+  VadInst* vad_instance_;
 };
 
 #endif
