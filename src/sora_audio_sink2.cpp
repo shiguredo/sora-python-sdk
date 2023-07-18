@@ -49,6 +49,10 @@ SoraAudioSink2Impl::SoraAudioSink2Impl(SoraTrackInterface* track,
     : track_(track),
       output_sample_rate_(output_sample_rate),
       output_channels_(output_channels) {
+  vad_instance_ = WebRtcVad_Create();
+  WebRtcVad_Init(vad_instance_);
+  // 0 がノーマルモード
+  WebRtcVad_set_mode(vad_instance_, 0);
   track_->AddSubscriber(this);
   webrtc::AudioTrackInterface* audio_track =
       static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
@@ -71,6 +75,9 @@ void SoraAudioSink2Impl::Disposed() {
     webrtc::AudioTrackInterface* audio_track =
         static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
     audio_track->RemoveSink(this);
+  }
+  if (vad_instance_) {
+    WebRtcVad_Free(vad_instance_);
   }
   track_ = nullptr;
 }
@@ -114,6 +121,16 @@ void SoraAudioSink2Impl::OnData(
   if (output_channels_ != 0 &&
       tuned_frame->num_channels() != output_channels_) {
     webrtc::RemixFrame(output_channels_, tuned_frame.get());
+  }
+  if (vad_instance_) {
+    int vad_return = WebRtcVad_Process(
+        vad_instance_, tuned_frame->sample_rate_hz(), tuned_frame->data(),
+        tuned_frame->samples_per_channel_);
+    if (vad_return == 1) {
+      tuned_frame->vad_activity_ = webrtc::AudioFrame::VADActivity::kVadActive;
+    } else {
+      tuned_frame->vad_activity_ = webrtc::AudioFrame::VADActivity::kVadPassive;
+    }
   }
 
   on_frame_(std::make_shared<SoraAudioFrame>(std::move(tuned_frame)));
