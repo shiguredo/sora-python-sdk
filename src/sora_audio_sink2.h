@@ -1,9 +1,6 @@
 #ifndef SORA_AUDIO_SINK2_H_
 #define SORA_AUDIO_SINK2_H_
 
-#include <condition_variable>
-#include <mutex>
-
 // nonobind
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
@@ -13,11 +10,25 @@
 #include <api/media_stream_interface.h>
 #include <api/scoped_refptr.h>
 #include <modules/audio_coding/acm2/acm_resampler.h>
-#include <rtc_base/buffer.h>
 
 #include "sora_track_interface.h"
 
 namespace nb = nanobind;
+
+class SoraAudioFrame {
+ public:
+  SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame);
+
+  nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>> Data() const;
+  size_t samples_per_channel() const;
+  size_t num_channels() const;
+  int sample_rate_hz() const;
+  std::optional<int64_t> absolute_capture_timestamp_ms() const;
+  webrtc::AudioFrame::VADActivity vad_activity() const;
+
+ private:
+  std::unique_ptr<webrtc::AudioFrame> audio_frame_;
+};
 
 class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,
                            public DisposeSubscriber {
@@ -38,27 +49,16 @@ class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,
               size_t number_of_frames,
               absl::optional<int64_t> absolute_capture_timestamp_ms) override;
 
-  std::function<void(
-      nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>)>
-      on_data_;
-  std::function<void(int, size_t)> on_format_;
+  // このコールバックは shared_ptr にしないとリークする
+  std::function<void(std::shared_ptr<SoraAudioFrame>)> on_frame_;
 
  private:
-  void SendData(const int16_t* audio_data,
-                int sample_rate,
-                size_t number_of_channels,
-                size_t number_of_frames);
-
   SoraTrackInterface* track_;
   const int output_sample_rate_;
   const size_t output_channels_;
-  std::unique_ptr<webrtc::AudioFrame> audio_frame_;
+  // ACMResampler の前に std::unique_ptr がなんでも良いので無いと何故かビルドが通らない
+  std::unique_ptr<uint8_t> dummy_;
   webrtc::acm2::ACMResampler resampler_;
-  std::mutex buffer_mtx_;
-  std::condition_variable buffer_cond_;
-  rtc::BufferT<int16_t> buffer_;
-  int sample_rate_;
-  size_t number_of_channels_;
 };
 
 #endif
