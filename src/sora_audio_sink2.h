@@ -9,12 +9,7 @@
 #include <api/audio/audio_frame.h>
 #include <api/media_stream_interface.h>
 #include <api/scoped_refptr.h>
-#include <common_audio/vad/include/webrtc_vad.h>
 #include <modules/audio_coding/acm2/acm_resampler.h>
-#include <modules/audio_processing/agc2/cpu_features.h>
-#include <modules/audio_processing/agc2/vad_wrapper.h>
-#include <modules/audio_processing/audio_buffer.h>
-#include <modules/audio_processing/include/audio_processing.h>
 
 #include "sora_track_interface.h"
 
@@ -22,19 +17,17 @@ namespace nb = nanobind;
 
 class SoraAudioFrame {
  public:
-  SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame,
-                 float voice_probability);
+  SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame);
 
   nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>> Data() const;
+  const int16_t* RawData() const;
   size_t samples_per_channel() const;
   size_t num_channels() const;
   int sample_rate_hz() const;
   std::optional<int64_t> absolute_capture_timestamp_ms() const;
-  float voice_probability() const;
 
  private:
   std::unique_ptr<webrtc::AudioFrame> audio_frame_;
-  float voice_probability_;
 };
 
 class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,
@@ -66,9 +59,6 @@ class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,
   // ACMResampler の前に std::unique_ptr がなんでも良いので無いと何故かビルドが通らない
   std::unique_ptr<uint8_t> dummy_;
   webrtc::acm2::ACMResampler resampler_;
-  std::unique_ptr<webrtc::AudioBuffer> audio_buffer_;
-  webrtc::StreamConfig vad_input_config_;
-  std::unique_ptr<webrtc::VoiceActivityDetectorWrapper> vad_;
 };
 
 #endif

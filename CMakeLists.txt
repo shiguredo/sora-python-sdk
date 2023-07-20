@@ -80,6 +80,7 @@ nanobind_add_module(
   src/sora_factory.cpp
   src/sora_log.cpp
   src/sora_sdk_ext.cpp
+  src/sora_vad.cpp
   src/sora_video_sink.cpp
   src/sora_video_source.cpp
 )
