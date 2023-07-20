@@ -5,9 +5,15 @@
 // WebRTC
 #include <api/audio/channel_layout.h>
 #include <modules/audio_mixer/audio_frame_manipulator.h>
+#include <modules/audio_processing/agc2/agc2_common.h>
+#include <modules/audio_processing/agc2/cpu_features.h>
+#include <modules/audio_processing/agc2/rnn_vad/common.h>
+#include <modules/audio_processing/include/audio_frame_view.h>
 
-SoraAudioFrame::SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame)
-    : audio_frame_(std::move(audio_frame)) {}
+SoraAudioFrame::SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame,
+                               float voice_probability)
+    : audio_frame_(std::move(audio_frame)),
+      voice_probability_(voice_probability) {}
 
 nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>
 SoraAudioFrame::Data() const {
@@ -39,8 +45,8 @@ std::optional<int64_t> SoraAudioFrame::absolute_capture_timestamp_ms() const {
   }
 }
 
-webrtc::AudioFrame::VADActivity SoraAudioFrame::vad_activity() const {
-  return audio_frame_->vad_activity_;
+float SoraAudioFrame::voice_probability() const {
+  return voice_probability_;
 }
 
 SoraAudioSink2Impl::SoraAudioSink2Impl(SoraTrackInterface* track,
@@ -48,11 +54,14 @@ SoraAudioSink2Impl::SoraAudioSink2Impl(SoraTrackInterface* track,
                                        size_t output_channels)
     : track_(track),
       output_sample_rate_(output_sample_rate),
-      output_channels_(output_channels) {
-  vad_instance_ = WebRtcVad_Create();
-  WebRtcVad_Init(vad_instance_);
-  // 0 がノーマルモード
-  WebRtcVad_set_mode(vad_instance_, 0);
+      output_channels_(output_channels),
+      vad_input_config_(0) {
+  vad_ = std::make_unique<webrtc::VoiceActivityDetectorWrapper>(
+      webrtc::kVadResetPeriodMs,  // libWebRTC 内部の設定に合わせる
+      webrtc::GetAvailableCpuFeatures(),
+      webrtc::rnn_vad::
+          kSampleRate24kHz  // 24kHz にしておかないと、VAD 前にリサンプリングが走る
+  );
   track_->AddSubscriber(this);
   webrtc::AudioTrackInterface* audio_track =
       static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
@@ -75,9 +84,6 @@ void SoraAudioSink2Impl::Disposed() {
     webrtc::AudioTrackInterface* audio_track =
         static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
     audio_track->RemoveSink(this);
-  }
-  if (vad_instance_) {
-    WebRtcVad_Free(vad_instance_);
   }
   track_ = nullptr;
 }
@@ -122,16 +128,28 @@ void SoraAudioSink2Impl::OnData(
       tuned_frame->num_channels() != output_channels_) {
     webrtc::RemixFrame(output_channels_, tuned_frame.get());
   }
-  if (vad_instance_) {
-    int vad_return = WebRtcVad_Process(
-        vad_instance_, tuned_frame->sample_rate_hz(), tuned_frame->data(),
-        tuned_frame->samples_per_channel_);
-    if (vad_return == 1) {
-      tuned_frame->vad_activity_ = webrtc::AudioFrame::VADActivity::kVadActive;
-    } else {
-      tuned_frame->vad_activity_ = webrtc::AudioFrame::VADActivity::kVadPassive;
+  float voice_probability = 0;
+  if (vad_) {
+    if (!audio_buffer_ ||
+        vad_input_config_.sample_rate_hz() != tuned_frame->sample_rate_hz() ||
+        vad_input_config_.num_channels() != tuned_frame->num_channels()) {
+      audio_buffer_.reset(new webrtc::AudioBuffer(
+          tuned_frame->sample_rate_hz(), tuned_frame->num_channels(),
+          webrtc::rnn_vad::kSampleRate24kHz,  // VAD は 24kHz なので合わせる
+          1,  // VAD は 1 チャンネルなので合わせる
+          webrtc::rnn_vad::
+              kSampleRate24kHz,  // 出力はしないが、余計なインスタンスを生成しないよう合わせる
+          1  // 出力はしないが VAD とチャネル数は合わせておく
+          ));
+      vad_input_config_ = webrtc::StreamConfig(tuned_frame->sample_rate_hz(),
+                                               tuned_frame->num_channels());
     }
+    audio_buffer_->CopyFrom(tuned_frame->data(), vad_input_config_);
+    voice_probability = vad_->Analyze(webrtc::AudioFrameView<const float>(
+        audio_buffer_->channels(), audio_buffer_->num_channels(),
+        audio_buffer_->num_frames()));
   }
 
-  on_frame_(std::make_shared<SoraAudioFrame>(std::move(tuned_frame)));
+  on_frame_(std::make_shared<SoraAudioFrame>(std::move(tuned_frame),
+                                             voice_probability));
 }
