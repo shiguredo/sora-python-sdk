@@ -146,12 +146,6 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("LIVE", webrtc::MediaStreamTrackInterface::TrackState::kLive)
       .value("ENDED", webrtc::MediaStreamTrackInterface::TrackState::kEnded);
 
-  nb::enum_<webrtc::AudioFrame::VADActivity>(m, "VADActivity",
-                                             nb::is_arithmetic())
-      .value("ACTIVE", webrtc::AudioFrame::VADActivity::kVadActive)
-      .value("PASSIVE", webrtc::AudioFrame::VADActivity::kVadPassive)
-      .value("UNKNOWN", webrtc::AudioFrame::VADActivity::kVadUnknown);
-
   nb::enum_<rtc::LoggingSeverity>(m, "SoraLoggingSeverity", nb::is_arithmetic())
       .value("VERBOSE", rtc::LoggingSeverity::LS_VERBOSE)
       .value("INFO", rtc::LoggingSeverity::LS_INFO)
@@ -216,7 +210,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_ro("absolute_capture_timestamp_ms",
                    &SoraAudioFrame::absolute_capture_timestamp_ms)
       .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference)
-      .def_prop_ro("vad_activity", &SoraAudioFrame::vad_activity);
+      .def_prop_ro("voice_probability", &SoraAudioFrame::voice_probability);
 
   nb::class_<SoraAudioSink2Impl>(m, "SoraAudioSink2Impl",
                                  nb::type_slots(audio_sink2_slots))
