@@ -18,9 +18,14 @@ namespace nb = nanobind;
 class SoraAudioFrame {
  public:
   SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame);
+  SoraAudioFrame(std::vector<uint16_t> vector,
+                 size_t samples_per_channel,
+                 size_t num_channels,
+                 int sample_rate_hz);
 
   nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>> Data() const;
   const int16_t* RawData() const;
+  std::vector<uint16_t> VectorData() const;
   size_t samples_per_channel() const;
   size_t num_channels() const;
   int sample_rate_hz() const;
@@ -28,6 +33,10 @@ class SoraAudioFrame {
 
  private:
   std::unique_ptr<webrtc::AudioFrame> audio_frame_;
+  std::vector<uint16_t> vector_;
+  size_t samples_per_channel_;
+  size_t num_channels_;
+  int sample_rate_hz_;
 };
 
 class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,

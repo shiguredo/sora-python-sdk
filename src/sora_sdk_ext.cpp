@@ -5,6 +5,8 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/vector.h>
 
 #include "sora.h"
 #include "sora_audio_sink.h"
@@ -205,6 +207,20 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_format", &SoraAudioSinkImpl::on_format_);
 
   nb::class_<SoraAudioFrame>(m, "SoraAudioFrame")
+      .def("__getstate__",
+           [](const SoraAudioFrame& frame) {
+             return std::make_tuple(
+                 frame.VectorData(), frame.samples_per_channel(),
+                 frame.num_channels(), frame.sample_rate_hz());
+           })
+      .def("__setstate__",
+           [](SoraAudioFrame& frame,
+              const std::tuple<std::vector<uint16_t>, size_t, size_t, int>&
+                  state) {
+             new (&frame)
+                 SoraAudioFrame(std::get<0>(state), std::get<1>(state),
+                                std::get<2>(state), std::get<3>(state));
+           })
       .def_prop_ro("samples_per_channel", &SoraAudioFrame::samples_per_channel)
       .def_prop_ro("num_channels", &SoraAudioFrame::num_channels)
       .def_prop_ro("sample_rate_hz", &SoraAudioFrame::sample_rate_hz)
