@@ -15,13 +15,64 @@
 
 namespace nb = nanobind;
 
+class SoraAudioFrameImpl {
+ public:
+  virtual ~SoraAudioFrameImpl() {}
+  virtual const int16_t* RawData() const = 0;
+  virtual std::vector<uint16_t> VectorData() const = 0;
+  virtual size_t samples_per_channel() const = 0;
+  virtual size_t num_channels() const = 0;
+  virtual int sample_rate_hz() const = 0;
+  virtual std::optional<int64_t> absolute_capture_timestamp_ms() const = 0;
+};
+
+class SoraAudioFrameDefaultImpl : public SoraAudioFrameImpl {
+ public:
+  SoraAudioFrameDefaultImpl(std::unique_ptr<webrtc::AudioFrame> audio_frame);
+
+  const int16_t* RawData() const override;
+  std::vector<uint16_t> VectorData() const override;
+  size_t samples_per_channel() const override;
+  size_t num_channels() const override;
+  int sample_rate_hz() const override;
+  std::optional<int64_t> absolute_capture_timestamp_ms() const override;
+
+ private:
+  std::unique_ptr<webrtc::AudioFrame> audio_frame_;
+};
+
+class SoraAudioFrameVectorImpl : public SoraAudioFrameImpl {
+ public:
+  SoraAudioFrameVectorImpl(
+      std::vector<uint16_t> vector,
+      size_t samples_per_channel,
+      size_t num_channels,
+      int sample_rate_hz,
+      std::optional<int64_t> absolute_capture_timestamp_ms);
+
+  const int16_t* RawData() const override;
+  std::vector<uint16_t> VectorData() const override;
+  size_t samples_per_channel() const override;
+  size_t num_channels() const override;
+  int sample_rate_hz() const override;
+  std::optional<int64_t> absolute_capture_timestamp_ms() const override;
+
+ private:
+  std::vector<uint16_t> vector_;
+  size_t samples_per_channel_;
+  size_t num_channels_;
+  int sample_rate_hz_;
+  std::optional<int64_t> absolute_capture_timestamp_ms_;
+};
+
 class SoraAudioFrame {
  public:
   SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame);
   SoraAudioFrame(std::vector<uint16_t> vector,
                  size_t samples_per_channel,
                  size_t num_channels,
-                 int sample_rate_hz);
+                 int sample_rate_hz,
+                 std::optional<int64_t> absolute_capture_timestamp_ms);
 
   nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>> Data() const;
   const int16_t* RawData() const;
@@ -32,11 +83,7 @@ class SoraAudioFrame {
   std::optional<int64_t> absolute_capture_timestamp_ms() const;
 
  private:
-  std::unique_ptr<webrtc::AudioFrame> audio_frame_;
-  std::vector<uint16_t> vector_;
-  size_t samples_per_channel_;
-  size_t num_channels_;
-  int sample_rate_hz_;
+  std::unique_ptr<SoraAudioFrameImpl> impl_;
 };
 
 class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,

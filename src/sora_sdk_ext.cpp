@@ -211,15 +211,16 @@ NB_MODULE(sora_sdk_ext, m) {
            [](const SoraAudioFrame& frame) {
              return std::make_tuple(
                  frame.VectorData(), frame.samples_per_channel(),
-                 frame.num_channels(), frame.sample_rate_hz());
+                 frame.num_channels(), frame.sample_rate_hz(),
+                 frame.absolute_capture_timestamp_ms());
            })
       .def("__setstate__",
            [](SoraAudioFrame& frame,
-              const std::tuple<std::vector<uint16_t>, size_t, size_t, int>&
-                  state) {
-             new (&frame)
-                 SoraAudioFrame(std::get<0>(state), std::get<1>(state),
-                                std::get<2>(state), std::get<3>(state));
+              const std::tuple<std::vector<uint16_t>, size_t, size_t, int,
+                               std::optional<int64_t>>& state) {
+             new (&frame) SoraAudioFrame(std::get<0>(state), std::get<1>(state),
+                                         std::get<2>(state), std::get<3>(state),
+                                         std::get<4>(state));
            })
       .def_prop_ro("samples_per_channel", &SoraAudioFrame::samples_per_channel)
       .def_prop_ro("num_channels", &SoraAudioFrame::num_channels)
