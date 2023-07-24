@@ -13,8 +13,18 @@
 SoraAudioFrame::SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame)
     : audio_frame_(std::move(audio_frame)) {}
 
+SoraAudioFrame::SoraAudioFrame(std::vector<uint16_t> vector,
+                               size_t samples_per_channel,
+                               size_t num_channels,
+                               int sample_rate_hz)
+    : vector_(vector),
+      samples_per_channel_(samples_per_channel),
+      num_channels_(num_channels),
+      sample_rate_hz_(sample_rate_hz) {}
+
 nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>
 SoraAudioFrame::Data() const {
+  // Data はまだ vector の時は返せてない
   size_t shape[2] = {static_cast<size_t>(audio_frame_->samples_per_channel()),
                      static_cast<size_t>(audio_frame_->num_channels())};
   return nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>(
@@ -22,19 +32,43 @@ SoraAudioFrame::Data() const {
 }
 
 const int16_t* SoraAudioFrame::RawData() const {
-  return audio_frame_->data();
+  if (audio_frame_) {
+    return audio_frame_->data();
+  } else {
+    return (const int16_t*)vector_.data();
+  }
+}
+
+std::vector<uint16_t> SoraAudioFrame::VectorData() const {
+  std::vector<uint16_t> vector(
+      audio_frame_->data(),
+      audio_frame_->data() +
+          audio_frame_->samples_per_channel() * audio_frame_->num_channels());
+  return vector;
 }
 
 size_t SoraAudioFrame::samples_per_channel() const {
-  return audio_frame_->samples_per_channel();
+  if (audio_frame_) {
+    return audio_frame_->samples_per_channel();
+  } else {
+    return samples_per_channel_;
+  }
 }
 
 size_t SoraAudioFrame::num_channels() const {
-  return audio_frame_->num_channels();
+  if (audio_frame_) {
+    return audio_frame_->num_channels();
+  } else {
+    return num_channels_;
+  }
 }
 
 int SoraAudioFrame::sample_rate_hz() const {
-  return audio_frame_->sample_rate_hz();
+  if (audio_frame_) {
+    return audio_frame_->sample_rate_hz();
+  } else {
+    return sample_rate_hz_;
+  }
 }
 
 std::optional<int64_t> SoraAudioFrame::absolute_capture_timestamp_ms() const {
