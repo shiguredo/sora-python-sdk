@@ -9,7 +9,8 @@ import urllib.parse
 import zipfile
 from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
-from pypath import get_python_version, get_python_include_dir, get_python_library
+from pypath import (get_python_include_dir, get_python_library,
+                    get_python_version)
 
 
 def mkdir_p(path: str):
@@ -431,6 +432,17 @@ def install_cmake(version, source_dir, install_dir, platform: str, ext):
     extract(path, install_dir, 'cmake')
 
 
+@versioned
+def install_openh264(version, source_dir, install_dir):
+    rm_rf(os.path.join(source_dir, 'openh264'))
+    rm_rf(os.path.join(install_dir, 'openh264'))
+    git_clone_shallow('https://github.com/cisco/openh264.git',
+                      version, os.path.join(source_dir, 'openh264'))
+    with cd(os.path.join(source_dir, 'openh264')):
+        cmd([
+            'make', f'PREFIX={os.path.join(install_dir, "openh264")}', 'install-headers'])
+
+
 class PlatformTarget(object):
     def __init__(self, os, osver, arch):
         self.os = os
@@ -615,6 +627,16 @@ def install_deps(build_platform: PlatformTarget, target_platform: PlatformTarget
     else:
         add_path(os.path.join(install_dir, 'cmake', 'bin'))
 
+    if build_platform.os != 'windows':
+        # OpenH264
+        install_openh264_args = {
+            'version': version['OPENH264_VERSION'],
+            'version_file': os.path.join(install_dir, 'openh264.version'),
+            'source_dir': source_dir,
+            'install_dir': install_dir,
+        }
+        install_openh264(**install_openh264_args)
+
 
 def cmake_path(path: str) -> str:
     return path.replace('\\', '/')
@@ -672,6 +694,8 @@ def main():
             f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
         cmake_args.append(
             f"-DSORA_DIR={cmake_path(os.path.join(install_dir, 'sora'))}")
+        cmake_args.append(
+            f"-DOPENH264_DIR={cmake_path(os.path.join(install_dir, 'openh264'))}")
         python_version = get_python_version()
         cmake_args.append(f"-DPYTHON_VERSION_STRING={python_version}")
         cmake_args.append(f"-DPYTHON_INCLUDE_DIR={get_python_include_dir(python_version)}")
@@ -717,25 +741,32 @@ def main():
                 "-DNB_SUFFIX=.cpython-38-aarch64-linux-gnu.so",
             ]
 
-        mkdir_p(os.path.join(build_dir, 'sora_sdk'))
-        with cd(os.path.join(build_dir, 'sora_sdk')):
+        sora_src_dir = os.path.join('src', 'sora_sdk')
+        sora_build_dir = os.path.join(build_dir, 'sora_sdk')
+        if target_platform.os == 'windows':
+            sora_build_target_dir = os.path.join(build_dir, 'sora_sdk', configuration)
+        else:
+            sora_build_target_dir = os.path.join(build_dir, 'sora_sdk')
+
+        mkdir_p(sora_build_dir)
+        with cd(sora_build_dir):
             cmd(['cmake', BASE_DIR, *cmake_args])
             cmd(['cmake', '--build', '.', '--config', configuration])
 
-        for file in os.listdir(os.path.join('src', 'sora_sdk')):
+        for file in os.listdir(sora_src_dir):
             if file.startswith('sora_sdk_ext.') and (
-               file.endswith('.so') or file.endswith('.dylib') or file.endswith('.dll')):
-                os.remove(os.path.join('src', 'sora_sdk', file))
+               file.endswith('.so') or file.endswith('.dylib') or file.endswith('.pyd')):
+                os.remove(os.path.join(sora_src_dir, file))
 
-        for file in os.listdir(os.path.join(build_dir, 'sora_sdk')):
+        for file in os.listdir(sora_build_target_dir):
             if file.startswith('sora_sdk_ext.') and (
-               file.endswith('.so') or file.endswith('.dylib') or file.endswith('.dll')):
-                shutil.copyfile(os.path.join(build_dir, 'sora_sdk', file),
-                                os.path.join('src', 'sora_sdk', file))
+               file.endswith('.so') or file.endswith('.dylib') or file.endswith('.pyd')):
+                shutil.copyfile(os.path.join(sora_build_target_dir, file),
+                                os.path.join(sora_src_dir, file))
 
         for file in os.listdir(os.path.join(install_dir, 'lyra', 'share', 'model_coeffs')):
             shutil.copyfile(os.path.join(install_dir, 'lyra', 'share', 'model_coeffs', file),
-                            os.path.join('src', 'sora_sdk', 'model_coeffs', file))
+                            os.path.join(sora_src_dir, 'model_coeffs', file))
 
 
 if __name__ == '__main__':

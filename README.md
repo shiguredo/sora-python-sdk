@@ -55,6 +55,7 @@ $ pip install sora_sdk
 
 ```
 $ rye add sora_sdk
+$ rye sync
 ```
 
 ## システム条件
@@ -75,12 +76,17 @@ $ rye add sora_sdk
 
 - Sora の機能へ追従
 - VP8 / VP9 / AV1 / H.264 のハードウェアアクセラレーター (HWA) 対応
+- OpenH264 を利用した H.264 のソフトウェアエンコーダー/デコーダーへの対応
+  - Ubuntu 22.04 x86_64 でのみ対応
 
 ## 優先実装
 
 優先実装とは Sora のライセンスを契約頂いているお客様向けに Sora Python SDK の実装予定機能を有償にて前倒しで実装することです。
 
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
+
+- DataChannel 対応
+  - [アダワープジャパン株式会社](https://adawarp.com/) 様
 
 ## サポートについて
 
@@ -121,3 +127,11 @@ limitations under the License.
 ```
 
 このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
+
+## OpenH264
+
+https://www.openh264.org/BINARY_LICENSE.txt
+
+```
+"OpenH264 Video Codec provided by Cisco Systems, Inc."
+```
