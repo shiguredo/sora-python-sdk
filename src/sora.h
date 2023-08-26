@@ -32,6 +32,49 @@ class Sora : public DisposePublisher {
    * 実装上の留意点：Sora C++ SDK が observer に std::weak_ptr を要求するためポインタで返す Source とは異なり、
    * std::shared_ptr で返しますが Python での扱いは変わりません。
    * 
+   * @param signaling_urls シグナリングに使用する URL のリスト
+   * @param role ロール recvonly | sendonly | sendrecv
+   * @param channel_id チャネル ID
+   * @param client_id (オプション)クライアント ID
+   * @param bundle_id (オプション)バンドル ID
+   * @param metadata (オプション)認証メタデータ
+   * @param signaling_notify_metadata (オプション)シグナリング通知メタデータ
+   * @param audio_source (オプション)音声ソース CreateAudioSource で生成した SoraAudioSource を渡してください
+   * @param video_source (オプション)映像ソース CreateVideoSource で生成した SoraVideoSource を渡してください
+   * @param audio (オプション)音声の有効無効 デフォルト: true
+   * @param video (オプション)映像の有効無効 デフォルト: true
+   * @param audio_codec_type (オプション)音声コーデック OPUS | LYRA デフォルト: OPUS
+   * @param video_codec_type (オプション)映像コーデック VP8 | VP9 | AV1 | H264 デフォルト: VP9
+   * @param video_bit_rate (オプション)映像ビットレート kbps 単位です
+   * @param audio_bit_rate (オプション)音声ビットレート kbps 単位です
+   * @param video_vp9_params (オプション)映像コーデック VP9 設定
+   * @param video_av1_params (オプション)映像コーデック AV1 設定
+   * @param video_h264_params (オプション)映像コーデック H264 設定
+   * @param simulcast (オプション)サイマルキャストの有効無効
+   * @param spotlight (オプション)スポットライトの有効無効
+   * @param spotlight_number (オプション)スポットライトのフォーカス数
+   * @param simulcast_rid (オプション)サイマルキャストで受信したい RID
+   * @param spotlight_focus_rid (オプション)スポットライトでフォーカスしているときのサイマルキャスト RID
+   * @param spotlight_unfocus_rid (オプション)スポットライトでフォーカスしていないときのサイマルキャスト RID
+   * @param forwarding_filter (オプション)転送フィルター設定
+   * @param data_channels (オプション) DataChannel 設定
+   * @param data_channel_signaling (オプション)シグナリングを DataChannel に切り替える機能の有効無効
+   * @param ignore_disconnect_websocket (オプション)シグナリングを DataChannel に切り替えた際に WebSocket が切断されても切断としない機能の有効無効
+   * @param data_channel_signaling_timeout (オプション) DataChannel シグナリングタイムアウト
+   * @param disconnect_wait_timeout (オプション) 切断待ちタイムアウト
+   * @param websocket_close_timeout (オプション) WebSocket クローズタイムアウト
+   * @param websocket_connection_timeout (オプション) WebSocket 接続タイムアウト
+   * @param audio_codec_lyra_bitrate (オプション) 音声コーデック Lyra のビットレート
+   * @param audio_codec_lyra_usedtx (オプション) 音声コーデック Lyra で DTX の有効無効
+   * @param check_lyra_version (オプション) 音声コーデック Lyra のバージョンチェック有効無効
+   * @param audio_streaming_language_code (オプション) 音声ストリーミング機能で利用する言語コード設定
+   * @param insecure (オプション) 証明書チェックの有効無効 デフォルト: false
+   * @param client_cert (オプション) クライアント証明書
+   * @param client_key (オプション) クライアントシークレットキー
+   * @param proxy_url (オプション) Proxy URL
+   * @param proxy_username (オプション) Proxy ユーザー名
+   * @param proxy_password (オプション) Proxy パスワード
+   * @param proxy_agent (オプション) Proxy エージェント
    * @return SoraConnection インスタンス
    */
   std::shared_ptr<SoraConnection> CreateConnection(
