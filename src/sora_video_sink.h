@@ -36,6 +36,7 @@ class SoraVideoFrame {
   nb::ndarray<nb::numpy, uint8_t, nb::shape<nb::any, nb::any, 3>> Data();
 
  private:
+  // width や height は ndarray に情報として含まれるため、これらを別で返す関数は不要
   const int width_;
   const int height_;
   std::unique_ptr<uint8_t> argb_data_;
@@ -60,7 +61,13 @@ class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   void Del();
   void Disposed();
 
-  // rtc::VideoSinkInterface
+  /**
+   * VideoTrack からフレームデータが来るたびに呼び出される関数です。
+   * 
+   * 継承している rtc::VideoSinkInterface で定義されています。
+   * 
+   * @param frame VideoTrack から渡されるフレームデータ
+   */
   void OnFrame(const webrtc::VideoFrame& frame) override;
 
   // DisposeSubscriber
@@ -72,7 +79,7 @@ class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
    * フレームが受信される度に呼び出されます。
    * このコールバック関数内では重い処理は行わないでください。サンプルを参考に queue を利用するなどの対応を推奨します。
    * また、この関数はメインスレッドから呼び出されないため、関数内で cv2.imshow を実行しても macOS の場合は表示されません。
-   * 実装上の留意点：このコールバックで渡す引数は shared_ptr にしておかないとリークします
+   * 実装上の留意点：このコールバックで渡す引数は shared_ptr にしておかないとリークします。
    */
   std::function<void(std::shared_ptr<SoraVideoFrame>)> on_frame_;
 
