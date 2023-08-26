@@ -16,8 +16,14 @@ void DummyAudioMixer::Mix(size_t number_of_channels,
                           webrtc::AudioFrame* audio_frame_for_mixing) {
   webrtc::MutexLock lock(&mutex_);
   for (auto& source_and_status : audio_source_list_) {
-    // 第一引数の設定値にサンプリングレートがリサンプリングされる
-    // -1 を指定するとリサンプリングされなくなる
+    /**
+     * webrtc::AudioTrackSinkInterface の OnData はこの関数内で呼ばれる
+     * 
+     * 第一引数の設定値にサンプリングレートがリサンプリングされるが、
+     * -1 を指定するとリサンプリングされなくなる。
+     * SoraAudioSinkImpl の OnData 内でリサンプリングするため、
+     * ここでは -1 を指定している。
+    */
     source_and_status->audio_source->GetAudioFrameWithInfo(
         -1, &source_and_status->audio_frame);
   }
@@ -41,6 +47,11 @@ void DummyAudioMixer::RemoveSource(Source* audio_source) {
 
 DummyAudioMixer::DummyAudioMixer(webrtc::TaskQueueFactory* task_queue_factory)
     : task_queue_factory_(task_queue_factory) {
+  /**
+   * 通常 webrtc::AudioMixer の Mix は音声出力デバイスのループで呼ばれるが、
+   * sora::SoraClientContextConfig::use_audio_device を false にした際に設定される、
+   * webrtc::AudioDeviceDummy はループを回さないため、ここでループを作ることとした。
+   */
   task_queue_ =
       std::make_unique<rtc::TaskQueue>(task_queue_factory_->CreateTaskQueue(
           "TestAudioDeviceModuleImpl",
