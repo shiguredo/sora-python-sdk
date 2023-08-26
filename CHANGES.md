@@ -11,7 +11,7 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを 2023.9.0 に上げる
+- [UPDATE] Sora C++ SDK のバージョンを 2023.10.0 に上げる
   - @voluntas
 
 ## 2023.3.1
