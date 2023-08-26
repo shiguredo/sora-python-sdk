@@ -10,8 +10,8 @@
 /**
  * webrtc::MediaStreamTrackInterface を格納する SoraTrackInterface です。
  * 
- * webrtc::MediaStreamTrackInterface は rtc::scoped_refptr のため、
- * nanobind で直接のハンドリングが難しいために用意しました。
+ * webrtc::MediaStreamTrackInterface は rtc::scoped_refptr なので、
+ * nanobind で直接のハンドリングが難しいので用意しました。
  */
 class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
  public:
@@ -28,8 +28,8 @@ class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
 
   /**
    * Python で呼び出すための関数
-   * この実装では track_ が nullptr になっているとクラッシュするが、
-   * その時には publisher_ も失われているため許容することとした。
+   * この実装では track_ が nullptr になっているとクラッシュしてしまいますが、
+   * その時には publisher_ も失われているため許容することとしました。
    */
   std::string kind() const { return track_->kind(); }
   std::string id() const { return track_->id(); }
@@ -40,7 +40,7 @@ class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
   }
 
   /**
-   * webrtc::MediaStreamTrackInterface の実体を取り出すため Python SDK 内で使う関数
+   * webrtc::MediaStreamTrackInterface の実体を取り出すため Python SDK 内で使う関数です。
    * 
    * @return rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>
    */
