@@ -36,6 +36,7 @@ SoraFactory::SoraFactory(std::optional<bool> use_hardware_encoder,
 #endif
 
   sora::SoraClientContextConfig context_config;
+  // Audio デバイスは使わない、 use_audio_device を true にしただけでデバイスを掴んでしまうので常に false
   context_config.use_audio_device = false;
   if (use_hardware_encoder) {
     context_config.use_hardware_encoder = *use_hardware_encoder;
@@ -44,8 +45,10 @@ SoraFactory::SoraFactory(std::optional<bool> use_hardware_encoder,
       [use_hardware_encoder = context_config.use_hardware_encoder, openh264](
           const webrtc::PeerConnectionFactoryDependencies& dependencies,
           cricket::MediaEngineDependencies& media_dependencies) {
+        // 通常の AudioMixer を使うと use_audio_device が false のとき、音声のループは全て止まってしまうので自前の AudioMixer を使う
         media_dependencies.audio_mixer =
             DummyAudioMixer::Create(media_dependencies.task_queue_factory);
+        // アンチエコーやゲインコントロール、ノイズサプレッションが必要になる用途は想定していないため nullptr
         media_dependencies.audio_processing = nullptr;
 
 #ifndef _WIN32
