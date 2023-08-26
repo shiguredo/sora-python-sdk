@@ -11,6 +11,9 @@
 // Sora
 #include <sora/sora_client_context.h>
 
+/**
+ * sora::SoraClientContext を呼び出す必要がある処理をまとめたクラスです。
+ */
 class SoraFactory {
  public:
   SoraFactory(std::optional<bool> use_hardware_encoder,
