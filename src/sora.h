@@ -22,6 +22,12 @@
  */
 class Sora : public DisposePublisher {
  public:
+  /**
+   * このタイミングで SoraFactory の生成まで行うため SoraFactory の生成にあたって必要な引数はここで設定します。
+   * 
+   * @param use_hardware_encoder (オプション)ハードウェアエンコーダーの有効無効 デフォルト: true
+   * @param openh264 (オプション) OpenH264 ライブラリへのパス
+   */
   Sora(std::optional<bool> use_hardware_encoder,
        std::optional<std::string> openh264);
   ~Sora();
@@ -150,6 +156,16 @@ class Sora : public DisposePublisher {
   SoraVideoSource* CreateVideoSource();
 
  private:
+  /**
+   * Python で渡された値を boost::json::value に変換します。
+   * 
+   * metadata のように JSON の値として扱える内容であれば自由に指定できるものを、
+   * nanobind::handle で受け取って Sora C++ SDK で使っている boost::json::value に変換します。
+   * 
+   * @param value Python から渡された値の nanobind::handle
+   * @param error_message 変換に失敗した際に nanobind::type_error で返す際のエラーメッセージ
+   * @return boost::json::value
+   */
   boost::json::value ConvertJsonValue(nb::handle value,
                                       const char* error_message);
   std::vector<sora::SoraSignalingConfig::DataChannel> ConvertDataChannels(
