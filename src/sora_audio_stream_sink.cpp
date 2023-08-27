@@ -1,4 +1,4 @@
-#include "sora_audio_sink2.h"
+#include "sora_audio_stream_sink.h"
 
 #include <chrono>
 
@@ -135,9 +135,9 @@ std::optional<int64_t> SoraAudioFrame::absolute_capture_timestamp_ms() const {
   return impl_->absolute_capture_timestamp_ms();
 }
 
-SoraAudioSink2Impl::SoraAudioSink2Impl(SoraTrackInterface* track,
-                                       int output_sample_rate,
-                                       size_t output_channels)
+SoraAudioStreamSinkImpl::SoraAudioStreamSinkImpl(SoraTrackInterface* track,
+                                                 int output_sample_rate,
+                                                 size_t output_channels)
     : track_(track),
       output_sample_rate_(output_sample_rate),
       output_channels_(output_channels) {
@@ -147,18 +147,18 @@ SoraAudioSink2Impl::SoraAudioSink2Impl(SoraTrackInterface* track,
   audio_track->AddSink(this);
 }
 
-SoraAudioSink2Impl::~SoraAudioSink2Impl() {
+SoraAudioStreamSinkImpl::~SoraAudioStreamSinkImpl() {
   Del();
 }
 
-void SoraAudioSink2Impl::Del() {
+void SoraAudioStreamSinkImpl::Del() {
   if (track_) {
     track_->RemoveSubscriber(this);
   }
   Disposed();
 }
 
-void SoraAudioSink2Impl::Disposed() {
+void SoraAudioStreamSinkImpl::Disposed() {
   if (track_ && track_->GetTrack()) {
     webrtc::AudioTrackInterface* audio_track =
         static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
@@ -167,11 +167,11 @@ void SoraAudioSink2Impl::Disposed() {
   track_ = nullptr;
 }
 
-void SoraAudioSink2Impl::PublisherDisposed() {
+void SoraAudioStreamSinkImpl::PublisherDisposed() {
   Disposed();
 }
 
-void SoraAudioSink2Impl::OnData(
+void SoraAudioStreamSinkImpl::OnData(
     const void* audio_data,
     int bits_per_sample,
     int sample_rate,
