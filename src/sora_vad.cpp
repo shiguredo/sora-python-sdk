@@ -23,6 +23,7 @@ float SoraVAD::Analyze(std::shared_ptr<SoraAudioFrame> frame) {
   if (!audio_buffer_ ||
       vad_input_config_.sample_rate_hz() != frame->sample_rate_hz() ||
       vad_input_config_.num_channels() != frame->num_channels()) {
+    // audio_buffer_ のサンプリングレートやチャネル数と frame のそれが一致しない場合は audio_buffer_ を初期化する
     audio_buffer_.reset(new webrtc::AudioBuffer(
         frame->sample_rate_hz(), frame->num_channels(),
         webrtc::rnn_vad::kSampleRate24kHz,  // VAD は 24kHz なので合わせる
