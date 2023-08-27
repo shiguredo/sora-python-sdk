@@ -15,6 +15,9 @@
 
 namespace nb = nanobind;
 
+/**
+ * SoraAudioFrame 内で音声データを持つクラスの抽象クラス
+ */
 class SoraAudioFrameImpl {
  public:
   virtual ~SoraAudioFrameImpl() {}
@@ -26,6 +29,11 @@ class SoraAudioFrameImpl {
   virtual std::optional<int64_t> absolute_capture_timestamp_ms() const = 0;
 };
 
+/**
+ * SoraAudioFrame を SoraAudioSink2Impl から生成した際にデータを持つクラスです。
+ * 
+ * libwebrtc でオーディオデータを扱う際の単位である webrtc::AudioFrame のまま扱います。
+ */
 class SoraAudioFrameDefaultImpl : public SoraAudioFrameImpl {
  public:
   SoraAudioFrameDefaultImpl(std::unique_ptr<webrtc::AudioFrame> audio_frame);
@@ -41,6 +49,11 @@ class SoraAudioFrameDefaultImpl : public SoraAudioFrameImpl {
   std::unique_ptr<webrtc::AudioFrame> audio_frame_;
 };
 
+/**
+ * SoraAudioFrame を pickle した状態から __setstate__ で戻した場合にデータを持つクラスです。
+ * 
+ * nanobind でハンドリングできる型のみでコンストラクタを構成しています。
+ */
 class SoraAudioFrameVectorImpl : public SoraAudioFrameImpl {
  public:
   SoraAudioFrameVectorImpl(
@@ -65,27 +78,89 @@ class SoraAudioFrameVectorImpl : public SoraAudioFrameImpl {
   std::optional<int64_t> absolute_capture_timestamp_ms_;
 };
 
+/**
+ * 受信した 10ms 単位の音声データを保持する SoraAudioFrame です。
+ * 
+ * SoraAudioSink2Impl から生成するための webrtc::AudioFrame を引数にもつコンストラクタと
+ * pickle に対応するための Python から生成ためのコンストラクタが存在します。
+ * それぞれでデータの持ち方が異なるため実際のデータは SoraAudioFrameImpl の impl_ 内にもっていて、
+ * このクラスは Python へのインターフェイスを提供します。
+ * pickle に対応するために抽象クラスだけでなく、このようなクラスが必要になりました。
+ */
 class SoraAudioFrame {
  public:
+  // SoraAudioSink2Impl から生成する際のコンストラクタ
   SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame);
+  // pickle した状態から __setstate__ で戻す際に使うコンストラクタ
   SoraAudioFrame(std::vector<uint16_t> vector,
                  size_t samples_per_channel,
                  size_t num_channels,
                  int sample_rate_hz,
                  std::optional<int64_t> absolute_capture_timestamp_ms);
-
+  /**
+   * SoraAudioFrame 内の音声データへの numpy.ndarray での参照を返します。
+   * 
+   * @return NumPy の配列 numpy.ndarray で サンプル数 x チャンネル数 になっている音声データ
+   */
   nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>> Data() const;
+  /**
+   * SoraAudioFrame 内の音声データへの直接参照を返します。
+   * 
+   * Python SDK 内で使う関数です。
+   * 
+   * @return 音声データの int16_t* ポインタ
+   */
   const int16_t* RawData() const;
+  /**
+   * SoraAudioFrame 内の音声データを std::vector<uint16_t> で返します。
+   * 
+   * Python SDK 内で使う関数で pickle 化するために使います。
+   * 
+   * @return 音声データの std::vector<uint16_t>
+   */
   std::vector<uint16_t> VectorData() const;
+  /**
+   * チャネルあたりのサンプル数を返します。
+   * 
+   * @return チャネルあたりのサンプル数
+   */
   size_t samples_per_channel() const;
+  /**
+   * チャネル数を返します。
+   * 
+   * @return チャネル数
+   */
   size_t num_channels() const;
+  /**
+   * サンプリングレートを返します。
+   * 
+   * @return サンプリングレート
+   */
   int sample_rate_hz() const;
+  /**
+   * キャプチャした際のタイムスタンプがあればミリ秒で返します。
+   * 
+   * @return キャプチャした際のタイムスタンプ
+   */
   std::optional<int64_t> absolute_capture_timestamp_ms() const;
 
  private:
   std::unique_ptr<SoraAudioFrameImpl> impl_;
 };
 
+/**
+ * Sora からの音声を受け取る SoraAudioSink2Impl です。
+ * 
+ * Connection の OnTrack コールバックから渡されるリモート Track から音声を取り出すことができます。
+ * Track からの音声はコンストラクタで設定したサンプリングレートとチャネル数に変換し、
+ * SoraAudioFrame に格納した上でコールバックで Python に音声データを渡します。
+ * コールバックは libwebrtc 内部での扱いから 10ms 間隔で呼び出されるため、
+ * コールバックは速やかに処理を返すことが求められます。 10ms 単位の高いリアルタム性を求めないのであれば、
+ * 内部にバッファを持ち任意のタイミングで音声を取り出すことができる SoraAudioSink の利用を推奨します。
+ * 
+ * 実装上の留意点：Track の参照保持のための Impl のない SoraAudioSink2 を __init__.py に定義しています。
+ * SoraAudioSink2Impl を直接 Python から呼び出すことは想定していません。
+ */
 class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,
                            public DisposeSubscriber {
  public:
@@ -104,8 +179,14 @@ class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,
               size_t number_of_channels,
               size_t number_of_frames,
               absl::optional<int64_t> absolute_capture_timestamp_ms) override;
-
-  // このコールバックは shared_ptr にしないとリークする
+  /**
+   * 音声データが来るたびに呼び出されるコールバック変数です。
+   * 
+   * Track から音声データが渡される 10ms 間隔で呼び出されます。このコールバック関数内では重い処理は行わないでください。
+   * 渡される SoraAudioFrame は pickle が利用可能のため別プロセスなどにオフロードすることを推奨します。
+   * また、この関数はメインスレッドから呼び出されないため留意してください。
+   * 実装上の留意点：このコールバックで渡す引数は shared_ptr にしておかないとリークします。
+   */
   std::function<void(std::shared_ptr<SoraAudioFrame>)> on_frame_;
 
  private:

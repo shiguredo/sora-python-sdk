@@ -83,7 +83,6 @@ int SoraAudioFrameVectorImpl::sample_rate_hz() const {
 
 std::optional<int64_t> SoraAudioFrameVectorImpl::absolute_capture_timestamp_ms()
     const {
-  // まだどう作るか考え中
   return absolute_capture_timestamp_ms_;
 }
 

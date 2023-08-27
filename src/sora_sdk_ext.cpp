@@ -209,6 +209,7 @@ NB_MODULE(sora_sdk_ext, m) {
   nb::class_<SoraAudioFrame>(m, "SoraAudioFrame")
       .def("__getstate__",
            [](const SoraAudioFrame& frame) {
+             // picke 化する際に呼び出されるので、すべてのデータを tuple に格納します。
              return std::make_tuple(
                  frame.VectorData(), frame.samples_per_channel(),
                  frame.num_channels(), frame.sample_rate_hz(),
@@ -218,6 +219,7 @@ NB_MODULE(sora_sdk_ext, m) {
            [](SoraAudioFrame& frame,
               const std::tuple<std::vector<uint16_t>, size_t, size_t, int,
                                std::optional<int64_t>>& state) {
+             // picke から戻す際に呼び出されるので、 tuple から SoraAudioFrame に戻します。
              new (&frame) SoraAudioFrame(std::get<0>(state), std::get<1>(state),
                                          std::get<2>(state), std::get<3>(state),
                                          std::get<4>(state));
