@@ -30,7 +30,7 @@ class SoraAudioFrameImpl {
 };
 
 /**
- * SoraAudioFrame を SoraAudioSink2Impl から生成した際にデータを持つクラスです。
+ * SoraAudioFrame を SoraAudioStreamSinkImpl から生成した際にデータを持つクラスです。
  * 
  * libwebrtc でオーディオデータを扱う際の単位である webrtc::AudioFrame のまま扱います。
  */
@@ -81,7 +81,7 @@ class SoraAudioFrameVectorImpl : public SoraAudioFrameImpl {
 /**
  * 受信した 10ms 単位の音声データを保持する SoraAudioFrame です。
  * 
- * SoraAudioSink2Impl から生成するための webrtc::AudioFrame を引数にもつコンストラクタと
+ * SoraAudioStreamSinkImpl から生成するための webrtc::AudioFrame を引数にもつコンストラクタと
  * pickle に対応するための Python から生成ためのコンストラクタが存在します。
  * それぞれでデータの持ち方が異なるため実際のデータは SoraAudioFrameImpl の impl_ 内にもっていて、
  * このクラスは Python へのインターフェイスを提供します。
@@ -89,7 +89,7 @@ class SoraAudioFrameVectorImpl : public SoraAudioFrameImpl {
  */
 class SoraAudioFrame {
  public:
-  // SoraAudioSink2Impl から生成する際のコンストラクタ
+  // SoraAudioStreamSinkImpl から生成する際のコンストラクタ
   SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame);
   // pickle した状態から __setstate__ で戻す際に使うコンストラクタ
   SoraAudioFrame(std::vector<uint16_t> vector,
@@ -149,7 +149,7 @@ class SoraAudioFrame {
 };
 
 /**
- * Sora からの音声を受け取る SoraAudioSink2Impl です。
+ * Sora からの音声を受け取る SoraAudioStreamSinkImpl です。
  * 
  * Connection の OnTrack コールバックから渡されるリモート Track から音声を取り出すことができます。
  * Track からの音声はコンストラクタで設定したサンプリングレートとチャネル数に変換し、
@@ -158,16 +158,16 @@ class SoraAudioFrame {
  * コールバックは速やかに処理を返すことが求められます。 10ms 単位の高いリアルタム性を求めないのであれば、
  * 内部にバッファを持ち任意のタイミングで音声を取り出すことができる SoraAudioSink の利用を推奨します。
  * 
- * 実装上の留意点：Track の参照保持のための Impl のない SoraAudioSink2 を __init__.py に定義しています。
- * SoraAudioSink2Impl を直接 Python から呼び出すことは想定していません。
+ * 実装上の留意点：Track の参照保持のための Impl のない SoraAudioStreamSink を __init__.py に定義しています。
+ * SoraAudioStreamSinkImpl を直接 Python から呼び出すことは想定していません。
  */
-class SoraAudioSink2Impl : public webrtc::AudioTrackSinkInterface,
-                           public DisposeSubscriber {
+class SoraAudioStreamSinkImpl : public webrtc::AudioTrackSinkInterface,
+                                public DisposeSubscriber {
  public:
-  SoraAudioSink2Impl(SoraTrackInterface* track,
-                     int output_sample_rate,
-                     size_t output_channels);
-  ~SoraAudioSink2Impl();
+  SoraAudioStreamSinkImpl(SoraTrackInterface* track,
+                          int output_sample_rate,
+                          size_t output_channels);
+  ~SoraAudioStreamSinkImpl();
 
   void Del();
   void Disposed();
