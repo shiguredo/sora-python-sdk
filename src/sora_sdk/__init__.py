@@ -18,6 +18,16 @@ class SoraAudioSink(SoraAudioSinkImpl):
         del self.__track
 
 
+class SoraAudioStreamSink(SoraAudioStreamSinkImpl):
+    def __init__(self, track, output_frequency, output_channels):
+        super().__init__(track, output_frequency, output_channels)
+        self.__track = track
+
+    def __del__(self):
+        super().__del__()
+        del self.__track
+
+
 class SoraVideoSink(SoraVideoSinkImpl):
     def __init__(self, track):
         super().__init__(track)
