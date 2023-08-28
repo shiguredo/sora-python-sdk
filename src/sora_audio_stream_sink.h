@@ -1,5 +1,5 @@
-#ifndef SORA_AUDIO_SINK2_H_
-#define SORA_AUDIO_SINK2_H_
+#ifndef SORA_AUDIO_STREAM_SINK_H_
+#define SORA_AUDIO_STREAM_SINK_H_
 
 // nonobind
 #include <nanobind/nanobind.h>
