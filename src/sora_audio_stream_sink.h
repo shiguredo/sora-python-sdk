@@ -1,6 +1,8 @@
 #ifndef SORA_AUDIO_STREAM_SINK_H_
 #define SORA_AUDIO_STREAM_SINK_H_
 
+#include <optional>
+
 // nonobind
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
