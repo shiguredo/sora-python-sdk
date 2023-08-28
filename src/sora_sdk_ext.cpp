@@ -5,10 +5,13 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/vector.h>
 
 #include "sora.h"
 #include "sora_audio_sink.h"
 #include "sora_audio_source.h"
+#include "sora_audio_stream_sink.h"
 #include "sora_connection.h"
 #include "sora_log.h"
 #include "sora_track_interface.h"
@@ -51,6 +54,22 @@ int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
  */
 PyType_Slot audio_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_sink_tp_traverse},
+    {0, nullptr}};
+
+int audio_sink2_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  SoraAudioStreamSinkImpl* audio_sink =
+      nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
+
+  if (audio_sink->on_frame_) {
+    nb::object on_frame = nb::cast(audio_sink->on_frame_, nb::rv_policy::none);
+    Py_VISIT(on_frame.ptr());
+  }
+
+  return 0;
+}
+
+PyType_Slot audio_sink2_slots[] = {
+    {Py_tp_traverse, (void*)audio_sink2_tp_traverse},
     {0, nullptr}};
 
 int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
@@ -198,6 +217,38 @@ NB_MODULE(sora_sdk_ext, m) {
            nb::rv_policy::move)
       .def_rw("on_data", &SoraAudioSinkImpl::on_data_)
       .def_rw("on_format", &SoraAudioSinkImpl::on_format_);
+
+  nb::class_<SoraAudioFrame>(m, "SoraAudioFrame")
+      .def("__getstate__",
+           [](const SoraAudioFrame& frame) {
+             // picke 化する際に呼び出されるので、すべてのデータを tuple に格納します。
+             return std::make_tuple(
+                 frame.VectorData(), frame.samples_per_channel(),
+                 frame.num_channels(), frame.sample_rate_hz(),
+                 frame.absolute_capture_timestamp_ms());
+           })
+      .def("__setstate__",
+           [](SoraAudioFrame& frame,
+              const std::tuple<std::vector<uint16_t>, size_t, size_t, int,
+                               std::optional<int64_t>>& state) {
+             // picke から戻す際に呼び出されるので、 tuple から SoraAudioFrame に戻します。
+             new (&frame) SoraAudioFrame(std::get<0>(state), std::get<1>(state),
+                                         std::get<2>(state), std::get<3>(state),
+                                         std::get<4>(state));
+           })
+      .def_prop_ro("samples_per_channel", &SoraAudioFrame::samples_per_channel)
+      .def_prop_ro("num_channels", &SoraAudioFrame::num_channels)
+      .def_prop_ro("sample_rate_hz", &SoraAudioFrame::sample_rate_hz)
+      .def_prop_ro("absolute_capture_timestamp_ms",
+                   &SoraAudioFrame::absolute_capture_timestamp_ms)
+      .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference);
+
+  nb::class_<SoraAudioStreamSinkImpl>(m, "SoraAudioStreamSinkImpl",
+                                      nb::type_slots(audio_sink2_slots))
+      .def(nb::init<SoraTrackInterface*, int, size_t>(), "track"_a,
+           "output_frequency"_a = -1, "output_channels"_a = 0)
+      .def("__del__", &SoraAudioStreamSinkImpl::Del)
+      .def_rw("on_frame", &SoraAudioStreamSinkImpl::on_frame_);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
       .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);
