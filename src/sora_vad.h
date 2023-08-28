@@ -11,7 +11,7 @@
 #include <modules/audio_processing/audio_buffer.h>
 #include <modules/audio_processing/include/audio_processing.h>
 
-#include "sora_audio_sink2.h"
+#include "sora_audio_stream_sink.h"
 
 namespace nb = nanobind;
 
