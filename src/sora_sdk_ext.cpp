@@ -18,20 +18,25 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-/*
- * コールバック関数のメンバー変数は Py_tp_traverse で visit コールバックを呼び出すようにする
- * やっておかないと終了時にリークエラーが発生する
+/**
+ * クラスにコールバック関数のメンバー変数がある場合は全て以下のように、
+ * Py_VISIT を呼び出すことによりガベージコレクタにその存在を伝える関数を作る。
+ * やっておかないと終了時にリークエラーが発生する。
  */
-
 int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  // インスタンスを取得する
   SoraAudioSinkImpl* audio_sink = nb::inst_ptr<SoraAudioSinkImpl>(self);
 
+  // コールバックがある場合
   if (audio_sink->on_format_) {
+    // コールバック変数の参照を取得して
     nb::object on_format =
         nb::cast(audio_sink->on_format_, nb::rv_policy::none);
+    // ガベージコレクタに伝える
     Py_VISIT(on_format.ptr());
   }
 
+  // 上に同じ
   if (audio_sink->on_data_) {
     nb::object on_data = nb::cast(audio_sink->on_data_, nb::rv_policy::none);
     Py_VISIT(on_data.ptr());
@@ -40,6 +45,10 @@ int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   return 0;
 }
 
+/**
+ * PyType_Slot の Py_tp_traverse に先に作った関数を設定する。
+ * 定義した PyType_Slot は NB_MODULE 内の対応するクラスに対して紐づける。
+ */
 PyType_Slot audio_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_sink_tp_traverse},
     {0, nullptr}};
@@ -107,6 +116,9 @@ PyType_Slot connection_slots[] = {
     {Py_tp_traverse, (void*)connection_tp_traverse},
     {0, nullptr}};
 
+/**
+ * Python で利用するすべてのクラスと定数は以下のように定義しなければならない
+ */
 NB_MODULE(sora_sdk_ext, m) {
   nb::enum_<sora::SoraSignalingErrorCode>(m, "SoraSignalingErrorCode",
                                           nb::is_arithmetic())
