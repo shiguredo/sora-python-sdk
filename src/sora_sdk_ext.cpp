@@ -15,6 +15,7 @@
 #include "sora_connection.h"
 #include "sora_log.h"
 #include "sora_track_interface.h"
+#include "sora_vad.h"
 #include "sora_video_sink.h"
 #include "sora_video_source.h"
 
@@ -249,6 +250,10 @@ NB_MODULE(sora_sdk_ext, m) {
            "output_frequency"_a = -1, "output_channels"_a = 0)
       .def("__del__", &SoraAudioStreamSinkImpl::Del)
       .def_rw("on_frame", &SoraAudioStreamSinkImpl::on_frame_);
+
+  nb::class_<SoraVAD>(m, "SoraVAD")
+      .def(nb::init<>())
+      .def("analyze", &SoraVAD::Analyze);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
       .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);
