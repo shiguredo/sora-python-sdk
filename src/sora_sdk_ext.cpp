@@ -56,7 +56,7 @@ PyType_Slot audio_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_sink_tp_traverse},
     {0, nullptr}};
 
-int audio_sink2_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+int audio_stream_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   SoraAudioStreamSinkImpl* audio_sink =
       nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
 
@@ -68,8 +68,8 @@ int audio_sink2_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   return 0;
 }
 
-PyType_Slot audio_sink2_slots[] = {
-    {Py_tp_traverse, (void*)audio_sink2_tp_traverse},
+PyType_Slot audio_stream_sink_slots[] = {
+    {Py_tp_traverse, (void*)audio_stream_sink_tp_traverse},
     {0, nullptr}};
 
 int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
@@ -244,7 +244,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference);
 
   nb::class_<SoraAudioStreamSinkImpl>(m, "SoraAudioStreamSinkImpl",
-                                      nb::type_slots(audio_sink2_slots))
+                                      nb::type_slots(audio_stream_sink_slots))
       .def(nb::init<SoraTrackInterface*, int, size_t>(), "track"_a,
            "output_frequency"_a = -1, "output_channels"_a = 0)
       .def("__del__", &SoraAudioStreamSinkImpl::Del)
