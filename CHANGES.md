@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] 発話区間の検出が可能な SoraVAD の追加
+  - @tnoho
 - [ADD] リアルタイム性を重視した AudioStreamSink の追加
   - @tnoho
 - [ADD] AudioStreamSink が返す音声フレームとして pickel が可能な AudioFrame を追加
