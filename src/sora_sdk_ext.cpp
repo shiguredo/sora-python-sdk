@@ -172,6 +172,7 @@ NB_MODULE(sora_sdk_ext, m) {
   m.def("enable_libwebrtc_log", &EnableLibwebrtcLog);
 
   nb::class_<SoraTrackInterface>(m, "SoraTrackInterface")
+      .def_prop_ro("stream_id", &SoraTrackInterface::stream_id)
       .def_prop_ro("kind", &SoraTrackInterface::kind)
       .def_prop_ro("id", &SoraTrackInterface::id)
       .def_prop_ro("enabled", &SoraTrackInterface::enabled)
