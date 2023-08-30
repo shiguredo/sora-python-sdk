@@ -34,6 +34,7 @@ void SoraConnection::PublisherDisposed() {
 }
 
 void SoraConnection::Init(sora::SoraSignalingConfig& config) {
+  // TODO(tnoho): 複数回の呼び出しは禁止なので、ちゃんと throw する
   ioc_.reset(new boost::asio::io_context(1));
   config.io_context = ioc_.get();
   conn_ = sora::SoraSignaling::Create(config);
@@ -51,6 +52,7 @@ void SoraConnection::Connect() {
 
   conn_->Connect();
 
+  // ioc_->run(); は別スレッドで呼ばなければ、この関数は切断されるまで返らなくなってしまう
   thread_.reset(new std::thread([this]() {
     auto guard = boost::asio::make_work_guard(*ioc_);
     ioc_->run();
@@ -76,6 +78,7 @@ void SoraConnection::Disconnect() {
 }
 
 void SoraConnection::SetAudioTrack(SoraTrackInterface* audio_source) {
+  // TODO(tnoho): audio_sender_ がないと意味がないので、エラーを返すようにするべき
   if (audio_sender_) {
     audio_sender_->SetTrack(audio_source->GetTrack().get());
   }
@@ -87,6 +90,7 @@ void SoraConnection::SetAudioTrack(SoraTrackInterface* audio_source) {
 }
 
 void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
+  // TODO(tnoho): video_sender_ がないと意味がないので、エラーを返すようにするべき
   if (video_sender_) {
     video_sender_->SetTrack(video_source->GetTrack().get());
   }
@@ -109,6 +113,7 @@ void SoraConnection::OnSetOffer(std::string offer) {
         audio_result = conn_->GetPeerConnection()->AddTrack(
             audio_source_->GetTrack(), {stream_id});
     if (audio_result.ok()) {
+      // javascript でいう replaceTrack を実装するために webrtc::RtpSenderInterface の参照をとっておく
       audio_sender_ = audio_result.value();
     }
   }
@@ -154,7 +159,7 @@ void SoraConnection::OnMessage(std::string label, std::string data) {
 void SoraConnection::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   if (on_track_) {
-    // shared_ptr になってないのでリークする
+    // shared_ptr になってないとリークする
     auto track = std::make_shared<SoraTrackInterface>(
         this, transceiver->receiver()->track());
     AddSubscriber(track.get());
@@ -163,7 +168,9 @@ void SoraConnection::OnTrack(
 }
 
 void SoraConnection::OnRemoveTrack(
-    rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {}
+    rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+  // TODO(tnoho): 要実装
+}
 
 void SoraConnection::OnDataChannel(std::string label) {
   if (on_data_channel_) {
