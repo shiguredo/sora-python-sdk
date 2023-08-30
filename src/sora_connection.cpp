@@ -161,7 +161,8 @@ void SoraConnection::OnTrack(
   if (on_track_) {
     // shared_ptr になってないとリークする
     auto track = std::make_shared<SoraTrackInterface>(
-        this, transceiver->receiver()->track());
+        this, transceiver->receiver()->track(),
+        transceiver->receiver()->stream_ids()[0]);
     AddSubscriber(track.get());
     on_track_(track);
   }
