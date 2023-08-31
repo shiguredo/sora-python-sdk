@@ -172,12 +172,14 @@ NB_MODULE(sora_sdk_ext, m) {
   m.def("enable_libwebrtc_log", &EnableLibwebrtcLog);
 
   nb::class_<SoraTrackInterface>(m, "SoraTrackInterface")
-      .def_prop_ro("stream_id", &SoraTrackInterface::stream_id)
       .def_prop_ro("kind", &SoraTrackInterface::kind)
       .def_prop_ro("id", &SoraTrackInterface::id)
       .def_prop_ro("enabled", &SoraTrackInterface::enabled)
       .def_prop_ro("state", &SoraTrackInterface::state)
       .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
+
+  nb::class_<SoraMediaTrack, SoraTrackInterface>(m, "SoraMediaTrack")
+      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id);
 
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
       .def("on_data", nb::overload_cast<const int16_t*, size_t, double>(

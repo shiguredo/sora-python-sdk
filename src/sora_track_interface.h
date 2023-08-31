@@ -19,9 +19,8 @@ class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
  public:
   SoraTrackInterface(
       DisposePublisher* publisher,
-      rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
-      std::optional<std::string> stream_id = std::nullopt)
-      : publisher_(publisher), track_(track), stream_id_(stream_id) {}
+      rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track)
+      : publisher_(publisher), track_(track) {}
   virtual ~SoraTrackInterface() {
     if (publisher_) {
       publisher_->RemoveSubscriber(this);
@@ -41,20 +40,6 @@ class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
   webrtc::MediaStreamTrackInterface::TrackState state() {
     return track_->state();
   }
-
-  /**
-   * この Track の Stream ID を std::string で返します。
-   * 
-   * Python で呼び出すための関数です。
-   * 本来 Track には複数の Stream ID を紐づけることができるのですが、
-   * Sora の使用上 Track には Stream ID が 1 つしか紐づかないため Track のメンバーとしました。
-   * 
-   * このクラスを継承している SoraAudioSource, SoraVideoSource については、
-   * Connection にセットしてある際にセットされた組み合わせで Connection ごとに Stream ID が新規に設定されること。
-   * SoraAudioSource, SoraVideoSource は複数の Connection に割り当てが可能なこと。
-   * を踏まえて、この関数では std::nullopt (None) を返すこととしました。
-   */
-  std::optional<std::string> stream_id() const { return stream_id_; }
 
   /**
    * webrtc::MediaStreamTrackInterface の実体を取り出すため Python SDK 内で使う関数です。
@@ -78,7 +63,30 @@ class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
  protected:
   DisposePublisher* publisher_;
   rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track_;
-  std::optional<std::string> stream_id_;
 };
 
+/**
+ * SoraConnection の on_track で渡されるリモートトラックを格納する SoraTrackInterface です。
+ * 
+ * webrtc::MediaStreamTrackInterface のメンバーにはない stream_id を on_track で渡すために追加しました。
+ */
+class SoraMediaTrack : public SoraTrackInterface {
+ public:
+  SoraMediaTrack(DisposePublisher* publisher,
+                 rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+                 std::string stream_id)
+      : SoraTrackInterface(publisher, track), stream_id_(stream_id) {}
+
+  /**
+   * この Track の Stream ID を std::string で返します。
+   * 
+   * Python で呼び出すための関数です。
+   * 本来 Track には複数の Stream ID を紐づけることができるのですが、
+   * Sora の使用上 Track には Stream ID が 1 つしか紐づかないため Track のメンバーとしました。
+   */
+  std::string stream_id() const { return stream_id_; }
+
+ private:
+  std::string stream_id_;
+};
 #endif
