@@ -261,7 +261,7 @@ NB_MODULE(sora_sdk_ext, m) {
 
   nb::class_<SoraVAD>(m, "SoraVAD")
       .def(nb::init<>())
-      .def("analyze", &SoraVAD::Analyze);
+      .def("analyze", &SoraVAD::Analyze, "frame"_a);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
       .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);
