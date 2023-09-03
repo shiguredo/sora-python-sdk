@@ -1,8 +1,6 @@
 #ifndef SORA_TRACK_INTERFACE_H_
 #define SORA_TRACK_INTERFACE_H_
 
-#include <optional>
-
 // WebRTC
 #include <api/media_stream_interface.h>
 #include <api/scoped_refptr.h>
