@@ -11,7 +11,7 @@
 
 ## develop
 
-- [ADD] SoraTrackInterface に stream_id の追加
+- [UPDATE] SoraMediaTrack を追加し、 SoraConnection.on_track の引数を SoraMediaTrack に変更
   - @tnoho
 - [ADD] 発話区間の検出が可能な SoraVAD の追加
   - @tnoho
