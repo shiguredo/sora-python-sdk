@@ -63,4 +63,28 @@ class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
   rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track_;
 };
 
+/**
+ * SoraConnection の on_track で渡されるリモートトラックを格納する SoraTrackInterface です。
+ * 
+ * webrtc::MediaStreamTrackInterface のメンバーにはない stream_id を on_track で渡すために追加しました。
+ */
+class SoraMediaTrack : public SoraTrackInterface {
+ public:
+  SoraMediaTrack(DisposePublisher* publisher,
+                 rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+                 std::string stream_id)
+      : SoraTrackInterface(publisher, track), stream_id_(stream_id) {}
+
+  /**
+   * この Track の Stream ID を std::string で返します。
+   * 
+   * Python で呼び出すための関数です。
+   * 本来 Track には複数の Stream ID を紐づけることができるのですが、
+   * Sora の使用上 Track には Stream ID が 1 つしか紐づかないため Track のメンバーとしました。
+   */
+  std::string stream_id() const { return stream_id_; }
+
+ private:
+  std::string stream_id_;
+};
 #endif
