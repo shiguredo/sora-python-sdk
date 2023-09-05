@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] SoraMediaTrack を追加し、 SoraConnection.on_track の引数を SoraMediaTrack に変更
+  - @tnoho
 - [ADD] 発話区間の検出が可能な SoraVAD の追加
   - @tnoho
 - [ADD] リアルタイム性を重視した AudioStreamSink の追加

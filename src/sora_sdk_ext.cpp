@@ -178,6 +178,9 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_ro("state", &SoraTrackInterface::state)
       .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
 
+  nb::class_<SoraMediaTrack, SoraTrackInterface>(m, "SoraMediaTrack")
+      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id);
+
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
       .def("on_data", nb::overload_cast<const int16_t*, size_t, double>(
                           &SoraAudioSource::OnData))
