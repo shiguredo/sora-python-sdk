@@ -160,8 +160,9 @@ void SoraConnection::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   if (on_track_) {
     // shared_ptr になってないとリークする
-    auto track = std::make_shared<SoraTrackInterface>(
-        this, transceiver->receiver()->track());
+    auto track = std::make_shared<SoraMediaTrack>(
+        this, transceiver->receiver()->track(),
+        transceiver->receiver()->stream_ids()[0]);
     AddSubscriber(track.get());
     on_track_(track);
   }
