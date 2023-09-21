@@ -41,7 +41,7 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
@@ -113,7 +113,7 @@ jobs:
           - "3.10"
           - "3.11"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: "${{ matrix.python_version }}"
@@ -190,7 +190,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/download
         with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.8"}
       - uses: ./.github/actions/download

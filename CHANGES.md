@@ -13,14 +13,17 @@
 
 - [CHANGE] SoraAudioSource.on_data, SoraVideoSource.on_captured, SoraVAD.analyze の引数名を変更
   - @tnoho
+- [UPDATE] SoraMediaTrack を追加し、 SoraConnection.on_track の引数を SoraMediaTrack に変更
+  - @tnoho
 - [ADD] 発話区間の検出が可能な SoraVAD の追加
   - @tnoho
 - [ADD] リアルタイム性を重視した AudioStreamSink の追加
   - @tnoho
 - [ADD] AudioStreamSink が返す音声フレームとして pickel が可能な AudioFrame を追加
   - @tnoho
-- [UPDATE] Sora C++ SDK のバージョンを 2023.10.0 に上げる
-  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを 2023.13.1 に上げる
+  - WebRTC m116 で cricket::Codec は protected になったので cricket::CreateVideoCodec に修正する
+  - @voluntas @miosakuma
 
 ## 2023.3.1
 

@@ -105,7 +105,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   std::function<void(std::string)> on_notify_;
   std::function<void(std::string)> on_push_;
   std::function<void(std::string, nb::bytes)> on_message_;
-  std::function<void(std::shared_ptr<SoraTrackInterface>)> on_track_;
+  std::function<void(std::shared_ptr<SoraMediaTrack>)> on_track_;
   std::function<void(std::string)> on_data_channel_;
 
  private:
