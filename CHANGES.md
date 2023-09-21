@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] SoraAudioSource.on_data, SoraVideoSource.on_captured, SoraVAD.analyze の引数名を変更
+  - @tnoho
 - [UPDATE] SoraMediaTrack を追加し、 SoraConnection.on_track の引数を SoraMediaTrack に変更
   - @tnoho
 - [ADD] 発話区間の検出が可能な SoraVAD の追加

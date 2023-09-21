@@ -182,35 +182,43 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_ro("stream_id", &SoraMediaTrack::stream_id);
 
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
-      .def("on_data", nb::overload_cast<const int16_t*, size_t, double>(
-                          &SoraAudioSource::OnData))
       .def("on_data",
-           nb::overload_cast<const int16_t*, size_t>(&SoraAudioSource::OnData))
+           nb::overload_cast<const int16_t*, size_t, double>(
+               &SoraAudioSource::OnData),
+           "data"_a, "samples_per_channel"_a, "timestamp"_a)
+      .def("on_data",
+           nb::overload_cast<const int16_t*, size_t>(&SoraAudioSource::OnData),
+           "data"_a, "samples_per_channel"_a)
       .def("on_data",
            nb::overload_cast<nb::ndarray<int16_t, nb::shape<nb::any, nb::any>,
                                          nb::c_contig, nb::device::cpu>,
-                             double>(&SoraAudioSource::OnData))
+                             double>(&SoraAudioSource::OnData),
+           "ndarray"_a, "timestamp"_a)
       .def("on_data",
            nb::overload_cast<nb::ndarray<int16_t, nb::shape<nb::any, nb::any>,
                                          nb::c_contig, nb::device::cpu>>(
-               &SoraAudioSource::OnData));
+               &SoraAudioSource::OnData),
+           "ndarray"_a);
 
   nb::class_<SoraVideoSource, SoraTrackInterface>(m, "SoraVideoSource")
       .def(
           "on_captured",
           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
                                         nb::c_contig, nb::device::cpu>>(
-              &SoraVideoSource::OnCaptured))
+              &SoraVideoSource::OnCaptured),
+          "ndarray"_a)
       .def(
           "on_captured",
           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
                                         nb::c_contig, nb::device::cpu>,
-                            double>(&SoraVideoSource::OnCaptured))
+                            double>(&SoraVideoSource::OnCaptured),
+          "ndarray"_a, "timestamp"_a)
       .def(
           "on_captured",
           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
                                         nb::c_contig, nb::device::cpu>,
-                            int64_t>(&SoraVideoSource::OnCaptured));
+                            int64_t>(&SoraVideoSource::OnCaptured),
+          "ndarray"_a, "timestamp_us"_a);
 
   nb::class_<SoraAudioSinkImpl>(m, "SoraAudioSinkImpl",
                                 nb::type_slots(audio_sink_slots))
@@ -256,7 +264,7 @@ NB_MODULE(sora_sdk_ext, m) {
 
   nb::class_<SoraVAD>(m, "SoraVAD")
       .def(nb::init<>())
-      .def("analyze", &SoraVAD::Analyze);
+      .def("analyze", &SoraVAD::Analyze, "frame"_a);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
       .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);
