@@ -19,8 +19,8 @@
   - @tnoho
 - [ADD] AudioStreamSink が返す音声フレームとして pickel が可能な AudioFrame を追加
   - @tnoho
-- [UPDATE] Sora C++ SDK のバージョンを 2023.10.0 に上げる
-  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを 2023.13.1 に上げる
+  - @voluntas @miosakuma
 
 ## 2023.3.1
 
