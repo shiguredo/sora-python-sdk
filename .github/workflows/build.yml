@@ -30,6 +30,7 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
         exclude:
           # Jetson は Python 3.8 のみ作成する
           - platform: { name: ubuntu-20.04_armv8_jetson }
@@ -38,6 +39,8 @@ jobs:
             python_version: "3.10"
           - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.11"
+          - platform: { name: ubuntu-20.04_armv8_jetson }
+            python_version: "3.12"
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 60
     steps:
@@ -192,31 +195,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.8"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.8" }
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.9"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.9" }
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.10"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.10" }
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.11"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-20.04_armv8_jetson", "python_version":"3.8"}
+        with:
+          { "platform": "ubuntu-20.04_armv8_jetson", "python_version": "3.8" }
       - uses: ./.github/actions/download
-        with: {"platform":"macos-13_arm64", "python_version":"3.8"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.8" }
       - uses: ./.github/actions/download
-        with: {"platform":"macos-13_arm64", "python_version":"3.9"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.9" }
       - uses: ./.github/actions/download
-        with: {"platform":"macos-13_arm64", "python_version":"3.10"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.10" }
       - uses: ./.github/actions/download
-        with: {"platform":"macos-13_arm64", "python_version":"3.11"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
-        with: {"platform":"windows-2019", "python_version":"3.8"}
+        with: { "platform": "windows-2019", "python_version": "3.8" }
       - uses: ./.github/actions/download
-        with: {"platform":"windows-2019", "python_version":"3.9"}
+        with: { "platform": "windows-2019", "python_version": "3.9" }
       - uses: ./.github/actions/download
-        with: {"platform":"windows-2019", "python_version":"3.10"}
+        with: { "platform": "windows-2019", "python_version": "3.10" }
       - uses: ./.github/actions/download
-        with: {"platform":"windows-2019", "python_version":"3.11"}
+        with: { "platform": "windows-2019", "python_version": "3.11" }
       - name: Env to output
         run: |
           echo "package_paths<<EOF" >> $GITHUB_OUTPUT
@@ -226,5 +230,4 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files:
-            ${{ steps.env.outputs.package_paths }}
+          files: ${{ steps.env.outputs.package_paths }}
