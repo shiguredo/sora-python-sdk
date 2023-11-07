@@ -21,8 +21,12 @@
   - @tnoho
 - [ADD] AudioStreamSink が返す音声フレームとして pickel が可能な AudioFrame を追加
   - @tnoho
-- [UPDATE] Sora C++ SDK のバージョンを 2023.13.1 に上げる
+- [UPDATE] Sora C++ SDK のバージョンを 2023.15.0 に上げる
   - WebRTC m116 で cricket::Codec は protected になったので cricket::CreateVideoCodec に修正する
+  - WebRTC m116 でパッケージディレクトリが変更されたためそれに追従する
+  - WEBRTC_BUILD_VERSION を `m119.6045.2.1` に上げる
+  - BOOST_VERSION を `1.83.0` に上げる
+  - CMAKE_VERSION を `3.27.7` に上げる
   - @voluntas @miosakuma
 
 ## 2023.3.1
