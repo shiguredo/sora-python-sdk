@@ -23,7 +23,7 @@
   - @tnoho
 - [UPDATE] Sora C++ SDK のバージョンを 2023.15.0 に上げる
   - WebRTC m116 で cricket::Codec は protected になったので cricket::CreateVideoCodec に修正する
-  - WebRTC m116 でパッケージディレクトリが変更されたためそれに追従する
+  - WebRTC m118 でパッケージディレクトリが変更されたためそれに追従する
   - WEBRTC_BUILD_VERSION を `m119.6045.2.1` に上げる
   - BOOST_VERSION を `1.83.0` に上げる
   - CMAKE_VERSION を `3.27.7` に上げる
