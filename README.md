@@ -60,7 +60,7 @@ $ rye sync
 
 ## システム条件
 
-- WebRTC SFU Sora 2023.1.0 以降
+- WebRTC SFU Sora 2023.2.0 以降
 - Python 3.8 以上
 
 ## 対応プラットフォーム
