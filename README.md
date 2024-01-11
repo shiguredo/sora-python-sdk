@@ -109,9 +109,9 @@ Discord へお願いします。
 Apache License 2.0
 
 ```
-Copyright 2023-2023, tnoho (Original Author)
-Copyright 2023-2023, Wandbox LLC (Original Author)
-Copyright 2023-2023, Shiguredo Inc.
+Copyright 2023-2024, tnoho (Original Author)
+Copyright 2023-2024, Wandbox LLC (Original Author)
+Copyright 2023-2024, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
