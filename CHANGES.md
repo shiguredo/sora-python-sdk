@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] nanobind を 1.8.0 に上げる
+  - @voluntas
 - [UPDATE] actions/setup-python@v5 に上げる
   - @voluntas
 - [CHANGE] SoraAudioSource.on_data, SoraVideoSource.on_captured, SoraVAD.analyze の引数名を変更

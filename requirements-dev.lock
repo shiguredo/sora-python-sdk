@@ -11,7 +11,7 @@ auditwheel==5.4.0
 build==0.10.0
 exceptiongroup==1.1.1
 iniconfig==2.0.0
-nanobind==1.4.0
+nanobind==1.8.0
 packaging==23.1
 pluggy==1.0.0
 pyelftools==0.29
