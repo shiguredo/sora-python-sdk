@@ -76,7 +76,7 @@ jobs:
       # Jetson 向け
       - name: Set up QEMU
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       - run: |
           sudo apt-get install -y multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
