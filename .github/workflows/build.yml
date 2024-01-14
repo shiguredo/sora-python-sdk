@@ -99,7 +99,7 @@ jobs:
           ARCHFLAGS: ${{ matrix.platform.archflags }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
@@ -127,7 +127,7 @@ jobs:
       - run: python -m build
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-2019_python-${{ matrix.python_version }}
           path: dist/
