@@ -1,7 +1,7 @@
 [project]
 name = "sora_sdk"
 authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
-version = "2023.3.1"
+version = "2023.4.0.dev5"
 description = "WebRTC SFU Sora Python SDK"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -12,6 +12,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 requires-python = ">= 3.8"
 

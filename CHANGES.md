@@ -11,14 +11,28 @@
 
 ## develop
 
+- [UPDATE] nanobind を 1.8.0 に上げる
+  - @voluntas
+- [UPDATE] actions/setup-python@v5 に上げる
+  - @voluntas
+- [CHANGE] SoraAudioSource.on_data, SoraVideoSource.on_captured, SoraVAD.analyze の引数名を変更
+  - @tnoho
+- [UPDATE] SoraMediaTrack を追加し、 SoraConnection.on_track の引数を SoraMediaTrack に変更
+  - @tnoho
 - [ADD] 発話区間の検出が可能な SoraVAD の追加
   - @tnoho
 - [ADD] リアルタイム性を重視した AudioStreamSink の追加
   - @tnoho
 - [ADD] AudioStreamSink が返す音声フレームとして pickel が可能な AudioFrame を追加
   - @tnoho
-- [UPDATE] Sora C++ SDK のバージョンを 2023.10.0 に上げる
-  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを 2023.17.0 に上げる
+  - WebRTC m116 で cricket::Codec は protected になったので cricket::CreateVideoCodec に修正する
+  - WebRTC m118 でパッケージディレクトリが変更されたためそれに追従する
+  - WebRTC m120 の webrtc::EncodedImage API の変更に追従する
+  - WEBRTC_BUILD_VERSION を `m120.6099.1.2` に上げる
+  - BOOST_VERSION を `1.83.0` に上げる
+  - CMAKE_VERSION を `3.27.7` に上げる
+  - @voluntas @miosakuma
 
 ## 2023.3.1
 

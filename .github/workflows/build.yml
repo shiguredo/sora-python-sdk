@@ -32,6 +32,7 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
         exclude:
           # Jetson は Python 3.8 のみ作成する
           - platform: { name: ubuntu-20.04_armv8_jetson }
@@ -40,10 +41,12 @@ jobs:
             python_version: "3.10"
           - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.11"
+          - platform: { name: ubuntu-20.04_armv8_jetson }
+            python_version: "3.12"
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
@@ -75,7 +78,7 @@ jobs:
       # Jetson 向け
       - name: Set up QEMU
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       - run: |
           sudo apt-get install -y multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
@@ -98,13 +101,13 @@ jobs:
           ARCHFLAGS: ${{ matrix.platform.archflags }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
 
   build_windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -114,9 +117,10 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "${{ matrix.python_version }}"
           cache: "pip"
@@ -125,7 +129,7 @@ jobs:
       - run: python -m build
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-2019_python-${{ matrix.python_version }}
           path: dist/
@@ -148,6 +152,7 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
         exclude:
           - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.9"
@@ -155,10 +160,12 @@ jobs:
             python_version: "3.10"
           - platform: { name: ubuntu-20.04_armv8_jetson }
             python_version: "3.11"
+          - platform: { name: ubuntu-20.04_armv8_jetson }
+            python_version: "3.12"
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist
@@ -192,33 +199,40 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.8"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.8" }
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.9"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.9" }
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.10"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.10" }
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-22.04_x86_64", "python_version":"3.11"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
-        with: {"platform":"ubuntu-20.04_armv8_jetson", "python_version":"3.8"}
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: {"platform":"macos-13_arm64", "python_version":"3.8"}
+        with:
+          { "platform": "ubuntu-20.04_armv8_jetson", "python_version": "3.8" }
       - uses: ./.github/actions/download
-        with: {"platform":"macos-13_arm64", "python_version":"3.9"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.8" }
       - uses: ./.github/actions/download
-        with: {"platform":"macos-13_arm64", "python_version":"3.10"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.9" }
       - uses: ./.github/actions/download
-        with: {"platform":"macos-13_arm64", "python_version":"3.11"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.10" }
       - uses: ./.github/actions/download
-        with: {"platform":"windows-2019", "python_version":"3.8"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
-        with: {"platform":"windows-2019", "python_version":"3.9"}
+        with: { "platform": "macos-13_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: {"platform":"windows-2019", "python_version":"3.10"}
+        with: { "platform": "windows-2019", "python_version": "3.8" }
       - uses: ./.github/actions/download
-        with: {"platform":"windows-2019", "python_version":"3.11"}
+        with: { "platform": "windows-2019", "python_version": "3.9" }
+      - uses: ./.github/actions/download
+        with: { "platform": "windows-2019", "python_version": "3.10" }
+      - uses: ./.github/actions/download
+        with: { "platform": "windows-2019", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "windows-2019", "python_version": "3.12" }
       - name: Env to output
         run: |
           echo "package_paths<<EOF" >> $GITHUB_OUTPUT
@@ -228,5 +242,4 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files:
-            ${{ steps.env.outputs.package_paths }}
+          files: ${{ steps.env.outputs.package_paths }}
