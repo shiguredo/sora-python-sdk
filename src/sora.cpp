@@ -269,7 +269,7 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
 
   try {
     auto object = forwarding_filter_value.as_object();
-    filter.action = object["action"].as_string();
+    filter.action = boost::optional<std::string>(object["action"].as_string());
     for (auto or_rule : object["rules"].as_array()) {
       std::vector<sora::SoraSignalingConfig::ForwardingFilter::Rule> rules;
       for (auto and_rule_value : or_rule.as_array()) {
