@@ -33,6 +33,8 @@
   - BOOST_VERSION を `1.83.0` に上げる
   - CMAKE_VERSION を `3.27.7` に上げる
   - @voluntas @miosakuma
+- [UPDATE] JetPack を 5.1.2 に上げる
+  - @miosakuma
 
 ## 2023.3.1
 
