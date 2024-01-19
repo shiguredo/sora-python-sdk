@@ -36,6 +36,8 @@
 - [UPDATE] ForwardingFilter に version と metadata を追加する
   - Sora 2023.2.0, C++ SDK 2024.1.0 への追従
   - @miosakuma
+- [UPDATE] JetPack を 5.1.2 に上げる
+  - @miosakuma
 
 ## 2023.3.1
 
