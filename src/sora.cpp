@@ -286,6 +286,12 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
       }
       filter.rules.push_back(rules);
     }
+    if (!object["version"].is_null()) {
+      filter.version = std::string(object["version"].as_string());
+    }
+    if (!object["metadata"].is_null()) {
+      filter.metadata = object["metadata"];
+    }
   } catch (std::exception&) {
     throw nb::type_error("Invalid forwarding_filter");
   }
