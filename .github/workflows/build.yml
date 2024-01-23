@@ -241,3 +241,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ steps.env.outputs.package_paths }}
+          prerelease: ${{ contains(github.ref, 'dev') }}
