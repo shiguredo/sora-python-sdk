@@ -1,16 +1,16 @@
 Sora Python SDK
 
-Copyright 2023-2023, tnoho (Original Author)
-Copyright 2023-2023, Wandbox LLC (Original Author)
-Copyright 2023-2023, Shiguredo Inc.
+Copyright 2023-2024, tnoho (Original Author)
+Copyright 2023-2024, Wandbox LLC (Original Author)
+Copyright 2023-2024, Shiguredo Inc.
 
 # Sora C++ SDK
 
 https://github.com/shiguredo/sora-cpp-sdk
 
 ```
-Copyright 2021-2023, Wandbox LLC (Original Author)
-Copyright 2021-2023, Shiguredo Inc.
+Copyright 2021-2024, Wandbox LLC (Original Author)
+Copyright 2021-2024, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
