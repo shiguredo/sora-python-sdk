@@ -17,7 +17,7 @@
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     },
-    "editor.defaultFormatter": "ms-python.autopep8"
+    "editor.defaultFormatter": "charliermarsh.ruff"
   },
   "[cpp]": {
     "editor.formatOnSave": true
