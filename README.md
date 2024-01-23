@@ -43,6 +43,10 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 [Sora Python SDK](https://sora-python-sdk.shiguredo.jp/)
 
+## サンプル集
+
+[Sora Python SDK サンプル集](https://github.com/shiguredo/sora-python-sdk-samples)
+
 ## sora_sdk パッケージの追加
 
 ### pip
