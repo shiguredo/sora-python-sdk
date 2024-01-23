@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] フォーマッターを Ruff に変更する
+  - @voluntas
 - [UPDATE] nanobind を 1.8.0 に上げる
   - @voluntas
 - [UPDATE] actions/setup-python@v5 に上げる
