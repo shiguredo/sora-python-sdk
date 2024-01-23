@@ -5,7 +5,7 @@ from sora_sdk import Sora
 
 
 def on_disconnect(error_code, message: str):
-    print(f'on_disconnect: error_code: {error_code}, message: {message}')
+    print(f"on_disconnect: error_code: {error_code}, message: {message}")
 
 
 def test_sendonly():
@@ -15,7 +15,7 @@ def test_sendonly():
         signaling_urls=[os.environ.get("TEST_SIGNALING_URL")],
         role="recvonly",
         channel_id=os.environ.get("TEST_CHANNEL_ID_PREFIX") + "sora-python-sdk-test",
-        metadata={"access_token": os.environ.get("TEST_SECRET_KEY")}
+        metadata={"access_token": os.environ.get("TEST_SECRET_KEY")},
     )
 
     conn.on_disconnect = on_disconnect

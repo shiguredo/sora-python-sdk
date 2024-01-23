@@ -29,4 +29,11 @@ dev-dependencies = [
     "wheel~=0.40.0",
     "auditwheel~=5.4.0",
     "pytest~=7.3.2",
+    "ruff>=0.1.14",
 ]
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+exclude = [".venv", "run.py", "pypath.py", "setup.py"]
