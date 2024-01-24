@@ -3,14 +3,6 @@
     "reportMissingImports": "none",
     "reportUnusedImport": "information"
   },
-  "python.linting.flake8Enabled": true,
-  "python.linting.flake8Args": ["--max-line-length=120"],
-  "python.linting.enabled": true,
-  "python.formatting.autopep8Args": [
-    "--max-line-length",
-    "120",
-    "--experimental"
-  ],
   "[python]": {
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file",
@@ -126,9 +118,8 @@
     "__memory": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
-  "editor.tabSize": 2, // nanobind 周りでエラーが消えないので全部消す
+  // nanobind 周りでエラーが消えないので全部消す
+  "editor.tabSize": 2,
   "python.analysis.typeCheckingMode": "off",
-  "cSpell.words": ["dtype", "imshow", "samplerate", "sounddevice"],
-  "python.formatting.provider": "none",
-  "ansible.python.interpreterPath": "/Users/voluntas/.venvs/default/bin/python"
+  "cSpell.words": ["dtype", "imshow", "samplerate", "sounddevice"]
 }
