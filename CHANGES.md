@@ -25,9 +25,9 @@
   - @tnoho
 - [ADD] リアルタイム性を重視した AudioStreamSink の追加
   - @tnoho
-- [ADD] AudioStreamSink が返す音声フレームとして pickel が可能な AudioFrame を追加
+- [ADD] AudioStreamSink が返す音声フレームとして pickle が可能な AudioFrame を追加
   - @tnoho
-- [UPDATE] Sora C++ SDK のバージョンを 2024.1.0 に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.1.0` に上げる
   - WebRTC m116 で cricket::Codec は protected になったので cricket::CreateVideoCodec に修正する
   - WebRTC m118 でパッケージディレクトリが変更されたためそれに追従する
   - WebRTC m120 の webrtc::EncodedImage API の変更に追従する
@@ -36,9 +36,10 @@
   - CMAKE_VERSION を `3.27.7` に上げる
   - @voluntas @miosakuma
 - [UPDATE] ForwardingFilter に version と metadata を追加する
-  - Sora 2023.2.0, C++ SDK 2024.1.0 への追従
+  - `Sora 2023.2.0` へ追従
+  - `C++ SDK 2024.1.0` へ追従
   - @miosakuma
-- [UPDATE] JetPack を 5.1.2 に上げる
+- [UPDATE] NVIDIA JetPack を `5.1.2` に上げる
   - @miosakuma
 
 ## 2023.3.1
