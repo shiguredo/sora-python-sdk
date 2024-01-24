@@ -48,6 +48,7 @@
 - [UPDATE] NVIDIA JetPack を `5.1.2` に上げる
   - @miosakuma
 - [UPDATE] OpenH264 を `v2.4.0` に上げる
+  - @voluntas
 
 ## 2023.3.1
 
