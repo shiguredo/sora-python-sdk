@@ -13,7 +13,7 @@
 
 - [CHANGE] フォーマッターを Ruff に変更する
   - @voluntas
-- [UPDATE] nanobind の最小を 1.8.0 にする
+- [UPDATE] nanobind の最小を `1.8.0` にする
   - @voluntas
 - [UPDATE] actions/setup-python@v5 に上げる
   - @voluntas
