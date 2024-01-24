@@ -77,7 +77,7 @@ $ rye sync
 - Ubuntu 22.04 x86_64
 - Ubuntu 20.04 arm64
   - Python 3.8 のみ対応
-  - NVIDIA Jetson JetPack SDK 5 系
+  - NVIDIA Jetson JetPack SDK 5.1.2
 
 ## 対応機能
 
@@ -93,6 +93,14 @@ $ rye sync
 
 - DataChannel 対応
   - [アダワープジャパン株式会社](https://adawarp.com/) 様
+
+### 優先実装が可能な機能一覧
+
+**詳細は Discord やメールなどでお気軽にお問い合わせください**
+
+- Ubuntu 22.04 arm64
+  - Python 3.10
+  - NVIDIA Jetson JetPack SDK 6.0
 
 ## サポートについて
 
