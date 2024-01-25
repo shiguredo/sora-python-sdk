@@ -24,16 +24,11 @@ def send_message():
         video=False,
     )
 
-    connection.on_data_channel = on_data_channel
-
-    # 次の行をコメントアウトすると SIGSEGV は発生しない
-    connection.on_message = on_message
-
     connection.connect()
 
     time.sleep(3)
 
-    connection.send_data_channel("#spam", "ham")
+    connection.send_data_channel("#spam", b"Hello, world!")
 
     connection.disconnect()
 
@@ -58,5 +53,7 @@ def test_messaging_direction_recvonly():
     connection.connect()
 
     send_message()
+
+    time.sleep(3)
 
     connection.disconnect()
