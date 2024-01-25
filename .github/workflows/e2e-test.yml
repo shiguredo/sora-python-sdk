@@ -17,7 +17,7 @@ jobs:
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
       - uses: sksat/setup-rye@v0.12.0
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
