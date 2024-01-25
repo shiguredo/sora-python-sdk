@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -20,17 +21,18 @@ def send_message():
         channel_id=os.environ.get("TEST_CHANNEL_ID_PREFIX") + "sora-python-sdk-test",
         data_channel_signaling=True,
         data_channels=[{"label": "#spam", "direction": "sendrecv"}],
+        metadata={"access_token": os.environ.get("TEST_SECRET_KEY")},
         audio=False,
         video=False,
     )
 
     connection.connect()
 
-    time.sleep(3)
+    time.sleep(1)
 
     connection.send_data_channel("#spam", b"Hello, world!")
 
-    time.sleep(3)
+    time.sleep(1)
 
     connection.disconnect()
 
@@ -43,6 +45,7 @@ def test_messaging_direction_recvonly():
         channel_id=os.environ.get("TEST_CHANNEL_ID_PREFIX") + "sora-python-sdk-test",
         data_channel_signaling=True,
         data_channels=[{"label": "#spam", "direction": "sendrecv"}],
+        metadata={"access_token": os.environ.get("TEST_SECRET_KEY")},
         audio=False,
         video=False,
     )
@@ -55,7 +58,5 @@ def test_messaging_direction_recvonly():
     connection.connect()
 
     send_message()
-
-    time.sleep(3)
 
     connection.disconnect()
