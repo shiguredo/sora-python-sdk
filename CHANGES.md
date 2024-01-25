@@ -11,21 +11,29 @@
 
 ## develop
 
-- [UPDATE] nanobind を 1.8.0 に上げる
+- [CHANGE] フォーマッターを Ruff に変更する
+  - @voluntas
+- [UPDATE] nanobind の最小を `1.8.0` にする
   - @voluntas
 - [UPDATE] actions/setup-python@v5 に上げる
   - @voluntas
-- [CHANGE] SoraAudioSource.on_data, SoraVideoSource.on_captured, SoraVAD.analyze の引数名を変更
+- [CHANGE] SoraAudioSource.on_data の引数名を変更
   - @tnoho
-- [UPDATE] SoraMediaTrack を追加し、 SoraConnection.on_track の引数を SoraMediaTrack に変更
+- [CHANGE] SoraVideoSource.on_captured の引数名を変更
+  - @tnoho
+- [CHANGE] SoraVAD.analyze の引数名を変更
+  - @tnoho
+- [CHANGE] SoraConnection.on_track の引数を SoraMediaTrack に変更
+  - @tnoho
+- [UPDATE] SoraMediaTrack を追加
   - @tnoho
 - [ADD] 発話区間の検出が可能な SoraVAD の追加
   - @tnoho
 - [ADD] リアルタイム性を重視した AudioStreamSink の追加
   - @tnoho
-- [ADD] AudioStreamSink が返す音声フレームとして pickel が可能な AudioFrame を追加
+- [ADD] AudioStreamSink が返す音声フレームとして pickle が可能な AudioFrame を追加
   - @tnoho
-- [UPDATE] Sora C++ SDK のバージョンを 2023.17.0 に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.1.0` に上げる
   - WebRTC m116 で cricket::Codec は protected になったので cricket::CreateVideoCodec に修正する
   - WebRTC m118 でパッケージディレクトリが変更されたためそれに追従する
   - WebRTC m120 の webrtc::EncodedImage API の変更に追従する
@@ -33,6 +41,14 @@
   - BOOST_VERSION を `1.83.0` に上げる
   - CMAKE_VERSION を `3.27.7` に上げる
   - @voluntas @miosakuma
+- [UPDATE] ForwardingFilter に version と metadata を追加する
+  - `Sora 2023.2.0` へ追従
+  - `C++ SDK 2024.1.0` へ追従
+  - @miosakuma
+- [UPDATE] NVIDIA JetPack を `5.1.2` に上げる
+  - @miosakuma
+- [UPDATE] OpenH264 を `v2.4.0` に上げる
+  - @voluntas
 
 ## 2023.3.1
 

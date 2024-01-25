@@ -61,7 +61,9 @@ def get_python_include_dir(python_version: str):
 
     # if Python.h not found (or python_include_dir is None), try to find a
     # suitable include dir
-    found_python_h = python_include_dir is not None and os.path.exists(os.path.join(python_include_dir, "Python.h"))
+    found_python_h = python_include_dir is not None and os.path.exists(
+        os.path.join(python_include_dir, "Python.h")
+    )
 
     if not found_python_h:
         # NOTE(opadron): these possible prefixes must be guarded against
@@ -92,7 +94,14 @@ def get_python_include_dir(python_version: str):
         if python_inc is not None:
             python_inc2 = os.path.join(python_inc, ".".join(map(str, sys.version_info[:2])))
 
-        all_candidate_prefixes = [include_py, include_dir, include, plat_include, python_inc, python_inc2]
+        all_candidate_prefixes = [
+            include_py,
+            include_dir,
+            include,
+            plat_include,
+            python_inc,
+            python_inc2,
+        ]
         candidate_prefixes: list[str] = [pre for pre in all_candidate_prefixes if pre]
 
         candidate_versions: tuple[str, ...] = (python_version,)
@@ -163,7 +172,7 @@ def get_python_library(python_version: str):
             masd = sysconfig.get_config_var("multiarchsubdir")
             if masd:
                 if masd.startswith(os.sep):
-                    masd = masd[len(os.sep):]
+                    masd = masd[len(os.sep) :]
                 libdir_masd = os.path.join(libdir, masd)
                 if os.path.exists(libdir_masd):
                     libdir = libdir_masd
@@ -218,7 +227,9 @@ def _guess_python_library(python_version: str):
         assert not isinstance(libdir_a, int)
         if libdir_a is None:
             libdest = sysconfig.get_config_var("LIBDEST")
-            candidate_libdirs.append(os.path.abspath(os.path.join(libdest, "..", "libs") if libdest else "libs"))
+            candidate_libdirs.append(
+                os.path.abspath(os.path.join(libdest, "..", "libs") if libdest else "libs")
+            )
         libdir_b = sysconfig.get_config_var("LIBDIR")
         for libdir in (libdir_a, libdir_b):
             if libdir is None:
@@ -227,7 +238,7 @@ def _guess_python_library(python_version: str):
                 masd = sysconfig.get_config_var("multiarchsubdir")
                 if masd:
                     if masd.startswith(os.sep):
-                        masd = masd[len(os.sep):]
+                        masd = masd[len(os.sep) :]
                     candidate_libdirs.append(os.path.join(libdir, masd))
             candidate_libdirs.append(libdir)
 

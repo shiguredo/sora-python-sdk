@@ -1,7 +1,7 @@
 [project]
 name = "sora_sdk"
 authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
-version = "2023.4.0.dev5"
+version = "2023.4.0.dev8"
 description = "WebRTC SFU Sora Python SDK"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -23,10 +23,15 @@ Discord = "https://discord.gg/shiguredo"
 
 [tool.rye]
 dev-dependencies = [
-    "nanobind>=1.4.0",
+    "nanobind>=1.8.0",
     "setuptools>=42",
     "build~=0.10.0",
     "wheel~=0.40.0",
     "auditwheel~=5.4.0",
     "pytest~=7.3.2",
+    "ruff>=0.1.14",
 ]
+
+[tool.ruff]
+line-length = 100
+indent-width = 4

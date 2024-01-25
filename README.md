@@ -1,7 +1,9 @@
 # Sora Python SDK
 
 [![PyPI](https://img.shields.io/pypi/v/sora_sdk)](https://pypi.org/project/sora-sdk/)
+[![image](https://img.shields.io/pypi/pyversions/sora_sdk.svg)](https://pypi.python.org/pypi/sora_sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Actions status](https://github.com/shiguredo/sora-python-sdk/workflows/build/badge.svg)](https://github.com/shiguredo/sora-python-sdk/actions)
 
 Sora Python SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp/) の Python クライアントアプリケーションを開発するためのライブラリです。[Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) をベースにしています。
 
@@ -23,9 +25,10 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
-- Windows / macOS / Linux (Ubuntu)
+- Windows / macOS / Linux (Ubuntu) プラットフォームに対応
 - NVIDIA Jetson に対応
-- ハードウェアデコーダー/エンコーダーに対応
+- Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
+- [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
 - 物体検出などの入力に Sora 経由で受信した映像が利用できる
 - 音声認識などの入力に Sora 経由で受信した音声を利用できる
 - `pip install sora_sdk` でインストール可能
@@ -40,6 +43,10 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 ## ドキュメント
 
 [Sora Python SDK](https://sora-python-sdk.shiguredo.jp/)
+
+## サンプル集
+
+[Sora Python SDK サンプル集](https://github.com/shiguredo/sora-python-sdk-samples)
 
 ## sora_sdk パッケージの追加
 
@@ -70,14 +77,13 @@ $ rye sync
 - Ubuntu 22.04 x86_64
 - Ubuntu 20.04 arm64
   - Python 3.8 のみ対応
-  - NVIDIA Jetson JetPack SDK 5 系
+  - NVIDIA Jetson JetPack SDK 5.1.2
 
 ## 対応機能
 
 - Sora の機能へ追従
 - VP8 / VP9 / AV1 / H.264 のハードウェアアクセラレーター (HWA) 対応
 - OpenH264 を利用した H.264 のソフトウェアエンコーダー/デコーダーへの対応
-  - Ubuntu 22.04 x86_64 でのみ対応
 
 ## 優先実装
 
@@ -87,6 +93,14 @@ $ rye sync
 
 - DataChannel 対応
   - [アダワープジャパン株式会社](https://adawarp.com/) 様
+
+### 優先実装が可能な機能一覧
+
+**詳細は Discord やメールなどでお気軽にお問い合わせください**
+
+- Ubuntu 22.04 arm64
+  - Python 3.10
+  - NVIDIA Jetson JetPack SDK 6.0
 
 ## サポートについて
 
