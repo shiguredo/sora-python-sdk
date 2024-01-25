@@ -9,6 +9,9 @@ on:
 
 jobs:
   e2e_test:
+    strategy:
+      matrix:
+        python_version: [3.8, 3.9, 3.10, 3.11, 3.12]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -21,12 +24,7 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
-      - run: rye pin 3.11
-      - run: rye sync
-      - run: rye run python run.py
-      - run: rye run python -m pytest tests/test_recvonly.py -s
-      - run: rye run python -m pytest tests/test_messaging.py -s
-      - run: rye pin 3.12
+      - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py
       - run: rye run python -m pytest tests/test_recvonly.py -s
