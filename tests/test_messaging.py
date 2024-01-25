@@ -30,6 +30,8 @@ def send_message():
 
     connection.send_data_channel("#spam", b"Hello, world!")
 
+    time.sleep(3)
+
     connection.disconnect()
 
 
