@@ -26,3 +26,4 @@ jobs:
       - run: rye sync
       - run: rye run python run.py
       - run: rye run python -m pytest tests/test_recvonly.py -s
+      - run: rye run python -m pytest tests/test_messaging.py -s
