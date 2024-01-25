@@ -16,11 +16,13 @@ jobs:
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
-      - uses: sksat/setup-rye@v0.7.0
+      - uses: sksat/setup-rye@v0.12.0
       - uses: actions/checkout@v3
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
+      # Python 3.12 を利用するようにする
+      - run: rye pin 3.12
       - run: rye sync
       - run: rye run python run.py
       - run: rye run python -m pytest tests/test_recvonly.py -s
