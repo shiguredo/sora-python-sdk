@@ -56,6 +56,10 @@ def test_messaging_direction_recvonly():
 
     connection.connect()
 
+    time.sleep(1)
+
     send_message()
+
+    time.sleep(1)
 
     connection.disconnect()
