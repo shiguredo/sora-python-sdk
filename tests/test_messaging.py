@@ -30,6 +30,16 @@ def send_message():
     time.sleep(1)
 
     connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
+    connection.send_data_channel("#spam", b"Hello, world!")
 
     time.sleep(1)
 
