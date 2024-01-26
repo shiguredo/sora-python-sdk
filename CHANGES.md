@@ -39,7 +39,7 @@
   - WebRTC m120 の webrtc::EncodedImage API の変更に追従する
   - WEBRTC_BUILD_VERSION を `m120.6099.1.2` に上げる
   - BOOST_VERSION を `1.83.0` に上げる
-  - CMAKE_VERSION を `3.27.7` に上げる
+  - CMAKE_VERSION を `3.28.1` に上げる
   - @voluntas @miosakuma
 - [UPDATE] ForwardingFilter に version と metadata を追加する
   - `Sora 2023.2.0` へ追従
