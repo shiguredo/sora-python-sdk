@@ -2,7 +2,11 @@ import json
 import os
 import time
 
+from dotenv import load_dotenv
+
 from sora_sdk import Sora
+
+load_dotenv()
 
 
 class Messaging:
