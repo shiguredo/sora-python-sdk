@@ -1,29 +1,77 @@
+import json
 import os
 import time
 
 from sora_sdk import Sora
 
 
-def on_disconnect(error_code, message: str):
-    print(f"on_disconnect: error_code: {error_code}, message: {message}")
+class Recvonly:
+    def __init__(self, signaling_urls, channel_id, metadata):
+        self.sora = Sora()
+        self.connection = self.sora.create_connection(
+            signaling_urls=signaling_urls,
+            role="sendrecv",
+            channel_id=channel_id,
+            metadata=metadata,
+        )
+
+        self.connected = False
+        self.closed = False
+        self.is_data_channel_ready = False
+
+        self.connection.on_set_offer = self.on_set_offer
+        self.connection.on_notify = self.on_notify
+        self.connection.on_disconnect = self.on_disconnect
+
+        self.connection_id = None
+
+    def on_set_offer(self, raw_offer):
+        offer = json.loads(raw_offer)
+        if offer["type"] == "offer":
+            self.connection_id = offer["connection_id"]
+
+    def on_notify(self, raw_message):
+        message = json.loads(raw_message)
+        if (
+            message["type"] == "notify"
+            and message["event_type"] == "connection.created"
+            and message["connection_id"] == self.connection_id
+        ):
+            print(f"Sora に接続しました: connection_id={self.connection_id}")
+            self.connected = True
+
+    def on_disconnect(self, error_code, message):
+        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
+        self.closed = True
+
+    def connect(self):
+        self.connection.connect()
+
+    def disconnect(self):
+        self.connection.disconnect()
 
 
-def on_notify(raw_message: str):
-    print(f'on_notify: raw_message: {raw_message}')
+def test_recvonly(setup):
+    signaling_urls = setup.get("signaling_urls")
+    channel_id = setup.get("channel_id")
+    metadata = setup.get("metadata")
 
+    recvonly = Recvonly(signaling_urls, channel_id, metadata)
 
-def test_sendonly():
-    sora = Sora()
+    assert recvonly.connected is False
 
-    conn = sora.create_connection(
-        signaling_urls=[os.environ.get("TEST_SIGNALING_URL")],
-        role="recvonly",
-        channel_id=os.environ.get("TEST_CHANNEL_ID_PREFIX") + "sora-python-sdk-test",
-        metadata={"access_token": os.environ.get("TEST_SECRET_KEY")},
-    )
+    recvonly.connect()
 
-    conn.on_notify = on_notify
-    conn.on_disconnect = on_disconnect
-    conn.connect()
     time.sleep(3)
-    conn.disconnect()
+
+    assert recvonly.connected is True
+
+    time.sleep(3)
+
+    assert recvonly.closed is False
+
+    recvonly.disconnect()
+
+    time.sleep(3)
+
+    assert recvonly.closed is True
