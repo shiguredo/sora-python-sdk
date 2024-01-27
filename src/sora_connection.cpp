@@ -152,6 +152,7 @@ void SoraConnection::OnPush(std::string text) {
 
 void SoraConnection::OnMessage(std::string label, std::string data) {
   if (on_message_) {
+    nb::gil_scoped_acquire acq;
     on_message_(label, nb::bytes(data.c_str(), data.size()));
   }
 }
