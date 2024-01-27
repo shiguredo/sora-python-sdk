@@ -42,11 +42,11 @@ class Messaging:
             and message["event_type"] == "connection.created"
             and message["connection_id"] == self.connection_id
         ):
-            print("Sora に接続しました")
+            print(f"Sora に接続しました: connection_id={self.connection_id}")
             self.connection_created = True
 
     def on_disconnect(self, error_code, message):
-        print(f"Sora から切断されました: error_code='{error_code}' message='{message}'")
+        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
         self.disconnected = True
 
     def on_message(self, label, data):
@@ -94,6 +94,8 @@ def recvonly(signaling_urls, channel_id, label, metadata):
 
     assert msg_recvonly.connection_created is True
 
+    time.sleep(3)
+
     msg_recvonly.disconnect()
 
 
@@ -119,7 +121,7 @@ def test_messaging_direction_recvonly():
 
     msg_sendonly.send(b"Hello, world!")
 
-    time.sleep(1)
+    time.sleep(3)
 
     msg_recvonly.disconnect()
     msg_sendonly.disconnect()
