@@ -9,6 +9,13 @@
 - FIX
   - バグ修正
 
+## feature/test
+
+- [ADD] python-dotenv を追加
+  - @voluntas
+- [UPDATE] pytest を 8.0.0 に上げる
+  - @voluntas
+
 ## develop
 
 - [CHANGE] フォーマッターを Ruff に変更する
