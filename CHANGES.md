@@ -24,6 +24,16 @@
 
 - [CHANGE] フォーマッターを Ruff に変更する
   - @voluntas
+- [UPDATE] build を `1.0.3` にアップデートする
+  - @voluntas
+- [UPDATE] wheel を `0.42.0` にアップデートする
+  - @voluntas
+- [UPDATE] build を `1.0.3` にアップデートする
+  - @voluntas
+- [UPDATE] pytest を `8.0.0` にアップデートする
+  - @voluntas
+- [UPDATE] setuptools の最小を `69` にする
+  - @voluntas
 - [UPDATE] nanobind の最小を `1.8.0` にする
   - @voluntas
 - [UPDATE] actions/setup-python@v5 に上げる

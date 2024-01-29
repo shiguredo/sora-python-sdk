@@ -19,5 +19,5 @@ src/sora_sdk/model_coeffs/*
 /dist
 /wheelhouse
 
-# .env
+# E2E テスト用
 .env
