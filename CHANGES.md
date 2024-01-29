@@ -13,7 +13,7 @@
 
 - [ADD] python-dotenv を追加
   - @voluntas
-- [UPDATE] wheel を 0.41.3 に上げる
+- [UPDATE] wheel を 0.42.0 に上げる
   - @voluntas
 - [UPDATE] build を 1.0.3 に上げる
   - @voluntas
