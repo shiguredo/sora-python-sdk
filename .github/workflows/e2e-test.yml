@@ -29,3 +29,11 @@ jobs:
       - run: rye run python run.py
       - run: rye run pytest tests/test_recvonly.py -s
       - run: rye run pytest tests/test_messaging.py -s
+      - name: Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: Failure test
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
