@@ -25,10 +25,10 @@ Discord = "https://discord.gg/shiguredo"
 dev-dependencies = [
     "nanobind>=1.8.0",
     "setuptools>=42",
-    "build~=0.10.0",
-    "wheel~=0.40.0",
-    "auditwheel~=5.4.0",
-    "pytest~=7.3.2",
+    "build>=0.10.0",
+    "wheel>=0.40.0",
+    "auditwheel>=5.4.0",
+    "pytest>=7.3.2",
     "ruff>=0.1.14",
     "python-dotenv>=1.0.1",
 ]
