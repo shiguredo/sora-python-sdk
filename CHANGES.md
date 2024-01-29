@@ -13,6 +13,8 @@
 
 - [ADD] python-dotenv を追加
   - @voluntas
+- [UPDATE] build を 1.0.3 に上げる
+  - @voluntas
 - [UPDATE] pytest を 8.0.0 に上げる
   - @voluntas
 
