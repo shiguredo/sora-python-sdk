@@ -28,7 +28,7 @@ dev-dependencies = [
     "build~=0.10.0",
     "wheel~=0.40.0",
     "auditwheel~=5.4.0",
-    "pytest~=7.3.2",
+    "pytest>=8.0.0",
     "ruff>=0.1.14",
     "python-dotenv>=1.0.1",
 ]
