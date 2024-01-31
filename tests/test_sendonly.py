@@ -35,9 +35,9 @@ class Sendonly:
             video=True,
         )
 
-        self._connection.on_set_offer = self.on_set_offer
-        self._connection.on_notify = self.on_notify
-        self._connection.on_disconnect = self.on_disconnect
+        self._connection.on_set_offer = self._on_set_offer
+        self._connection.on_notify = self._on_notify
+        self._connection.on_disconnect = self._on_disconnect
 
         self._video_source = self._sora.create_video_source()
 
@@ -59,13 +59,13 @@ class Sendonly:
                 np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
             )
 
-    def on_set_offer(self, raw_offer):
+    def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
             self.connection_id = offer["connection_id"]
             print(f"Offer を受信しました: connection_id={self.connection_id}")
 
-    def on_notify(self, raw_message):
+    def _on_notify(self, raw_message):
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
@@ -75,7 +75,7 @@ class Sendonly:
             print(f"Sora に接続しました: connection_id={self.connection_id}")
             self._connected.set()
 
-    def on_disconnect(self, error_code, message):
+    def _on_disconnect(self, error_code, message):
         print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
         self._closed = True
         self._connected.clear()

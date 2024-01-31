@@ -34,20 +34,20 @@ class Messaging:
 
         self._label = label
 
-        self._connection.on_set_offer = self.on_set_offer
-        self._connection.on_notify = self.on_notify
+        self._connection.on_set_offer = self._on_set_offer
+        self._connection.on_notify = self._on_notify
 
-        self._connection.on_data_channel = self.on_data_channel
-        self._connection.on_message = self.on_message
+        self._connection.on_data_channel = self._on_data_channel
+        self._connection.on_message = self._on_message
 
-        self._connection.on_disconnect = self.on_disconnect
+        self._connection.on_disconnect = self._on_disconnect
 
-    def on_set_offer(self, raw_offer):
+    def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
             self._connection_id = offer["connection_id"]
 
-    def on_notify(self, raw_message):
+    def _on_notify(self, raw_message):
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
@@ -57,15 +57,15 @@ class Messaging:
             print(f"Sora に接続しました: connection_id={self._connection_id}")
             self._connected.set()
 
-    def on_disconnect(self, error_code, message):
+    def _on_disconnect(self, error_code, message):
         print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
         self._closed = True
         self._connected.clear()
 
-    def on_message(self, label, data):
+    def _on_message(self, label, data):
         print(f"メッセージを受信しました: label={label}, data={data}")
 
-    def on_data_channel(self, label: str):
+    def _on_data_channel(self, label: str):
         if self._label == label:
             self._is_data_channel_ready = True
 
