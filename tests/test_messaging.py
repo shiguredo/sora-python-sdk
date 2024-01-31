@@ -12,7 +12,7 @@ class Messaging:
     _connection_id: str
 
     _connected: Event = Event()
-    _close: bool = False
+    _closed: bool = False
 
     _label: str
     _is_data_channel_ready: bool = False
