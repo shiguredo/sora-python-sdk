@@ -1,13 +1,27 @@
 import json
 import time
+from threading import Event
 
-from sora_sdk import Sora
+from sora_sdk import Sora, SoraConnection
 
 
 class Messaging:
-    def __init__(self, signaling_urls, channel_id, label, direction, metadata):
-        self.sora = Sora()
-        self.connection = self.sora.create_connection(
+    _sora: Sora
+    _connection: SoraConnection
+
+    _connection_id: str
+
+    _connected: Event = Event()
+    _close: bool = False
+
+    _label: str
+    _is_data_channel_ready: bool = False
+
+    def __init__(
+        self, signaling_urls: list, channel_id: str, label: str, direction: str, metadata: dict
+    ):
+        self._sora = Sora()
+        self._connection = self._sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendrecv",
             channel_id=channel_id,
@@ -18,105 +32,78 @@ class Messaging:
             data_channel_signaling=True,
         )
 
-        self.connected = False
-        self.closed = False
-        self.label = label
-        self.is_data_channel_ready = False
-        self.connection.on_set_offer = self.on_set_offer
-        self.connection.on_notify = self.on_notify
-        self.connection.on_data_channel = self.on_data_channel
-        self.connection.on_message = self.on_message
-        self.connection.on_disconnect = self.on_disconnect
+        self._label = label
+
+        self._connection.on_set_offer = self.on_set_offer
+        self._connection.on_notify = self.on_notify
+
+        self._connection.on_data_channel = self.on_data_channel
+        self._connection.on_message = self.on_message
+
+        self._connection.on_disconnect = self.on_disconnect
 
     def on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
-            self.connection_id = offer["connection_id"]
+            self._connection_id = offer["connection_id"]
 
     def on_notify(self, raw_message):
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
             and message["event_type"] == "connection.created"
-            and message["connection_id"] == self.connection_id
+            and message["connection_id"] == self._connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self.connection_id}")
-            self.connected = True
+            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            self._connected.set()
 
     def on_disconnect(self, error_code, message):
         print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
-        self.closed = True
+        self._closed = True
+        self._connected.clear()
 
     def on_message(self, label, data):
         print(f"メッセージを受信しました: label={label}, data={data}")
 
-    def on_data_channel(self, label):
-        if self.label == label:
-            self.is_data_channel_ready = True
+    def on_data_channel(self, label: str):
+        if self._label == label:
+            self._is_data_channel_ready = True
 
     def connect(self):
-        self.connection.connect()
+        self._connection.connect()
 
-    def send(self, data):
+        assert self._connected.wait(30)
+
+        return self
+
+    def send(self, data: bytes):
         # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
-        while not self.is_data_channel_ready and not self.closed:
+        while not self._is_data_channel_ready and not self._closed:
             time.sleep(0.01)
 
-        self.connection.send_data_channel(self.label, data)
-        print(f"メッセージを送信しました: label={self.label}, data={data}")
+        self._connection.send_data_channel(self._label, data)
+        print(f"メッセージを送信しました: label={self._label}, data={data}")
 
     def disconnect(self):
-        self.connection.disconnect()
-
-
-def sendonly(signaling_urls, channel_id, label, metadata):
-    msg_sendonly = Messaging(signaling_urls, channel_id, label, "sendonly", metadata)
-    msg_sendonly.connect()
-
-    time.sleep(3)
-
-    assert msg_sendonly.connected is True
-
-    msg_sendonly.connection.send_data_channel(label, b"Hello, world!")
-
-    time.sleep(1)
-
-    msg_sendonly.disconnect()
-
-
-def recvonly(signaling_urls, channel_id, label, metadata):
-    msg_recvonly = Messaging(signaling_urls, channel_id, label, "recvonly", metadata)
-    msg_recvonly.connect()
-
-    time.sleep(3)
-
-    assert msg_recvonly.connected is True
-
-    time.sleep(3)
-
-    msg_recvonly.disconnect()
+        self._connection.disconnect()
 
 
 def test_messaging_direction_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
-    channel_id = setup.get("channel_id")
+    channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
+
+    channel_id = f"{channel_id_prefix}{__name__}"
 
     label = "#spam"
 
     msg_recvonly = Messaging(signaling_urls, channel_id, label, "recvonly", metadata)
     msg_sendonly = Messaging(signaling_urls, channel_id, label, "sendonly", metadata)
 
-    assert msg_recvonly.connected is False
-    assert msg_sendonly.connected is False
-
     msg_recvonly.connect()
     msg_sendonly.connect()
 
     time.sleep(3)
-
-    assert msg_recvonly.connected is True
-    assert msg_sendonly.connected is True
 
     msg_sendonly.send(b"Hello, world!")
 
