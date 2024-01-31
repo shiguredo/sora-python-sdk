@@ -4,7 +4,6 @@ import time
 from threading import Event
 
 import numpy as np
-
 from sora_sdk import Sora, SoraConnection, SoraVideoSource
 
 
@@ -74,7 +73,6 @@ class Sendonly:
             and message["connection_id"] == self.connection_id
         ):
             print(f"Sora に接続しました: connection_id={self.connection_id}")
-            # _connected を set する
             self._connected.set()
 
     def on_disconnect(self, error_code, message):
@@ -98,7 +96,6 @@ def test_sendonly(setup):
     sendonly = Sendonly(signaling_urls, channel_id, metadata)
     sendonly.connect()
 
-    # 5 秒ほど配信する
     time.sleep(5)
 
     sendonly.disconnect()

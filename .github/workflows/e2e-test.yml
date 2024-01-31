@@ -28,9 +28,9 @@ jobs:
       - run: rye sync
       - run: rye run python run.py
       # まだ色々不安定なので個別にテストする
-      - run: rye run pytest tests/test_sendonly -s
-      - run: rye run pytest tests/test_recvonly -s
-      - run: rye run pytest tests/test_messaging -s
+      - run: rye run pytest tests/test_sendonly.py -s
+      - run: rye run pytest tests/test_recvonly.py -s
+      - run: rye run pytest tests/test_messaging.py -s
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
