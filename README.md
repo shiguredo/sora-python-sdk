@@ -53,7 +53,7 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 ### pip
 
 ```console
-$ pip install sora_sdk
+$ pip install sora-sdk
 ```
 
 ### Rye
@@ -61,7 +61,7 @@ $ pip install sora_sdk
 [Rye](https://rye-up.com/)
 
 ```
-$ rye add sora_sdk
+$ rye add sora-sdk
 $ rye sync
 ```
 
