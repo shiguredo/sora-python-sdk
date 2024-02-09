@@ -41,15 +41,14 @@ SoraFactory::SoraFactory(std::optional<bool> use_hardware_encoder,
   if (use_hardware_encoder) {
     context_config.use_hardware_encoder = *use_hardware_encoder;
   }
-  context_config.configure_media_dependencies =
-      [use_hardware_encoder = context_config.use_hardware_encoder, openh264](
-          const webrtc::PeerConnectionFactoryDependencies& dependencies,
-          cricket::MediaEngineDependencies& media_dependencies) {
+  context_config.configure_dependencies =
+      [use_hardware_encoder = context_config.use_hardware_encoder,
+       openh264](webrtc::PeerConnectionFactoryDependencies& dependencies) {
         // 通常の AudioMixer を使うと use_audio_device が false のとき、音声のループは全て止まってしまうので自前の AudioMixer を使う
-        media_dependencies.audio_mixer =
-            DummyAudioMixer::Create(media_dependencies.task_queue_factory);
+        dependencies.audio_mixer =
+            DummyAudioMixer::Create(dependencies.task_queue_factory.get());
         // アンチエコーやゲインコントロール、ノイズサプレッションが必要になる用途は想定していないため nullptr
-        media_dependencies.audio_processing = nullptr;
+        dependencies.audio_processing = nullptr;
 
 #ifndef _WIN32
         if (openh264) {
@@ -68,7 +67,7 @@ SoraFactory::SoraFactory(std::optional<bool> use_hardware_encoder,
                       return webrtc::DynamicH264Encoder::Create(
                           cricket::CreateVideoCodec(format), *openh264);
                     }));
-            media_dependencies.video_encoder_factory =
+            dependencies.video_encoder_factory =
                 absl::make_unique<sora::SoraVideoEncoderFactory>(
                     std::move(config));
           }
@@ -85,7 +84,7 @@ SoraFactory::SoraFactory(std::optional<bool> use_hardware_encoder,
                         auto format) -> std::unique_ptr<webrtc::VideoDecoder> {
                       return webrtc::DynamicH264Decoder::Create(*openh264);
                     }));
-            media_dependencies.video_decoder_factory =
+            dependencies.video_decoder_factory =
                 absl::make_unique<sora::SoraVideoDecoderFactory>(
                     std::move(config));
           }

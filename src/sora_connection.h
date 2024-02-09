@@ -93,6 +93,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   void OnNotify(std::string text) override;
   void OnPush(std::string text) override;
   void OnMessage(std::string label, std::string data) override;
+  void OnSwitched(std::string text) override{};
   void OnTrack(
       rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
   void OnRemoveTrack(
