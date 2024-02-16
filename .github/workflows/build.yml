@@ -191,6 +191,14 @@ jobs:
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
+      - name: Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: Build failed
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   create-release:
     if: contains(github.ref, 'tags/202')
     needs:
@@ -244,3 +252,11 @@ jobs:
         with:
           files: ${{ steps.env.outputs.package_paths }}
           prerelease: ${{ contains(github.ref, 'dev') }}
+      - name: Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: Release failed
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
