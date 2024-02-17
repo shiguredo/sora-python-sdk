@@ -29,6 +29,7 @@ jobs:
           curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-linux64.7.so.bz2
           bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
           mv libopenh264-2.4.1-linux64.7.so libopenh264.so
+          echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
         working-directory: ./tests
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
@@ -37,6 +38,7 @@ jobs:
       - run: rye run pytest tests/test_sendonly.py -s
       - run: rye run pytest tests/test_recvonly.py -s
       - run: rye run pytest tests/test_messaging.py -s
+      - run: rye run pytest tests/test_openh264.py -s
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2

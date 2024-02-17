@@ -21,4 +21,4 @@ src/sora_sdk/model_coeffs/*
 
 # E2E テスト用
 .env
-libopenh264.so
+libopenh264*

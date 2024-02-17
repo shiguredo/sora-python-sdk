@@ -60,7 +60,8 @@ class Sendonly:
         while not self._closed:
             time.sleep(1.0 / 30)
             self._video_source.on_captured(
-                np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
+                # 緑にしてみる
+                np.full((self._video_height, self._video_width, 3), (0, 255, 0), dtype=np.uint8)
             )
 
     def _on_set_offer(self, raw_offer):

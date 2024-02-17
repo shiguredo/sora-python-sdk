@@ -4,6 +4,7 @@ import time
 from threading import Event
 
 import numpy as np
+
 from sora_sdk import Sora, SoraConnection, SoraVideoSource
 
 
@@ -26,6 +27,9 @@ class Sendonly:
     def __init__(self, signaling_urls: list, channel_id: str, metadata: dict):
         self._sora = Sora()
         self._connected = Event()
+
+        self._video_source = self._sora.create_video_source()
+
         self._connection = self._sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendonly",
@@ -33,13 +37,12 @@ class Sendonly:
             metadata=metadata,
             audio=False,
             video=True,
+            video_source=self._video_source,
         )
 
         self._connection.on_set_offer = self._on_set_offer
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
-
-        self._video_source = self._sora.create_video_source()
 
     def connect(self):
         self._connection.connect()
