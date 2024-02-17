@@ -122,9 +122,9 @@ jobs:
         with:
           python-version: "${{ matrix.python_version }}"
           cache: "pip"
-      - name: Remove Editable Install
-        run: (Get-Content -Path "requirements-dev.lock") -notmatch "-e" | Set-Content -Path "requirements-dev.tmp"
-        shell: pwsh
+      #- name: Remove Editable Install (hack)
+      #  run: (Get-Content -Path "requirements-dev.lock") -notmatch "-e" | Set-Content -Path "requirements-dev.tmp"
+      #  shell: pwsh
       - run: pip install -r requirements-dev.tmp
       - run: python run.py
       - run: python -m build
