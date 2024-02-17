@@ -13,4 +13,5 @@ def setup():
         "channel_id_prefix": os.environ.get("TEST_CHANNEL_ID_PREFIX"),
         "secret": os.environ.get("TEST_SECRET_KEY"),
         "metadata": {"access_token": os.environ.get("TEST_SECRET_KEY")},
+        "openh264_path": os.environ.get("TEST_OPENH264_PATH"),
     }

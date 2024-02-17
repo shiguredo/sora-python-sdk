@@ -24,6 +24,12 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
+      - name: Download openh264
+        run: |
+          curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-linux64.7.so.bz2
+          bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
+          mv libopenh264-2.4.1-linux64.7.so libopenh264.so
+        working-directory: ./test-e2e
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py
