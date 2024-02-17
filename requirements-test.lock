@@ -1,5 +1,4 @@
-# windows で build が通った最後の状態
-# 最初に失敗したときの commit https://github.com/shiguredo/sora-python-sdk/commit/92f781695f390c4aca4add318a59f2994ba2d761
+# memo  https://github.com/shiguredo/sora-python-sdk/commit/92f781695f390c4aca4add318a59f2994ba2d761
 -e file:.
 auditwheel==5.4.0
 build==1.0.3
