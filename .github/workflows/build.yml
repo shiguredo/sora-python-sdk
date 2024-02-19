@@ -122,6 +122,8 @@ jobs:
         with:
           python-version: "${{ matrix.python_version }}"
           cache: "pip"
+      # windows では wheel が見当たらずエラーになるため wheel をインストールする
+      - run: pip install wheel
       - run: pip install -r requirements-dev.lock
       - run: python run.py
       - run: python -m build
