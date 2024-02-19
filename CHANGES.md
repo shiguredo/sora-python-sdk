@@ -61,6 +61,9 @@
   - @miosakuma
 - [UPDATE] OpenH264 を `v2.4.0` に上げる
   - @voluntas
+- [FIX] `pyproject.toml` の `[rye.tool]` に `virtual = true` を追加する
+  - これで Windows ビルド失敗の原因である `--e file:.` が消える
+  - @voluntas
 
 ## 2023.3.1
 
