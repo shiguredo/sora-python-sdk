@@ -72,6 +72,7 @@
   - @voluntas
 - [FIX] `pyproject.toml` の `[rye.tool]` に `virtual = true` を追加する
   - これで Windows ビルド失敗の原因である `--e file:.` が消える
+  - ただし E2E テストが動作しなくなる問題あり
   - @voluntas
 
 ## 2023.3.1
