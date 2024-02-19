@@ -22,17 +22,18 @@ Documentation = "https://sora-python-sdk.shiguredo.jp"
 Discord = "https://discord.gg/shiguredo"
 
 [tool.rye]
+virtual = true
 dev-dependencies = [
     "nanobind>=1.8.0",
-    "setuptools>=69",
+    "setuptools>=69.1",
     "build~=1.0.3",
     "wheel~=0.42.0",
-    "auditwheel~=5.4.0",
+    "auditwheel~=6.0.0",
     "pytest>=8.0.0",
-    "ruff>=0.1.14",
     "python-dotenv>=1.0.1",
     "opencv-python>=4.9.0.80",
     "numpy>=1.24.4",
+    "ruff>=0.2.2",
 ]
 
 [tool.ruff]

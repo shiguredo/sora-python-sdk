@@ -18,6 +18,8 @@
 
 - [CHANGE] フォーマッターを Ruff に変更する
   - @voluntas
+- [UPDATE] auditwheel を `6.0.0` にアップデートする
+  - @voluntas
 - [UPDATE] build を `1.0.3` にアップデートする
   - @voluntas
 - [UPDATE] wheel を `0.42.0` にアップデートする
@@ -26,7 +28,9 @@
   - @voluntas
 - [UPDATE] pytest を `8.0.0` にアップデートする
   - @voluntas
-- [UPDATE] setuptools の最小を `69` にする
+- [UPDATE] setuptools の最小を `69.1` にする
+  - @voluntas
+- [UPDATE] ruff の最小を `0.2.2` にする
   - @voluntas
 - [UPDATE] nanobind の最小を `1.8.0` にする
   - @voluntas
@@ -42,6 +46,8 @@
   - @tnoho
 - [UPDATE] SoraMediaTrack を追加
   - @tnoho
+- [ADD] GitHub Actions workflows/build.yml を平日 14:00 JST 定期実行する
+  - @voluntas
 - [ADD] 発話区間の検出が可能な SoraVAD の追加
   - @tnoho
 - [ADD] リアルタイム性を重視した AudioStreamSink の追加
@@ -62,7 +68,10 @@
   - @miosakuma
 - [UPDATE] NVIDIA JetPack を `5.1.2` に上げる
   - @miosakuma
-- [UPDATE] OpenH264 を `v2.4.0` に上げる
+- [UPDATE] OpenH264 を `v2.4.1` に上げる
+  - @voluntas
+- [FIX] `pyproject.toml` の `[rye.tool]` に `virtual = true` を追加する
+  - これで Windows ビルド失敗の原因である `--e file:.` が消える
   - @voluntas
 
 ## 2023.3.1
