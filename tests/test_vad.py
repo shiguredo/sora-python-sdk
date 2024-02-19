@@ -2,7 +2,6 @@ import json
 import time
 from threading import Event
 
-import numpy as np
 from sora_sdk import (
     Sora,
     SoraAudioFrame,
@@ -84,10 +83,11 @@ class VAD:
         if voice_probability > 0.95:  # 0.95 は libwebrtc の判定値
             print(f"Voice! voice_probability={voice_probability}")
         else:
-            print("Not a voice!")
+            pass
 
     def _on_track(self, track: SoraMediaTrack):
         if track.kind == "audio":
+            # SoraAudioStreamSink
             self._audio_stream_sink = SoraAudioStreamSink(
                 track, self._audio_output_frequency, self._audio_output_channels
             )
