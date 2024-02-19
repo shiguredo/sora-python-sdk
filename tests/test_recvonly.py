@@ -2,7 +2,7 @@ import json
 import time
 from threading import Event
 
-from sora_sdk import Sora, SoraConnection
+from sora_sdk import Sora, SoraConnection, SoraMediaTrack
 
 
 class Recvonly:
@@ -18,31 +18,39 @@ class Recvonly:
 
     def __init__(self, signaling_urls, channel_id, metadata):
         self.sora = Sora()
-        self.connection = self.sora.create_connection(
+        self._connection = self.sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendrecv",
             channel_id=channel_id,
             metadata=metadata,
         )
 
-        self.connection.on_set_offer = self._on_set_offer
-        self.connection.on_notify = self._on_notify
-        self.connection.on_disconnect = self._on_disconnect
+        self._connection.on_set_offer = self._on_set_offer
+        self._connection.on_notify = self._on_notify
+        self._connection.on_disconnect = self._on_disconnect
+
+        self._connection.on_track = self._on_track
 
     def connect(self):
-        self.connection.connect()
+        self._connection.connect()
 
         # _connected が set されるまで 30 秒待つ
         assert self._connected.wait(30)
 
         return self
 
-    def _on_set_offer(self, raw_offer):
+    def _on_track(self, track: SoraMediaTrack):
+        if track.kind == "audio":
+            pass
+        if track.kind == "video":
+            pass
+
+    def _on_set_offer(self, raw_offer: str):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
             self._connection_id = offer["connection_id"]
 
-    def _on_notify(self, raw_message):
+    def _on_notify(self, raw_message: str):
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
@@ -58,7 +66,7 @@ class Recvonly:
         self._connected.clear()
 
     def disconnect(self):
-        self.connection.disconnect()
+        self._connection.disconnect()
 
 
 def test_recvonly(setup):

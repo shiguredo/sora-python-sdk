@@ -39,6 +39,7 @@ jobs:
       - run: rye run pytest tests/test_recvonly.py -s
       - run: rye run pytest tests/test_messaging.py -s
       - run: rye run pytest tests/test_openh264.py -s
+      - run: rye run pytest tests/test_vad.py -s
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
