@@ -37,6 +37,8 @@
   - @tnoho
 - [UPDATE] SoraMediaTrack を追加
   - @tnoho
+- [ADD] GitHub Actions workflows/build.yml を平日 14:00 JST 定期実行する
+  - @voluntas
 - [ADD] 発話区間の検出が可能な SoraVAD の追加
   - @tnoho
 - [ADD] リアルタイム性を重視した AudioStreamSink の追加
