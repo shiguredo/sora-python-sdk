@@ -121,9 +121,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "${{ matrix.python_version }}"
-          cache: "pip"
+          # cache: "pip"
       # windows では wheel が見当たらずエラーになるため wheel をインストールする
-      - run: pip install -upgrade pip
       - run: pip install wheel setuptools
       - run: pip install -r requirements-dev.lock
       - run: python run.py
