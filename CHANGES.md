@@ -13,6 +13,14 @@
 
 - [CHANGE] フォーマッターを Ruff に変更する
   - @voluntas
+- [CHANGE] SoraAudioSource.on_data の引数名を変更
+  - @tnoho
+- [CHANGE] SoraVideoSource.on_captured の引数名を変更
+  - @tnoho
+- [CHANGE] SoraVAD.analyze の引数名を変更
+  - @tnoho
+- [CHANGE] SoraConnection.on_track の引数を SoraMediaTrack に変更
+  - @tnoho
 - [UPDATE] auditwheel を `6.0.0` にアップデートする
   - @voluntas
 - [UPDATE] build を `1.0.3` にアップデートする
@@ -31,23 +39,7 @@
   - @voluntas
 - [UPDATE] actions/setup-python@v5 に上げる
   - @voluntas
-- [CHANGE] SoraAudioSource.on_data の引数名を変更
-  - @tnoho
-- [CHANGE] SoraVideoSource.on_captured の引数名を変更
-  - @tnoho
-- [CHANGE] SoraVAD.analyze の引数名を変更
-  - @tnoho
-- [CHANGE] SoraConnection.on_track の引数を SoraMediaTrack に変更
-  - @tnoho
 - [UPDATE] SoraMediaTrack を追加
-  - @tnoho
-- [ADD] GitHub Actions workflows/build.yml を平日 14:00 JST 定期実行する
-  - @voluntas
-- [ADD] 発話区間の検出が可能な SoraVAD の追加
-  - @tnoho
-- [ADD] リアルタイム性を重視した AudioStreamSink の追加
-  - @tnoho
-- [ADD] AudioStreamSink が返す音声フレームとして pickle が可能な AudioFrame を追加
   - @tnoho
 - [UPDATE] Sora C++ SDK のバージョンを `2024.1.0` に上げる
   - WebRTC m116 で cricket::Codec は protected になったので cricket::CreateVideoCodec に修正する
@@ -65,6 +57,14 @@
   - @miosakuma
 - [UPDATE] OpenH264 を `v2.4.1` に上げる
   - @voluntas
+- [ADD] GitHub Actions workflows/build.yml を平日 14:00 JST 定期実行する
+  - @voluntas
+- [ADD] 発話区間の検出が可能な SoraVAD の追加
+  - @tnoho
+- [ADD] リアルタイム性を重視した AudioStreamSink の追加
+  - @tnoho
+- [ADD] AudioStreamSink が返す音声フレームとして pickle が可能な AudioFrame を追加
+  - @tnoho
 - [FIX] `pyproject.toml` の `[rye.tool]` に `virtual = true` を追加する
   - これで Windows ビルド失敗の原因である `--e file:.` が消える
   - @voluntas
