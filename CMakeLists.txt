@@ -74,11 +74,13 @@ nanobind_add_module(
   src/dummy_audio_mixer.cpp
   src/sora.cpp
   src/sora_audio_sink.cpp
+  src/sora_audio_stream_sink.cpp
   src/sora_audio_source.cpp
   src/sora_connection.cpp
   src/sora_factory.cpp
   src/sora_log.cpp
   src/sora_sdk_ext.cpp
+  src/sora_vad.cpp
   src/sora_video_sink.cpp
   src/sora_video_source.cpp
 )

@@ -5,33 +5,42 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/vector.h>
 
 #include "sora.h"
 #include "sora_audio_sink.h"
 #include "sora_audio_source.h"
+#include "sora_audio_stream_sink.h"
 #include "sora_connection.h"
 #include "sora_log.h"
 #include "sora_track_interface.h"
+#include "sora_vad.h"
 #include "sora_video_sink.h"
 #include "sora_video_source.h"
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
-/*
- * コールバック関数のメンバー変数は Py_tp_traverse で visit コールバックを呼び出すようにする
- * やっておかないと終了時にリークエラーが発生する
+/**
+ * クラスにコールバック関数のメンバー変数がある場合は全て以下のように、
+ * Py_VISIT を呼び出すことによりガベージコレクタにその存在を伝える関数を作る。
+ * やっておかないと終了時にリークエラーが発生する。
  */
-
 int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  // インスタンスを取得する
   SoraAudioSinkImpl* audio_sink = nb::inst_ptr<SoraAudioSinkImpl>(self);
 
+  // コールバックがある場合
   if (audio_sink->on_format_) {
+    // コールバック変数の参照を取得して
     nb::object on_format =
         nb::cast(audio_sink->on_format_, nb::rv_policy::none);
+    // ガベージコレクタに伝える
     Py_VISIT(on_format.ptr());
   }
 
+  // 上に同じ
   if (audio_sink->on_data_) {
     nb::object on_data = nb::cast(audio_sink->on_data_, nb::rv_policy::none);
     Py_VISIT(on_data.ptr());
@@ -40,8 +49,28 @@ int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   return 0;
 }
 
+/**
+ * PyType_Slot の Py_tp_traverse に先に作った関数を設定する。
+ * 定義した PyType_Slot は NB_MODULE 内の対応するクラスに対して紐づける。
+ */
 PyType_Slot audio_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_sink_tp_traverse},
+    {0, nullptr}};
+
+int audio_stream_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  SoraAudioStreamSinkImpl* audio_sink =
+      nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
+
+  if (audio_sink->on_frame_) {
+    nb::object on_frame = nb::cast(audio_sink->on_frame_, nb::rv_policy::none);
+    Py_VISIT(on_frame.ptr());
+  }
+
+  return 0;
+}
+
+PyType_Slot audio_stream_sink_slots[] = {
+    {Py_tp_traverse, (void*)audio_stream_sink_tp_traverse},
     {0, nullptr}};
 
 int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
@@ -107,6 +136,9 @@ PyType_Slot connection_slots[] = {
     {Py_tp_traverse, (void*)connection_tp_traverse},
     {0, nullptr}};
 
+/**
+ * Python で利用するすべてのクラスと定数は以下のように定義しなければならない
+ */
 NB_MODULE(sora_sdk_ext, m) {
   nb::enum_<sora::SoraSignalingErrorCode>(m, "SoraSignalingErrorCode",
                                           nb::is_arithmetic())
@@ -146,36 +178,47 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_ro("state", &SoraTrackInterface::state)
       .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
 
+  nb::class_<SoraMediaTrack, SoraTrackInterface>(m, "SoraMediaTrack")
+      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id);
+
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
-      .def("on_data", nb::overload_cast<const int16_t*, size_t, double>(
-                          &SoraAudioSource::OnData))
       .def("on_data",
-           nb::overload_cast<const int16_t*, size_t>(&SoraAudioSource::OnData))
+           nb::overload_cast<const int16_t*, size_t, double>(
+               &SoraAudioSource::OnData),
+           "data"_a, "samples_per_channel"_a, "timestamp"_a)
+      .def("on_data",
+           nb::overload_cast<const int16_t*, size_t>(&SoraAudioSource::OnData),
+           "data"_a, "samples_per_channel"_a)
       .def("on_data",
            nb::overload_cast<nb::ndarray<int16_t, nb::shape<nb::any, nb::any>,
                                          nb::c_contig, nb::device::cpu>,
-                             double>(&SoraAudioSource::OnData))
+                             double>(&SoraAudioSource::OnData),
+           "ndarray"_a, "timestamp"_a)
       .def("on_data",
            nb::overload_cast<nb::ndarray<int16_t, nb::shape<nb::any, nb::any>,
                                          nb::c_contig, nb::device::cpu>>(
-               &SoraAudioSource::OnData));
+               &SoraAudioSource::OnData),
+           "ndarray"_a);
 
   nb::class_<SoraVideoSource, SoraTrackInterface>(m, "SoraVideoSource")
       .def(
           "on_captured",
           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
                                         nb::c_contig, nb::device::cpu>>(
-              &SoraVideoSource::OnCaptured))
+              &SoraVideoSource::OnCaptured),
+          "ndarray"_a)
       .def(
           "on_captured",
           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
                                         nb::c_contig, nb::device::cpu>,
-                            double>(&SoraVideoSource::OnCaptured))
+                            double>(&SoraVideoSource::OnCaptured),
+          "ndarray"_a, "timestamp"_a)
       .def(
           "on_captured",
           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
                                         nb::c_contig, nb::device::cpu>,
-                            int64_t>(&SoraVideoSource::OnCaptured));
+                            int64_t>(&SoraVideoSource::OnCaptured),
+          "ndarray"_a, "timestamp_us"_a);
 
   nb::class_<SoraAudioSinkImpl>(m, "SoraAudioSinkImpl",
                                 nb::type_slots(audio_sink_slots))
@@ -186,6 +229,42 @@ NB_MODULE(sora_sdk_ext, m) {
            nb::rv_policy::move)
       .def_rw("on_data", &SoraAudioSinkImpl::on_data_)
       .def_rw("on_format", &SoraAudioSinkImpl::on_format_);
+
+  nb::class_<SoraAudioFrame>(m, "SoraAudioFrame")
+      .def("__getstate__",
+           [](const SoraAudioFrame& frame) {
+             // picke 化する際に呼び出されるので、すべてのデータを tuple に格納します。
+             return std::make_tuple(
+                 frame.VectorData(), frame.samples_per_channel(),
+                 frame.num_channels(), frame.sample_rate_hz(),
+                 frame.absolute_capture_timestamp_ms());
+           })
+      .def("__setstate__",
+           [](SoraAudioFrame& frame,
+              const std::tuple<std::vector<uint16_t>, size_t, size_t, int,
+                               std::optional<int64_t>>& state) {
+             // picke から戻す際に呼び出されるので、 tuple から SoraAudioFrame に戻します。
+             new (&frame) SoraAudioFrame(std::get<0>(state), std::get<1>(state),
+                                         std::get<2>(state), std::get<3>(state),
+                                         std::get<4>(state));
+           })
+      .def_prop_ro("samples_per_channel", &SoraAudioFrame::samples_per_channel)
+      .def_prop_ro("num_channels", &SoraAudioFrame::num_channels)
+      .def_prop_ro("sample_rate_hz", &SoraAudioFrame::sample_rate_hz)
+      .def_prop_ro("absolute_capture_timestamp_ms",
+                   &SoraAudioFrame::absolute_capture_timestamp_ms)
+      .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference);
+
+  nb::class_<SoraAudioStreamSinkImpl>(m, "SoraAudioStreamSinkImpl",
+                                      nb::type_slots(audio_stream_sink_slots))
+      .def(nb::init<SoraTrackInterface*, int, size_t>(), "track"_a,
+           "output_frequency"_a = -1, "output_channels"_a = 0)
+      .def("__del__", &SoraAudioStreamSinkImpl::Del)
+      .def_rw("on_frame", &SoraAudioStreamSinkImpl::on_frame_);
+
+  nb::class_<SoraVAD>(m, "SoraVAD")
+      .def(nb::init<>())
+      .def("analyze", &SoraVAD::Analyze, "frame"_a);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
       .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);

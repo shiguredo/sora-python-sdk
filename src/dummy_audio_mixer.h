@@ -12,6 +12,18 @@
 #include <rtc_base/task_utils/repeating_task.h>
 #include <rtc_base/thread_annotations.h>
 
+/**
+ * webrtc::AudioMixer を継承した DummyAudioMixer です。
+ * 
+ * PeerConnectionFactory 生成時に渡す cricket::MediaEngineDependencies の
+ * audio_mixer を指定しない場合 webrtc::AudioMixerImpl が使用されます。
+ * これはすべての AudioTrack の出力データのサンプリングレートとチャネル数を揃え、
+ * ミキシングした上で音声出力デバイスに渡す役割を担います。
+ * しかし、 Python SDK では音声をデバイスに出力することはありません。
+ * ですが、 AudioTrack からデータを受け取る AudioSinkInterface::OnData は
+ * AudioMixer により駆動されているため、 AudioSinkInterface::OnData を呼び出す仕組みだけを持つ
+ * シンプルな webrtc::AudioMixer になっています。
+ */
 class DummyAudioMixer : public webrtc::AudioMixer {
  public:
   struct SourceStatus;
