@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2024.1.0
+
+**2024-02-20**
+
 - [CHANGE] フォーマッターを Ruff に変更する
   - @voluntas
 - [CHANGE] SoraAudioSource.on_data の引数名を変更
