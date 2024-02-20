@@ -121,7 +121,7 @@ int32_t DynamicH264Decoder::Decode(const EncodedImage& input_image,
   webrtc::VideoFrame video_frame =
       webrtc::VideoFrame::Builder()
           .set_video_frame_buffer(i420_buffer)
-          .set_timestamp_rtp(input_image.Timestamp())
+          .set_timestamp_rtp(input_image.RtpTimestamp())
           .build();
   if (input_image.ColorSpace() != nullptr) {
     video_frame.set_color_space(*input_image.ColorSpace());

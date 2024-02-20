@@ -269,7 +269,9 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
 
   try {
     auto object = forwarding_filter_value.as_object();
-    filter.action = object["action"].as_string();
+    if (!object["action"].is_null()) {
+      filter.action = std::string(object["action"].as_string());
+    }
     for (auto or_rule : object["rules"].as_array()) {
       std::vector<sora::SoraSignalingConfig::ForwardingFilter::Rule> rules;
       for (auto and_rule_value : or_rule.as_array()) {
@@ -283,6 +285,12 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
         rules.push_back(rule);
       }
       filter.rules.push_back(rules);
+    }
+    if (!object["version"].is_null()) {
+      filter.version = std::string(object["version"].as_string());
+    }
+    if (!object["metadata"].is_null()) {
+      filter.metadata = object["metadata"];
     }
   } catch (std::exception&) {
     throw nb::type_error("Invalid forwarding_filter");
