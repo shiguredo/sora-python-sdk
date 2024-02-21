@@ -76,6 +76,8 @@ jobs:
           # ./scripts/fix_shared_lib.sh src/sora_sdk/*.so > excludes
           # PATH=`pwd`/patchelf/bin:$PATH rye run python -m auditwheel repair --plat ${{ matrix.platform.auditwheel_plat }} dist/*.whl `cat excludes`
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Jetson 向け
       - name: Set up QEMU
@@ -92,6 +94,7 @@ jobs:
         if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
         env:
           SORA_SDK_TARGET: ubuntu-20.04_armv8_jetson
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # macOS 向け
       - run: |
@@ -101,6 +104,7 @@ jobs:
         env:
           _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
           ARCHFLAGS: ${{ matrix.platform.archflags }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -128,6 +132,8 @@ jobs:
           cache: "pip"
       - run: pip install -r requirements-dev.lock
       - run: python run.py
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: python -m build
 
       - name: Upload Artifact

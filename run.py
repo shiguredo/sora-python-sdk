@@ -133,6 +133,27 @@ def download(url: str, output_dir: Optional[str] = None, filename: Optional[str]
     return output_path
 
 
+def gh_run_download(repo: str,filename: str, output_dir: str,branch: Optional[str] = None, run_id: Optional[str] = None):
+    # branch が指定されたら、そのブランチの最新の artifact を参照する
+    if branch:
+        run_id = cmdcap(['gh', '-R', repo, 'run', 'list', '-b', branch, '--json', 'databaseId', '--jq', '.[0].databaseId'])
+
+    output_path = os.path.join(output_dir, filename)
+
+    if os.path.exists(output_path):
+        return output_path
+
+    try:
+         cmd(['gh', '-R', repo, 'run', 'download', run_id, '-n', filename, '-D', output_dir])
+    except Exception:
+        # ゴミを残さないようにする
+        if os.path.exists(output_path):
+            os.remove(output_path)
+        raise
+
+    return output_path
+
+
 # アーカイブが単一のディレクトリに全て格納されているかどうかを調べる。
 #
 # 単一のディレクトリに格納されている場合はそのディレクトリ名を返す。
@@ -419,10 +440,7 @@ def install_boost(version, source_dir, install_dir, sora_version, platform: str)
         f'boost-{version}_sora-cpp-sdk-{sora_version}_{platform}.{"zip" if win else "tar.gz"}'
     )
     rm_rf(os.path.join(source_dir, filename))
-    archive = download(
-        f"https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/{filename}",
-        output_dir=source_dir,
-    )
+    archive = gh_run_download('shiguredo/sora-cpp-sdk', filename, source_dir, branch='develop')
     rm_rf(os.path.join(install_dir, "boost"))
     extract(archive, output_dir=install_dir, output_dirname="boost")
 
@@ -432,10 +450,7 @@ def install_lyra(version, source_dir, install_dir, sora_version, platform: str):
     win = platform.startswith("windows_")
     filename = f'lyra-{version}_sora-cpp-sdk-{sora_version}_{platform}.{"zip" if win else "tar.gz"}'
     rm_rf(os.path.join(source_dir, filename))
-    archive = download(
-        f"https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/{filename}",
-        output_dir=source_dir,
-    )
+    archive = gh_run_download('shiguredo/sora-cpp-sdk', filename, source_dir, branch='develop')
     rm_rf(os.path.join(install_dir, "lyra"))
     extract(archive, output_dir=install_dir, output_dirname="lyra")
 
@@ -445,10 +460,7 @@ def install_sora(version, source_dir, install_dir, platform: str):
     win = platform.startswith("windows_")
     filename = f'sora-cpp-sdk-{version}_{platform}.{"zip" if win else "tar.gz"}'
     rm_rf(os.path.join(source_dir, filename))
-    archive = download(
-        f"https://github.com/shiguredo/sora-cpp-sdk/releases/download/{version}/{filename}",
-        output_dir=source_dir,
-    )
+    archive = gh_run_download('shiguredo/sora-cpp-sdk', filename, source_dir, branch='develop')
     rm_rf(os.path.join(install_dir, "sora"))
     extract(archive, output_dir=install_dir, output_dirname="sora")
 
