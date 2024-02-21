@@ -49,6 +49,11 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python_version }}"
+          cache: "pip"
+      - run: pip install -r requirements-dev.lock
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
