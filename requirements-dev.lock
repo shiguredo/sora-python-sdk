@@ -7,8 +7,12 @@
 #   all-features: false
 #   with-sources: false
 
+-e file:.
 auditwheel==6.0.0
 build==1.0.3
+colorama==0.4.6
+    # via build
+    # via pytest
 exceptiongroup==1.2.0
     # via pytest
 importlib-metadata==7.0.1
