@@ -72,6 +72,9 @@
 - [FIX] `pyproject.toml` の `[rye.tool]` に `virtual = true` を追加する
   - これで Windows ビルド失敗の原因である `--e file:.` が消える
   - @voluntas
+- [ADD]H.265 に対応
+  - Sora C++ SDK のバージョンアップに伴い macOS で H.265 が利用可能になる
+  - @voluntas @miosakuma
 
 ## 2023.3.1
 
