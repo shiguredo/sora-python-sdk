@@ -53,6 +53,7 @@ jobs:
         with:
           python-version: "${{ matrix.python_version }}"
           cache: "pip"
+      - run: pip install setuptools wheel
       - run: pip install -r requirements-dev.lock
       - run: |
           sudo apt-get update
@@ -131,6 +132,7 @@ jobs:
         with:
           python-version: "${{ matrix.python_version }}"
           cache: "pip"
+      - run: pip install setuptools wheel
       - run: pip install -r requirements-dev.lock
       - run: python run.py
       - run: python -m build
