@@ -749,6 +749,8 @@ def main():
                 f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
             ]
+            cxxflags = ['-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE']
+            cmake_args.append(f"-DCMAKE_CXX_FLAGS={' '.join(cxxflags)}")
         elif target_platform.os == "macos":
             sysroot = cmdcap(["xcrun", "--sdk", "macosx", "--show-sdk-path"])
             cmake_args += [
@@ -779,6 +781,8 @@ def main():
                 f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.8'))}",
                 "-DNB_SUFFIX=.cpython-38-aarch64-linux-gnu.so",
             ]
+            cxxflags = ['-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE']
+            cmake_args.append(f"-DCMAKE_CXX_FLAGS={' '.join(cxxflags)}")
 
         sora_src_dir = os.path.join("src", "sora_sdk")
         sora_build_dir = os.path.join(build_dir, "sora_sdk")
