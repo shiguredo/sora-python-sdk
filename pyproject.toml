@@ -21,6 +21,12 @@ Source = "https://github.com/shiguredo/sora-python-sdk"
 Documentation = "https://sora-python-sdk.shiguredo.jp"
 Discord = "https://discord.gg/shiguredo"
 
+# pip など build-frontend ツールにどの build-backend を使うかを伝えるための情報
+# requires にはビルドするのに必要なパッケージを指定する
+# build-backend にはビルドで使用するPythonオブジェクトを指定する。
+# 参考情報
+# https://packaging.python.org/ja/latest/
+# https://packaging.python.org/ja/latest/guides/modernize-setup-py-project/
 [build-system]
 requires = ["setuptools>=69.1", "wheel~=0.42.0"]
 build-backend = "setuptools.build_meta"
