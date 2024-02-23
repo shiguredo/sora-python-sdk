@@ -21,6 +21,10 @@ Source = "https://github.com/shiguredo/sora-python-sdk"
 Documentation = "https://sora-python-sdk.shiguredo.jp"
 Discord = "https://discord.gg/shiguredo"
 
+[build-system]
+requires = ["setuptools>=69.1", "wheel~=0.42.0"]
+build-backend = "setuptools.build_meta"
+
 [tool.rye]
 dev-dependencies = [
     "nanobind>=1.8.0",
