@@ -21,12 +21,25 @@ Source = "https://github.com/shiguredo/sora-python-sdk"
 Documentation = "https://sora-python-sdk.shiguredo.jp"
 Discord = "https://discord.gg/shiguredo"
 
-# build-system は pip install で sora-python-sdk を正常にビルドするために必要な設定です。
-# requires にはビルド(setup.py)を実行するために必要なパッケージを指定します。
-# build-backend にはビルドで使用するPythonオブジェクトを指定します。
-# 参考情報
+# build-system を指定することで、ソース成果物から pip install (今回だと pip install -e file:.) されるときに何が必要かが伝わる。
+# sora-python-sdk の setup.py は setuptools と wheel を必要としているので、requires の指定はこうなっている。
+# build-backend の指定方法は、setuptools のドキュメントに記載があったのでそのまま真似した。
+#
+# build-system 設定を追加した背景
+# pip version 23 以前は、pip がデフォルトで設定してくれる build-system.requires に setuptools, wheel が含まれていたので
+# 特になにもしなくても pip install でビルドできていたが、pip 24 以降はデフォルトから wheel が削除され、
+# setuptools のみがデフォルトの requires になった。この影響で wheel を build-system.requires で指定しないと
+# `ModuleNotFoundError: No module named 'wheel'` が発生するようになった。
+# そのため、build-system.requires に wheel と setuptools を指定する必要が生まれた。
+#
+# setuptools と wheel のバージョン指定について
+# dev-dependencies に指定している setuptools と wheel のバージョンに合わせているので
+# dev-dependencies に指定しているバージョンを変更した時は、build-system.requires に指定しているバージョンも変更した方が良い。
+#
+# 参考:
 # https://packaging.python.org/ja/latest/
 # https://packaging.python.org/ja/latest/guides/modernize-setup-py-project/
+# https://setuptools.pypa.io/en/latest/build_meta.html#how-to-use-it
 [build-system]
 requires = ["setuptools>=69.1", "wheel~=0.42.0"]
 build-backend = "setuptools.build_meta"
