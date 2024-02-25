@@ -21,8 +21,41 @@ Source = "https://github.com/shiguredo/sora-python-sdk"
 Documentation = "https://sora-python-sdk.shiguredo.jp"
 Discord = "https://discord.gg/shiguredo"
 
+# build-system 設定がなぜ必要なのか
+#
+# pip version 23 以前は、pip がデフォルトで設定する build-system.requires に setuptools, wheel が含まれていたので
+# 特になにもしなくても pip install でビルドできていたが、pip 24 以降はデフォルトから wheel が削除され、
+# setuptools のみがデフォルトの requires になった。この影響で wheel を build-system.requires で指定しないと
+# `ModuleNotFoundError: No module named 'wheel'` が発生するようになった。
+# 回避策として事前に wheel をインストールすれば良いと思うかもしれないが、pip などのビルドフロントエンドは
+# build-system.requires の下に列挙されているビルド時の依存関係 (と、その依存関係)だけをインストールする先としての一時的な仮想環境を作成
+# するため、事前にインストールした wheel はビルド時の依存関係として認識されない。
+#
+# この問題に対応するため build-system.requires に wheel と setuptools を指定し、
+# ソース成果物から pip install (今回だと pip install -e file:.) されるときに
+# 必要な依存関係が伝わるようにした。
+#
+# sora-python-sdk の setup.py は setuptools と wheel を必要としているので、requires の指定はこうなっている。
+# build-backend の指定方法は、setuptools のドキュメントに記載があったのでそのまま採用した。
+#
+# setuptools と wheel のバージョン指定について
+# dev-dependencies に指定している setuptools と wheel のバージョンに合わせているので
+# dev-dependencies に指定しているバージョンを変更した時は、build-system.requires に指定しているバージョンも変更した方が良い。
+#
+# 参考:
+# - https://packaging.python.org/ja/latest/
+#   - Python パッケージを配布・インストールする方法について包括的に解説されていて参考になる
+# - https://packaging.python.org/ja/latest/guides/modernize-setup-py-project/
+#   - setup.py を pyproject.toml と共存させる設定をしたいときに参考になる
+# - https://packaging.python.org/ja/latest/guides/modernize-setup-py-project/#what-is-the-build-isolation-feature
+#   - なぜ、ビルド前に wheel をインストールしてもビルド時の依存関係として認識されないのかについて記載されていた
+# - https://setuptools.pypa.io/en/latest/build_meta.html
+#   - setuptools の build-system サポートについて解説されていて参考になる
+[build-system]
+requires = ["setuptools>=69.1", "wheel~=0.42.0"]
+build-backend = "setuptools.build_meta"
+
 [tool.rye]
-virtual = true
 dev-dependencies = [
     "nanobind>=1.8.0",
     "setuptools>=69.1",
