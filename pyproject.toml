@@ -63,7 +63,7 @@ dev-dependencies = [
     "wheel~=0.42.0",
     "auditwheel~=6.0.0",
     "pytest>=8.0.0",
-    "ruff~=0.2.2",
+    "ruff>=0.3.0",
 ]
 
 [tool.ruff]
