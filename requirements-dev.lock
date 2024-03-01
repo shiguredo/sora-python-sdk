@@ -28,7 +28,7 @@ pyelftools==0.30
 pyproject-hooks==1.0.0
     # via build
 pytest==8.0.0
-ruff==0.2.2
+ruff==0.3.0
 setuptools==69.1.0
 tomli==2.0.1
     # via build
