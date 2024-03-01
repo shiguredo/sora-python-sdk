@@ -16,7 +16,7 @@ importlib-metadata==7.0.1
     # via build
 iniconfig==2.0.0
     # via pytest
-nanobind==1.8.0
+nanobind==1.9.2
 packaging==23.2
     # via auditwheel
     # via build
