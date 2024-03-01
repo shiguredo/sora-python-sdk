@@ -57,13 +57,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.rye]
 dev-dependencies = [
-    "nanobind>=1.8.0",
+    "nanobind~=1.9.2",
     "setuptools>=69.1",
     "build~=1.0.3",
     "wheel~=0.42.0",
     "auditwheel~=6.0.0",
     "pytest>=8.0.0",
-    "ruff>=0.2.2",
+    "ruff~=0.2.2",
 ]
 
 [tool.ruff]
