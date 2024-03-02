@@ -1,24 +1,24 @@
 import json
 import time
 from threading import Event
+from typing import Any, Dict, List
 
-from sora_sdk import Sora, SoraConnection, SoraMediaTrack
+from sora_sdk import Sora, SoraMediaTrack
 
 
 class Recvonly:
-    _sora: Sora
-    _connection: SoraConnection
+    def __init__(self, signaling_urls: List[str], channel_id: str, metadata: Dict[str, Any]):
+        self._signaling_urls = signaling_urls
 
-    _connection_id: str
+        self.connection_id: str
 
-    # 接続した
-    _connected: Event = Event()
-    # 終了
-    _closed: bool = False
+        # 接続した
+        self._connected = Event()
+        # 終了
+        self._closed = False
 
-    def __init__(self, signaling_urls, channel_id, metadata):
-        self.sora = Sora()
-        self._connection = self.sora.create_connection(
+        self._sora = Sora()
+        self._connection = self._sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendrecv",
             channel_id=channel_id,
@@ -48,16 +48,16 @@ class Recvonly:
     def _on_set_offer(self, raw_offer: str):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
-            self._connection_id = offer["connection_id"]
+            self.connection_id = offer["connection_id"]
 
     def _on_notify(self, raw_message: str):
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
             and message["event_type"] == "connection.created"
-            and message["connection_id"] == self._connection_id
+            and message["connection_id"] == self.connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            print(f"Sora に接続しました: connection_id={self.connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code, message):
@@ -69,7 +69,7 @@ class Recvonly:
         self._connection.disconnect()
 
 
-def test_recvonly(setup):
+def test_recvonly(setup: dict[str, Any]):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")

@@ -2,35 +2,33 @@ import json
 import threading
 import time
 from threading import Event
+from typing import List
 
 import numpy as np
-
 from sora_sdk import Sora, SoraConnection, SoraVideoSource
 
 
 class Sendonly:
-    _sora: Sora = None
-    _connection: SoraConnection
+    def __init__(self, signaling_urls: List[str], channel_id: str, metadata: dict):
+        self._signaling_urls: List[str] = signaling_urls
+        self._channel_id: str = channel_id
 
-    _connection_id: str
+        self.connection_id: str
 
-    # 接続した
-    _connected: Event = Event()
-    # 終了
-    _closed: bool = False
+        # 接続した
+        self._connected: Event = Event()
+        # 終了
+        self._closed: bool = False
 
-    _video_height: int = 480
-    _video_width: int = 640
-    _video_input_thread: threading.Thread
-    _video_source: SoraVideoSource
+        self._video_height: int = 480
+        self._video_width: int = 640
 
-    def __init__(self, signaling_urls: list, channel_id: str, metadata: dict):
-        self._sora = Sora()
+        self._sora: Sora = Sora()
         self._connected = Event()
 
-        self._video_source = self._sora.create_video_source()
+        self._video_source: SoraVideoSource = self._sora.create_video_source()
 
-        self._connection = self._sora.create_connection(
+        self._connection: SoraConnection = self._sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendonly",
             channel_id=channel_id,

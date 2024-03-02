@@ -1,35 +1,34 @@
 import json
 import time
 from threading import Event
+from typing import Any, Dict, List
 
 from sora_sdk import (
     Sora,
     SoraAudioFrame,
     SoraAudioStreamSink,
-    SoraConnection,
     SoraMediaTrack,
     SoraVAD,
 )
 
 
 class VAD:
-    _vad: SoraVAD = SoraVAD()
+    def __init__(self, signaling_urls: List[str], channel_id: str, metadata: Dict[str, Any]):
+        self._signaling_urls = signaling_urls
+        self._channel_id = channel_id
 
-    _sora: Sora = None
-    _connection: SoraConnection
+        self._vad = SoraVAD()
 
-    _connection_id: str
+        self.connection_id: str
 
-    # 接続した
-    _connected: Event = Event()
-    # 終了
-    _closed: bool = False
+        # 接続した
+        self._connected: Event = Event()
+        # 終了
+        self._closed: bool = False
 
-    _audio_stream_sink: SoraAudioStreamSink
-    _audio_output_frequency: int = 24000
-    _audio_output_channels: int = 1
+        self._audio_output_frequency: int = 24000
+        self._audio_output_channels: int = 1
 
-    def __init__(self, signaling_urls: list, channel_id: str, metadata: dict):
         self._sora = Sora()
         self._connected = Event()
 

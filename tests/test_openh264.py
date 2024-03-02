@@ -8,29 +8,21 @@ from sora_sdk import Sora, SoraConnection, SoraVideoSource
 
 
 class Sendonly:
-    _sora: Sora = None
-    _connection: SoraConnection
-
-    _connection_id: str
-
-    # 接続した
-    _connected: Event = Event()
-    # 終了
-    _closed: bool = False
-
-    _video_height: int = 480
-    _video_width: int = 640
-    _video_input_thread: threading.Thread
-    _video_source: SoraVideoSource
-
     def __init__(self, openh264_path: str, signaling_urls: list, channel_id: str, metadata: dict):
-        print(channel_id)
-        self._sora = Sora(openh264=openh264_path)
-        self._connected = Event()
+        self._connection_id: str
 
-        self._video_source = self._sora.create_video_source()
+        # 接続した
+        self._connected: Event = Event()
+        # 終了
+        self._closed: bool = False
 
-        self._connection = self._sora.create_connection(
+        self._video_height: int = 480
+        self._video_width: int = 640
+
+        self._sora: Sora = Sora(openh264=openh264_path)
+        self._video_source: SoraVideoSource = self._sora.create_video_source()
+
+        self._connection: SoraConnection = self._sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendonly",
             channel_id=channel_id,

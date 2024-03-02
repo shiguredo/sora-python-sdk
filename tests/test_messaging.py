@@ -1,27 +1,25 @@
 import json
 import time
 from threading import Event
+from typing import List
 
 from sora_sdk import Sora, SoraConnection
 
 
 class Messaging:
-    _sora: Sora
-    _connection: SoraConnection
-
-    _connection_id: str
-
-    _connected: Event = Event()
-    _closed: bool = False
-
-    _label: str
-    _is_data_channel_ready: bool = False
-
     def __init__(
         self, signaling_urls: list, channel_id: str, label: str, direction: str, metadata: dict
     ):
-        self._sora = Sora()
-        self._connection = self._sora.create_connection(
+        self.connection_id: str
+
+        self._signaling_urls: List[str] = signaling_urls
+        self._channel_id = channel_id
+
+        self._connected: Event = Event()
+        self._closed: bool = False
+
+        self._sora: Sora = Sora()
+        self._connection: SoraConnection = self._sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendrecv",
             channel_id=channel_id,
@@ -32,7 +30,8 @@ class Messaging:
             data_channel_signaling=True,
         )
 
-        self._label = label
+        self._label: str = label
+        self._is_data_channel_ready: bool = False
 
         self._connection.on_set_offer = self._on_set_offer
         self._connection.on_notify = self._on_notify
@@ -45,16 +44,16 @@ class Messaging:
     def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
-            self._connection_id = offer["connection_id"]
+            self.connection_id = offer["connection_id"]
 
     def _on_notify(self, raw_message):
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
             and message["event_type"] == "connection.created"
-            and message["connection_id"] == self._connection_id
+            and message["connection_id"] == self.connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            print(f"Sora に接続しました: connection_id={self.connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code, message):
@@ -72,7 +71,7 @@ class Messaging:
     def connect(self):
         self._connection.connect()
 
-        assert self._connected.wait(30)
+        assert self._connected.wait(30), "Sora に接続できませんでした"
 
         return self
 
@@ -82,7 +81,7 @@ class Messaging:
             time.sleep(0.01)
 
         self._connection.send_data_channel(self._label, data)
-        print(f"メッセージを送信しました: label={self._label}, data={data}")
+        print(f"メッセージを送信しました: label={self._label}, data={data.decode()}")
 
     def disconnect(self):
         self._connection.disconnect()
