@@ -3,22 +3,23 @@ import time
 from threading import Event
 from typing import Any, Dict, List
 
-from sora_sdk import Sora, SoraMediaTrack
+from sora_sdk import Sora, SoraConnection, SoraMediaTrack
 
 
 class Recvonly:
     def __init__(self, signaling_urls: List[str], channel_id: str, metadata: Dict[str, Any]):
-        self._signaling_urls = signaling_urls
+        self._signaling_urls: List[str] = signaling_urls
+        self._channel_id: str = channel_id
 
-        self.connection_id: str
+        self._connection_id: str
 
         # 接続した
         self._connected = Event()
         # 終了
         self._closed = False
 
-        self._sora = Sora()
-        self._connection = self._sora.create_connection(
+        self._sora: Sora = Sora()
+        self._connection: SoraConnection = self._sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendrecv",
             channel_id=channel_id,
@@ -48,16 +49,16 @@ class Recvonly:
     def _on_set_offer(self, raw_offer: str):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
-            self.connection_id = offer["connection_id"]
+            self._connection_id = offer["connection_id"]
 
     def _on_notify(self, raw_message: str):
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
             and message["event_type"] == "connection.created"
-            and message["connection_id"] == self.connection_id
+            and message["connection_id"] == self._connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self.connection_id}")
+            print(f"Sora に接続しました: connection_id={self._connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code, message):

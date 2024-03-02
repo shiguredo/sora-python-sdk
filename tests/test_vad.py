@@ -14,12 +14,12 @@ from sora_sdk import (
 
 class VAD:
     def __init__(self, signaling_urls: List[str], channel_id: str, metadata: Dict[str, Any]):
-        self._signaling_urls = signaling_urls
-        self._channel_id = channel_id
+        self._signaling_urls: List[str] = signaling_urls
+        self._channel_id: str = channel_id
 
         self._vad = SoraVAD()
 
-        self.connection_id: str
+        self._connection_id: str
 
         # 接続した
         self._connected: Event = Event()
@@ -58,17 +58,17 @@ class VAD:
     def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
-            self.connection_id = offer["connection_id"]
-            print(f"Offer を受信しました: connection_id={self.connection_id}")
+            self._connection_id = offer["connection_id"]
+            print(f"Offer を受信しました: connection_id={self._connection_id}")
 
     def _on_notify(self, raw_message):
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
             and message["event_type"] == "connection.created"
-            and message["connection_id"] == self.connection_id
+            and message["connection_id"] == self._connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self.connection_id}")
+            print(f"Sora に接続しました: connection_id={self._connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code, message):
