@@ -16,6 +16,15 @@
 
 ## develop
 
+- [UPDATE] nanobind を `1.9.2` に上げて固定する
+  - @voluntas
+- [UPDATE] ruff の最小を ``0.3.0` に上げる
+  - @voluntas
+- [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
+  - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった
+  - そのために pyproject.toml の `build-system.requires` に wheel と setuptools を指定する
+  - @zztkm
+
 ## 2024.1.0
 
 **2024-02-20**

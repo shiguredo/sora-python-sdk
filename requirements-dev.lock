@@ -12,7 +12,7 @@ auditwheel==6.0.0
 build==1.0.3
 iniconfig==2.0.0
     # via pytest
-nanobind==1.9.0
+nanobind==1.9.2
 numpy==1.26.4
     # via opencv-python
 opencv-python==4.9.0.80
@@ -26,8 +26,8 @@ pyelftools==0.30
     # via auditwheel
 pyproject-hooks==1.0.0
     # via build
-pytest==8.0.1
+pytest==8.0.2
 python-dotenv==1.0.1
-ruff==0.2.2
-setuptools==69.1.0
+ruff==0.3.0
+setuptools==69.1.1
 wheel==0.42.0
