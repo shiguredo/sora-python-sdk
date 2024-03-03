@@ -70,7 +70,7 @@ class Recvonly:
         self._connection.disconnect()
 
 
-def test_recvonly(setup: dict[str, Any]):
+def test_recvonly(setup: Dict[str, Any]):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
