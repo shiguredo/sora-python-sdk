@@ -55,7 +55,6 @@ if(TARGET_OS STREQUAL "windows")
 endif()
 
 find_package(Boost REQUIRED COMPONENTS json filesystem)
-find_package(Lyra REQUIRED)
 find_package(WebRTC REQUIRED)
 find_package(Sora REQUIRED)
 find_package(nanobind CONFIG REQUIRED)
@@ -133,10 +132,3 @@ endif()
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 
 install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)
-install(
-  FILES
-  ${LYRA_DIR}/share/model_coeffs/lyra_config.binarypb
-  ${LYRA_DIR}/share/model_coeffs/lyragan.tflite
-  ${LYRA_DIR}/share/model_coeffs/quantizer.tflite
-  ${LYRA_DIR}/share/model_coeffs/soundstream_encoder.tflite
-  DESTINATION model_coeffs)
