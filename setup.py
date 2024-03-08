@@ -1,15 +1,15 @@
 import os
 import sys
 import sysconfig
+
 from setuptools import setup
 from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
-
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, BASE_DIR)
 
 
-from run import get_build_platform, PlatformTarget, cd  # noqa: E402
+from run import PlatformTarget, cd, get_build_platform  # noqa: E402
 
 
 def run_setup(build_platform, target_platform):
@@ -34,10 +34,10 @@ def run_setup(build_platform, target_platform):
 
     setup(
         url="https://github.com/shiguredo/sora-python-sdk",
-        packages=["sora_sdk", "sora_sdk.model_coeffs"],
+        packages=["sora_sdk"],
         package_dir={"": "src"},
         package_data={
-            "sora_sdk": ["sora_sdk_ext.*", "model_coeffs/*"],
+            "sora_sdk": ["sora_sdk_ext.*"],
         },
         include_package_data=True,
         cmdclass={
