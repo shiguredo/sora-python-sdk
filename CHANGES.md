@@ -11,6 +11,11 @@
 
 ## develop
 
+- [CHANGE] Lyra のサポートを廃止し、以下のオプションを削除する
+  - audio_codec_lyra_bitrate
+  - audio_codec_lyra_usedtx
+  - check_lyra_version
+  - @enm10k
 - [UPDATE] nanobind を `1.9.2` に上げて固定する
   - @voluntas
 - [UPDATE] ruff の最小を ``0.3.0` に上げる
