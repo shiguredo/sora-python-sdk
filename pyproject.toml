@@ -52,7 +52,7 @@ Discord = "https://discord.gg/shiguredo"
 # - https://setuptools.pypa.io/en/latest/build_meta.html
 #   - setuptools の build-system サポートについて解説されていて参考になる
 [build-system]
-requires = ["setuptools>=69.1", "wheel~=0.42.0"]
+requires = ["setuptools>=69.1", "wheel~=0.43.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.rye]
