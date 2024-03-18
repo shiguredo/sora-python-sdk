@@ -9,7 +9,7 @@
 
 -e file:.
 auditwheel==6.0.0
-build==1.0.3
+build==1.1.1
 exceptiongroup==1.2.0
     # via pytest
 importlib-metadata==7.0.1
@@ -29,11 +29,11 @@ pyproject-hooks==1.0.0
     # via build
 pytest==8.0.0
 ruff==0.3.0
-setuptools==69.1.0
+setuptools==69.2.0
 tomli==2.0.1
     # via build
     # via pyproject-hooks
     # via pytest
-wheel==0.42.0
+wheel==0.43.0
 zipp==3.17.0
     # via importlib-metadata
