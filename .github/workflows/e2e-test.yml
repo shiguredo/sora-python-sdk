@@ -34,12 +34,12 @@ jobs:
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py
-      # まだ色々不安定なので個別にテストする
-      - run: rye run pytest tests/test_sendonly.py -s
-      - run: rye run pytest tests/test_recvonly.py -s
-      - run: rye run pytest tests/test_messaging.py -s
-      - run: rye run pytest tests/test_openh264.py -s
-      - run: rye run pytest tests/test_vad.py -s
+      - run: rye test
+      # - run: rye run pytest tests/test_sendonly.py -s
+      # - run: rye run pytest tests/test_recvonly.py -s
+      # - run: rye run pytest tests/test_messaging.py -s
+      # - run: rye run pytest tests/test_openh264.py -s
+      # - run: rye run pytest tests/test_vad.py -s
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
