@@ -16,6 +16,8 @@
   - audio_codec_lyra_usedtx
   - check_lyra_version
   - @enm10k
+- [ADD] `on_switched` コールバックを追加する
+  - @enm10k
 - [UPDATE] nanobind を `1.9.2` に上げて固定する
   - @voluntas
 - [UPDATE] ruff の最小を ``0.3.0` に上げる
