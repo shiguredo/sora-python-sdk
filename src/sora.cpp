@@ -44,9 +44,6 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<int> disconnect_wait_timeout,
     std::optional<int> websocket_close_timeout,
     std::optional<int> websocket_connection_timeout,
-    std::optional<int> audio_codec_lyra_bitrate,
-    std::optional<bool> audio_codec_lyra_usedtx,
-    std::optional<bool> check_lyra_version,
     std::optional<std::string> audio_streaming_language_code,
     std::optional<bool> insecure,
     std::optional<std::string> client_cert,
@@ -141,15 +138,6 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   }
   if (websocket_connection_timeout) {
     config.websocket_connection_timeout = *websocket_connection_timeout;
-  }
-  if (audio_codec_lyra_bitrate) {
-    config.audio_codec_lyra_bitrate = *audio_codec_lyra_bitrate;
-  }
-  if (audio_codec_lyra_usedtx) {
-    config.audio_codec_lyra_usedtx = *audio_codec_lyra_usedtx;
-  }
-  if (check_lyra_version) {
-    config.check_lyra_version = *check_lyra_version;
   }
   if (audio_streaming_language_code) {
     config.audio_streaming_language_code = *audio_streaming_language_code;
@@ -311,7 +299,8 @@ std::vector<std::string> Sora::ConvertSignalingUrls(const nb::handle value) {
     if (!signaling_url_value.is_string()) {
       throw nb::type_error("`signaling_urls` should be a list of strings");
     }
-    signaling_urls.push_back(boost::json::value_to<std::string>(signaling_url_value));
+    signaling_urls.push_back(
+        boost::json::value_to<std::string>(signaling_url_value));
   }
 
   if (signaling_urls.empty()) {
