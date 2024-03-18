@@ -58,10 +58,10 @@ build-backend = "setuptools.build_meta"
 [tool.rye]
 dev-dependencies = [
     "nanobind~=1.9.2",
-    "setuptools>=69.1",
-    "build~=1.0.3",
-    "wheel>=0.42.0",
-    "auditwheel>=6.0.0",
+    "setuptools>=69.2",
+    "build~=1.1.1",
+    "wheel~=0.43.0",
+    "auditwheel~=6.0.0",
     "pytest>=8.0.0",
     "python-dotenv>=1.0.1",
     "opencv-python>=4.9.0.80",
