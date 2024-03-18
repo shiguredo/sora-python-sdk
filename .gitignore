@@ -19,3 +19,7 @@ src/sora_sdk/*.pyd
 
 # E2E テスト用
 .env
+
+
+# libopenh264
+libopenh264*
