@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] Sora Python SDK Samples を `examples` に移動する
+  - @voluntas
 - [CHANGE] Lyra のサポートを廃止し、以下のオプションを削除する
   - audio_codec_lyra_bitrate
   - audio_codec_lyra_usedtx
@@ -26,7 +28,6 @@
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
   - WEBRTC_BUILD_VERSION を `m121.6167.3.0` に上げる
   - BOOST_VERSION を `1.84.0` に上げる
-  - LYRA_VERSION を `1.3.2` に上げる
   - @enm10k
 - [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
   - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった
