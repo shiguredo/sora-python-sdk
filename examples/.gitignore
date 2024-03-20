@@ -1,0 +1,7 @@
+.venv
+.ruff_cache
+.mypy_cache
+*.pyc
+__pycache__
+.env*
+!.env.template
