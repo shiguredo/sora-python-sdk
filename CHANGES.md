@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] Sora Python SDK Samples を `examples` に移動する
+  - @voluntas
 - [CHANGE] Lyra のサポートを廃止し、以下のオプションを削除する
   - audio_codec_lyra_bitrate
   - audio_codec_lyra_usedtx
