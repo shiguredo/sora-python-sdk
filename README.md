@@ -82,9 +82,8 @@ $ rye sync
 ## 対応機能
 
 - Sora の機能へ追従
-- VP8 / VP9 / AV1 / H.264 のハードウェアアクセラレーター (HWA) 対応
-- H.265 のハードウェアアクセラレーター (HWA) 対応
-  - macOS のみ対応
+- VP8 / VP9 / AV1 / H.264 / H.265 のハードウェアアクセラレーター (HWA) 対応
+  - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
 - OpenH264 を利用した H.264 のソフトウェアエンコーダー/デコーダーへの対応
 
 ## 優先実装
