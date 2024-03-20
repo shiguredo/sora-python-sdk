@@ -26,12 +26,6 @@ $ rye sync
 ### サンプルコードの実行
 
 ```console
-$ rye run media_recvonly --signaling-urls wss://1.example.com/signaling wss://2.example.com/signaling --channel-id sora
-```
-
-### コマンドラインの代わりに環境変数を利用する
-
-```console
 $ cp .env.template .env
 # .env に必要な変数を設定してください。
 $ rye run media_recvonly
