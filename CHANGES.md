@@ -22,7 +22,7 @@
   - @voluntas
 - [UPDATE] ruff の最小を ``0.3.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.3.1` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.4.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
   - WEBRTC_BUILD_VERSION を `m121.6167.3.0` に上げる
   - BOOST_VERSION を `1.84.0` に上げる
