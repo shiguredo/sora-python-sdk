@@ -9,6 +9,11 @@
 - FIX
   - バグ修正
 
+## feature/test
+
+- [ADD] python-dotenv を追加
+  - @voluntas
+
 ## develop
 
 - [ADD] Sora Python SDK Samples を `examples` に移動する
@@ -94,6 +99,7 @@
   - @tnoho
 - [FIX] `pyproject.toml` の `[rye.tool]` に `virtual = true` を追加する
   - これで Windows ビルド失敗の原因である `--e file:.` が消える
+  - ただし E2E テストが動作しなくなる問題あり
   - @voluntas
 - [ADD]H.265 に対応
   - Sora C++ SDK のバージョンアップに伴い macOS で H.265 が利用可能になる

@@ -63,6 +63,9 @@ dev-dependencies = [
     "wheel~=0.43.0",
     "auditwheel~=6.0.0",
     "pytest>=8.0.0",
+    "python-dotenv>=1.0.1",
+    "opencv-python>=4.9.0.80",
+    "numpy>=1.24.4",
     "ruff>=0.3.0",
 ]
 
