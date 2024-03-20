@@ -11,9 +11,15 @@ def sendonly():
     load_dotenv()
 
     # 必須引数
-    signaling_urls = os.getenv("SORA_SIGNALING_URLS").split(",")
-    channel_id = os.getenv("SORA_CHANNEL_ID")
-    messaging_label = os.getenv("SORA_MESSAGING_LABEL", "#example")
+    if not (raw_signaling_urls := os.getenv("SORA_SIGNALING_URLS")):
+        raise ValueError("環境変数 SORA_SIGNALING_URLS が設定されていません")
+    signaling_urls = raw_signaling_urls.split(",")
+
+    if not (channel_id := os.getenv("SORA_CHANNEL_ID")):
+        raise ValueError("環境変数 SORA_CHANNEL_ID が設定されていません")
+
+    if not (messaging_label := os.getenv("SORA_MESSAGING_LABEL")):
+        raise ValueError("環境変数 SORA_MESSAGING_LABEL が設定されていません")
 
     # オプション引数
     metadata = None
