@@ -1,4 +1,6 @@
 {
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingImports": "none",
     "reportUnusedImport": "information"
@@ -6,10 +8,12 @@
   "[python]": {
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file",
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.autoIndent": "full",
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
-    },
-    "editor.defaultFormatter": "charliermarsh.ruff"
+      "source.fixAll.ruff": "always",
+      "source.organizeImports.ruff": "explicit"
+    }
   },
   "[cpp]": {
     "editor.formatOnSave": true
@@ -119,7 +123,5 @@
   },
   "C_Cpp.errorSquiggles": "disabled",
   // nanobind 周りでエラーが消えないので全部消す
-  "editor.tabSize": 2,
-  "python.analysis.typeCheckingMode": "off",
-  "cSpell.words": ["dtype", "imshow", "samplerate", "sounddevice"]
+  "editor.tabSize": 2
 }
