@@ -13,6 +13,8 @@ on:
 
 jobs:
   build_linux_macos:
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -109,6 +111,8 @@ jobs:
           path: "dist/"
 
   build_windows:
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     runs-on: windows-2019
     timeout-minutes: 60
     strategy:

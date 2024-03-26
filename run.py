@@ -107,6 +107,49 @@ def cmd(args, **kwargs):
     return subprocess.run(args, **kwargs)
 
 
+def gh_run_download(
+    repo: str,
+    filename: str,
+    output_dir: str,
+    branch: Optional[str] = None,
+    run_id: Optional[str] = None,
+):
+    # branch が指定されたら、そのブランチの最新の artifact を参照する
+    if branch:
+        run_id = cmdcap(
+            [
+                "gh",
+                "-R",
+                repo,
+                "run",
+                "list",
+                "-b",
+                branch,
+                "-s",
+                "success",
+                "--json",
+                "databaseId",
+                "--jq",
+                ".[0].databaseId",
+            ]
+        )
+
+    output_path = os.path.join(output_dir, filename)
+
+    if os.path.exists(output_path):
+        return output_path
+
+    try:
+        cmd(["gh", "-R", repo, "run", "download", run_id, "-n", filename, "-D", output_dir])
+    except Exception:
+        # ゴミを残さないようにする
+        if os.path.exists(output_path):
+            os.remove(output_path)
+        raise
+
+    return output_path
+
+
 def download(url: str, output_dir: Optional[str] = None, filename: Optional[str] = None) -> str:
     if filename is None:
         output_path = urllib.parse.urlparse(url).path.split("/")[-1]
@@ -411,6 +454,16 @@ def install_llvm(
             os.path.join(llvm_dir, "libcxx", "include", "__config_site"),
         )
 
+        # __assertion_handler をコピーする
+        # 背景: https://source.chromium.org/chromium/_/chromium/external/github.com/llvm/llvm-project/libcxx.git/+/1e5bda0d1ce8e346955aa4a85eaab258785f11f7
+        shutil.copyfile(
+            # NOTE(enm10k): 最初は default_assertion_handler.in をコピーしていたが、 buildtools 以下に
+            # default_assertion_handler.in から生成されたと思われる __assertion_handler が存在するため、それをコピーする
+            # os.path.join(llvm_dir, "libcxx", "vendor", "llvm", "default_assertion_handler.in"),
+            os.path.join(llvm_dir, "buildtools", "third_party", "libc++", "__assertion_handler"),
+            os.path.join(llvm_dir, "libcxx", "include", "__assertion_handler"),
+        )
+
 
 @versioned
 def install_boost(version, source_dir, install_dir, sora_version, platform: str):
@@ -419,9 +472,15 @@ def install_boost(version, source_dir, install_dir, sora_version, platform: str)
         f'boost-{version}_sora-cpp-sdk-{sora_version}_{platform}.{"zip" if win else "tar.gz"}'
     )
     rm_rf(os.path.join(source_dir, filename))
-    archive = download(
-        f"https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/{filename}",
-        output_dir=source_dir,
+    # archive = download(
+    #     f"https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/{filename}",
+    #     output_dir=source_dir,
+    # )
+    archive = gh_run_download(
+        "shiguredo/sora-cpp-sdk",
+        filename,
+        source_dir,
+        branch="feature/onevpl-h265-m122",
     )
     rm_rf(os.path.join(install_dir, "boost"))
     extract(archive, output_dir=install_dir, output_dirname="boost")
@@ -432,9 +491,15 @@ def install_sora(version, source_dir, install_dir, platform: str):
     win = platform.startswith("windows_")
     filename = f'sora-cpp-sdk-{version}_{platform}.{"zip" if win else "tar.gz"}'
     rm_rf(os.path.join(source_dir, filename))
-    archive = download(
-        f"https://github.com/shiguredo/sora-cpp-sdk/releases/download/{version}/{filename}",
-        output_dir=source_dir,
+    # archive = download(
+    #     f"https://github.com/shiguredo/sora-cpp-sdk/releases/download/{version}/{filename}",
+    #     output_dir=source_dir,
+    # )
+    archive = gh_run_download(
+        "shiguredo/sora-cpp-sdk",
+        filename,
+        source_dir,
+        branch="feature/onevpl-h265-m122",
     )
     rm_rf(os.path.join(install_dir, "sora"))
     extract(archive, output_dir=install_dir, output_dirname="sora")
