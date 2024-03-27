@@ -55,10 +55,11 @@ class LogoStreamer:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
-        if video_fps is not None:
-            self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
         if video_fourcc is not None:
             self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
+        # FOURCC を設定すると FPS の設定が初期化されるので、かならず FOURCC の後に FPS を設定する
+        if video_fps is not None:
+            self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
 
         # ロゴを読み込む
         self._logo = Image.open(Path(__file__).parent.joinpath("shiguremaru.png"))
