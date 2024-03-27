@@ -10,6 +10,12 @@ from numpy import ndarray
 from sora_sdk import Sora, SoraConnection, SoraSignalingErrorCode
 
 
+def decode_fourcc(v):
+    # https://amdkkj.blogspot.com/2017/06/opencv-python-for-windows-playing-videos_17.html
+    v = int(v)
+    return "".join([chr((v >> 8 * i) & 0xFF) for i in range(4)])
+
+
 class Sendonly:
     def __init__(
         self,
@@ -41,6 +47,7 @@ class Sendonly:
             role="sendonly",
             channel_id=channel_id,
             metadata=metadata,
+            audio=False,
             video_codec_type=video_codec_type,
             video_bit_rate=video_bit_rate,
             audio_source=self._audio_source,
@@ -60,6 +67,8 @@ class Sendonly:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
+        self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc("M", "J", "P", "G"))
+        self._video_capture.set(cv2.CAP_PROP_FPS, 30)
 
     def connect(self):
         self._connection.connect()
@@ -141,6 +150,7 @@ def sendonly():
     video_bit_rate = int(os.getenv("SORA_VIDEO_BIT_RATE", "500"))
     video_width = int(os.getenv("SORA_VIDEO_WIDTH", "640"))
     video_height = int(os.getenv("SORA_VIDEO_HEIGHT", "360"))
+    print(f"video_width={video_width}, video_height={video_height}")
 
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
