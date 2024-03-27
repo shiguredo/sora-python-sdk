@@ -148,7 +148,7 @@ def sendonly():
     video_width = int(os.getenv("SORA_VIDEO_WIDTH", "640"))
     video_height = int(os.getenv("SORA_VIDEO_HEIGHT", "360"))
     video_fps = int(os.getenv("SORA_VIDEO_FPS", "30"))
-    video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPEG")
+    video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPG")
 
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
