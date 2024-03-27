@@ -22,6 +22,8 @@ class Sendonly:
         video_bit_rate: int,
         video_width: Optional[int],
         video_height: Optional[int],
+        video_fps: Optional[int],
+        video_fourcc: Optional[str],
         openh264: Optional[str],
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
@@ -60,8 +62,10 @@ class Sendonly:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
-        self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc("M", "J", "P", "G"))
-        self._video_capture.set(cv2.CAP_PROP_FPS, 30)
+        if video_fps is not None:
+            self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
+        if video_fourcc is not None:
+            self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
 
     def connect(self):
         self._connection.connect()
@@ -143,6 +147,8 @@ def sendonly():
     video_bit_rate = int(os.getenv("SORA_VIDEO_BIT_RATE", "500"))
     video_width = int(os.getenv("SORA_VIDEO_WIDTH", "640"))
     video_height = int(os.getenv("SORA_VIDEO_HEIGHT", "360"))
+    video_fps = int(os.getenv("SORA_VIDEO_FPS", "30"))
+    video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPEG")
 
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
@@ -157,6 +163,8 @@ def sendonly():
         video_bit_rate,
         video_width,
         video_height,
+        video_fps,
+        video_fourcc,
         openh264_path,
     )
     sendonly.run()

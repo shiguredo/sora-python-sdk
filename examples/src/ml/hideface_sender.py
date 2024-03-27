@@ -24,6 +24,8 @@ class LogoStreamer:
         camera_id: int,
         video_width: Optional[int],
         video_height: Optional[int],
+        video_fps: Optional[int],
+        video_fourcc: Optional[str],
     ):
         self.mp_face_detection = mp.solutions.face_detection
 
@@ -53,6 +55,10 @@ class LogoStreamer:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
+        if video_fps is not None:
+            self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
+        if video_fourcc is not None:
+            self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
 
         # ロゴを読み込む
         self._logo = Image.open(Path(__file__).parent.joinpath("shiguremaru.png"))
@@ -181,6 +187,8 @@ def hideface_sender():
 
     video_width = int(os.getenv("SORA_VIDEO_WIDTH", "640"))
     video_height = int(os.getenv("SORA_VIDEO_HEIGHT", "360"))
+    video_fps = int(os.getenv("SORA_VIDEO_FPS", "30"))
+    video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPEG")
 
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
@@ -192,6 +200,8 @@ def hideface_sender():
         camera_id=camera_id,
         video_height=video_height,
         video_width=video_width,
+        video_fps=video_fps,
+        video_fourcc=video_fourcc,
     )
     streamer.run()
 
