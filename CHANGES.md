@@ -33,6 +33,8 @@
   - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった
   - そのために pyproject.toml の `build-system.requires` に wheel と setuptools を指定する
   - @zztkm
+- [FIX] サンプルアプリで 1080p の映像を送信すると 2-3 FPS しか出ないのを修正
+  - @melpon
 
 ## 2024.1.0
 
