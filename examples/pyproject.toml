@@ -7,7 +7,7 @@ dependencies = [
     "opencv-python~=4.9.0.80",
     "opencv-python-headless~=4.9.0.80",
     "sounddevice~=0.4.6",
-    "sora-sdk @ file:///home/melpon/dev/sora-python-sdk/examples/..",
+    "sora-sdk>=2024.1.0",
     "mediapipe~=0.10.1",
     "python-dotenv>=1.0.1",
 ]
