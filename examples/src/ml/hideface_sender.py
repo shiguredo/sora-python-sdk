@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import platform
 from pathlib import Path
 from threading import Event
 from typing import Any, Dict, List, Optional
@@ -50,16 +51,29 @@ class LogoStreamer:
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
-        self._video_capture = cv2.VideoCapture(camera_id)
+        if platform.system() == "Windows":
+            self._video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+        else:
+            self._video_capture = cv2.VideoCapture(camera_id)
         if video_width is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
         if video_fourcc is not None:
             self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
-        # FOURCC を設定すると FPS の設定が初期化されるので、かならず FOURCC の後に FPS を設定する
         if video_fps is not None:
             self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
+        # Ubuntu → FOURCC を設定すると FPS が初期化される
+        # Windows → FPS を設定すると FOURCC が初期化される
+        # ので、両方に対応するため２回設定する
+        if video_fourcc is not None:
+            fourcc = cv2.VideoWriter_fourcc(*video_fourcc)
+            target_fourcc = self._video_capture.get(cv2.CAP_PROP_FOURCC)
+            if fourcc != target_fourcc:
+                self._video_capture.set(cv2.CAP_PROP_FOURCC, fourcc)
+        if video_fps is not None:
+            if video_fps != int(self._video_capture.get(cv2.CAP_PROP_FPS)):
+                self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
 
         # ロゴを読み込む
         self._logo = Image.open(Path(__file__).parent.joinpath("shiguremaru.png"))
