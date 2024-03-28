@@ -52,6 +52,7 @@ class LogoStreamer:
         self._connection.on_disconnect = self._on_disconnect
 
         if platform.system() == "Windows":
+            # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
             self._video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
         else:
             self._video_capture = cv2.VideoCapture(camera_id)
