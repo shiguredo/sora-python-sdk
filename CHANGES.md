@@ -24,9 +24,10 @@
   - @voluntas
 - [UPDATE] ruff の最小を ``0.3.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.4.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.5.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
-  - WEBRTC_BUILD_VERSION を `m121.6167.3.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m122.6261.1.0` に上げる
+    - Ubuntu のビルドを通すために、 __assertion_handler というファイルをコピーする処理を追加した
   - BOOST_VERSION を `1.84.0` に上げる
   - @enm10k
 - [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
