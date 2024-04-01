@@ -24,7 +24,7 @@
   - @voluntas
 - [UPDATE] ruff の最小を ``0.3.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.5.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
   - WEBRTC_BUILD_VERSION を `m122.6261.1.0` に上げる
     - Ubuntu のビルドを通すために、 __assertion_handler というファイルをコピーする処理を追加した
