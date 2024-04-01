@@ -26,6 +26,7 @@ class LogoStreamer:
         video_width: Optional[int],
         video_height: Optional[int],
         video_fps: Optional[int],
+        video_codec_type: Optional[str],
         video_fourcc: Optional[str],
     ):
         self.mp_face_detection = mp.solutions.face_detection
@@ -37,7 +38,7 @@ class LogoStreamer:
             role=role,
             channel_id=channel_id,
             metadata=metadata,
-            video_codec_type=None,
+            video_codec_type=video_codec_type,
             video_bit_rate=500,
             video_source=self._video_source,
         )
@@ -205,7 +206,7 @@ def hideface_sender():
     video_height = int(os.getenv("SORA_VIDEO_HEIGHT", "360"))
     video_fps = int(os.getenv("SORA_VIDEO_FPS", "30"))
     video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPG")
-
+    video_codec_type = os.getenv("SORA_VIDEO_CODEC_TYPE", "VP9")
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
     streamer = LogoStreamer(
@@ -213,6 +214,7 @@ def hideface_sender():
         role="sendonly",
         channel_id=channel_id,
         metadata=metadata,
+        video_codec_type=video_codec_type,
         camera_id=camera_id,
         video_height=video_height,
         video_width=video_width,
