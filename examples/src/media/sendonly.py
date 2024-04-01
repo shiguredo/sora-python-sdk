@@ -24,6 +24,8 @@ class Sendonly:
         video_width: Optional[int],
         video_height: Optional[int],
         video_fps: Optional[int],
+        simulcast: Optional[bool],
+        spotlight: Optional[bool],
         video_fourcc: Optional[str],
         openh264: Optional[str],
         audio_channels: int = 1,
@@ -46,6 +48,8 @@ class Sendonly:
             metadata=metadata,
             video_codec_type=video_codec_type,
             video_bit_rate=video_bit_rate,
+            simulcast=simulcast,
+            spotlight=spotlight,
             audio_source=self._audio_source,
             video_source=self._video_source,
         )
@@ -165,7 +169,8 @@ def sendonly():
     video_height = int(os.getenv("SORA_VIDEO_HEIGHT", "360"))
     video_fps = int(os.getenv("SORA_VIDEO_FPS", "30"))
     video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPG")
-
+    video_simulcast = bool(os.getenv("SORA_SIMULCAST", None))
+    video_spotlight = bool(os.getenv("SORA_SPOTLIGHT", None))
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
     openh264_path = os.getenv("OPENH264_PATH")
@@ -180,6 +185,8 @@ def sendonly():
         video_width,
         video_height,
         video_fps,
+        video_simulcast,
+        video_spotlight,
         video_fourcc,
         openh264_path,
     )
