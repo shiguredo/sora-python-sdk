@@ -26,6 +26,8 @@ class Recvonly:
         signaling_urls: List[str],
         channel_id: str,
         metadata: Optional[Dict[str, Any]],
+        simulcast: Optional[bool],
+        spotlight: Optional[bool],
         openh264: Optional[str],
         output_frequency: int = 16000,
         output_channels: int = 1,
@@ -159,9 +161,19 @@ def recvonly():
     if raw_metadata := os.getenv("SORA_METADATA"):
         metadata = json.loads(raw_metadata)
 
+    video_simulcast = bool(os.getenv("SORA_SIMULCAST", None))
+    video_spotlight = bool(os.getenv("SORA_SPOTLIGHT", None))
+
     openh264_path = os.getenv("OPENH264_PATH")
 
-    recvonly = Recvonly(signaling_urls, channel_id, metadata, openh264_path)
+    recvonly = Recvonly(
+        signaling_urls,
+        channel_id,
+        metadata,
+        video_simulcast,
+        video_spotlight,
+        openh264_path
+    )
     recvonly.run()
 
 
