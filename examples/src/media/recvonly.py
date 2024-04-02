@@ -41,6 +41,8 @@ class Recvonly:
             role="recvonly",
             channel_id=channel_id,
             metadata=metadata,
+            simulcast=simulcast,
+            spotlight=spotlight,
         )
         self._connection_id = ""
         self._connected = Event()
