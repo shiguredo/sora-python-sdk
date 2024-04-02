@@ -59,7 +59,7 @@ python-dotenv==1.0.1
     # via sora-sdk-samples
 six==1.16.0
     # via python-dateutil
-sora-sdk==2024.1.0
+sora-sdk==2024.2.0.dev2
     # via sora-sdk-samples
 sounddevice==0.4.6
     # via mediapipe
