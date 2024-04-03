@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import platform
 from pathlib import Path
 from threading import Event
 from typing import Any, Dict, List, Optional
@@ -24,6 +25,8 @@ class LogoStreamer:
         camera_id: int,
         video_width: Optional[int],
         video_height: Optional[int],
+        video_fps: Optional[int],
+        video_fourcc: Optional[str],
     ):
         self.mp_face_detection = mp.solutions.face_detection
 
@@ -48,11 +51,30 @@ class LogoStreamer:
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
-        self._video_capture = cv2.VideoCapture(camera_id)
+        if platform.system() == "Windows":
+            # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
+            self._video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+        else:
+            self._video_capture = cv2.VideoCapture(camera_id)
         if video_width is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
+        if video_fourcc is not None:
+            self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
+        if video_fps is not None:
+            self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
+        # Ubuntu → FOURCC を設定すると FPS が初期化される
+        # Windows → FPS を設定すると FOURCC が初期化される
+        # ので、両方に対応するため２回設定する
+        if video_fourcc is not None:
+            fourcc = cv2.VideoWriter_fourcc(*video_fourcc)
+            target_fourcc = self._video_capture.get(cv2.CAP_PROP_FOURCC)
+            if fourcc != target_fourcc:
+                self._video_capture.set(cv2.CAP_PROP_FOURCC, fourcc)
+        if video_fps is not None:
+            if video_fps != int(self._video_capture.get(cv2.CAP_PROP_FPS)):
+                self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
 
         # ロゴを読み込む
         self._logo = Image.open(Path(__file__).parent.joinpath("shiguremaru.png"))
@@ -181,6 +203,8 @@ def hideface_sender():
 
     video_width = int(os.getenv("SORA_VIDEO_WIDTH", "640"))
     video_height = int(os.getenv("SORA_VIDEO_HEIGHT", "360"))
+    video_fps = int(os.getenv("SORA_VIDEO_FPS", "30"))
+    video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPG")
 
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
@@ -192,6 +216,8 @@ def hideface_sender():
         camera_id=camera_id,
         video_height=video_height,
         video_width=video_width,
+        video_fps=video_fps,
+        video_fourcc=video_fourcc,
     )
     streamer.run()
 

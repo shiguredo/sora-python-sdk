@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 from threading import Event
 from typing import Any, Dict, List, Optional
 
@@ -22,6 +23,8 @@ class Sendonly:
         video_bit_rate: int,
         video_width: Optional[int],
         video_height: Optional[int],
+        video_fps: Optional[int],
+        video_fourcc: Optional[str],
         openh264: Optional[str],
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
@@ -55,11 +58,30 @@ class Sendonly:
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
-        self._video_capture = cv2.VideoCapture(camera_id)
+        if platform.system() == "Windows":
+            # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
+            self._video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+        else:
+            self._video_capture = cv2.VideoCapture(camera_id)
         if video_width is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
+        if video_fourcc is not None:
+            self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
+        if video_fps is not None:
+            self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
+        # Ubuntu → FOURCC を設定すると FPS が初期化される
+        # Windows → FPS を設定すると FOURCC が初期化される
+        # ので、両方に対応するため２回設定する
+        if video_fourcc is not None:
+            fourcc = cv2.VideoWriter_fourcc(*video_fourcc)
+            target_fourcc = self._video_capture.get(cv2.CAP_PROP_FOURCC)
+            if fourcc != target_fourcc:
+                self._video_capture.set(cv2.CAP_PROP_FOURCC, fourcc)
+        if video_fps is not None:
+            if video_fps != int(self._video_capture.get(cv2.CAP_PROP_FPS)):
+                self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
 
     def connect(self):
         self._connection.connect()
@@ -141,6 +163,8 @@ def sendonly():
     video_bit_rate = int(os.getenv("SORA_VIDEO_BIT_RATE", "500"))
     video_width = int(os.getenv("SORA_VIDEO_WIDTH", "640"))
     video_height = int(os.getenv("SORA_VIDEO_HEIGHT", "360"))
+    video_fps = int(os.getenv("SORA_VIDEO_FPS", "30"))
+    video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPG")
 
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
@@ -155,6 +179,8 @@ def sendonly():
         video_bit_rate,
         video_width,
         video_height,
+        video_fps,
+        video_fourcc,
         openh264_path,
     )
     sendonly.run()

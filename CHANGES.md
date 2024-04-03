@@ -29,15 +29,18 @@
   - @voluntas
 - [UPDATE] ruff の最小を ``0.3.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.4.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
-  - WEBRTC_BUILD_VERSION を `m121.6167.3.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m122.6261.1.0` に上げる
+    - Ubuntu のビルドを通すために、 __assertion_handler というファイルをコピーする処理を追加した
   - BOOST_VERSION を `1.84.0` に上げる
   - @enm10k
 - [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
   - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった
   - そのために pyproject.toml の `build-system.requires` に wheel と setuptools を指定する
   - @zztkm
+- [FIX] サンプルアプリで 1080p の映像を送信すると 2-3 FPS しか出ないのを修正
+  - @melpon
 
 ## 2024.1.0
 
