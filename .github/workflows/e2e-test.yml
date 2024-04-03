@@ -8,7 +8,7 @@ on:
       - "**.md"
 
 jobs:
-  e2e_test:
+  e2e_ubuntu_test:
     strategy:
       matrix:
         python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
@@ -41,6 +41,33 @@ jobs:
       - run: rye run pytest tests/test_openh264.py -s
       - run: rye run pytest tests/test_switched.py -s
       - run: rye run pytest tests/test_vad.py -s
+      - name: Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: Failure test
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+  e2e_macos_test:
+    strategy:
+      matrix:
+        python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    runs-on: macos-14
+    timeout-minutes: 10
+    env:
+      TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
+      TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+      TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+    steps:
+      - uses: eifinger/setup-rye@v2
+      - uses: actions/checkout@v4
+      - run: rye pin ${{ matrix.python_version }}
+      - run: rye sync
+      - run: rye run python run.py
+      # - run: rye test
+      - run: rye run pytest tests/test_macos_h265.py -s
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
