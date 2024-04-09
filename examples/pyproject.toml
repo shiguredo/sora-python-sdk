@@ -1,6 +1,6 @@
 [project]
 name = "sora-sdk-samples"
-version = "2024.2.0.dev2"
+version = "2024.2.0"
 description = "Sora Python SDK Samples"
 authors = [{ name = "Shiguredo Inc." }]
 dependencies = [
