@@ -36,7 +36,7 @@
   - @zztkm
 - [FIX] サンプルアプリで 1080p の映像を送信すると 2-3 FPS しか出ないのを修正
   - ビデオキャプチャの設定に FOURCC と FPS を設定するようにする
-  - 初期値は "MJPG", 30 を設定し、`.env` ファイルで変更可能とする
+  - 初期値は "MJPG", 30 を設定し、`.env` の `SORA_VIDEO_FOURCC`, `SORA_VIDEO_FPS` で変更可能とする
   - @melpon
 - [FIX] Ubuntu 20.04 arm64 NVIDIA Jetson 5.1.2 で AV1 が正常に配信されない問題を修正
   - Sora C++ SDK のバージョンを `2024.6.0` に上げることで解消
