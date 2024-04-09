@@ -118,6 +118,11 @@ int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
     Py_VISIT(on_message.ptr());
   }
 
+  if (conn->on_switched_) {
+    nb::object on_switched = nb::cast(conn->on_switched_, nb::rv_policy::none);
+    Py_VISIT(on_switched.ptr());
+  }
+
   if (conn->on_track_) {
     nb::object on_track = nb::cast(conn->on_track_, nb::rv_policy::none);
     Py_VISIT(on_track.ptr());
@@ -286,6 +291,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_notify", &SoraConnection::on_notify_)
       .def_rw("on_push", &SoraConnection::on_push_)
       .def_rw("on_message", &SoraConnection::on_message_)
+      .def_rw("on_switched", &SoraConnection::on_switched_)
       .def_rw("on_track", &SoraConnection::on_track_)
       .def_rw("on_data_channel", &SoraConnection::on_data_channel_);
 
@@ -312,9 +318,6 @@ NB_MODULE(sora_sdk_ext, m) {
            "disconnect_wait_timeout"_a = nb::none(),
            "websocket_close_timeout"_a = nb::none(),
            "websocket_connection_timeout"_a = nb::none(),
-           "audio_codec_lyra_bitrate"_a = nb::none(),
-           "audio_codec_lyra_usedtx"_a = nb::none(),
-           "check_lyra_bitrate"_a = nb::none(),
            "audio_streaming_language_code"_a = nb::none(),
            "insecure"_a = nb::none(), "client_cert"_a = nb::none(),
            "client_key"_a = nb::none(), "proxy_url"_a = nb::none(),

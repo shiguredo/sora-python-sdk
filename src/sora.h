@@ -49,7 +49,7 @@ class Sora : public DisposePublisher {
    * @param video_source (オプション)映像ソース CreateVideoSource で生成した SoraVideoSource を渡してください
    * @param audio (オプション)音声の有効無効 デフォルト: true
    * @param video (オプション)映像の有効無効 デフォルト: true
-   * @param audio_codec_type (オプション)音声コーデック OPUS | LYRA デフォルト: OPUS
+   * @param audio_codec_type (オプション)音声コーデック OPUS デフォルト: OPUS
    * @param video_codec_type (オプション)映像コーデック VP8 | VP9 | AV1 | H264 デフォルト: VP9
    * @param video_bit_rate (オプション)映像ビットレート kbps 単位です
    * @param audio_bit_rate (オプション)音声ビットレート kbps 単位です
@@ -70,9 +70,6 @@ class Sora : public DisposePublisher {
    * @param disconnect_wait_timeout (オプション) 切断待ちタイムアウト
    * @param websocket_close_timeout (オプション) WebSocket クローズタイムアウト
    * @param websocket_connection_timeout (オプション) WebSocket 接続タイムアウト
-   * @param audio_codec_lyra_bitrate (オプション) 音声コーデック Lyra のビットレート
-   * @param audio_codec_lyra_usedtx (オプション) 音声コーデック Lyra で DTX の有効無効
-   * @param check_lyra_version (オプション) 音声コーデック Lyra のバージョンチェック有効無効
    * @param audio_streaming_language_code (オプション) 音声ストリーミング機能で利用する言語コード設定
    * @param insecure (オプション) 証明書チェックの有効無効 デフォルト: false
    * @param client_cert (オプション) クライアント証明書
@@ -120,9 +117,6 @@ class Sora : public DisposePublisher {
       std::optional<int> disconnect_wait_timeout,
       std::optional<int> websocket_close_timeout,
       std::optional<int> websocket_connection_timeout,
-      std::optional<int> audio_codec_lyra_bitrate,
-      std::optional<bool> audio_codec_lyra_usedtx,
-      std::optional<bool> check_lyra_version,
       std::optional<std::string> audio_streaming_language_code,
       std::optional<bool> insecure,
       std::optional<std::string> client_cert,

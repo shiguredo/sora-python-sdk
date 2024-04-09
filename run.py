@@ -411,6 +411,16 @@ def install_llvm(
             os.path.join(llvm_dir, "libcxx", "include", "__config_site"),
         )
 
+        # __assertion_handler をコピーする
+        # 背景: https://source.chromium.org/chromium/_/chromium/external/github.com/llvm/llvm-project/libcxx.git/+/1e5bda0d1ce8e346955aa4a85eaab258785f11f7
+        shutil.copyfile(
+            # NOTE(enm10k): 最初は default_assertion_handler.in をコピーしていたが、 buildtools 以下に
+            # default_assertion_handler.in から生成されたと思われる __assertion_handler が存在するため、それをコピーする
+            # os.path.join(llvm_dir, "libcxx", "vendor", "llvm", "default_assertion_handler.in"),
+            os.path.join(llvm_dir, "buildtools", "third_party", "libc++", "__assertion_handler"),
+            os.path.join(llvm_dir, "libcxx", "include", "__assertion_handler"),
+        )
+
 
 @versioned
 def install_boost(version, source_dir, install_dir, sora_version, platform: str):
@@ -425,19 +435,6 @@ def install_boost(version, source_dir, install_dir, sora_version, platform: str)
     )
     rm_rf(os.path.join(install_dir, "boost"))
     extract(archive, output_dir=install_dir, output_dirname="boost")
-
-
-@versioned
-def install_lyra(version, source_dir, install_dir, sora_version, platform: str):
-    win = platform.startswith("windows_")
-    filename = f'lyra-{version}_sora-cpp-sdk-{sora_version}_{platform}.{"zip" if win else "tar.gz"}'
-    rm_rf(os.path.join(source_dir, filename))
-    archive = download(
-        f"https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/{filename}",
-        output_dir=source_dir,
-    )
-    rm_rf(os.path.join(install_dir, "lyra"))
-    extract(archive, output_dir=install_dir, output_dirname="lyra")
 
 
 @versioned
@@ -612,17 +609,6 @@ def install_deps(
     }
     install_boost(**install_boost_args)
 
-    # Lyra
-    install_lyra_args = {
-        "version": version["LYRA_VERSION"],
-        "version_file": os.path.join(install_dir, "lyra.version"),
-        "source_dir": source_dir,
-        "install_dir": install_dir,
-        "sora_version": version["SORA_CPP_SDK_VERSION"],
-        "platform": target_platform.package_name,
-    }
-    install_lyra(**install_lyra_args)
-
     # Sora C++ SDK
     install_sora_args = {
         "version": version["SORA_CPP_SDK_VERSION"],
@@ -718,7 +704,6 @@ def main():
         cmake_args.append(f"-DCMAKE_BUILD_TYPE={configuration}")
         cmake_args.append(f"-DTARGET_OS={target_platform.os}")
         cmake_args.append(f"-DBOOST_ROOT={cmake_path(os.path.join(install_dir, 'boost'))}")
-        cmake_args.append(f"-DLYRA_DIR={cmake_path(os.path.join(install_dir, 'lyra'))}")
         cmake_args.append(f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
         cmake_args.append(f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
         cmake_args.append(f"-DSORA_DIR={cmake_path(os.path.join(install_dir, 'sora'))}")
@@ -793,12 +778,6 @@ def main():
                 shutil.copyfile(
                     os.path.join(sora_build_target_dir, file), os.path.join(sora_src_dir, file)
                 )
-
-        for file in os.listdir(os.path.join(install_dir, "lyra", "share", "model_coeffs")):
-            shutil.copyfile(
-                os.path.join(install_dir, "lyra", "share", "model_coeffs", file),
-                os.path.join(sora_src_dir, "model_coeffs", file),
-            )
 
 
 if __name__ == "__main__":
