@@ -12,8 +12,6 @@ build
 src/sora_sdk/*.so
 src/sora_sdk/*.dll
 src/sora_sdk/*.pyd
-src/sora_sdk/model_coeffs/*
-!src/sora_sdk/model_coeffs/.gitkeep
 
 # パッケージ
 /dist
@@ -21,3 +19,7 @@ src/sora_sdk/model_coeffs/*
 
 # E2E テスト用
 .env
+
+
+# libopenh264
+libopenh264*

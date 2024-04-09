@@ -109,7 +109,7 @@ jobs:
           path: "dist/"
 
   build_windows:
-    runs-on: windows-2022
+    runs-on: windows-2019
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -250,7 +250,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
         id: env
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.env.outputs.package_paths }}
           prerelease: ${{ contains(github.ref, 'dev') }}
