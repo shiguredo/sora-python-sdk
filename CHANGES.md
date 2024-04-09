@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2024.2.0
+
+**2024-04-09**
+
 - [ADD] Sora Python SDK Samples を `examples` に移動する
   - @voluntas
 - [CHANGE] Lyra のサポートを廃止し、以下のオプションを削除する
