@@ -34,6 +34,9 @@
     - Ubuntu のビルドを通すために、 __assertion_handler というファイルをコピーする処理を追加した
   - BOOST_VERSION を `1.84.0` に上げる
   - @enm10k
+- [UPDATE] Intel VPL を利用した H.265 に対応
+  - Sora C++ SDK のバージョンを `2024.6.0` に上げることで対応
+  - @enm10k
 - [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
   - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった
   - そのために pyproject.toml の `build-system.requires` に wheel と setuptools を指定する
