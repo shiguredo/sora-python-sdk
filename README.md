@@ -94,6 +94,8 @@ $ rye sync
 
 - DataChannel 対応
   - [アダワープジャパン株式会社](https://adawarp.com/) 様
+- Intel VPL H.265 対応
+  - [アダワープジャパン株式会社](https://adawarp.com/) 様
 
 ### 優先実装が可能な機能一覧
 
