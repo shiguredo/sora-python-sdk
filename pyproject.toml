@@ -62,8 +62,8 @@ dev-dependencies = [
     "build~=1.1.1",
     "wheel~=0.43.0",
     "auditwheel~=6.0.0",
-    "pytest>=8.0.0",
-    "ruff>=0.3.0",
+    "pytest>=8.1",
+    "ruff>=0.3",
 ]
 
 [tool.ruff]
