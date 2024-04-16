@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] Sora C++ SDK のバージョンを `2024.6.1` に上げる
+  - @voluntas
+
 ## 2024.2.0
 
 **2024-04-09**
@@ -31,7 +34,7 @@
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
   - WEBRTC_BUILD_VERSION を `m122.6261.1.0` に上げる
-    - Ubuntu のビルドを通すために、 __assertion_handler というファイルをコピーする処理を追加した
+    - Ubuntu のビルドを通すために、 \_\_assertion_handler というファイルをコピーする処理を追加した
   - BOOST_VERSION を `1.84.0` に上げる
   - @enm10k
 - [UPDATE] Intel VPL を利用した H.265 に対応
