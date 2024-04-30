@@ -21,18 +21,17 @@ packaging==24.0
     # via auditwheel
     # via build
     # via pytest
-pluggy==1.4.0
+pluggy==1.5.0
     # via pytest
 pyelftools==0.31
     # via auditwheel
-pyproject-hooks==1.0.0
+pyproject-hooks==1.1.0
     # via build
-pytest==8.1.1
-ruff==0.4.0
+pytest==8.2.0
+ruff==0.4.2
 setuptools==69.5.1
 tomli==2.0.1
     # via build
-    # via pyproject-hooks
     # via pytest
 wheel==0.43.0
 zipp==3.18.1
