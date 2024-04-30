@@ -62,10 +62,9 @@ dev-dependencies = [
     "build~=1.1.1",
     "wheel~=0.43.0",
     "auditwheel~=6.0.0",
-    "pytest>=8.1",
+    "pytest>=8.2",
     "ruff>=0.4",
 ]
 
 [tool.ruff]
 line-length = 100
-indent-width = 4
