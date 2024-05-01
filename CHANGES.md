@@ -16,6 +16,13 @@
 
 ## develop
 
+- [UPDATE] Sora C++ SDK のバージョンを `2024.6.1` に上げる
+  - @voluntas
+
+## 2024.2.0
+
+**2024-04-09**
+
 - [ADD] Sora Python SDK Samples を `examples` に移動する
   - @voluntas
 - [CHANGE] Lyra のサポートを廃止し、以下のオプションを削除する
@@ -32,15 +39,23 @@
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
   - WEBRTC_BUILD_VERSION を `m122.6261.1.0` に上げる
-    - Ubuntu のビルドを通すために、 __assertion_handler というファイルをコピーする処理を追加した
+    - Ubuntu のビルドを通すために、 \_\_assertion_handler というファイルをコピーする処理を追加した
   - BOOST_VERSION を `1.84.0` に上げる
+  - @enm10k
+- [UPDATE] Intel VPL を利用した H.265 に対応
+  - Sora C++ SDK のバージョンを `2024.6.0` に上げることで対応
   - @enm10k
 - [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
   - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった
   - そのために pyproject.toml の `build-system.requires` に wheel と setuptools を指定する
   - @zztkm
 - [FIX] サンプルアプリで 1080p の映像を送信すると 2-3 FPS しか出ないのを修正
+  - ビデオキャプチャの設定に FOURCC と FPS を設定するようにする
+  - 初期値は "MJPG", 30 を設定し、`.env` の `SORA_VIDEO_FOURCC`, `SORA_VIDEO_FPS` で変更可能とする
   - @melpon
+- [FIX] Ubuntu 20.04 arm64 NVIDIA Jetson 5.1.2 で AV1 が正常に配信されない問題を修正
+  - Sora C++ SDK のバージョンを `2024.6.0` に上げることで解消
+  - @enm10k
 
 ## 2024.1.0
 
