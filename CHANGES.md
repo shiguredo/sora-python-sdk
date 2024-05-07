@@ -13,6 +13,8 @@
 
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.1` に上げる
   - @voluntas
+- [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
+  - @enm10k
 
 ## 2024.2.0
 
