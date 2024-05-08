@@ -46,7 +46,7 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## サンプル集
 
-[examples](examples)を参照してください。
+[examples](examples) を参照してください。
 
 ## sora_sdk パッケージの追加
 
@@ -101,6 +101,7 @@ $ rye sync
 
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
 
+- Ubuntu 24.04 x86_64
 - Ubuntu 22.04 arm64
   - Python 3.10
   - NVIDIA Jetson JetPack SDK 6.0
