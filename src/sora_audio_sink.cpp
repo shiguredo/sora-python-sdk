@@ -134,10 +134,6 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
 nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
   std::unique_lock<std::mutex> lock(buffer_mtx_);
 
-  if (buffer_.size() == 0) {
-    // 返すものがない時は即座に返す
-    return nb::make_tuple(false, nb::none());
-  }
   size_t num_of_samples;
   if (frames > 0) {
     // フレーム数のリクエストがある場合はリクエスト分が貯まるまで待つ
@@ -160,6 +156,9 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
     }
   } else {
     // フレーム数のリクエストがない場合はあるだけ全部出す
+    if (buffer_.empty()) {
+      return nb::make_tuple(false, nb::none());
+    }
     num_of_samples = buffer_.size();
   }
 
