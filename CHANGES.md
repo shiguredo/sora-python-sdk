@@ -15,6 +15,8 @@
   - @voluntas
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
   - @enm10k
+- [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、 read の実行タイミングによってはクラッシュするようになったので修正する
+  - @enm10k
 
 ## 2024.2.0
 
