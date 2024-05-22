@@ -6,6 +6,7 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
+#   generate-hashes: false
 
 -e file:.
 auditwheel==6.0.0
@@ -27,12 +28,12 @@ pyelftools==0.31
     # via auditwheel
 pyproject-hooks==1.1.0
     # via build
-pytest==8.2.0
-ruff==0.4.2
-setuptools==69.5.1
+pytest==8.2.1
+ruff==0.4.4
+setuptools==70.0.0
 tomli==2.0.1
     # via build
     # via pytest
 wheel==0.43.0
-zipp==3.18.1
+zipp==3.18.2
     # via importlib-metadata
