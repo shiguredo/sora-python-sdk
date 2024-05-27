@@ -54,7 +54,9 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
         if: ${{ matrix.platform.os == 'ubuntu' }}
-      - run: curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" bash
+      - uses: eifinger/setup-rye@v3
+        with:
+          version: 'latest'
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
