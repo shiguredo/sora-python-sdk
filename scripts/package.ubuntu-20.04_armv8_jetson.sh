@@ -25,7 +25,7 @@ apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
   curl
 
-curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" bash
+curl -sSf https://rye.astral.sh/get | RYE_INSTALL_OPTION="--yes" bash
 . /root/.rye/env
 
 cd /root/sora-python-sdk
