@@ -137,14 +137,14 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
   size_t num_of_samples;
   if (frames > 0) {
     // フレーム数のリクエストがある場合はリクエスト分が貯まるまで待つ
-    num_of_samples = frames * number_of_channels_;
     if (!buffer_cond_.wait_for(
             lock,
             std::chrono::nanoseconds(
                 // Python の流儀に合わせて秒を float で受け取っているので換算
                 (int64_t)((double)timeout * 1000. * 1000. * 1000.)),
             [&] {
-              return buffer_.size() >= num_of_samples ||
+              return (number_of_channels_ > 0 &&
+                      buffer_.size() >= frames * number_of_channels_) ||
                      PyErr_CheckSignals() != 0;
             })) {
       // タイムアウトで返す
@@ -154,6 +154,9 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
       // Signals で wait を抜けた時は返す
       return nb::make_tuple(false, nb::none());
     }
+    // std::condition_variable::wait_for の待機中に number_of_channels_ が更新される可能性があるため、
+    // 起床後に num_of_samples を計算する必要がある
+    num_of_samples = frames * number_of_channels_;
   } else {
     // フレーム数のリクエストがない場合はあるだけ全部出す
     if (buffer_.empty()) {
