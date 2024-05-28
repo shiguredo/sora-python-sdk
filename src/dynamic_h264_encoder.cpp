@@ -56,7 +56,7 @@ static const int kLowH264QpThreshold = 24;
 static const int kHighH264QpThreshold = 37;
 
 // Used by histograms. Values of entries should not be changed.
-enum H264EncoderImplEvent {
+enum DynamicH264EncoderEvent {
   kH264EncoderEventInit = 0,
   kH264EncoderEventError = 1,
   kH264EncoderEventMax = 16,
@@ -258,7 +258,7 @@ int32_t DynamicH264Encoder::InitEncode(const VideoCodec* inst,
        ++i, --idx) {
     ISVCEncoder* openh264_encoder;
     // Create encoder.
-    if (WelsCreateSVCEncoder(&openh264_encoder) != 0) {
+    if (create_encoder_(&openh264_encoder) != 0) {
       // Failed to create encoder.
       RTC_LOG(LS_ERROR) << "Failed to create OpenH264 encoder";
       RTC_DCHECK(!openh264_encoder);
@@ -351,7 +351,7 @@ int32_t DynamicH264Encoder::Release() {
     ISVCEncoder* openh264_encoder = encoders_.back();
     if (openh264_encoder) {
       RTC_CHECK_EQ(0, openh264_encoder->Uninitialize());
-      WelsDestroySVCEncoder(openh264_encoder);
+      destroy_encoder_(openh264_encoder);
     }
     encoders_.pop_back();
   }
