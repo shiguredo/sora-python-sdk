@@ -41,12 +41,13 @@ class ISVCEncoder;
 
 namespace webrtc {
 
-class DynamicH264Encoder : public H264Encoder {
+class DynamicH264Encoder : public VideoEncoder {
  public:
-  static std::unique_ptr<VideoEncoder> Create(const cricket::VideoCodec& codec,
+  static std::unique_ptr<VideoEncoder> Create(const Environment& env,
+                                              H264EncoderSettings settings,
                                               std::string openh264) {
     return std::unique_ptr<VideoEncoder>(
-        new DynamicH264Encoder(codec, std::move(openh264)));
+        new DynamicH264Encoder(env, settings, std::move(openh264)));
   }
 
  public:
@@ -66,9 +67,10 @@ class DynamicH264Encoder : public H264Encoder {
     void SetStreamState(bool send_stream);
   };
 
- public:
-  explicit DynamicH264Encoder(const cricket::VideoCodec& codec,
-                              const std::string openh264);
+  DynamicH264Encoder(const Environment& env,
+                     H264EncoderSettings settings,
+                     std::string openh264);
+
   ~DynamicH264Encoder() override;
 
   // `settings.max_payload_size` is ignored.
@@ -115,6 +117,7 @@ class DynamicH264Encoder : public H264Encoder {
   absl::InlinedVector<absl::optional<ScalabilityMode>, kMaxSimulcastStreams>
       scalability_modes_;
 
+  const Environment env_;
   VideoCodec codec_;
   H264PacketizationMode packetization_mode_;
   size_t max_payload_size_;
