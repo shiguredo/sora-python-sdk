@@ -6,6 +6,7 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
+#   generate-hashes: false
 
 -e file:.
 absl-py==1.4.0
@@ -63,7 +64,7 @@ python-dotenv==1.0.1
 ruff==0.3.0
 six==1.16.0
     # via python-dateutil
-sora-sdk==2024.2.0
+sora-sdk==2024.3.0.dev3
     # via sora-sdk-samples
 sounddevice==0.4.6
     # via mediapipe
