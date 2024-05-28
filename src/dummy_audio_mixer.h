@@ -7,8 +7,9 @@
 #include <api/audio/audio_frame.h>
 #include <api/audio/audio_mixer.h>
 #include <api/scoped_refptr.h>
+#include <api/task_queue/task_queue_base.h>
+#include <api/task_queue/task_queue_factory.h>
 #include <rtc_base/synchronization/mutex.h>
-#include <rtc_base/task_queue.h>
 #include <rtc_base/task_utils/repeating_task.h>
 #include <rtc_base/thread_annotations.h>
 
@@ -44,7 +45,7 @@ class DummyAudioMixer : public webrtc::AudioMixer {
  private:
   void ProcessAudio();
   const webrtc::TaskQueueFactory* task_queue_factory_;
-  std::unique_ptr<rtc::TaskQueue> task_queue_;
+  std::unique_ptr<webrtc::TaskQueueBase, webrtc::TaskQueueDeleter> task_queue_;
 
   mutable webrtc::Mutex mutex_;
   std::vector<std::unique_ptr<SourceStatus>> audio_source_list_
