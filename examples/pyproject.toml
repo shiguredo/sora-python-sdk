@@ -1,13 +1,13 @@
 [project]
 name = "sora-sdk-samples"
-version = "2024.2.0"
+version = "2024.3.0.dev3"
 description = "Sora Python SDK Samples"
 authors = [{ name = "Shiguredo Inc." }]
 dependencies = [
     "opencv-python~=4.9.0.80",
     "opencv-python-headless~=4.9.0.80",
     "sounddevice~=0.4.6",
-    "sora-sdk>=2024.2.0",
+    "sora-sdk>=2024.3.0.dev3",
     "mediapipe~=0.10.1",
     "python-dotenv>=1.0.1",
 ]
