@@ -52,12 +52,10 @@ DummyAudioMixer::DummyAudioMixer(webrtc::TaskQueueFactory* task_queue_factory)
    * sora::SoraClientContextConfig::use_audio_device を false にした際に設定される、
    * webrtc::AudioDeviceDummy はループを回さないため、ここでループを作ることとした。
    */
-  task_queue_ =
-      std::make_unique<rtc::TaskQueue>(task_queue_factory_->CreateTaskQueue(
-          "TestAudioDeviceModuleImpl",
-          webrtc::TaskQueueFactory::Priority::NORMAL));
+  task_queue_ = task_queue_factory_->CreateTaskQueue(
+      "TestAudioDeviceModuleImpl", webrtc::TaskQueueFactory::Priority::NORMAL);
 
-  webrtc::RepeatingTaskHandle::Start(task_queue_->Get(), [this]() {
+  webrtc::RepeatingTaskHandle::Start(task_queue_.get(), [this]() {
     ProcessAudio();
     // オーディオフレームは 10 ms ごとに処理するため 10000 us を指定する
     return webrtc::TimeDelta::Micros(10000);

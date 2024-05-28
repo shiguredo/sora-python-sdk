@@ -5,6 +5,7 @@
 
 // WebRTC
 #include <api/create_peerconnection_factory.h>
+#include <api/environment/environment_factory.h>
 #include <api/rtc_event_log/rtc_event_log_factory.h>
 #include <api/task_queue/default_task_queue_factory.h>
 #include <media/engine/webrtc_media_engine.h>
@@ -54,7 +55,8 @@ SoraFactory::SoraFactory(std::optional<bool> use_hardware_encoder,
                     [openh264 = openh264](
                         auto format) -> std::unique_ptr<webrtc::VideoEncoder> {
                       return webrtc::DynamicH264Encoder::Create(
-                          cricket::CreateVideoCodec(format), *openh264);
+                          webrtc::CreateEnvironment(),
+                          webrtc::H264EncoderSettings(), *openh264);
                     }));
             dependencies.video_encoder_factory =
                 absl::make_unique<sora::SoraVideoEncoderFactory>(
