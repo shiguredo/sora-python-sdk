@@ -1,4 +1,5 @@
 import hashlib
+import multiprocessing
 import os
 import platform
 import shutil
@@ -763,7 +764,7 @@ def main():
         mkdir_p(sora_build_dir)
         with cd(sora_build_dir):
             cmd(["cmake", BASE_DIR, *cmake_args])
-            cmd(["cmake", "--build", ".", "--config", configuration])
+            cmd(["cmake", "--build", ".", "--config", configuration, f"-j{multiprocessing.cpu_count()}"])
 
         for file in os.listdir(sora_src_dir):
             if file.startswith("sora_sdk_ext.") and (
