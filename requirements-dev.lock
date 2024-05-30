@@ -6,7 +6,6 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
-#   generate-hashes: false
 
 -e file:.
 auditwheel==6.0.0
@@ -17,7 +16,7 @@ importlib-metadata==7.1.0
     # via build
 iniconfig==2.0.0
     # via pytest
-nanobind==1.9.2
+nanobind==2.0.0
 packaging==24.0
     # via auditwheel
     # via build
@@ -30,10 +29,10 @@ pyproject-hooks==1.1.0
     # via build
 pytest==8.2.1
 ruff==0.4.5
-setuptools==70.0.0
 tomli==2.0.1
     # via build
     # via pytest
 wheel==0.43.0
 zipp==3.19.0
     # via importlib-metadata
+setuptools==70.0.0
