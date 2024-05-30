@@ -6,17 +6,17 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
+#   generate-hashes: false
 
 -e file:.
 auditwheel==6.0.0
 build==1.1.1
-exceptiongroup==1.2.1
-    # via pytest
-importlib-metadata==7.1.0
-    # via build
 iniconfig==2.0.0
     # via pytest
 nanobind==2.0.0
+numpy==1.26.4
+    # via opencv-python
+opencv-python==4.9.0.80
 packaging==24.0
     # via auditwheel
     # via build
@@ -28,11 +28,7 @@ pyelftools==0.31
 pyproject-hooks==1.1.0
     # via build
 pytest==8.2.1
-ruff==0.4.5
-tomli==2.0.1
-    # via build
-    # via pytest
-wheel==0.43.0
-zipp==3.19.0
-    # via importlib-metadata
+python-dotenv==1.0.1
+ruff==0.4.6
 setuptools==70.0.0
+wheel==0.43.0
