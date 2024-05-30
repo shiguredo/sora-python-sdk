@@ -22,7 +22,7 @@
 
 ## 2024.2.0
 
-**2024-04-09**
+**日時**: 2024-04-09
 
 - [ADD] Sora Python SDK Samples を `examples` に移動する
   - @voluntas
