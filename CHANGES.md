@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] nanobind を `2.0.0` に上げて固定する
+  - @melpon
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.1` に上げる
   - @voluntas
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
