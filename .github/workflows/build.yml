@@ -56,7 +56,9 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
         if: ${{ matrix.platform.os == 'ubuntu' }}
-      - run: curl -sSf https://rye-up.com/get | RYE_INSTALL_OPTION="--yes" bash
+      - uses: eifinger/setup-rye@v3
+        with:
+          version: 'latest'
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
@@ -112,7 +114,7 @@ jobs:
           path: "dist/"
 
   build_windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -138,6 +140,20 @@ jobs:
         with:
           name: windows-2019_python-${{ matrix.python_version }}
           path: dist/
+
+  slack_notify_failed:
+    needs: [build_linux_macos, build_windows]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_TITLE: Build failed
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   publish_wheel:
     if: contains(github.ref, 'tags/202')

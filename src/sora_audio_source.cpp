@@ -149,11 +149,10 @@ void SoraAudioSource::OnData(const int16_t* data, size_t samples_per_channel) {
   source_->OnData(data, samples_per_channel, absl::nullopt);
 }
 
-void SoraAudioSource::OnData(nb::ndarray<int16_t,
-                                         nb::shape<nb::any, nb::any>,
-                                         nb::c_contig,
-                                         nb::device::cpu> ndarray,
-                             double timestamp) {
+void SoraAudioSource::OnData(
+    nb::ndarray<int16_t, nb::shape<-1, -1>, nb::c_contig, nb::device::cpu>
+        ndarray,
+    double timestamp) {
   if (!track_) {
     return;
   }
@@ -161,10 +160,9 @@ void SoraAudioSource::OnData(nb::ndarray<int16_t,
                   (int64_t)(timestamp * 1000));
 }
 
-void SoraAudioSource::OnData(nb::ndarray<int16_t,
-                                         nb::shape<nb::any, nb::any>,
-                                         nb::c_contig,
-                                         nb::device::cpu> ndarray) {
+void SoraAudioSource::OnData(
+    nb::ndarray<int16_t, nb::shape<-1, -1>, nb::c_contig, nb::device::cpu>
+        ndarray) {
   if (!track_) {
     return;
   }

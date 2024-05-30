@@ -33,7 +33,7 @@ class SoraVideoFrame {
    * 
    * @return NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    */
-  nb::ndarray<nb::numpy, uint8_t, nb::shape<nb::any, nb::any, 3>> Data();
+  nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>> Data();
 
  private:
   // width や height は ndarray に情報として含まれるため、これらを別で返す関数は不要

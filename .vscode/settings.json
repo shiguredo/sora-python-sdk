@@ -19,6 +19,8 @@
     "editor.formatOnSave": true
   },
   "files.associations": {
+    "*.cs": "csharp",
+    "CMakeLists.txt": "cmake",
     "algorithm": "cpp",
     "__bits": "cpp",
     "__config": "cpp",
@@ -119,7 +121,9 @@
     "strstream": "cpp",
     "typeindex": "cpp",
     "source_location": "cpp",
-    "__memory": "cpp"
+    "__memory": "cpp",
+    "compare": "cpp",
+    "concepts": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
   // nanobind 周りでエラーが消えないので全部消す

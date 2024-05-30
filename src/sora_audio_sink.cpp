@@ -124,8 +124,8 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
 
   if (on_data_) {
     size_t shape[2] = {number_of_frames, number_of_channels_};
-    auto data = nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>(
-        (void*)audio_data, 2, shape);
+    auto data = nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>(
+        (void*)audio_data, 2, shape, nb::handle());
     /* まだ使ったことながない。現状 Python 側で on_frame と同じ感覚でコールバックの外に値を持ち出すと落ちるはず。 */
     on_data_(data);
   }
@@ -137,14 +137,14 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
   size_t num_of_samples;
   if (frames > 0) {
     // フレーム数のリクエストがある場合はリクエスト分が貯まるまで待つ
-    num_of_samples = frames * number_of_channels_;
     if (!buffer_cond_.wait_for(
             lock,
             std::chrono::nanoseconds(
                 // Python の流儀に合わせて秒を float で受け取っているので換算
                 (int64_t)((double)timeout * 1000. * 1000. * 1000.)),
             [&] {
-              return buffer_.size() >= num_of_samples ||
+              return (number_of_channels_ > 0 &&
+                      buffer_.size() >= frames * number_of_channels_) ||
                      PyErr_CheckSignals() != 0;
             })) {
       // タイムアウトで返す
@@ -154,6 +154,9 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
       // Signals で wait を抜けた時は返す
       return nb::make_tuple(false, nb::none());
     }
+    // std::condition_variable::wait_for の待機中に number_of_channels_ が更新される可能性があるため、
+    // 起床後に num_of_samples を計算する必要がある
+    num_of_samples = frames * number_of_channels_;
   } else {
     // フレーム数のリクエストがない場合はあるだけ全部出す
     if (buffer_.empty()) {
@@ -174,7 +177,7 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
   });
 
   size_t shape[2] = {num_of_samples / number_of_channels_, number_of_channels_};
-  auto output = nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>(
+  auto output = nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>(
       (int16_t*)output_data, 2, shape, deleter);
   return nb::make_tuple(true, output);
 }

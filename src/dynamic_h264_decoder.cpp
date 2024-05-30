@@ -4,6 +4,7 @@
 
 // WebRTC
 #include <api/video/i420_buffer.h>
+#include <modules/video_coding/include/video_error_codes.h>
 #include <rtc_base/logging.h>
 #include <third_party/libyuv/include/libyuv.h>
 
@@ -33,8 +34,7 @@ bool DynamicH264Decoder::Configure(const Settings& settings) {
     Release();
     return false;
   }
-  destroy_decoder_ =
-      (DestroyDecoderFunc)::dlsym(handle, "WelsDestroyDecoder");
+  destroy_decoder_ = (DestroyDecoderFunc)::dlsym(handle, "WelsDestroyDecoder");
   if (destroy_decoder_ == nullptr) {
     RTC_LOG(LS_ERROR) << "Failed to dlsym(WelsDestroyDecoder)";
     Release();

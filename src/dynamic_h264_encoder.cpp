@@ -14,11 +14,12 @@
 
 #include "dynamic_h264_encoder.h"
 
-#include <dlfcn.h>
-
 #include <algorithm>
 #include <limits>
 #include <string>
+
+// Linux
+#include <dlfcn.h>
 
 // WebRTC
 #include <absl/strings/match.h>
@@ -26,6 +27,8 @@
 #include <api/video/video_codec_constants.h>
 #include <api/video_codecs/scalability_mode.h>
 #include <common_video/libyuv/include/webrtc_libyuv.h>
+#include <modules/video_coding/include/video_codec_interface.h>
+#include <modules/video_coding/include/video_error_codes.h>
 #include <modules/video_coding/svc/create_scalability_structure.h>
 #include <modules/video_coding/utility/simulcast_rate_allocator.h>
 #include <modules/video_coding/utility/simulcast_utility.h>
@@ -173,22 +176,17 @@ static void RtpFragmentize(EncodedImage* encoded_image, SFrameBSInfo* info) {
   }
 }
 
-DynamicH264Encoder::DynamicH264Encoder(const cricket::VideoCodec& codec,
+DynamicH264Encoder::DynamicH264Encoder(const Environment& env,
+                                       H264EncoderSettings settings,
                                        std::string openh264)
-    : packetization_mode_(H264PacketizationMode::SingleNalUnit),
+    : env_(env),
+      packetization_mode_(settings.packetization_mode),
       max_payload_size_(0),
       number_of_cores_(0),
       encoded_image_callback_(nullptr),
       has_reported_init_(false),
       has_reported_error_(false),
       openh264_(std::move(openh264)) {
-  RTC_CHECK(absl::EqualsIgnoreCase(codec.name, cricket::kH264CodecName));
-  std::string packetization_mode_string;
-  if (codec.GetParam(cricket::kH264FmtpPacketizationMode,
-                     &packetization_mode_string) &&
-      packetization_mode_string == "1") {
-    packetization_mode_ = H264PacketizationMode::NonInterleaved;
-  }
   downscaled_buffers_.reserve(kMaxSimulcastStreams - 1);
   encoded_images_.reserve(kMaxSimulcastStreams);
   encoders_.reserve(kMaxSimulcastStreams);
@@ -544,7 +542,7 @@ int32_t DynamicH264Encoder::Encode(
 
     encoded_images_[i]._encodedWidth = configurations_[i].width;
     encoded_images_[i]._encodedHeight = configurations_[i].height;
-    encoded_images_[i].SetRtpTimestamp(input_frame.timestamp());
+    encoded_images_[i].SetRtpTimestamp(input_frame.rtp_timestamp());
     encoded_images_[i].SetColorSpace(input_frame.color_space());
     encoded_images_[i]._frameType = ConvertToVideoFrameType(info.eFrameType);
     encoded_images_[i].SetSimulcastIndex(configurations_[i].simulcast_idx);
@@ -576,10 +574,20 @@ int32_t DynamicH264Encoder::Encode(
         codec_specific.codecSpecific.H264.base_layer_sync =
             tid > 0 && tid < tl0sync_limit_[i];
         if (svc_controllers_[i]) {
+          if (encoded_images_[i]._frameType == VideoFrameType::kVideoFrameKey) {
+            // Reset the ScalableVideoController on key frame
+            // to reset the expected dependency structure.
+            layer_frames =
+                svc_controllers_[i]->NextFrameConfig(/* restart= */ true);
+            RTC_CHECK_EQ(layer_frames.size(), 1);
+            RTC_DCHECK_EQ(layer_frames[0].TemporalId(), 0);
+            RTC_DCHECK_EQ(layer_frames[0].IsKeyframe(), true);
+          }
+
           if (layer_frames[0].TemporalId() != tid) {
             RTC_LOG(LS_WARNING)
-                << "Encoder produced a frame for layer S" << (i + 1) << "T"
-                << tid + 1 << " that wasn't requested.";
+                << "Encoder produced a frame with temporal id " << tid
+                << ", expected " << layer_frames[0].TemporalId() << ".";
             continue;
           }
           encoded_images_[i].SetTemporalIndex(tid);

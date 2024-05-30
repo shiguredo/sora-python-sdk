@@ -101,11 +101,10 @@ class SoraAudioSource : public SoraTrackInterface {
    * @param ndarray NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
    * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
    */
-  void OnData(nb::ndarray<int16_t,
-                          nb::shape<nb::any, nb::any>,
-                          nb::c_contig,
-                          nb::device::cpu> ndarray,
-              double timestamp);
+  void OnData(
+      nb::ndarray<int16_t, nb::shape<-1, -1>, nb::c_contig, nb::device::cpu>
+          ndarray,
+      double timestamp);
   /**
    * Sora に送る音声データを渡します。
    * 
@@ -113,10 +112,9 @@ class SoraAudioSource : public SoraTrackInterface {
    * 
    * @param ndarray NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
    */
-  void OnData(nb::ndarray<int16_t,
-                          nb::shape<nb::any, nb::any>,
-                          nb::c_contig,
-                          nb::device::cpu> ndarray);
+  void OnData(
+      nb::ndarray<int16_t, nb::shape<-1, -1>, nb::c_contig, nb::device::cpu>
+          ndarray);
 
  private:
   rtc::scoped_refptr<SoraAudioSourceInterface> source_;

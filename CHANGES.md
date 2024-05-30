@@ -16,14 +16,18 @@
 
 ## develop
 
+- [UPDATE] nanobind を `2.0.0` に上げて固定する
+  - @melpon
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.1` に上げる
   - @voluntas
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
   - @enm10k
+- [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、 read の実行タイミングによってはクラッシュするようになったので修正する
+  - @enm10k
 
 ## 2024.2.0
 
-**2024-04-09**
+**日時**: 2024-04-09
 
 - [ADD] Sora Python SDK Samples を `examples` に移動する
   - @voluntas
@@ -38,15 +42,19 @@
   - @voluntas
 - [UPDATE] ruff の最小を ``0.3.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.2` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
-  - WEBRTC_BUILD_VERSION を `m122.6261.1.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m125.6422.2.1` に上げる
     - Ubuntu のビルドを通すために、 \_\_assertion_handler というファイルをコピーする処理を追加した
-  - BOOST_VERSION を `1.84.0` に上げる
-  - @enm10k
+    - rtc::TaskQueue が廃止され、webrtc::TaskQueueBase を直接利用する方式変更に追従した
+  - BOOST_VERSION を `1.85.0` に上げる
+  - @enm10k @melpon
 - [UPDATE] Intel VPL を利用した H.265 に対応
   - Sora C++ SDK のバージョンを `2024.6.0` に上げることで対応
   - @enm10k
+- [UPDATE] Github Actions のビルドで windows-2022 を利用する
+  - Sora CPP SDK 2024.7.0-canary (libwebrtc m125) から windows-2022 でビルドする
+  - @miosakuma
 - [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
   - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった
   - そのために pyproject.toml の `build-system.requires` に wheel と setuptools を指定する
