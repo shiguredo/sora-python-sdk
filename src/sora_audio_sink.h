@@ -56,8 +56,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
    * 実装上の留意点：コールバックと Read 関数の共存はパフォーマンスや使い方の面で難しいことが判明したので、
    * on_data_, on_format_ ともに廃止予定です。
   */
-  std::function<void(
-      nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>)>
+  std::function<void(nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>)>
       on_data_;
   std::function<void(int, size_t)> on_format_;
 

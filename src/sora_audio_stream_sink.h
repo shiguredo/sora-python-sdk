@@ -104,7 +104,7 @@ class SoraAudioFrame {
    * 
    * @return NumPy の配列 numpy.ndarray で サンプル数 x チャンネル数 になっている音声データ
    */
-  nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>> Data() const;
+  nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>> Data() const;
   /**
    * SoraAudioFrame 内の音声データへの直接参照を返します。
    * 
