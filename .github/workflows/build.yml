@@ -6,7 +6,6 @@ on:
     paths-ignore:
       - "doc/**"
       - "**.md"
-      - "**.yml"
   # 毎日日本時間（JST）の14:00（UTCの5:00）に実行します。
   # ただし、週末は除きます。
   schedule:
