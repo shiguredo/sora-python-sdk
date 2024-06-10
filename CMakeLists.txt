@@ -84,6 +84,15 @@ nanobind_add_module(
   src/sora_video_source.cpp
 )
 
+nanobind_add_stub(
+  sora_sdk_ext_stub
+  MODULE sora_sdk_ext
+  OUTPUT sora_sdk_ext.pyi
+  PYTHON_PATH $<TARGET_FILE_DIR:sora_sdk_ext>
+  DEPENDS sora_sdk_ext
+  MARKER_FILE py.typed
+)
+
 set_target_properties(sora_sdk_ext PROPERTIES CXX_STANDARD 20 C_STANDARD 20)
 set_target_properties(sora_sdk_ext PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -132,3 +141,4 @@ endif()
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 
 install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)
+install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")

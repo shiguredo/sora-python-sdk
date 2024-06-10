@@ -779,6 +779,10 @@ def main():
                 shutil.copyfile(
                     os.path.join(sora_build_target_dir, file), os.path.join(sora_src_dir, file)
                 )
+            if file in ("sora_sdk_ext.pyi", "py.typed"):
+                shutil.copyfile(
+                    os.path.join(sora_build_target_dir, file), os.path.join(sora_src_dir, file)
+                )
 
 
 if __name__ == "__main__":

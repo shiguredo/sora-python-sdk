@@ -15,6 +15,8 @@
   - @melpon
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.1` に上げる
   - @voluntas
+- [ADD] sora_sdk に型を付ける
+  - @melpon
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
   - @enm10k
 - [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、 read の実行タイミングによってはクラッシュするようになったので修正する
