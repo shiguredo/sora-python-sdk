@@ -754,6 +754,10 @@ def main():
                 "-DNB_SUFFIX=.cpython-38-aarch64-linux-gnu.so",
             ]
 
+        # Windows 以外の、クロスコンパイルでない環境では pyi ファイルを生成する
+        if target_platform.os != "windows" and build_platform.package_name == target_platform.package_name:
+            cmake_args.append("-DSORA_GEN_PYI=ON")
+
         sora_src_dir = os.path.join("src", "sora_sdk")
         sora_build_dir = os.path.join(build_dir, "sora_sdk")
         if target_platform.os == "windows":

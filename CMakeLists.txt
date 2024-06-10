@@ -141,4 +141,6 @@ endif()
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 
 install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)
-install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")
+if (SORA_GEN_PYI)
+  install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")
+endif()
