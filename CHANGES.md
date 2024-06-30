@@ -11,9 +11,13 @@
 
 ## develop
 
+- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.5` に上げる
+  - @voluntas
 - [UPDATE] nanobind を `2.0.0` に上げて固定する
   - @melpon
-- [UPDATE] Sora C++ SDK のバージョンを `2024.6.1` に上げる
+- [UPDATE] cmake のバージョンを `3.29.6` に上げる
+  - @voluntas
+- [UPDATE] libwebrtc のバージョンを `m125.6422.2.5` に上げる
   - @voluntas
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
   - @enm10k
