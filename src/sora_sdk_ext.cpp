@@ -319,7 +319,50 @@ NB_MODULE(sora_sdk_ext, m) {
            "insecure"_a = nb::none(), "client_cert"_a = nb::none(),
            "client_key"_a = nb::none(), "proxy_url"_a = nb::none(),
            "proxy_username"_a = nb::none(), "proxy_password"_a = nb::none(),
-           "proxy_agent"_a = nb::none())
+           "proxy_agent"_a = nb::none(),
+           nb::sig("def create_connection("
+                   "self, "
+                   "signaling_urls: list[str], "
+                   "role: str, "
+                   "channel_id: str, "
+                   "client_id: Optional[str] = None, "
+                   "bundle_id: Optional[str] = None, "
+                   "metadata: Optional[dict] = None, "
+                   "signaling_notify_metadata: Optional[dict] = None, "
+                   "audio_source: Optional[SoraTrackInterface] = None, "
+                   "video_source: Optional[SoraTrackInterface] = None, "
+                   "audio: Optional[bool] = None, "
+                   "video: Optional[bool] = None, "
+                   "audio_codec_type: Optional[str] = None, "
+                   "video_codec_type: Optional[str] = None, "
+                   "video_bit_rate: Optional[int] = None, "
+                   "audio_bit_rate: Optional[int] = None, "
+                   "video_vp9_params: Optional[dict] = None, "
+                   "video_av1_params: Optional[dict] = None, "
+                   "video_h264_params: Optional[dict] = None, "
+                   "simulcast: Optional[bool] = None, "
+                   "spotlight: Optional[bool] = None, "
+                   "spotlight_number: Optional[int] = None, "
+                   "simulcast_rid: Optional[str] = None, "
+                   "spotlight_focus_rid: Optional[str] = None, "
+                   "spotlight_unfocus_rid: Optional[str] = None, "
+                   "forwarding_filter: Optional[dict] = None, "
+                   "data_channels: Optional[list[dict]] = None, "
+                   "data_channel_signaling: Optional[bool] = None, "
+                   "ignore_disconnect_websocket: Optional[bool] = None, "
+                   "data_channel_signaling_timeout: Optional[int] = None, "
+                   "disconnect_wait_timeout: Optional[int] = None, "
+                   "websocket_close_timeout: Optional[int] = None, "
+                   "websocket_connection_timeout: Optional[int] = None, "
+                   "audio_streaming_language_code: Optional[str] = None, "
+                   "insecure: Optional[bool] = None, "
+                   "client_cert: Optional[str] = None, "
+                   "client_key: Optional[str] = None, "
+                   "proxy_url: Optional[str] = None, "
+                   "proxy_username: Optional[str] = None, "
+                   "proxy_password: Optional[str] = None, "
+                   "proxy_agent: Optional[str] = None"
+                   ") -> SoraConnection"))
       .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
            "sample_rate"_a)
       .def("create_video_source", &Sora::CreateVideoSource);
