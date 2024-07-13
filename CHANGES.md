@@ -21,6 +21,8 @@
   - @voluntas
 - [ADD] sora_sdk に型を付ける
   - @melpon
+- [ADD] SoraConnection に get_stats 関数を追加
+  - @melpon
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
   - @enm10k
 - [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、 read の実行タイミングによってはクラッシュするようになったので修正する
