@@ -283,6 +283,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("disconnect", &SoraConnection::Disconnect)
       .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a,
            "data"_a)
+      .def("get_stats", &SoraConnection::GetStats)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
       .def_rw("on_notify", &SoraConnection::on_notify_)
