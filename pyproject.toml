@@ -59,11 +59,11 @@ build-backend = "setuptools.build_meta"
 dev-dependencies = [
     "nanobind~=2.0.0",
     "setuptools>=69.2",
-    "build~=1.1.1",
+    "build~=1.2.1",
     "wheel~=0.43.0",
     "auditwheel~=6.0.0",
     "pytest>=8.2",
-    "ruff>=0.4",
+    "ruff>=0.5",
     "typing-extensions>=4.12.2",
 ]
 
