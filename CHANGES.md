@@ -16,10 +16,18 @@
 
 ## develop
 
+- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.5` に上げる
+  - @voluntas
 - [UPDATE] nanobind を `2.0.0` に上げて固定する
   - @melpon
-- [UPDATE] Sora C++ SDK のバージョンを `2024.6.1` に上げる
+- [UPDATE] cmake のバージョンを `3.29.6` に上げる
   - @voluntas
+- [UPDATE] libwebrtc のバージョンを `m125.6422.2.5` に上げる
+  - @voluntas
+- [ADD] sora_sdk に型を付ける
+  - @melpon
+- [ADD] SoraConnection に get_stats 関数を追加
+  - @melpon
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
   - @enm10k
 - [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、 read の実行タイミングによってはクラッシュするようになったので修正する

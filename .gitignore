@@ -12,6 +12,8 @@ build
 src/sora_sdk/*.so
 src/sora_sdk/*.dll
 src/sora_sdk/*.pyd
+src/sora_sdk/*.pyi
+src/sora_sdk/py.typed
 
 # パッケージ
 /dist

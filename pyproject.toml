@@ -1,7 +1,7 @@
 [project]
 name = "sora_sdk"
 authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
-version = "2024.3.0.dev3"
+version = "2024.3.0.dev4"
 description = "WebRTC SFU Sora Python SDK"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -67,6 +67,7 @@ dev-dependencies = [
     "opencv-python>=4.9.0.80",
     "numpy>=1.24.4",
     "ruff>=0.4",
+    "typing-extensions>=4.12.2",
 ]
 
 [tool.ruff]

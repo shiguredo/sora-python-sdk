@@ -86,6 +86,14 @@ class SoraConnection : public sora::SoraSignalingObserver,
    */
   bool SendDataChannel(const std::string& label, nb::bytes& data);
 
+  /**
+   * WebRTC の統計情報を取得します。
+   *
+   * この関数は PeerConnection::GetStats() を呼んで、結果のコールバックがやってくるまでスレッドをブロックすることに注意してください。
+   * また、libwebrtc のシグナリングスレッドから呼ぶとデッドロックするので、必ずそれ以外のスレッドから呼ぶようにしてください。
+   */
+  std::string GetStats();
+
   // sora::SoraSignalingObserver に定義されているコールバック関数
   void OnSetOffer(std::string offer) override;
   void OnDisconnect(sora::SoraSignalingErrorCode ec,
