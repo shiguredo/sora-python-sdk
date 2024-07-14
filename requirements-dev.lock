@@ -11,7 +11,7 @@
 
 -e file:.
 auditwheel==6.0.0
-build==1.1.1
+build==1.2.1
 exceptiongroup==1.2.2
     # via pytest
 importlib-metadata==8.0.0
