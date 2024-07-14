@@ -3,6 +3,9 @@
 #include <chrono>
 #include <stdexcept>
 
+// Sora C++ SDK
+#include <sora/rtc_stats.h>
+
 // Boost
 #include <boost/asio/signal_set.hpp>
 
@@ -104,6 +107,23 @@ void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
 bool SoraConnection::SendDataChannel(const std::string& label,
                                      nb::bytes& data) {
   return conn_->SendDataChannel(label, std::string(data.c_str(), data.size()));
+}
+
+std::string SoraConnection::GetStats() {
+  auto pc = conn_->GetPeerConnection();
+  if (pc == nullptr) {
+    return "[]";
+  }
+  std::promise<std::string> stats;
+  std::future<std::string> future = stats.get_future();
+  nb::gil_scoped_release release;
+  pc->GetStats(
+      sora::RTCStatsCallback::Create(
+          [&](const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
+            stats.set_value(report->ToJson());
+          })
+          .get());
+  return future.get();
 }
 
 void SoraConnection::OnSetOffer(std::string offer) {
