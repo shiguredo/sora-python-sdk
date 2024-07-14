@@ -19,7 +19,7 @@ jobs:
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
-      - uses: eifinger/setup-rye@v2
+      - uses: eifinger/setup-rye@v3
       - uses: actions/checkout@v4
       - run: |
           sudo apt-get update
