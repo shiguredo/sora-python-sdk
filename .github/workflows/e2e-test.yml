@@ -19,7 +19,7 @@ jobs:
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
-      - uses: eifinger/setup-rye@v3
+      - uses: eifinger/setup-rye@v4
       - uses: actions/checkout@v4
       - run: |
           sudo apt-get update
@@ -42,20 +42,11 @@ jobs:
       - run: rye run pytest tests/test_switched.py -s
       - run: rye run pytest tests/test_vad.py -s
       - run: rye run pytest tests/test_stats.py -s
-      - name: Slack Notification
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: sora-python-sdk
-          SLACK_COLOR: danger
-          SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_TITLE: E2E Test Failed
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   e2e_macos_test:
     strategy:
       matrix:
-        python_version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: macos-14
     timeout-minutes: 10
     env:
@@ -63,19 +54,37 @@ jobs:
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
-      - uses: eifinger/setup-rye@v2
+      - uses: eifinger/setup-rye@v4
       - uses: actions/checkout@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py
       # - run: rye test
       - run: rye run pytest tests/test_macos_h265.py -s
+
+  slack_notify_succeeded:
+    needs: [e2e_ubuntu_test, e2e_macos_test]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
       - name: Slack Notification
-        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: good
+          SLACK_TITLE: SUCCEEDED
+          SLACK_ICON_EMOJI: ":star-struck:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  slack_notify_failed:
+    needs: [e2e_ubuntu_test, e2e_macos_test]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: sora-python-sdk
           SLACK_COLOR: danger
+          SLACK_TITLE: "FAILED"
           SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_TITLE: E2E Test Failed
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}  
