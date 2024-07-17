@@ -40,7 +40,8 @@ class Recvonly:
             channel_id=channel_id,
             metadata=metadata,
         )
-        self._connection_id = ""
+        self._connection_id: Optional[str] = None
+
         self._connected = Event()
         self._closed = False
         self._default_connection_timeout_s = 10.0
