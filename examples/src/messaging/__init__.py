@@ -29,7 +29,7 @@ class Messaging:
             data_channels=self._data_channels,
             data_channel_signaling=True,
         )
-        self._connection_id: str = ""
+        self._connection_id: Optional[str] = None
 
         self._connected = Event()
         self._closed = False

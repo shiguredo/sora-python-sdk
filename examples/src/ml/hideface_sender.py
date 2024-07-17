@@ -41,7 +41,7 @@ class LogoStreamer:
             video_bit_rate=500,
             video_source=self._video_source,
         )
-        self._connection_id = ""
+        self._connection_id: Optional[str] = None
 
         self._connected = Event()
         self._closed = False
