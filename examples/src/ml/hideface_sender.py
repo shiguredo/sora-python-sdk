@@ -4,7 +4,7 @@ import os
 import platform
 from pathlib import Path
 from threading import Event
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import cv2
 import mediapipe as mp
@@ -18,10 +18,10 @@ from sora_sdk import Sora, SoraSignalingErrorCode, SoraVideoSource
 class LogoStreamer:
     def __init__(
         self,
-        signaling_urls: List[str],
+        signaling_urls: list[str],
         role: str,
         channel_id: str,
-        metadata: Optional[Dict[str, Any]],
+        metadata: Optional[dict[str, Any]],
         camera_id: int,
         video_width: Optional[int],
         video_height: Optional[int],
