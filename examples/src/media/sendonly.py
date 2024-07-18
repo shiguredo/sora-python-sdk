@@ -2,7 +2,7 @@ import json
 import os
 import platform
 from threading import Event
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import cv2
 import sounddevice
@@ -14,8 +14,7 @@ from sora_sdk import Sora, SoraConnection, SoraSignalingErrorCode
 class Sendonly:
     def __init__(
         self,
-        # python 3.8 まで対応なので list[str] ではなく List[str] にする
-        signaling_urls: List[str],
+        signaling_urls: list[str],
         channel_id: str,
         metadata: Optional[Dict[str, Any]],
         camera_id: int,

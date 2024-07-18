@@ -2,7 +2,7 @@ import json
 import random
 import time
 from threading import Event
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from sora_sdk import Sora, SoraConnection, SoraSignalingErrorCode
 
@@ -10,11 +10,10 @@ from sora_sdk import Sora, SoraConnection, SoraSignalingErrorCode
 class Messaging:
     def __init__(
         self,
-        # python 3.8 まで対応なので list[str] ではなく List[str] にする
-        signaling_urls: List[str],
+        signaling_urls: list[str],
         channel_id: str,
-        data_channels: List[Dict[str, Any]],
-        metadata: Optional[Dict[str, Any]],
+        data_channels: list[dict[str, Any]],
+        metadata: Optional[dict[str, Any]],
     ):
         self._data_channels = data_channels
 
@@ -65,13 +64,13 @@ class Messaging:
         self._connection.send_data_channel(self._label, data)
 
     def _on_set_offer(self, raw_message: str):
-        message: Dict[str, Any] = json.loads(raw_message)
+        message: dict[str, Any] = json.loads(raw_message)
         if message["type"] == "offer":
             # "type": "offer" に入ってくる自分の connection_id を保存する
             self._connection_id = message["connection_id"]
 
     def _on_notify(self, raw_message: str):
-        message: Dict[str, Any] = json.loads(raw_message)
+        message: dict[str, Any] = json.loads(raw_message)
         # "type": "notify" の "connection.created" で通知される connection_id が
         # 自分の connection_id と一致する場合に接続完了とする
         if (
