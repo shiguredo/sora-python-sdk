@@ -24,6 +24,8 @@ jobs:
       - run: |
           sudo apt-get -y install libva-dev libdrm-dev
       - uses: eifinger/setup-rye@v4
+        with:
+          version: 'latest'
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye pin cpython@3.12
       - run: rye sync
@@ -88,6 +90,8 @@ jobs:
           sudo apt-get -y install libva-dev libdrm-dev
         if: ${{ matrix.platform.os == 'ubuntu' }}
       - uses: eifinger/setup-rye@v4
+        with:
+          version: 'latest'
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
