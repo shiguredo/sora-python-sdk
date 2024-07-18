@@ -521,6 +521,25 @@ def get_build_platform() -> PlatformTarget:
     return PlatformTarget(os, osver, arch)
 
 
+def apply_patch(patch, dir, depth):
+    with cd(dir):
+        if platform.system() == "Windows":
+            cmd(
+                [
+                    "git",
+                    "apply",
+                    f"-p{depth}",
+                    "--ignore-space-change",
+                    "--ignore-whitespace",
+                    "--whitespace=nowarn",
+                    patch,
+                ]
+            )
+        else:
+            with open(patch) as stdin:
+                cmd(["patch", f"-p{depth}"], stdin=stdin)
+
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -657,6 +676,17 @@ def install_deps(
         }
         install_openh264(**install_openh264_args)
 
+    # nanobind にパッチを適用する
+    nanobind_dir = os.path.join(BASE_DIR, ".venv", "Lib", "site-packages", "nanobind")
+    if not os.path.exists(os.path.join(nanobind_dir, "include", "nanobind", "nb_func.h.old")):
+        shutil.copyfile(
+            os.path.join(nanobind_dir, "include", "nanobind", "nb_func.h"),
+            os.path.join(nanobind_dir, "include", "nanobind", "nb_func.h.old"),
+        )
+        patch = os.path.join(BASE_DIR, "fix_nanobind_nb_func.patch")
+        with cd(nanobind_dir):
+            apply_patch(patch, nanobind_dir, 0)
+
 
 def cmake_path(path: str) -> str:
     return path.replace("\\", "/")
@@ -755,7 +785,10 @@ def main():
             ]
 
         # Windows 以外の、クロスコンパイルでない環境では pyi ファイルを生成する
-        if target_platform.os != "windows" and build_platform.package_name == target_platform.package_name:
+        if (
+            target_platform.os != "windows"
+            and build_platform.package_name == target_platform.package_name
+        ):
             cmake_args.append("-DSORA_GEN_PYI=ON")
 
         sora_src_dir = os.path.join("src", "sora_sdk")
@@ -768,7 +801,16 @@ def main():
         mkdir_p(sora_build_dir)
         with cd(sora_build_dir):
             cmd(["cmake", BASE_DIR, *cmake_args])
-            cmd(["cmake", "--build", ".", "--config", configuration, f"-j{multiprocessing.cpu_count()}"])
+            cmd(
+                [
+                    "cmake",
+                    "--build",
+                    ".",
+                    "--config",
+                    configuration,
+                    f"-j{multiprocessing.cpu_count()}",
+                ]
+            )
 
         for file in os.listdir(sora_src_dir):
             if file.startswith("sora_sdk_ext.") and (
