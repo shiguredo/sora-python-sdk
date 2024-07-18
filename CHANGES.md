@@ -11,6 +11,10 @@
 
 ## develop
 
+- [UPDATE] 対応 Python バージョンを 3.9 以降に上げる
+  - numpy 2.0.0 が Python 3.9 以降なので、それに合わせる
+  - List / Dict から list / dict に変更する
+  - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.5` に上げる
   - @voluntas
 - [UPDATE] nanobind を `2.0.0` に上げて固定する
@@ -25,7 +29,8 @@
   - @melpon
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
   - @enm10k
-- [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、 read の実行タイミングによってはクラッシュするようになったので修正する
+- [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、
+  read の実行タイミングによってはクラッシュするようになったので修正する
   - @enm10k
 
 ## 2024.2.0
