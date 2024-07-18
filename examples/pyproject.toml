@@ -4,11 +4,11 @@ version = "2024.3.0.dev3"
 description = "Sora Python SDK Samples"
 authors = [{ name = "Shiguredo Inc." }]
 dependencies = [
-    "opencv-python~=4.9.0.80",
-    "opencv-python-headless~=4.9.0.80",
-    "sounddevice~=0.4.6",
+    "opencv-python~=4.10.0.84",
+    "opencv-python-headless~=4.10.0.84",
+    "sounddevice~=0.4.7",
     "sora-sdk>=2024.3.0.dev3",
-    "mediapipe~=0.10.1",
+    "mediapipe~=0.10.4",
     "python-dotenv>=1.0.1",
 ]
 readme = "README.md"
