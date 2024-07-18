@@ -2,7 +2,7 @@ import json
 import os
 import platform
 from threading import Event
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import cv2
 import sounddevice
@@ -12,11 +12,18 @@ from sora_sdk import Sora, SoraConnection, SoraSignalingErrorCode
 
 
 class Sendonly:
+    """
+    Sora にビデオと音声ストリームを送信するためのクラス。
+
+    このクラスは Sora への接続を設定し、カメラからのビデオと
+    マイクからの音声を Sora に送信するメソッドを提供します。
+    """
+
     def __init__(
         self,
         signaling_urls: list[str],
         channel_id: str,
-        metadata: Optional[Dict[str, Any]],
+        metadata: Optional[dict[str, Any]],
         camera_id: int,
         video_codec_type: str,
         video_bit_rate: int,
@@ -28,8 +35,26 @@ class Sendonly:
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
     ):
-        self.audio_channels = audio_channels
-        self.audio_sample_rate = audio_sample_rate
+        """
+        Sendonly インスタンスを初期化します。
+
+        引数:
+            signaling_urls (list[str]): Sora シグナリング URL のリスト。
+            channel_id (str): 接続するチャンネル ID。
+            metadata (Optional[dict[str, Any]]): 接続のためのオプションのメタデータ。
+            camera_id (int): 使用するカメラの ID。
+            video_codec_type (str): 使用するビデオコーデックの種類。
+            video_bit_rate (int): ビデオのビットレート。
+            video_width (Optional[int]): ビデオの幅。
+            video_height (Optional[int]): ビデオの高さ。
+            video_fps (Optional[int]): ビデオのフレームレート。
+            video_fourcc (Optional[str]): ビデオの FOURCC コード。
+            openh264 (Optional[str]): OpenH264 ライブラリへのパス。
+            audio_channels (int): 音声チャンネル数。デフォルトは 1。
+            audio_sample_rate (int): 音声サンプリングレート。デフォルトは 16000。
+        """
+        self.audio_channels: int = audio_channels
+        self.audio_sample_rate: int = audio_sample_rate
 
         self._sora: Sora = Sora(openh264=openh264)
 
@@ -50,19 +75,40 @@ class Sendonly:
         )
         self._connection_id: Optional[str] = None
 
-        self._connected = Event()
-        self._closed = False
-        self._default_connection_timeout_s = 10.0
+        self._connected: Event = Event()
+        self._closed: bool = False
+        self._default_connection_timeout_s: float = 10.0
 
         self._connection.on_set_offer = self._on_set_offer
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
+        self._setup_video_capture(camera_id, video_width, video_height, video_fps, video_fourcc)
+
+    def _setup_video_capture(
+        self,
+        camera_id: int,
+        video_width: Optional[int],
+        video_height: Optional[int],
+        video_fps: Optional[int],
+        video_fourcc: Optional[str],
+    ) -> None:
+        """
+        ビデオキャプチャの設定を行います。
+
+        引数:
+            camera_id (int): 使用するカメラの ID。
+            video_width (Optional[int]): ビデオの幅。
+            video_height (Optional[int]): ビデオの高さ。
+            video_fps (Optional[int]): ビデオのフレームレート。
+            video_fourcc (Optional[str]): ビデオの FOURCC コード。
+        """
         if platform.system() == "Windows":
             # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
             self._video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
         else:
             self._video_capture = cv2.VideoCapture(camera_id)
+
         if video_width is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
@@ -71,6 +117,7 @@ class Sendonly:
             self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
         if video_fps is not None:
             self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
+
         # Ubuntu → FOURCC を設定すると FPS が初期化される
         # Windows → FPS を設定すると FOURCC が初期化される
         # ので、両方に対応するため２回設定する
@@ -83,20 +130,31 @@ class Sendonly:
             if video_fps != int(self._video_capture.get(cv2.CAP_PROP_FPS)):
                 self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
 
-    def connect(self):
+    def connect(self) -> None:
+        """
+        Sora への接続を確立します。
+
+        例外:
+            AssertionError: タイムアウト期間内に接続が確立できなかった場合。
+        """
         self._connection.connect()
 
         assert self._connected.wait(
             timeout=self._default_connection_timeout_s
         ), "接続がタイムアウトしました"
 
-    def disconnect(self):
+    def disconnect(self) -> None:
+        """Sora から切断します。"""
         self._connection.disconnect()
 
-    def _on_notify(self, raw_message: str):
-        message: Dict[str, Any] = json.loads(raw_message)
-        # "type": "notify" の "connection.created" で通知される connection_id が
-        # 自分の connection_id と一致する場合に接続完了とする
+    def _on_notify(self, raw_message: str) -> None:
+        """
+        Sora からの通知イベントを処理します。
+
+        引数:
+            raw_message (str): 生の通知メッセージ。
+        """
+        message: dict[str, Any] = json.loads(raw_message)
         if (
             message["type"] == "notify"
             and message["event_type"] == "connection.created"
@@ -105,22 +163,47 @@ class Sendonly:
             print("Sora に接続しました")
             self._connected.set()
 
-    def _on_set_offer(self, raw_message: str):
-        message: Dict[str, Any] = json.loads(raw_message)
+    def _on_set_offer(self, raw_message: str) -> None:
+        """
+        オファー設定イベントを処理します。
+
+        引数:
+            raw_message (str): オファーを含む生のメッセージ。
+        """
+        message: dict[str, Any] = json.loads(raw_message)
         if message["type"] == "offer":
-            # "type": "offer" に入ってくる自分の connection_id を保存する
             self._connection_id = message["connection_id"]
 
-    def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str):
+    def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
+        """
+        切断イベントを処理します。
+
+        引数:
+            error_code (SoraSignalingErrorCode): 切断のエラーコード。
+            message (str): 切断メッセージ。
+        """
         print(f"Sora から切断されました: error_code='{error_code}' message='{message}'")
         self._connected.clear()
         self._closed = True
 
-    def _callback(self, indata: ndarray, frames: int, time, status: sounddevice.CallbackFlags):
+    def _callback(
+        self, indata: ndarray, frames: int, time: Any, status: sounddevice.CallbackFlags
+    ) -> None:
+        """
+        音声入力のためのコールバック関数。
+
+        引数:
+            indata (ndarray): 入力された音声データ。
+            frames (int): 処理するフレーム数。
+            time (Any): タイミング情報（未使用）。
+            status (sounddevice.CallbackFlags): ステータスフラグ。
+        """
         self._audio_source.on_data(indata)
 
-    def run(self):
-        # 音声デバイスの入力を Sora に送信する設定
+    def run(self) -> None:
+        """
+        ビデオフレームの送信と音声の送信を行うメインループ。
+        """
         with sounddevice.InputStream(
             samplerate=self.audio_sample_rate,
             channels=self.audio_channels,
@@ -130,7 +213,6 @@ class Sendonly:
             self.connect()
             try:
                 while self._connected.is_set():
-                    # 取得したフレームを Sora に送信する
                     success, frame = self._video_capture.read()
                     if not success:
                         continue
@@ -142,11 +224,15 @@ class Sendonly:
                 self._video_capture.release()
 
 
-def sendonly():
-    # .env ファイルを読み込む
+def sendonly() -> None:
+    """
+    環境変数を使用して Sendonly インスタンスを設定し実行します。
+
+    例外:
+        ValueError: 必要な環境変数が設定されていない場合。
+    """
     load_dotenv()
 
-    # 必須引数
     if not (raw_signaling_urls := os.getenv("SORA_SIGNALING_URLS")):
         raise ValueError("環境変数 SORA_SIGNALING_URLS が設定されていません")
     signaling_urls = raw_signaling_urls.split(",")
@@ -154,7 +240,6 @@ def sendonly():
     if not (channel_id := os.getenv("SORA_CHANNEL_ID")):
         raise ValueError("環境変数 SORA_CHANNEL_ID が設定されていません")
 
-    # オプション引数
     metadata = None
     if raw_metadata := os.getenv("SORA_METADATA"):
         metadata = json.loads(raw_metadata)
