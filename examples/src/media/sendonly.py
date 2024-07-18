@@ -38,20 +38,19 @@ class Sendonly:
         """
         Sendonly インスタンスを初期化します。
 
-        引数:
-            signaling_urls (list[str]): Sora シグナリング URL のリスト。
-            channel_id (str): 接続するチャンネル ID。
-            metadata (Optional[dict[str, Any]]): 接続のためのオプションのメタデータ。
-            camera_id (int): 使用するカメラの ID。
-            video_codec_type (str): 使用するビデオコーデックの種類。
-            video_bit_rate (int): ビデオのビットレート。
-            video_width (Optional[int]): ビデオの幅。
-            video_height (Optional[int]): ビデオの高さ。
-            video_fps (Optional[int]): ビデオのフレームレート。
-            video_fourcc (Optional[str]): ビデオの FOURCC コード。
-            openh264 (Optional[str]): OpenH264 ライブラリへのパス。
-            audio_channels (int): 音声チャンネル数。デフォルトは 1。
-            audio_sample_rate (int): 音声サンプリングレート。デフォルトは 16000。
+        :param signaling_urls: Sora シグナリング URL のリスト
+        :param channel_id: 接続するチャンネル ID
+        :param metadata: 接続のためのオプションのメタデータ
+        :param camera_id: 使用するカメラの ID
+        :param video_codec_type: 使用するビデオコーデックの種類
+        :param video_bit_rate: ビデオのビットレート
+        :param video_width: ビデオの幅
+        :param video_height: ビデオの高さ
+        :param video_fps: ビデオのフレームレート
+        :param video_fourcc: ビデオの FOURCC コード
+        :param openh264: OpenH264 ライブラリへのパス
+        :param audio_channels: 音声チャンネル数（デフォルト: 1）
+        :param audio_sample_rate: 音声サンプリングレート（デフォルト: 16000）
         """
         self.audio_channels: int = audio_channels
         self.audio_sample_rate: int = audio_sample_rate
@@ -96,12 +95,11 @@ class Sendonly:
         """
         ビデオキャプチャの設定を行います。
 
-        引数:
-            camera_id (int): 使用するカメラの ID。
-            video_width (Optional[int]): ビデオの幅。
-            video_height (Optional[int]): ビデオの高さ。
-            video_fps (Optional[int]): ビデオのフレームレート。
-            video_fourcc (Optional[str]): ビデオの FOURCC コード。
+        :param camera_id: 使用するカメラの ID
+        :param video_width: ビデオの幅
+        :param video_height: ビデオの高さ
+        :param video_fps: ビデオのフレームレート
+        :param video_fourcc: ビデオの FOURCC コード
         """
         if platform.system() == "Windows":
             # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
@@ -134,8 +132,7 @@ class Sendonly:
         """
         Sora への接続を確立します。
 
-        例外:
-            AssertionError: タイムアウト期間内に接続が確立できなかった場合。
+        :raises AssertionError: タイムアウト期間内に接続が確立できなかった場合
         """
         self._connection.connect()
 
@@ -151,8 +148,7 @@ class Sendonly:
         """
         Sora からの通知イベントを処理します。
 
-        引数:
-            raw_message (str): 生の通知メッセージ。
+        :param raw_message: 生の通知メッセージ
         """
         message: dict[str, Any] = json.loads(raw_message)
         if (
@@ -167,8 +163,7 @@ class Sendonly:
         """
         オファー設定イベントを処理します。
 
-        引数:
-            raw_message (str): オファーを含む生のメッセージ。
+        :param raw_message: オファーを含む生のメッセージ
         """
         message: dict[str, Any] = json.loads(raw_message)
         if message["type"] == "offer":
@@ -178,9 +173,8 @@ class Sendonly:
         """
         切断イベントを処理します。
 
-        引数:
-            error_code (SoraSignalingErrorCode): 切断のエラーコード。
-            message (str): 切断メッセージ。
+        :param error_code: 切断のエラーコード
+        :param message: 切断メッセージ
         """
         print(f"Sora から切断されました: error_code='{error_code}' message='{message}'")
         self._connected.clear()
@@ -192,11 +186,10 @@ class Sendonly:
         """
         音声入力のためのコールバック関数。
 
-        引数:
-            indata (ndarray): 入力された音声データ。
-            frames (int): 処理するフレーム数。
-            time (Any): タイミング情報（未使用）。
-            status (sounddevice.CallbackFlags): ステータスフラグ。
+        :param indata: 入力された音声データ
+        :param frames: 処理するフレーム数
+        :param time: タイミング情報（未使用）
+        :param status: ステータスフラグ
         """
         self._audio_source.on_data(indata)
 
@@ -228,8 +221,7 @@ def sendonly() -> None:
     """
     環境変数を使用して Sendonly インスタンスを設定し実行します。
 
-    例外:
-        ValueError: 必要な環境変数が設定されていない場合。
+    :raises ValueError: 必要な環境変数が設定されていない場合
     """
     load_dotenv()
 
