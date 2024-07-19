@@ -540,6 +540,16 @@ def apply_patch(patch, dir, depth):
                 cmd(["patch", f"-p{depth}"], stdin=stdin)
 
 
+# 標準出力をキャプチャするコマンド実行。シェルの `cmd ...` や $(cmd ...) と同じ
+def cmdcap(args, **kwargs):
+    # 3.7 でしか使えない
+    # kwargs['capture_output'] = True
+    kwargs["stdout"] = subprocess.PIPE
+    kwargs["stderr"] = subprocess.PIPE
+    kwargs["encoding"] = "utf-8"
+    return cmd(args, **kwargs).stdout.strip()
+
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -677,29 +687,19 @@ def install_deps(
         install_openh264(**install_openh264_args)
 
     # nanobind にパッチを適用する
-    nanobind_dir = os.path.join(BASE_DIR, ".venv", "Lib", "site-packages", "nanobind")
-    if not os.path.exists(os.path.join(nanobind_dir, "include", "nanobind", "nb_func.h.old")):
+    nanobind_include_dir = cmdcap([sys.executable, "-m", "nanobind", "--include_dir"])
+    if not os.path.exists(os.path.join(nanobind_include_dir, "nanobind", "nb_func.h.old")):
         shutil.copyfile(
-            os.path.join(nanobind_dir, "include", "nanobind", "nb_func.h"),
-            os.path.join(nanobind_dir, "include", "nanobind", "nb_func.h.old"),
+            os.path.join(nanobind_include_dir, "nanobind", "nb_func.h"),
+            os.path.join(nanobind_include_dir, "nanobind", "nb_func.h.old"),
         )
         patch = os.path.join(BASE_DIR, "fix_nanobind_nb_func.patch")
-        with cd(nanobind_dir):
-            apply_patch(patch, nanobind_dir, 0)
+        with cd(nanobind_include_dir):
+            apply_patch(patch, nanobind_include_dir, 1)
 
 
 def cmake_path(path: str) -> str:
     return path.replace("\\", "/")
-
-
-# 標準出力をキャプチャするコマンド実行。シェルの `cmd ...` や $(cmd ...) と同じ
-def cmdcap(args, **kwargs):
-    # 3.7 でしか使えない
-    # kwargs['capture_output'] = True
-    kwargs["stdout"] = subprocess.PIPE
-    kwargs["stderr"] = subprocess.PIPE
-    kwargs["encoding"] = "utf-8"
-    return cmd(args, **kwargs).stdout.strip()
 
 
 def main():
