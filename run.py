@@ -521,6 +521,35 @@ def get_build_platform() -> PlatformTarget:
     return PlatformTarget(os, osver, arch)
 
 
+def apply_patch(patch, dir, depth):
+    with cd(dir):
+        if platform.system() == "Windows":
+            cmd(
+                [
+                    "git",
+                    "apply",
+                    f"-p{depth}",
+                    "--ignore-space-change",
+                    "--ignore-whitespace",
+                    "--whitespace=nowarn",
+                    patch,
+                ]
+            )
+        else:
+            with open(patch) as stdin:
+                cmd(["patch", f"-p{depth}"], stdin=stdin)
+
+
+# 標準出力をキャプチャするコマンド実行。シェルの `cmd ...` や $(cmd ...) と同じ
+def cmdcap(args, **kwargs):
+    # 3.7 でしか使えない
+    # kwargs['capture_output'] = True
+    kwargs["stdout"] = subprocess.PIPE
+    kwargs["stderr"] = subprocess.PIPE
+    kwargs["encoding"] = "utf-8"
+    return cmd(args, **kwargs).stdout.strip()
+
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -657,19 +686,20 @@ def install_deps(
         }
         install_openh264(**install_openh264_args)
 
+    # nanobind にパッチを適用する
+    nanobind_include_dir = cmdcap([sys.executable, "-m", "nanobind", "--include_dir"])
+    if not os.path.exists(os.path.join(nanobind_include_dir, "nanobind", "nb_func.h.old")):
+        shutil.copyfile(
+            os.path.join(nanobind_include_dir, "nanobind", "nb_func.h"),
+            os.path.join(nanobind_include_dir, "nanobind", "nb_func.h.old"),
+        )
+        patch = os.path.join(BASE_DIR, "fix_nanobind_nb_func.patch")
+        with cd(nanobind_include_dir):
+            apply_patch(patch, nanobind_include_dir, 1)
+
 
 def cmake_path(path: str) -> str:
     return path.replace("\\", "/")
-
-
-# 標準出力をキャプチャするコマンド実行。シェルの `cmd ...` や $(cmd ...) と同じ
-def cmdcap(args, **kwargs):
-    # 3.7 でしか使えない
-    # kwargs['capture_output'] = True
-    kwargs["stdout"] = subprocess.PIPE
-    kwargs["stderr"] = subprocess.PIPE
-    kwargs["encoding"] = "utf-8"
-    return cmd(args, **kwargs).stdout.strip()
 
 
 def main():
@@ -755,7 +785,10 @@ def main():
             ]
 
         # Windows 以外の、クロスコンパイルでない環境では pyi ファイルを生成する
-        if target_platform.os != "windows" and build_platform.package_name == target_platform.package_name:
+        if (
+            target_platform.os != "windows"
+            and build_platform.package_name == target_platform.package_name
+        ):
             cmake_args.append("-DSORA_GEN_PYI=ON")
 
         sora_src_dir = os.path.join("src", "sora_sdk")
@@ -768,7 +801,16 @@ def main():
         mkdir_p(sora_build_dir)
         with cd(sora_build_dir):
             cmd(["cmake", BASE_DIR, *cmake_args])
-            cmd(["cmake", "--build", ".", "--config", configuration, f"-j{multiprocessing.cpu_count()}"])
+            cmd(
+                [
+                    "cmake",
+                    "--build",
+                    ".",
+                    "--config",
+                    configuration,
+                    f"-j{multiprocessing.cpu_count()}",
+                ]
+            )
 
         for file in os.listdir(sora_src_dir):
             if file.startswith("sora_sdk_ext.") and (
