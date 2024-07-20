@@ -20,12 +20,7 @@ from sora_sdk import (
 
 
 class Recvonly:
-    """
-    Sora からビデオと音声ストリームを受信するためのクラス。
-
-    このクラスは Sora への接続を設定し、音声とビデオトラックを受信し、
-    ビデオフレームの表示と音声の再生を行うメソッドを提供します。
-    """
+    """Sora からビデオと音声ストリームを受信するためのクラス。"""
 
     def __init__(
         self,
@@ -39,13 +34,15 @@ class Recvonly:
         """
         Recvonly インスタンスを初期化します。
 
-        引数:
-            signaling_urls (List[str]): Sora シグナリング URL のリスト。
-            channel_id (str): 接続するチャンネル ID。
-            metadata (Optional[Dict[str, Any]]): 接続のためのオプションのメタデータ。
-            openh264 (Optional[str]): OpenH264 ライブラリへのパス。
-            output_frequency (int): 音声出力周波数（Hz）。デフォルトは 16000。
-            output_channels (int): 音声出力チャンネル数。デフォルトは 1。
+        このクラスは Sora への接続を設定し、音声とビデオトラックを受信し、
+        ビデオフレームの表示と音声の再生を行うメソッドを提供します。
+
+        :param signaling_urls: Sora シグナリング URL のリスト
+        :param channel_id: 接続するチャンネル ID
+        :param metadata: 接続のためのオプションのメタデータ
+        :param openh264: OpenH264 ライブラリへのパス
+        :param output_frequency: 音声出力周波数（Hz）、デフォルトは 16000
+        :param output_channels: 音声出力チャンネル数、デフォルトは 1
         """
         self._output_frequency: int = output_frequency
         self._output_channels: int = output_channels
@@ -77,8 +74,7 @@ class Recvonly:
         """
         Sora への接続を確立します。
 
-        例外:
-            AssertionError: タイムアウト期間内に接続が確立できなかった場合。
+        :raises AssertionError: タイムアウト期間内に接続が確立できなかった場合
         """
         self._connection.connect()
 
@@ -94,8 +90,7 @@ class Recvonly:
         """
         オファー設定イベントを処理します。
 
-        引数:
-            raw_message (str): オファーを含む生のメッセージ。
+        :param raw_message: オファーを含む生のメッセージ
         """
         message: Dict[str, Any] = json.loads(raw_message)
         if message["type"] == "offer":
@@ -105,8 +100,7 @@ class Recvonly:
         """
         Sora からの通知イベントを処理します。
 
-        引数:
-            raw_message (str): 生の通知メッセージ。
+        :param raw_message: 生の通知メッセージ
         """
         message: Dict[str, Any] = json.loads(raw_message)
         if (
@@ -121,9 +115,8 @@ class Recvonly:
         """
         切断イベントを処理します。
 
-        引数:
-            error_code (SoraSignalingErrorCode): 切断のエラーコード。
-            message (str): 切断メッセージ。
+        :param error_code: 切断のエラーコード
+        :param message: 切断メッセージ
         """
         print(f"Sora から切断されました: error_code='{error_code}' message='{message}'")
         self._connected.clear()
@@ -133,8 +126,7 @@ class Recvonly:
         """
         受信したビデオフレームを処理します。
 
-        引数:
-            frame (SoraVideoFrame): 受信したビデオフレーム。
+        :param frame: 受信したビデオフレーム
         """
         self._q_out.put(frame)
 
@@ -142,8 +134,7 @@ class Recvonly:
         """
         新しいメディアトラックを処理します。
 
-        引数:
-            track (SoraMediaTrack): 新しいメディアトラック。
+        :param track: 新しいメディアトラック
         """
         if track.kind == "audio":
             self._audio_sink = SoraAudioSink(track, self._output_frequency, self._output_channels)
@@ -157,11 +148,10 @@ class Recvonly:
         """
         音声出力のためのコールバック関数。
 
-        引数:
-            outdata (ndarray): 音声データを格納する出力バッファ。
-            frames (int): 処理するフレーム数。
-            time (Any): タイミング情報（未使用）。
-            status (sounddevice.CallbackFlags): ステータスフラグ。
+        :param outdata: 音声データを格納する出力バッファ
+        :param frames: 処理するフレーム数
+        :param time: タイミング情報（未使用）
+        :param status: ストリームのステータス
         """
         if self._audio_sink is not None:
             success, data = self._audio_sink.read(frames)
@@ -173,9 +163,7 @@ class Recvonly:
                 print("音声データを取得できません")
 
     def run(self) -> None:
-        """
-        ビデオフレームの受信と表示、および音声の再生を行うメインループ。
-        """
+        """ビデオフレームの受信と表示、および音声の再生を行うメインループ。"""
         with sounddevice.OutputStream(
             channels=self._output_channels,
             callback=self._callback,
@@ -203,8 +191,7 @@ def recvonly() -> None:
     """
     環境変数を使用して Recvonly インスタンスを設定し実行します。
 
-    例外:
-        ValueError: 必要な環境変数が設定されていない場合。
+    :raises ValueError: 必要な環境変数が設定されていない場合
     """
     load_dotenv()
 
