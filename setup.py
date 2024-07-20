@@ -9,7 +9,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, BASE_DIR)
 
 
-from run import PlatformTarget, cd, get_build_platform  # noqa: E402
+from buildbase import PlatformTarget, cd, get_build_platform  # noqa: E402
 
 
 def run_setup(build_platform, target_platform):

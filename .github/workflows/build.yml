@@ -85,13 +85,13 @@ jobs:
 
       # Ubuntu 向け
       - run: |
-          rye run python run.py
+          rye run python run.py ${{ matrix.platform.name }}
           rye run python -m build
         if: ${{ matrix.platform.os == 'ubuntu' }}
 
       # macOS 向け
       - run: |
-          rye run python run.py
+          rye run python run.py ${{ matrix.platform.name }}
           rye run python -m build
         if: ${{ matrix.platform.os == 'macos' }}
         env:
@@ -131,7 +131,7 @@ jobs:
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
       - run: pip install -r requirements-dev.lock
-      - run: python run.py
+      - run: python run.py windows_x86_64
       - run: python -m build
 
       - name: Upload Artifact

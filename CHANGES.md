@@ -14,6 +14,8 @@
 - [CHANGE] Jetson 5 の対応を削除
   - 以降は support/jetson-jetpack-6 ブランチで Jetson 6 のみの対応となる
   - @melpon
+- [CHANGE] run.py の実行にターゲットの指定を必須にする
+  - @melpon
 - [UPDATE] 対応 Python バージョンを 3.9 以降に上げる
   - numpy 2.0.0 が Python 3.9 以降なので、それに合わせる
   - List / Dict から list / dict に変更する
@@ -26,6 +28,8 @@
   - @voluntas
 - [UPDATE] libwebrtc のバージョンを `m125.6422.2.5` に上げる
   - @voluntas
+- [UPDATE] run.py を buildbase 化する
+  - @melpon
 - [ADD] sora_sdk に型を付ける
   - @melpon
 - [ADD] SoraConnection に get_stats 関数を追加
