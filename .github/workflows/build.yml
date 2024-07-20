@@ -49,9 +49,6 @@ jobs:
             runs_on: ubuntu-22.04
             os: ubuntu
             auditwheel_plat: manylinux_2_35_x86_64
-          - name: ubuntu-20.04_armv8_jetson
-            runs_on: ubuntu-20.04
-            os: ubuntu
           - name: macos-13_arm64
             runs_on: macos-13
             os: macos
@@ -63,16 +60,6 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-        exclude:
-          # Jetson は Python 3.8 のみ作成する
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.9"
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.10"
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.11"
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.12"
     needs: [build_pyi] 
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 60
@@ -96,40 +83,11 @@ jobs:
       - run: rye pin cpython@${{ matrix.python_version }}
       - run: rye sync
 
-      # Jetson 以外の Ubuntu 向け
+      # Ubuntu 向け
       - run: |
           rye run python run.py
           rye run python -m build
-
-          # # auditwheel を適用する
-          # rm -rf patchelf
-          # mkdir -p patchelf
-          # pushd patchelf
-          #   # Ubuntu 20.04 の patchelf は auditwheel が要求するバージョンを満たしてないので
-          #   # リポジトリから新しいバイナリを取得する
-          #   curl -LO https://github.com/NixOS/patchelf/releases/download/0.14.3/patchelf-0.14.3-x86_64.tar.gz
-          #   tar -xf patchelf-0.14.3-x86_64.tar.gz
-          # popd
-          # # 共有ライブラリを除ける
-          # ./scripts/fix_shared_lib.sh src/sora_sdk/*.so > excludes
-          # PATH=`pwd`/patchelf/bin:$PATH rye run python -m auditwheel repair --plat ${{ matrix.platform.auditwheel_plat }} dist/*.whl `cat excludes`
-        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.name != 'ubuntu-20.04_armv8_jetson' }}
-
-      # Jetson 向け
-      - name: Set up QEMU
-        if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
-        uses: docker/setup-qemu-action@v3
-      - run: |
-          sudo apt-get install -y multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
-          rye run python run.py
-          # auditwheel も適用する
-          # ./scripts/package.ubuntu-20.04_armv8_jetson.sh --with-auditwheel
-          ./scripts/package.ubuntu-20.04_armv8_jetson.sh
-        if: ${{ matrix.platform.name == 'ubuntu-20.04_armv8_jetson' }}
-        env:
-          SORA_SDK_TARGET: ubuntu-20.04_armv8_jetson
+        if: ${{ matrix.platform.os == 'ubuntu' }}
 
       # macOS 向け
       - run: |
@@ -206,7 +164,6 @@ jobs:
       matrix:
         platform:
           - name: ubuntu-22.04_x86_64
-          - name: ubuntu-20.04_armv8_jetson
           - name: macos-13_arm64
           - name: windows-2019
         python_version:
@@ -215,15 +172,6 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-        exclude:
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.9"
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.10"
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.11"
-          - platform: { name: ubuntu-20.04_armv8_jetson }
-            python_version: "3.12"
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -280,9 +228,6 @@ jobs:
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with:
-          { "platform": "ubuntu-20.04_armv8_jetson", "python_version": "3.8" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.8" }
       - uses: ./.github/actions/download
