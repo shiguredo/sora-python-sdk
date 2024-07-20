@@ -46,10 +46,12 @@ jobs:
       matrix:
         platform:
           - name: ubuntu-22.04_x86_64
+            target: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
             os: ubuntu
             auditwheel_plat: manylinux_2_35_x86_64
           - name: macos-13_arm64
+            target: macos_arm64
             runs_on: macos-13
             os: macos
             python_host_platform: "macosx-13.0-arm64"
@@ -85,13 +87,13 @@ jobs:
 
       # Ubuntu 向け
       - run: |
-          rye run python run.py ${{ matrix.platform.name }}
+          rye run python run.py ${{ matrix.platform.target }}
           rye run python -m build
         if: ${{ matrix.platform.os == 'ubuntu' }}
 
       # macOS 向け
       - run: |
-          rye run python run.py ${{ matrix.platform.name }}
+          rye run python run.py ${{ matrix.platform.target }}
           rye run python -m build
         if: ${{ matrix.platform.os == 'macos' }}
         env:
