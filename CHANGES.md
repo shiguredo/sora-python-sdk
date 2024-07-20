@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] Jetson 5 の対応を削除
+  - 以降は support/jetson-jetpack-6 ブランチで Jetson 6 のみの対応となる
+  - @melpon
 - [UPDATE] 対応 Python バージョンを 3.9 以降に上げる
   - numpy 2.0.0 が Python 3.9 以降なので、それに合わせる
   - List / Dict から list / dict に変更する
@@ -32,6 +35,8 @@
 - [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、
   read の実行タイミングによってはクラッシュするようになったので修正する
   - @enm10k
+- [FIX] MSVC の内部コンパイラエラーによって Windows で nanobind のビルドが出来ないのを修正する
+  - @melpon
 
 ## 2024.2.0
 
