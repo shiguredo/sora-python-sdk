@@ -16,9 +16,7 @@ from sora_sdk import Sora, SoraSignalingErrorCode, SoraVideoSource
 
 
 class LogoStreamer:
-    """
-    顔検出を行い、検出された顔にロゴを重ねて Sora に送信するクラス。
-    """
+    """顔検出を行い、検出された顔にロゴを重ねて Sora に送信するクラス。"""
 
     def __init__(
         self,
@@ -35,16 +33,18 @@ class LogoStreamer:
         """
         LogoStreamer インスタンスを初期化します。
 
-        引数:
-            signaling_urls (list[str]): Sora シグナリング URL のリスト。
-            role (str): 接続ロール（"sendonly" など）。
-            channel_id (str): 接続するチャンネル ID。
-            metadata (Optional[dict[str, Any]]): 接続のためのオプションのメタデータ。
-            camera_id (int): 使用するカメラの ID。
-            video_width (Optional[int]): ビデオの幅。
-            video_height (Optional[int]): ビデオの高さ。
-            video_fps (Optional[int]): ビデオのフレームレート。
-            video_fourcc (Optional[str]): ビデオの FOURCC コード。
+        このクラスは Sora への接続を設定し、カメラからのビデオフレームを処理し、
+        顔検出を行い、検出された顔にロゴを重ねて Sora に送信する機能を提供します。
+
+        :param signaling_urls: Sora シグナリング URL のリスト
+        :param role: 接続ロール（"sendonly" など）
+        :param channel_id: 接続するチャンネル ID
+        :param metadata: 接続のためのオプションのメタデータ
+        :param camera_id: 使用するカメラの ID
+        :param video_width: ビデオの幅
+        :param video_height: ビデオの高さ
+        :param video_fps: ビデオのフレームレート
+        :param video_fourcc: ビデオの FOURCC コード
         """
         self.mp_face_detection = mp.solutions.face_detection
 
@@ -85,12 +85,11 @@ class LogoStreamer:
         """
         ビデオキャプチャの設定を行います。
 
-        引数:
-            camera_id (int): 使用するカメラの ID。
-            video_width (Optional[int]): ビデオの幅。
-            video_height (Optional[int]): ビデオの高さ。
-            video_fps (Optional[int]): ビデオのフレームレート。
-            video_fourcc (Optional[str]): ビデオの FOURCC コード。
+        :param camera_id: 使用するカメラの ID
+        :param video_width: ビデオの幅
+        :param video_height: ビデオの高さ
+        :param video_fps: ビデオのフレームレート
+        :param video_fourcc: ビデオの FOURCC コード
         """
         if platform.system() == "Windows":
             # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
@@ -123,8 +122,7 @@ class LogoStreamer:
         """
         Sora への接続を確立します。
 
-        例外:
-            AssertionError: タイムアウト期間内に接続が確立できなかった場合。
+        :raises AssertionError: タイムアウト期間内に接続が確立できなかった場合
         """
         self._connection.connect()
 
@@ -140,9 +138,8 @@ class LogoStreamer:
         """
         切断イベントを処理します。
 
-        引数:
-            error_code (SoraSignalingErrorCode): 切断のエラーコード。
-            message (str): 切断メッセージ。
+        :param error_code: 切断のエラーコード
+        :param message: 切断メッセージ
         """
         print(f"Sora から切断されました: error_code='{error_code}' message='{message}'")
         self._connected.clear()
@@ -152,8 +149,7 @@ class LogoStreamer:
         """
         オファー設定イベントを処理します。
 
-        引数:
-            raw_message (str): オファーを含む生のメッセージ。
+        :param raw_message: オファーを含む生のメッセージ
         """
         message = json.loads(raw_message)
         if message["type"] == "offer":
@@ -163,8 +159,7 @@ class LogoStreamer:
         """
         Sora からの通知イベントを処理します。
 
-        引数:
-            raw_message (str): 生の通知メッセージ。
+        :param raw_message: 生の通知メッセージ
         """
         message = json.loads(raw_message)
         if (
@@ -176,9 +171,7 @@ class LogoStreamer:
             self._connected.set()
 
     def run(self) -> None:
-        """
-        ビデオフレームの処理と送信を行うメインループ。
-        """
+        """ビデオフレームの処理と送信を行うメインループ。"""
         self.connect()
         try:
             # 顔検出を用意する
@@ -204,13 +197,10 @@ class LogoStreamer:
         """
         1フレームの処理を行います。
 
-        引数:
-            face_detection (mp.solutions.face_detection.FaceDetection): 顔検出オブジェクト。
-            angle (int): ロゴの回転角度。
-            frame (MatLike): 処理するフレーム。
-
-        戻り値:
-            int: 更新されたロゴの回転角度。
+        :param face_detection: 顔検出オブジェクト
+        :param angle: ロゴの回転角度
+        :param frame: 処理するフレーム
+        :return: 更新されたロゴの回転角度
         """
         # 高速化の呪文
         frame.flags.writeable = False
@@ -270,8 +260,7 @@ def hideface_sender() -> None:
     """
     環境変数を使用して LogoStreamer インスタンスを設定し実行します。
 
-    例外:
-        ValueError: 必要な環境変数が設定されていない場合。
+    :raises ValueError: 必要な環境変数が設定されていない場合
     """
     # .env ファイルを読み込む
     load_dotenv()
