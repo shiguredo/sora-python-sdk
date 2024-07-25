@@ -16,7 +16,6 @@ jobs:
     runs-on: ${{ matrix.os}}
     timeout-minutes: 10
     env:
-      SORA_SDK_VERSION: 2024.3.0.dev5
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
@@ -35,7 +34,7 @@ jobs:
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
         working-directory: ./tests
       - run: rye pin ${{ matrix.python_version }}
-      - run: rye add sora_sdk --pre ${{ env.SORA_SDK_VERSION }}
+      - run: rye add sora_sdk --pre
       - run: rye sync
       # - run: rye test
       - run: rye run pytest tests/test_sendonly.py -s
@@ -53,7 +52,6 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 10
     env:
-      SORA_SDK_VERSION: 2024.3.0.dev5
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
@@ -61,7 +59,7 @@ jobs:
       - uses: eifinger/setup-rye@v4
       - uses: actions/checkout@v4
       - run: rye pin ${{ matrix.python_version }}
-      - run: rye add sora_sdk --pre ${{ env.SORA_SDK_VERSION }}
+      - run: rye add sora_sdk --pre
       - run: rye sync
       # - run: rye test
       - run: rye run pytest tests/test_macos_h265.py -s

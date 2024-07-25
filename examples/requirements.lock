@@ -2,7 +2,7 @@
 # use `rye lock` or `rye sync` to update this lockfile
 #
 # last locked with the following flags:
-#   pre: false
+#   pre: true
 #   features: []
 #   all-features: false
 #   with-sources: false
@@ -92,7 +92,7 @@ scipy==1.10.1
     # via jaxlib
 six==1.16.0
     # via python-dateutil
-sora-sdk==2024.3.0.dev3
+sora-sdk==2024.3.0.dev5
     # via sora-sdk-samples
 sounddevice==0.4.7
     # via mediapipe
