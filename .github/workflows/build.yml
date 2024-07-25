@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches-ignore:
-      - feature/test
+      - feature/e2e-test
     paths-ignore:
       - "doc/**"
       - "**.md"
