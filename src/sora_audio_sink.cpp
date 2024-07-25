@@ -71,8 +71,10 @@ void SoraAudioSinkImpl::OnData(
         static_cast<size_t>(samples_per_channel_int);
     audio_frame_->sample_rate_hz_ = output_sample_rate_;
     audio_frame_->num_channels_ = number_of_channels;
-    audio_frame_->channel_layout_ =
-        webrtc::GuessChannelLayout(number_of_channels);
+    // channel_layout_ は private になったので一旦コメントアウトする
+    // https://webrtc-review.googlesource.com/c/src/+/349322
+    // audio_frame_->channel_layout_ =
+    //     webrtc::GuessChannelLayout(number_of_channels);
   }
   // Remix して channel 数を揃える
   bool need_remix =
