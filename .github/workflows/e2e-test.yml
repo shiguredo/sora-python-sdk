@@ -22,9 +22,10 @@ jobs:
     steps:
       - uses: eifinger/setup-rye@v4
       - uses: actions/checkout@v4
+      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
-          sudo apt-get -y install libva-dev libdrm-dev
+          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
       - name: Download openh264
         run: |
           curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-linux64.7.so.bz2
