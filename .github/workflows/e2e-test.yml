@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
@@ -33,7 +33,7 @@ jobs:
         working-directory: ./tests
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
-      - run: rye run python run.py
+      - run: rye run python run.py ubuntu-22.04_x86_64
       # - run: rye test
       - run: rye run pytest tests/test_sendonly.py -s
       - run: rye run pytest tests/test_recvonly.py -s
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
-      - run: rye run python run.py
+      - run: rye run python run.py macos_arm64
       # - run: rye test
       - run: rye run pytest tests/test_macos_h265.py -s
 
