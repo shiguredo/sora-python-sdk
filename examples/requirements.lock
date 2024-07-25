@@ -7,6 +7,7 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
+#   universal: false
 
 -e file:.
 absl-py==1.4.0
@@ -19,31 +20,59 @@ contourpy==1.1.0
     # via matplotlib
 cycler==0.11.0
     # via matplotlib
+filelock==3.15.4
+    # via torch
 flatbuffers==23.5.26
     # via mediapipe
 fonttools==4.40.0
     # via matplotlib
+fsspec==2024.6.1
+    # via torch
+importlib-metadata==8.0.0
+    # via jax
 importlib-resources==5.12.0
     # via matplotlib
+jax==0.4.13
+    # via mediapipe
+jaxlib==0.4.13
+    # via mediapipe
+jinja2==3.1.4
+    # via torch
 kiwisolver==1.4.4
     # via matplotlib
+markupsafe==2.1.5
+    # via jinja2
 matplotlib==3.7.2
     # via mediapipe
-mediapipe==0.10.1
+mediapipe==0.10.11
     # via sora-sdk-samples
+ml-dtypes==0.2.0
+    # via jax
+    # via jaxlib
+mpmath==1.3.0
+    # via sympy
+networkx==3.1
+    # via torch
 numpy==1.24.4
     # via contourpy
+    # via jax
+    # via jaxlib
     # via matplotlib
     # via mediapipe
+    # via ml-dtypes
     # via opencv-contrib-python
     # via opencv-python
     # via opencv-python-headless
+    # via opt-einsum
+    # via scipy
 opencv-contrib-python==4.8.0.74
     # via mediapipe
-opencv-python==4.9.0.80
+opencv-python==4.10.0.84
     # via sora-sdk-samples
-opencv-python-headless==4.9.0.80
+opencv-python-headless==4.10.0.84
     # via sora-sdk-samples
+opt-einsum==3.3.0
+    # via jax
 packaging==23.1
     # via matplotlib
 pillow==10.0.0
@@ -58,12 +87,22 @@ python-dateutil==2.8.2
     # via matplotlib
 python-dotenv==1.0.1
     # via sora-sdk-samples
+scipy==1.10.1
+    # via jax
+    # via jaxlib
 six==1.16.0
     # via python-dateutil
 sora-sdk==2024.3.0.dev3
     # via sora-sdk-samples
-sounddevice==0.4.6
+sounddevice==0.4.7
     # via mediapipe
     # via sora-sdk-samples
+sympy==1.13.0
+    # via torch
+torch==2.3.1
+    # via mediapipe
+typing-extensions==4.12.2
+    # via torch
 zipp==3.17.0
+    # via importlib-metadata
     # via importlib-resources

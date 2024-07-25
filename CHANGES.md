@@ -16,22 +16,38 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.5` に上げる
+- [CHANGE] Jetson 5 の対応を削除
+  - 以降は support/jetson-jetpack-6 ブランチで Jetson 6 のみの対応となる
+  - @melpon
+- [CHANGE] run.py の実行にターゲットの指定を必須にする
+  - @melpon
+- [UPDATE] 対応 Python バージョンを 3.9 以降に上げる
+  - numpy 2.0.0 が Python 3.9 以降なので、それに合わせる
+  - List / Dict から list / dict に変更する
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.8` に上げる
   - @voluntas
 - [UPDATE] nanobind を `2.0.0` に上げて固定する
   - @melpon
 - [UPDATE] cmake のバージョンを `3.29.6` に上げる
   - @voluntas
-- [UPDATE] libwebrtc のバージョンを `m125.6422.2.5` に上げる
+- [UPDATE] libwebrtc のバージョンを `m127.6533.1.1` に上げる
   - @voluntas
+- [UPDATE] run.py を buildbase 化する
+  - @melpon
 - [ADD] sora_sdk に型を付ける
+  - @melpon
+- [ADD] Sora C++ SDK と libwebrtc のローカルビルドを利用可能にする
   - @melpon
 - [ADD] SoraConnection に get_stats 関数を追加
   - @melpon
 - [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
   - @enm10k
-- [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、 read の実行タイミングによってはクラッシュするようになったので修正する
+- [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、
+  read の実行タイミングによってはクラッシュするようになったので修正する
   - @enm10k
+- [FIX] MSVC の内部コンパイラエラーによって Windows で nanobind のビルドが出来ないのを修正する
+  - @melpon
 
 ## 2024.2.0
 
