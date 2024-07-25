@@ -273,7 +273,7 @@ def main():
                 "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
                 f"-DCMAKE_SYSROOT={sysroot}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
-                f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.8'))}",
+                f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.9'))}",
                 "-DNB_SUFFIX=.cpython-38-aarch64-linux-gnu.so",
             ]
 
