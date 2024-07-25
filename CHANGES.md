@@ -20,13 +20,13 @@
   - numpy 2.0.0 が Python 3.9 以降なので、それに合わせる
   - List / Dict から list / dict に変更する
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.5` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.7` に上げる
   - @voluntas
 - [UPDATE] nanobind を `2.0.0` に上げて固定する
   - @melpon
 - [UPDATE] cmake のバージョンを `3.29.6` に上げる
   - @voluntas
-- [UPDATE] libwebrtc のバージョンを `m125.6422.2.5` に上げる
+- [UPDATE] libwebrtc のバージョンを `m127.6533.1.1` に上げる
   - @voluntas
 - [UPDATE] run.py を buildbase 化する
   - @melpon
