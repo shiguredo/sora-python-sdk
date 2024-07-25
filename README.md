@@ -11,11 +11,11 @@ Sora Python SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp/) の Python ク
 
 We will not respond to PRs or issues that have not been discussed on Discord. Also, Discord is only available in Japanese.
 
-Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use.
+Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before use.
 
 ## 時雨堂のオープンソースソフトウェアについて
 
-利用前に https://github.com/shiguredo/oss をお読みください。
+利用前に <https://github.com/shiguredo/oss> をお読みください。
 
 ## Sora Python SDK について
 
@@ -52,32 +52,33 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ### pip
 
-```console
-$ pip install sora_sdk
+```bash
+pip install sora_sdk
 ```
 
 ### Rye
 
 [Rye](https://rye-up.com/)
 
-```
-$ rye add sora_sdk
-$ rye sync
+```bash
+rye add sora_sdk
+rye sync
 ```
 
 ## システム条件
 
 - WebRTC SFU Sora 2023.2.0 以降
-- Python 3.8 以上
+- Python 3.9 以上
 
 ## 対応プラットフォーム
 
 - Windows 11 x86_64 以降
 - macOS 13 arm64 以降
+- Ubuntu 24.04 x86_64
 - Ubuntu 22.04 x86_64
-- Ubuntu 20.04 arm64
-  - Python 3.8 のみ対応
-  - NVIDIA Jetson JetPack SDK 5.1.2
+- Ubuntu 22.04 arm64
+  - Python 3.10 のみ対応
+  - NVIDIA Jetson JetPack SDK 6
 
 ## 対応機能
 
@@ -116,7 +117,7 @@ $ rye sync
 
 最新の状況などは Discord で共有しています。質問や相談も Discord でのみ受け付けています。
 
-https://discord.gg/shiguredo
+<https://discord.gg/shiguredo>
 
 ### バグ報告
 
@@ -148,7 +149,7 @@ limitations under the License.
 
 ## OpenH264
 
-https://www.openh264.org/BINARY_LICENSE.txt
+<https://www.openh264.org/BINARY_LICENSE.txt>
 
 ```
 "OpenH264 Video Codec provided by Cisco Systems, Inc."
