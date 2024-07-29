@@ -25,16 +25,20 @@
   - numpy 2.0.0 が Python 3.9 以降なので、それに合わせる
   - List / Dict から list / dict に変更する
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.8` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0` に上げる
   - @voluntas
 - [UPDATE] nanobind を `2.0.0` に上げて固定する
   - @melpon
 - [UPDATE] cmake のバージョンを `3.29.6` に上げる
   - @voluntas
 - [UPDATE] libwebrtc のバージョンを `m127.6533.1.1` に上げる
+  - rtc::TaskQueue が廃止され、webrtc::TaskQueueBase を直接利用する方式変更に追従した
   - @voluntas
 - [UPDATE] run.py を buildbase 化する
   - @melpon
+- [UPDATE] Github Actions のビルドで windows-2022 を利用する
+  - Sora CPP SDK 2024.7.0 (libwebrtc m127) から windows-2022 でビルドする
+  - @miosakuma
 - [ADD] sora_sdk に型を付ける
   - @melpon
 - [ADD] Sora C++ SDK と libwebrtc のローカルビルドを利用可能にする
@@ -66,19 +70,15 @@
   - @voluntas
 - [UPDATE] ruff の最小を ``0.3.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0-canary.2` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
-  - WEBRTC_BUILD_VERSION を `m125.6422.2.1` に上げる
+  - WEBRTC_BUILD_VERSION を `m122.6261.1.0` に上げる
     - Ubuntu のビルドを通すために、 \_\_assertion_handler というファイルをコピーする処理を追加した
-    - rtc::TaskQueue が廃止され、webrtc::TaskQueueBase を直接利用する方式変更に追従した
   - BOOST_VERSION を `1.85.0` に上げる
   - @enm10k @melpon
 - [UPDATE] Intel VPL を利用した H.265 に対応
   - Sora C++ SDK のバージョンを `2024.6.0` に上げることで対応
   - @enm10k
-- [UPDATE] Github Actions のビルドで windows-2022 を利用する
-  - Sora CPP SDK 2024.7.0-canary (libwebrtc m125) から windows-2022 でビルドする
-  - @miosakuma
 - [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
   - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった
   - そのために pyproject.toml の `build-system.requires` に wheel と setuptools を指定する

@@ -59,7 +59,6 @@ jobs:
             python_host_platform: "macosx-13.0-arm64"
             archflags: "-arch arm64"
         python_version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
@@ -116,7 +115,6 @@ jobs:
       fail-fast: false
       matrix:
         python_version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
@@ -171,7 +169,6 @@ jobs:
           - name: macos-13_arm64
           - name: windows-2019
         python_version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
@@ -189,7 +186,7 @@ jobs:
           fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.8' }}
+        if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.9' }}
 
       # テスト用
       # - name: Publish package to TestPyPI
@@ -223,8 +220,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.8" }
-      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.9" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.10" }
@@ -233,8 +228,6 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.8" }
-      - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.9" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.10" }
@@ -242,8 +235,6 @@ jobs:
         with: { "platform": "macos-13_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with: { "platform": "windows-2019", "python_version": "3.8" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2019", "python_version": "3.9" }
       - uses: ./.github/actions/download
