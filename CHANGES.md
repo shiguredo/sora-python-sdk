@@ -32,7 +32,7 @@
 - [UPDATE] run.py を buildbase 化する
   - @melpon
 - [UPDATE] Github Actions のビルドで windows-2022 を利用する
-  - Sora CPP SDK 2024.7.0-canary (libwebrtc m125) から windows-2022 でビルドする
+  - Sora CPP SDK 2024.7.0 (libwebrtc m127) から windows-2022 でビルドする
   - @miosakuma
 - [ADD] sora_sdk に型を付ける
   - @melpon
