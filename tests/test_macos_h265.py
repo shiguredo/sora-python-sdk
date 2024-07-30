@@ -87,6 +87,11 @@ class Sendonly:
         # タイムアウト指定
         self._video_input_thread.join(timeout=10)
 
+    def get_stats(self):
+        raw_stats = self._connection.get_stats()
+        stats = json.loads(raw_stats)
+        return stats
+
 
 def test_sendonly(setup):
     signaling_urls = setup.get("signaling_urls")
@@ -99,5 +104,18 @@ def test_sendonly(setup):
     sendonly.connect()
 
     time.sleep(5)
+
+    stats = sendonly.get_stats()
+
+    # codec が無かったら StopIteration 例外が上がる
+    codec_stats = next(s for s in stats if s.get("type") == "codec")
+    # H.265 が採用されているかどうか確認する
+    assert codec_stats["mimeType"] == "video/H265"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in stats if s.get("type") == "outbound-rtp")
+    assert outbound_rtp_stats["encoderImplementation"] == "VideoToolbox"
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
 
     sendonly.disconnect()
