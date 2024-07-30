@@ -14,12 +14,12 @@ auditwheel==6.0.0
 build==1.2.1
 exceptiongroup==1.2.2
     # via pytest
-importlib-metadata==8.0.0
+importlib-metadata==8.2.0
     # via build
 iniconfig==2.0.0
     # via pytest
 nanobind==2.0.0
-numpy==2.0.0
+numpy==2.0.1
     # via opencv-python
 opencv-python==4.10.0.84
 packaging==24.1
@@ -32,10 +32,10 @@ pyelftools==0.31
     # via auditwheel
 pyproject-hooks==1.1.0
     # via build
-pytest==8.2.2
+pytest==8.3.2
 python-dotenv==1.0.1
-ruff==0.5.1
-setuptools==70.3.0
+ruff==0.5.5
+setuptools==72.1.0
 tomli==2.0.1
     # via build
     # via pytest
