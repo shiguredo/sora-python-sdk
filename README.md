@@ -28,6 +28,10 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - Windows / macOS / Linux (Ubuntu) プラットフォームに対応
 - NVIDIA Jetson に対応
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
+  - Intel VPL (AV1 / H.264 / H.265)
+  - Apple Video Toolbox (H.264 / H.265)
+  - NVIDIA Video Codec SDK (VP9 / H.264 / H.265)
+  - NVIDIA Jetson JetPack SDK (H.264 / H.265 / AV1)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
 - 物体検出などの入力に Sora 経由で受信した映像が利用できる
 - 音声認識などの入力に Sora 経由で受信した音声を利用できる
@@ -65,6 +69,11 @@ rye add sora_sdk
 rye sync
 ```
 
+### NVIDIA Jetson 向けパッケージ
+
+PyPI 経由ではインストールできません。
+パッケージバイナリを配布しておりますので、そちらをご利用ください。
+
 ## システム条件
 
 - WebRTC SFU Sora 2023.2.0 以降
@@ -73,12 +82,22 @@ rye sync
 ## 対応プラットフォーム
 
 - Windows 11 x86_64 以降
-- macOS 13 arm64 以降
+- macOS 14 arm64 以降
 - Ubuntu 24.04 x86_64
 - Ubuntu 22.04 x86_64
-- Ubuntu 22.04 arm64
+- Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6)
   - Python 3.10 のみ対応
   - NVIDIA Jetson JetPack SDK 6
+
+### Ubuntu LTS への対応
+
+最新の 2 バージョンのみをサポートします。
+それよりの過去の Ubuntu に付いては優先実装で対応できますので、ご相談ください。
+
+- Ubuntu 24.04 LTS
+  - Ubuntu 28.04 リリース、3 ヶ月後にサポート終了
+- Ubuntu 22.04 LTS
+  - Ubuntu 26.04 リリース、3 ヶ月後にサポート終了
 
 ## 対応機能
 
@@ -102,10 +121,10 @@ rye sync
 
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
 
-- Ubuntu 24.04 x86_64
+- Windows 11 arm64
+- Ubuntu 24.04 arm64
 - Ubuntu 22.04 arm64
-  - Python 3.10
-  - NVIDIA Jetson JetPack SDK 6.0
+- Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
 
 ## サポートについて
 
@@ -127,7 +146,7 @@ Discord へお願いします。
 
 Apache License 2.0
 
-```
+```text
 Copyright 2023-2024, tnoho (Original Author)
 Copyright 2023-2024, Wandbox LLC (Original Author)
 Copyright 2023-2024, Shiguredo Inc.
@@ -151,6 +170,6 @@ limitations under the License.
 
 <https://www.openh264.org/BINARY_LICENSE.txt>
 
-```
+```text
 "OpenH264 Video Codec provided by Cisco Systems, Inc."
 ```
