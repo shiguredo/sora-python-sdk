@@ -20,7 +20,6 @@ jobs:
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
-      - uses: eifinger/setup-rye@v4
       - uses: actions/checkout@v4
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
@@ -33,6 +32,7 @@ jobs:
           mv libopenh264-2.4.1-linux64.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
         working-directory: ./tests
+      - uses: eifinger/setup-rye@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py ${{ matrix.os }}_x86_64
@@ -63,6 +63,8 @@ jobs:
       - run: rye run python run.py macos_arm64
       # - run: rye test
       - run: rye run pytest tests/test_macos.py -s
+
+  # TODO: e2e_windows_test を追加する
 
   slack_notify_succeeded:
     needs: [e2e_ubuntu_test, e2e_macos_test]
