@@ -17,17 +17,15 @@ jobs:
   # １箇所で pyi を生成してアーティファクトにアップロードして、
   # それを各ビルドで利用する形にする。
   build_pyi:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - run: |
           sudo apt-get -y install libva-dev libdrm-dev
-      - uses: eifinger/setup-rye@v3
-        with:
-          version: 'latest'
+      - uses: eifinger/setup-rye@v4
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
-      - run: rye pin cpython@3.12
+      - run: rye pin 3.12
       - run: rye sync
       - name: Generate pyi
         run: |
@@ -76,11 +74,9 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libva-dev libdrm-dev
         if: ${{ matrix.platform.os == 'ubuntu' }}
-      - uses: eifinger/setup-rye@v3
-        with:
-          version: 'latest'
+      - uses: eifinger/setup-rye@v4
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
-      - run: rye pin cpython@${{ matrix.python_version }}
+      - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
 
       # Ubuntu 向け
@@ -125,12 +121,16 @@ jobs:
         with:
           name: sora_sdk
           path: sora_sdk/
+
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - run: pip install -r requirements-dev.lock
-      - run: python run.py windows_x86_64
-      - run: python -m build
+      - uses: eifinger/setup-rye@v4
+      - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
+      - run: rye pin ${{ matrix.python_version }}
+      - run: rye sync
+      - run: rye run python run.py windows_x86_64
+      - run: rye run python -m build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
