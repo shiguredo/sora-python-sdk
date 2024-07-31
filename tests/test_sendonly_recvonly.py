@@ -2,7 +2,6 @@ import sys
 import time
 import uuid
 
-import pytest
 from client import Recvonly, Sendonly
 
 
@@ -112,13 +111,13 @@ def test_sendonly_recvonly_vp9(setup):
     recvonly.disconnect()
 
 
-@pytest.mark.skip(reason="なんか挙動が怪しい")
+# @pytest.mark.skip(reason="なんか挙動が怪しい")
 def test_sendonly_recvonly_av1(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
-    channel_id = f"{channel_id_prefix}_{__name__}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
         signaling_urls,
@@ -158,7 +157,7 @@ def test_sendonly_recvonly_av1(setup):
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
-    # assert inbound_rtp_stats["decoderImplementation"] == "dav1d"
+    assert inbound_rtp_stats["decoderImplementation"] == "dav1d"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
 
