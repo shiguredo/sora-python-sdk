@@ -2,7 +2,6 @@ import sys
 import time
 import uuid
 
-import pytest
 from client import Recvonly, Sendonly
 
 """
@@ -77,13 +76,12 @@ def test_macos_h265_sendonly(setup):
     sendonly.disconnect()
 
 
-@pytest.mark.skip(reason="なんか挙動が怪しい")
 def test_macos_h264_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
-    channel_id = f"{channel_id_prefix}_{__name__}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
         signaling_urls,
@@ -131,13 +129,12 @@ def test_macos_h264_sendonly_recvonly(setup):
     recvonly.disconnect()
 
 
-@pytest.mark.skip(reason="なんか挙動が怪しい")
 def test_macos_h265_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
-    channel_id = f"{channel_id_prefix}_{__name__}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
         signaling_urls,

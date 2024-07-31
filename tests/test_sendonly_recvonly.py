@@ -111,7 +111,6 @@ def test_sendonly_recvonly_vp9(setup):
     recvonly.disconnect()
 
 
-# @pytest.mark.skip(reason="なんか挙動が怪しい")
 def test_sendonly_recvonly_av1(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
