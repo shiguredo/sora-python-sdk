@@ -21,8 +21,9 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
-          sudo apt-get -y install libva-dev libdrm-dev
+          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
       - uses: eifinger/setup-rye@v4
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye pin 3.12
@@ -81,9 +82,10 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
+      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
-          sudo apt-get -y install libva-dev libdrm-dev
+          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
         if: ${{ matrix.platform.os == 'ubuntu' }}
       - uses: eifinger/setup-rye@v4
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
