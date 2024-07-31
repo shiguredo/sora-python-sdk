@@ -63,6 +63,10 @@ class Sendonly:
 
         return self
 
+    @property
+    def connected(self):
+        return self._connected.is_set()
+
     def _video_input_loop(self):
         while not self._closed:
             time.sleep(1.0 / 30)
@@ -140,6 +144,10 @@ class Recvonly:
         assert self._connected.wait(30)
 
         return self
+
+    @property
+    def connected(self):
+        return self._connected.is_set()
 
     def _on_track(self, track: SoraMediaTrack):
         if track.kind == "audio":
