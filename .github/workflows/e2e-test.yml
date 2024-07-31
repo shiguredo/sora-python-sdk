@@ -94,6 +94,7 @@ jobs:
       - uses: eifinger/setup-rye@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
+      - run: rye run python run.py windows_x86_64
 
   slack_notify_succeeded:
     needs: [e2e_ubuntu_test, e2e_macos_test]
