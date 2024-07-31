@@ -2,7 +2,7 @@ import json
 import threading
 import time
 from threading import Event
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from sora_sdk import Sora, SoraConnection, SoraMediaTrack, SoraVideoSource
@@ -18,6 +18,7 @@ class Sendonly:
         video: bool = True,
         audio_codec_type: str = "OPUS",
         video_codec_type: str = "VP8",
+        openh264_path: Optional[str] = None,
     ):
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
@@ -32,7 +33,7 @@ class Sendonly:
         self._video_height: int = 480
         self._video_width: int = 640
 
-        self._sora: Sora = Sora()
+        self._sora: Sora = Sora(openh264=openh264_path)
         self._connected = Event()
 
         self._video_source: SoraVideoSource = self._sora.create_video_source()
