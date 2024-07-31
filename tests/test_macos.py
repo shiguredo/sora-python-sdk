@@ -106,7 +106,7 @@ def test_macos_h264_sendonly_recvonly(setup):
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     # H.264 が採用されているかどうか確認する
-    assert sendonly_codec_stats["mimeType"] == "video/AV1"
+    assert sendonly_codec_stats["mimeType"] == "video/H264"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
@@ -117,7 +117,7 @@ def test_macos_h264_sendonly_recvonly(setup):
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
     # H.264 が採用されているかどうか確認する
-    assert recvonly_codec_stats["mimeType"] == "video/AV1"
+    assert recvonly_codec_stats["mimeType"] == "video/H264"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
@@ -159,7 +159,7 @@ def test_macos_h265_sendonly_recvonly(setup):
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     # H.264 が採用されているかどうか確認する
-    assert sendonly_codec_stats["mimeType"] == "video/AV1"
+    assert sendonly_codec_stats["mimeType"] == "video/H265"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
@@ -170,7 +170,7 @@ def test_macos_h265_sendonly_recvonly(setup):
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
     # H.264 が採用されているかどうか確認する
-    assert recvonly_codec_stats["mimeType"] == "video/AV1"
+    assert recvonly_codec_stats["mimeType"] == "video/H265"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
