@@ -182,7 +182,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - name: ubuntu-24.04_x86_64
+          # - name: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
           - name: macos-14_arm64
           - name: macos-13_arm64

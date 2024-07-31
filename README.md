@@ -26,7 +26,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
 - Windows / macOS / Linux (Ubuntu) プラットフォームに対応
-- NVIDIA Jetson に対応
+- NVIDIA Jetson JetPack SDK に対応
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
   - Intel VPL (AV1 / H.264 / H.265)
   - Apple Video Toolbox (H.264 / H.265)
@@ -95,9 +95,9 @@ PyPI 経由ではインストールできません。
 それよりの過去の Ubuntu に付いては優先実装で対応できますので、ご相談ください。
 
 - Ubuntu 24.04 LTS
-  - Ubuntu 28.04 リリース、3 ヶ月後にサポート終了
+  - Ubuntu 28.04 リリース後、6 ヶ月以内に通常サポート終了
 - Ubuntu 22.04 LTS
-  - Ubuntu 26.04 リリース、3 ヶ月後にサポート終了
+  - Ubuntu 26.04 リリース後、6 ヶ月以内に通常サポート終了
 
 ## 対応機能
 
@@ -125,6 +125,9 @@ PyPI 経由ではインストールできません。
 - Ubuntu 24.04 arm64
 - Ubuntu 22.04 arm64
 - Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
+- AMD Video Core Next (VCN) 対応
+  - VP9 / AV1 / H.264 / H.265
+- Python 3.9 以前への対応
 
 ## サポートについて
 

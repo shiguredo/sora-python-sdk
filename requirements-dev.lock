@@ -14,8 +14,6 @@ auditwheel==6.0.0
 build==1.2.1
 exceptiongroup==1.2.2
     # via pytest
-importlib-metadata==8.2.0
-    # via build
 iniconfig==2.0.0
     # via pytest
 nanobind==2.0.0
@@ -41,5 +39,3 @@ tomli==2.0.1
     # via pytest
 typing-extensions==4.12.2
 wheel==0.43.0
-zipp==3.19.2
-    # via importlib-metadata
