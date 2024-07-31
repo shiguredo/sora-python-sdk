@@ -31,7 +31,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
   - Intel VPL (AV1 / H.264 / H.265)
   - Apple Video Toolbox (H.264 / H.265)
   - NVIDIA Video Codec SDK (VP9 / H.264 / H.265)
-  - NVIDIA Jetson JetPack SDK (H.264 / H.265 / AV1)
+  - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
 - 物体検出などの入力に Sora 経由で受信した映像が利用できる
 - 音声認識などの入力に Sora 経由で受信した音声を利用できる
@@ -81,23 +81,14 @@ PyPI 経由ではインストールできません。
 
 ## 対応プラットフォーム
 
-- Windows 11 x86_64 以降
-- macOS 14 arm64 以降
-- Ubuntu 24.04 x86_64
-- Ubuntu 22.04 x86_64
-- Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6)
-  - Python 3.10 のみ対応
-  - NVIDIA Jetson JetPack SDK 6
-
-### Ubuntu LTS への対応
-
-最新の 2 バージョンのみをサポートします。
-それよりの過去の Ubuntu に付いては優先実装で対応できますので、ご相談ください。
-
-- Ubuntu 24.04 LTS
-  - Ubuntu 28.04 リリース後、6 ヶ月以内に通常サポート終了
-- Ubuntu 22.04 LTS
-  - Ubuntu 26.04 リリース後、6 ヶ月以内に通常サポート終了
+- Windows 11 x86_64
+- Windows Server 2022 x86_64
+- macOS Sonoma 13 arm64
+- macOS Ventura 14 arm64
+- Ubuntu 24.04 LTS x86_64
+- Ubuntu 22.04 LTS x86_64
+- Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
+  - PyPI からではなくパッケージファイルを利用してください
 
 ## 対応機能
 
