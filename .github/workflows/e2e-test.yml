@@ -55,13 +55,14 @@ jobs:
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
-      - uses: eifinger/setup-rye@v4
       - uses: actions/checkout@v4
+      - uses: eifinger/setup-rye@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py macos_arm64
       # - run: rye test
       - run: rye run pytest tests/test_macos.py -s
+      - run: rye run pytest tests/test_sendonly_recvonly.py -s
 
   # TODO: e2e_windows_test を追加する
 
