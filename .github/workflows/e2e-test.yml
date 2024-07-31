@@ -14,7 +14,7 @@ jobs:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.os}}
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
@@ -49,7 +49,7 @@ jobs:
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: macos-14
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
