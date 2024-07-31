@@ -169,7 +169,7 @@ def install_deps(
             apply_patch(patch, nanobind_include_dir, 1)
 
 
-AVAILABLE_TARGETS = ["windows_x86_64", "macos_arm64", "ubuntu-22.04_x86_64"]
+AVAILABLE_TARGETS = ["windows_x86_64", "macos_arm64", "ubuntu-22.04_x86_64", "ubuntu-24.04_x86_64"]
 
 
 def main():
@@ -191,6 +191,8 @@ def main():
         platform = Platform("macos", get_macos_osver(), "arm64")
     elif args.target == "ubuntu-22.04_x86_64":
         platform = Platform("ubuntu", "22.04", "x86_64")
+    elif args.target == "ubuntu-24.04_x86_64":
+        platform = Platform("ubuntu", "24.04", "x86_64")
     else:
         raise Exception(f"Unknown target {args.target}")
 
