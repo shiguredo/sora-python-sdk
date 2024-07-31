@@ -21,8 +21,8 @@
   - @melpon
 - [CHANGE] run.py の実行にターゲットの指定を必須にする
   - @melpon
-- [UPDATE] 対応 Python バージョンを 3.9 以降に上げる
-  - numpy 2.0.0 が Python 3.9 以降なので、それに合わせる
+- [UPDATE] 対応 Python バージョンを 3.10 以降に上げる
+  - Ubuntu 22.04 が Python 3.10 なのでそれに会わせる
   - List / Dict から list / dict に変更する
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.7.0` に上げる
