@@ -14,8 +14,6 @@ auditwheel==6.0.0
 build==1.2.1
 exceptiongroup==1.2.2
     # via pytest
-importlib-metadata==8.2.0
-    # via build
 iniconfig==2.0.0
     # via pytest
 nanobind==2.0.0
@@ -31,11 +29,9 @@ pyproject-hooks==1.1.0
     # via build
 pytest==8.3.2
 ruff==0.5.5
-setuptools==72.0.0
+setuptools==72.1.0
 tomli==2.0.1
     # via build
     # via pytest
 typing-extensions==4.12.2
 wheel==0.43.0
-zipp==3.19.2
-    # via importlib-metadata
