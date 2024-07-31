@@ -21,7 +21,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get -y install libva-dev libdrm-dev libx11-dev
       - uses: eifinger/setup-rye@v4
@@ -48,12 +47,10 @@ jobs:
             target: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
             os: ubuntu
-            auditwheel_plat: manylinux_2_35_x86_64
           - name: ubuntu-22.04_x86_64
             target: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
             os: ubuntu
-            auditwheel_plat: manylinux_2_35_x86_64
           - name: macos-13_arm64
             target: macos_arm64
             runs_on: macos-13
@@ -126,10 +123,6 @@ jobs:
           - "3.12"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "${{ matrix.python_version }}"
-          cache: "pip"
       - uses: actions/download-artifact@v4
         with:
           name: sora_sdk
@@ -148,7 +141,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-2019_python-${{ matrix.python_version }}
+          name: windows-2022_python-${{ matrix.python_version }}
           path: dist/
 
   slack_notify_failed:
