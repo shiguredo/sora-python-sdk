@@ -21,9 +21,8 @@
   - @melpon
 - [CHANGE] run.py の実行にターゲットの指定を必須にする
   - @melpon
-- [UPDATE] 対応 Python バージョンを 3.10 以降に上げる
-  - Ubuntu 22.04 が Python 3.10 なのでそれに会わせる
-  - List / Dict から list / dict に変更する
+- [UPDATE] 対応 Python バージョンの 3.8 と 3.9 のサポートを終了する
+  - 対応 Ubuntu の最小である 22.04 が Python 3.10 なのでそれに合わせる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.7.0` に上げる
   - @voluntas
@@ -36,9 +35,19 @@
   - @voluntas
 - [UPDATE] run.py を buildbase 化する
   - @melpon
+- [UPDATE] Github Actions の Windows ビルドで Rye を利用する
+  - @voluntas
+- [UPDATE] GitHub Actions で pyi 生成用の Ubuntu を 24.04 に上げる
+  - @voluntas
 - [UPDATE] Github Actions のビルドで windows-2022 を利用する
   - Sora CPP SDK 2024.7.0 (libwebrtc m127) から windows-2022 でビルドする
   - @miosakuma
+- [ADD] run.py の対応プラットフォームに ubuntu-24.04_x86_64 を追加する
+  - @voluntas
+- [ADD] Github Actions の対応プラットフォームに ubuntu-24.04_x86_64 と macos-14_arm64 を追加する
+  - @voluntas
+- [ADD] Github Actions でビルドに成功したら Slack へ通知するようにする
+  - @voluntas
 - [ADD] sora_sdk に型を付ける
   - @melpon
 - [ADD] Sora C++ SDK と libwebrtc のローカルビルドを利用可能にする
