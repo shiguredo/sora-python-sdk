@@ -29,7 +29,7 @@ jobs:
       - run: rye sync
       - name: Generate pyi
         run: |
-          rye run python run.py ubuntu-24.04_x86_64
+          rye run python run.py ubuntu-22.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
