@@ -9,7 +9,7 @@ TEST_SIGNALING_URL=wss://sora.example.com/signaling
 TEST_CHANNEL_ID_PREFIX=sora
 TEST_SECRET_KEY=secret
 # これはオプションです
-TEST_OPENH264_PATH=/usr/local/lib/libopenh264.so
+OPENH264_PATH=/usr/local/lib/libopenh264.so
 ```
 
 ## 実行方法
