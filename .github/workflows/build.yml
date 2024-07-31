@@ -17,19 +17,19 @@ jobs:
   # １箇所で pyi を生成してアーティファクトにアップロードして、
   # それを各ビルドで利用する形にする。
   build_pyi:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - run: |
-          sudo apt-get -y install libva-dev libdrm-dev
+          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
       - uses: eifinger/setup-rye@v4
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
       - run: rye pin 3.12
       - run: rye sync
       - name: Generate pyi
         run: |
-          rye run python run.py ubuntu-22.04_x86_64
+          rye run python run.py ubuntu-24.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
@@ -43,16 +43,25 @@ jobs:
       fail-fast: false
       matrix:
         platform:
+          - name: ubuntu-24.04_x86_64
+            target: ubuntu-24.04_x86_64
+            runs_on: ubuntu-24.04
+            os: ubuntu
           - name: ubuntu-22.04_x86_64
             target: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
             os: ubuntu
-            auditwheel_plat: manylinux_2_35_x86_64
           - name: macos-13_arm64
             target: macos_arm64
             runs_on: macos-13
             os: macos
             python_host_platform: "macosx-13.0-arm64"
+            archflags: "-arch arm64"
+          - name: macos-14_arm64
+            target: macos_arm64
+            runs_on: macos-14
+            os: macos
+            python_host_platform: "macosx-14.0-arm64"
             archflags: "-arch arm64"
         python_version:
           - "3.10"
@@ -70,9 +79,10 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
+      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
-          sudo apt-get -y install libva-dev libdrm-dev
+          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
         if: ${{ matrix.platform.os == 'ubuntu' }}
       - uses: eifinger/setup-rye@v4
       - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
@@ -113,10 +123,6 @@ jobs:
           - "3.12"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "${{ matrix.python_version }}"
-          cache: "pip"
       - uses: actions/download-artifact@v4
         with:
           name: sora_sdk
@@ -135,9 +141,22 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-2019_python-${{ matrix.python_version }}
+          name: windows-2022_python-${{ matrix.python_version }}
           path: dist/
 
+  slack_notify_succeeded:
+    needs: [build_linux_macos, build_windows]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+     - name: Slack Notification
+       uses: rtCamp/action-slack-notify@v2
+       env:
+         SLACK_CHANNEL: sora-python-sdk
+         SLACK_COLOR: good
+         SLACK_TITLE: SUCCEEDED
+         SLACK_ICON_EMOJI: ":star-struck:"
+         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   slack_notify_failed:
     needs: [build_linux_macos, build_windows]
     runs-on: ubuntu-latest
@@ -148,9 +167,9 @@ jobs:
         env:
           SLACK_CHANNEL: sora-python-sdk
           SLACK_COLOR: danger
+          SLACK_TITLE: "FAILED"
           SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_TITLE: Build failed
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}  
 
   publish_wheel:
     if: contains(github.ref, 'tags/202')
@@ -161,9 +180,11 @@ jobs:
       fail-fast: false
       matrix:
         platform:
+          - name: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
+          - name: macos-14_arm64
           - name: macos-13_arm64
-          - name: windows-2019
+          - name: windows-2022
         python_version:
           - "3.10"
           - "3.11"
@@ -215,11 +236,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.10" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.10" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-14_arm64", "python_version": "3.10" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-14_arm64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.10" }
       - uses: ./.github/actions/download
@@ -227,11 +260,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2019", "python_version": "3.10" }
+        with: { "platform": "windows-2022", "python_version": "3.10" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2019", "python_version": "3.11" }
+        with: { "platform": "windows-2022", "python_version": "3.11" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2019", "python_version": "3.12" }
+        with: { "platform": "windows-2022", "python_version": "3.12" }
       - name: Env to output
         run: |
           echo "package_paths<<EOF" >> $GITHUB_OUTPUT
