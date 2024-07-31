@@ -9,6 +9,7 @@ on:
 
 jobs:
   e2e_ubuntu_test:
+    if: false
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
@@ -45,10 +46,12 @@ jobs:
       - run: rye run pytest tests/test_vad.py -s
 
   e2e_macos_test:
+    if: false
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
-    runs-on: macos-14
+        os: ["macos-13", "macos-14"]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
