@@ -62,8 +62,7 @@ jobs:
       - run: rye sync
       - run: rye run python run.py macos_arm64
       # - run: rye test
-      - run: rye run pytest tests/test_macos_h264.py -s
-      - run: rye run pytest tests/test_macos_h265.py -s
+      - run: rye run pytest tests/test_macos.py -s
 
   slack_notify_succeeded:
     needs: [e2e_ubuntu_test, e2e_macos_test]

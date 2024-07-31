@@ -1,7 +1,7 @@
 import json
 import time
 from threading import Event
-from typing import Any, Dict, List
+from typing import Any
 
 from sora_sdk import (
     Sora,
@@ -13,8 +13,8 @@ from sora_sdk import (
 
 
 class VAD:
-    def __init__(self, signaling_urls: List[str], channel_id: str, metadata: Dict[str, Any]):
-        self._signaling_urls: List[str] = signaling_urls
+    def __init__(self, signaling_urls: list[str], channel_id: str, metadata: dict[str, Any]):
+        self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
 
         self._vad = SoraVAD()

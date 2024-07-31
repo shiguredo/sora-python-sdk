@@ -2,15 +2,24 @@ import json
 import threading
 import time
 from threading import Event
-from typing import List
+from typing import Any
 
 import numpy as np
-from sora_sdk import Sora, SoraConnection, SoraVideoSource
+from sora_sdk import Sora, SoraConnection, SoraMediaTrack, SoraVideoSource
 
 
 class Sendonly:
-    def __init__(self, signaling_urls: List[str], channel_id: str, metadata: dict):
-        self._signaling_urls: List[str] = signaling_urls
+    def __init__(
+        self,
+        signaling_urls: list[str],
+        channel_id: str,
+        metadata: dict,
+        audio: bool = False,
+        video: bool = True,
+        audio_codec_type: str = "OPUS",
+        video_codec_type: str = "VP8",
+    ):
+        self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
 
         self._connection_id: str
@@ -35,7 +44,7 @@ class Sendonly:
             metadata=metadata,
             audio=False,
             video=True,
-            video_codec_type="H265",
+            video_codec_type=video_codec_type,
             video_source=self._video_source,
         )
 
@@ -93,29 +102,70 @@ class Sendonly:
         return stats
 
 
-def test_sendonly(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
+class Recvonly:
+    def __init__(
+        self,
+        signaling_urls: list[str],
+        channel_id: str,
+        metadata: dict[str, Any],
+    ):
+        self._signaling_urls: list[str] = signaling_urls
+        self._channel_id: str = channel_id
 
-    channel_id = f"{channel_id_prefix}_{__name__}"
+        self._connection_id: str
 
-    sendonly = Sendonly(signaling_urls, channel_id, metadata)
-    sendonly.connect()
+        # 接続した
+        self._connected = Event()
+        # 終了
+        self._closed = False
 
-    time.sleep(5)
+        self._sora: Sora = Sora()
+        self._connection: SoraConnection = self._sora.create_connection(
+            signaling_urls=signaling_urls,
+            role="sendrecv",
+            channel_id=channel_id,
+            metadata=metadata,
+        )
 
-    stats = sendonly.get_stats()
+        self._connection.on_set_offer = self._on_set_offer
+        self._connection.on_notify = self._on_notify
+        self._connection.on_disconnect = self._on_disconnect
 
-    # codec が無かったら StopIteration 例外が上がる
-    codec_stats = next(s for s in stats if s.get("type") == "codec")
-    # H.265 が採用されているかどうか確認する
-    assert codec_stats["mimeType"] == "video/H265"
+        self._connection.on_track = self._on_track
 
-    # outbound-rtp が無かったら StopIteration 例外が上がる
-    outbound_rtp_stats = next(s for s in stats if s.get("type") == "outbound-rtp")
-    assert outbound_rtp_stats["encoderImplementation"] == "VideoToolbox"
-    assert outbound_rtp_stats["bytesSent"] > 0
-    assert outbound_rtp_stats["packetsSent"] > 0
+    def connect(self):
+        self._connection.connect()
 
-    sendonly.disconnect()
+        # _connected が set されるまで 30 秒待つ
+        assert self._connected.wait(30)
+
+        return self
+
+    def _on_track(self, track: SoraMediaTrack):
+        if track.kind == "audio":
+            pass
+        if track.kind == "video":
+            pass
+
+    def _on_set_offer(self, raw_offer: str):
+        offer = json.loads(raw_offer)
+        if offer["type"] == "offer":
+            self._connection_id = offer["connection_id"]
+
+    def _on_notify(self, raw_message: str):
+        message = json.loads(raw_message)
+        if (
+            message["type"] == "notify"
+            and message["event_type"] == "connection.created"
+            and message["connection_id"] == self._connection_id
+        ):
+            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            self._connected.set()
+
+    def _on_disconnect(self, error_code, message):
+        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
+        self._closed = True
+        self._connected.clear()
+
+    def disconnect(self):
+        self._connection.disconnect()

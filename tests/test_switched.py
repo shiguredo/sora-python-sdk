@@ -2,15 +2,14 @@ import json
 import threading
 import time
 from threading import Event
-from typing import List
 
 import numpy as np
 from sora_sdk import Sora, SoraConnection, SoraVideoSource
 
 
 class Sendonly:
-    def __init__(self, signaling_urls: List[str], channel_id: str, metadata: dict):
-        self._signaling_urls: List[str] = signaling_urls
+    def __init__(self, signaling_urls: list[str], channel_id: str, metadata: dict):
+        self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
 
         self._connection_id: str

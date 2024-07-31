@@ -2,7 +2,7 @@ import json
 import threading
 import time
 from threading import Event
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 from sora_sdk import Sora, SoraConnection, SoraVideoSource
@@ -12,13 +12,13 @@ class Sendonly:
     def __init__(
         self,
         openh264_path: str,
-        signaling_urls: List[str],
+        signaling_urls: list[str],
         channel_id: str,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ):
         self._connection_id: str
 
-        self._signaling_urls: List[str] = signaling_urls
+        self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
 
         # 接続した

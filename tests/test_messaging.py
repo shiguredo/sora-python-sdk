@@ -1,7 +1,7 @@
 import json
 import time
 from threading import Event
-from typing import Any, Dict, List
+from typing import Any
 
 from sora_sdk import Sora, SoraConnection
 
@@ -9,15 +9,15 @@ from sora_sdk import Sora, SoraConnection
 class Messaging:
     def __init__(
         self,
-        signaling_urls: List[str],
+        signaling_urls: list[str],
         channel_id: str,
         label: str,
         direction: str,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ):
         self._connection_id: str
 
-        self._signaling_urls: List[str] = signaling_urls
+        self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
 
         self._connected: Event = Event()
