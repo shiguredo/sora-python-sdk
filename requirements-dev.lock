@@ -12,14 +12,14 @@
 -e file:.
 auditwheel==6.0.0
 build==1.2.1
-exceptiongroup==1.2.1
+exceptiongroup==1.2.2
     # via pytest
-importlib-metadata==7.1.0
+importlib-metadata==8.2.0
     # via build
 iniconfig==2.0.0
     # via pytest
 nanobind==2.0.0
-packaging==24.0
+packaging==24.1
     # via auditwheel
     # via build
     # via pytest
@@ -29,13 +29,13 @@ pyelftools==0.31
     # via auditwheel
 pyproject-hooks==1.1.0
     # via build
-pytest==8.2.1
-ruff==0.5.1
-setuptools==70.0.0
+pytest==8.3.2
+ruff==0.5.5
+setuptools==72.0.0
 tomli==2.0.1
     # via build
     # via pytest
 typing-extensions==4.12.2
 wheel==0.43.0
-zipp==3.19.0
+zipp==3.19.2
     # via importlib-metadata
