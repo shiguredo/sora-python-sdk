@@ -3,7 +3,7 @@ import time
 from client import Sendonly
 
 
-def test_sendonly(setup):
+def test_openh264_sendonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")

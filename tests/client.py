@@ -95,6 +95,7 @@ class Sendonly:
     def _on_switched(self, raw_message):
         message = json.loads(raw_message)
         if message["type"] == "switched":
+            print(f"DataChannel に切り替わりました: connection_id={self._connection_id}")
             self._switched = True
 
     def _on_notify(self, raw_message):
@@ -184,6 +185,7 @@ class Recvonly:
     def _on_switched(self, raw_message):
         message = json.loads(raw_message)
         if message["type"] == "switched":
+            print(f"DataChannel に切り替わりました: connection_id={self._connection_id}")
             self._switched = True
 
     def _on_notify(self, raw_message: str):
@@ -203,3 +205,8 @@ class Recvonly:
 
     def disconnect(self):
         self._connection.disconnect()
+
+    def get_stats(self):
+        raw_stats = self._connection.get_stats()
+        stats = json.loads(raw_stats)
+        return stats
