@@ -43,6 +43,11 @@ jobs:
       fail-fast: false
       matrix:
         platform:
+          - name: ubuntu-24.04_x86_64
+            target: ubuntu-24.04_x86_64
+            runs_on: ubuntu-24.04
+            os: ubuntu
+            auditwheel_plat: manylinux_2_35_x86_64
           - name: ubuntu-22.04_x86_64
             target: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
@@ -53,6 +58,12 @@ jobs:
             runs_on: macos-13
             os: macos
             python_host_platform: "macosx-13.0-arm64"
+            archflags: "-arch arm64"
+          - name: macos-14_arm64
+            target: macos_arm64
+            runs_on: macos-14
+            os: macos
+            python_host_platform: "macosx-14.0-arm64"
             archflags: "-arch arm64"
         python_version:
           - "3.10"
@@ -161,9 +172,11 @@ jobs:
       fail-fast: false
       matrix:
         platform:
+          - name: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
+          - name: macos-14_arm64
           - name: macos-13_arm64
-          - name: windows-2019
+          - name: windows-2022
         python_version:
           - "3.10"
           - "3.11"
@@ -215,11 +228,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.10" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.10" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-14_arm64", "python_version": "3.10" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-14_arm64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.10" }
       - uses: ./.github/actions/download
@@ -227,11 +252,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2019", "python_version": "3.10" }
+        with: { "platform": "windows-2022", "python_version": "3.10" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2019", "python_version": "3.11" }
+        with: { "platform": "windows-2022", "python_version": "3.11" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2019", "python_version": "3.12" }
+        with: { "platform": "windows-2022", "python_version": "3.12" }
       - name: Env to output
         run: |
           echo "package_paths<<EOF" >> $GITHUB_OUTPUT
