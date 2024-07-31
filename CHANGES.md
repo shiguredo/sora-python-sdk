@@ -31,9 +31,17 @@
   - @voluntas
 - [UPDATE] run.py を buildbase 化する
   - @melpon
+- [UPDATE] Github Actions の Windows ビルドで Rye を利用する
+  - @voluntas
 - [UPDATE] Github Actions のビルドで windows-2022 を利用する
   - Sora CPP SDK 2024.7.0 (libwebrtc m127) から windows-2022 でビルドする
   - @miosakuma
+- [ADD] run.py の対応プラットフォームに ubuntu-24.04_x86_64 を追加する
+  - @voluntas
+- [ADD] Github Actions の対応プラットフォームに ubuntu-24.04_x86_64 と macos-14_arm64 を追加する
+  - @voluntas
+- [ADD] Github Actions でビルドに成功したら Slack へ通知するようにする
+  - @voluntas
 - [ADD] sora_sdk に型を付ける
   - @melpon
 - [ADD] Sora C++ SDK と libwebrtc のローカルビルドを利用可能にする
