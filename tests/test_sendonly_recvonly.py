@@ -34,7 +34,6 @@ def test_sendonly_recvonly_vp8(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    # H.264 が採用されているかどうか確認する
     assert sendonly_codec_stats["mimeType"] == "video/VP8"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
@@ -45,7 +44,6 @@ def test_sendonly_recvonly_vp8(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
-    # H.264 が採用されているかどうか確認する
     assert recvonly_codec_stats["mimeType"] == "video/VP8"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
@@ -87,7 +85,6 @@ def test_sendonly_recvonly_vp9(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    # H.264 が採用されているかどうか確認する
     assert sendonly_codec_stats["mimeType"] == "video/VP9"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
@@ -98,7 +95,6 @@ def test_sendonly_recvonly_vp9(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
-    # H.264 が採用されているかどうか確認する
     assert recvonly_codec_stats["mimeType"] == "video/VP9"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
@@ -140,7 +136,6 @@ def test_sendonly_recvonly_av1(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    # H.264 が採用されているかどうか確認する
     assert sendonly_codec_stats["mimeType"] == "video/AV1"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
@@ -151,7 +146,6 @@ def test_sendonly_recvonly_av1(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
-    # H.264 が採用されているかどうか確認する
     assert recvonly_codec_stats["mimeType"] == "video/AV1"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
