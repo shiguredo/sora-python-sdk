@@ -99,7 +99,7 @@ jobs:
   #     - run: rye run pytest tests/test_sendonly_recvonly.py -s
 
   slack_notify_succeeded:
-    needs: [e2e_ubuntu_test, e2e_macos_test, e2e_windows_test]
+    needs: [e2e_ubuntu_test, e2e_macos_test]
     runs-on: ubuntu-latest
     if: success()
     steps:
