@@ -48,7 +48,8 @@ jobs:
     strategy:
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
-    runs-on: macos-14
+    # runs-on: macos-14
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 20
     env:
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
