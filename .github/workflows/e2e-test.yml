@@ -48,8 +48,7 @@ jobs:
     strategy:
       matrix:
         python_version: ["3.9", "3.10", "3.11", "3.12"]
-    # runs-on: macos-14
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: macos-14
     timeout-minutes: 20
     env:
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
@@ -79,6 +78,22 @@ jobs:
       - run: rye run pytest tests/test_vad.py -s
 
   # TODO: e2e_windows_test を追加する
+  e2e_windows_test:
+    strategy:
+      matrix:
+        # python_version: ["3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.12"]
+    runs-on: windows-2022
+    timeout-minutes: 20
+    env:
+      TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
+      TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+      TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: eifinger/setup-rye@v4
+      - run: rye pin ${{ matrix.python_version }}
+      - run: rye sync
 
   slack_notify_succeeded:
     needs: [e2e_ubuntu_test, e2e_macos_test]
