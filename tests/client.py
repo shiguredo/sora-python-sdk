@@ -18,6 +18,7 @@ class Sendonly:
         video: bool = True,
         audio_codec_type: str = "OPUS",
         video_codec_type: str = "VP8",
+        data_channel_signaling: bool = True,
         openh264_path: Optional[str] = None,
     ):
         self._signaling_urls: list[str] = signaling_urls
@@ -27,6 +28,8 @@ class Sendonly:
 
         # 接続した
         self._connected: Event = Event()
+        # DataChannel へ切り替わった
+        self._switched: bool = False
         # 終了
         self._closed: bool = False
 
@@ -47,9 +50,13 @@ class Sendonly:
             video=True,
             video_codec_type=video_codec_type,
             video_source=self._video_source,
+            data_channel_signaling=data_channel_signaling,
         )
 
         self._connection.on_set_offer = self._on_set_offer
+
+        if data_channel_signaling:
+            self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
@@ -68,6 +75,10 @@ class Sendonly:
     def connected(self):
         return self._connected.is_set()
 
+    @property
+    def switched(self):
+        return self._switched
+
     def _video_input_loop(self):
         while not self._closed:
             time.sleep(1.0 / 30)
@@ -80,6 +91,11 @@ class Sendonly:
         if offer["type"] == "offer":
             self._connection_id = offer["connection_id"]
             print(f"Offer を受信しました: connection_id={self._connection_id}")
+
+    def _on_switched(self, raw_message):
+        message = json.loads(raw_message)
+        if message["type"] == "switched":
+            self._switched = True
 
     def _on_notify(self, raw_message):
         message = json.loads(raw_message)
@@ -113,6 +129,8 @@ class Recvonly:
         signaling_urls: list[str],
         channel_id: str,
         metadata: dict[str, Any],
+        data_channel_signaling: bool = True,
+        openh264_path: Optional[str] = None,
     ):
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
@@ -133,6 +151,8 @@ class Recvonly:
         )
 
         self._connection.on_set_offer = self._on_set_offer
+        if data_channel_signaling:
+            self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
@@ -160,6 +180,11 @@ class Recvonly:
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
             self._connection_id = offer["connection_id"]
+
+    def _on_switched(self, raw_message):
+        message = json.loads(raw_message)
+        if message["type"] == "switched":
+            self._switched = True
 
     def _on_notify(self, raw_message: str):
         message = json.loads(raw_message)

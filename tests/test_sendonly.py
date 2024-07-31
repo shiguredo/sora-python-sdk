@@ -16,6 +16,18 @@ def test_sendonly_vp8(setup):
 
     time.sleep(5)
 
+    stats = sendonly.get_stats()
+
+    # codec が無かったら StopIteration 例外が上がる
+    codec_stats = next(s for s in stats if s.get("type") == "codec")
+    # H.264 が採用されているかどうか確認する
+    assert codec_stats["mimeType"] == "video/VP8"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in stats if s.get("type") == "outbound-rtp")
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
+
     sendonly.disconnect()
 
 
@@ -31,6 +43,18 @@ def test_sendonly_vp9(setup):
 
     time.sleep(5)
 
+    stats = sendonly.get_stats()
+
+    # codec が無かったら StopIteration 例外が上がる
+    codec_stats = next(s for s in stats if s.get("type") == "codec")
+    # H.264 が採用されているかどうか確認する
+    assert codec_stats["mimeType"] == "video/VP9"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in stats if s.get("type") == "outbound-rtp")
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
+
     sendonly.disconnect()
 
 
@@ -45,5 +69,17 @@ def test_sendonly_av1(setup):
     sendonly.connect()
 
     time.sleep(5)
+
+    stats = sendonly.get_stats()
+
+    # codec が無かったら StopIteration 例外が上がる
+    codec_stats = next(s for s in stats if s.get("type") == "codec")
+    # H.264 が採用されているかどうか確認する
+    assert codec_stats["mimeType"] == "video/AV1"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in stats if s.get("type") == "outbound-rtp")
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
 
     sendonly.disconnect()

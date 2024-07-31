@@ -10,7 +10,7 @@ def test_get_stats(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}"
 
-    client = Sendonly(signaling_urls, channel_id, metadata, "VP8")
+    client = Sendonly(signaling_urls, channel_id, metadata)
     client.connect()
 
     time.sleep(5)
