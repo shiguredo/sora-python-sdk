@@ -1,5 +1,7 @@
 import json
+import sys
 import time
+import uuid
 from threading import Event
 from typing import Any
 
@@ -101,7 +103,7 @@ def test_vad(setup):
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
-    channel_id = f"{channel_id_prefix}_{__name__}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = VAD(signaling_urls, channel_id, metadata)
     sendonly.connect()

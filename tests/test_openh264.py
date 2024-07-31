@@ -1,4 +1,6 @@
+import sys
 import time
+import uuid
 
 from client import Sendonly
 
@@ -9,7 +11,7 @@ def test_openh264_sendonly(setup):
     metadata = setup.get("metadata")
     openh264_path = setup.get("openh264_path")
 
-    channel_id = f"{channel_id_prefix}_{__name__}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
         signaling_urls,

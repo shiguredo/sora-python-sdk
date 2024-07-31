@@ -1,5 +1,6 @@
 import sys
 import time
+import uuid
 
 from client import Recvonly, Sendonly
 
@@ -9,7 +10,7 @@ def test_macos_h264_sendonly_recvonly(setup):
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
         signaling_urls,
@@ -62,7 +63,7 @@ def test_macos_h265_sendonly_recvonly(setup):
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
         signaling_urls,

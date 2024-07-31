@@ -1,4 +1,6 @@
+import sys
 import time
+import uuid
 
 from client import Recvonly, Sendonly
 
@@ -8,7 +10,7 @@ def test_sendonly_recvonly_vp8(setup):
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
-    channel_id = f"{channel_id_prefix}_{__name__}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
         signaling_urls,
@@ -61,7 +63,7 @@ def test_sendonly_recvonly_vp9(setup):
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
-    channel_id = f"{channel_id_prefix}_{__name__}"
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
         signaling_urls,
