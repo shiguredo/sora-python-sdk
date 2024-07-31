@@ -67,4 +67,5 @@ dev-dependencies = [
 ]
 
 [tool.ruff]
+target-version = "py39"
 line-length = 100
