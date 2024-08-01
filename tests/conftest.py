@@ -34,10 +34,10 @@ def setup():
     if test_signaling_url is not None and test_signaling_urls is not None:
         signaling_urls = random.choice([[test_signaling_url], test_signaling_urls])
 
-    if test_channel_id_prefix := os.environ.get("TEST_CHANNEL_ID_PREFIX") is None:
+    if (test_channel_id_prefix := os.environ.get("TEST_CHANNEL_ID_PREFIX")) is None:
         raise ValueError("TEST_CHANNEL_ID_PREFIX is required.")
 
-    if test_secret_key := os.environ.get("TEST_SECRET_KEY") is None:
+    if (test_secret_key := os.environ.get("TEST_SECRET_KEY")) is None:
         raise ValueError("TEST_SECRET_KEY is required.")
 
     return {
