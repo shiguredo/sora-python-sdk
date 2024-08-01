@@ -14,9 +14,6 @@ def setup():
     test_signaling_url = os.environ.get("TEST_SIGNALING_URL")
     test_signaling_urls = os.environ.get("TEST_SIGNALING_URLS")
 
-    print(test_signaling_url)
-    print(test_signaling_urls)
-
     if test_signaling_url is None and test_signaling_urls is None:
         raise ValueError("TEST_SIGNALING_URL or TEST_SIGNALING_URLS is required.")
 
