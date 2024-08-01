@@ -12,12 +12,12 @@ def test_get_stats(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    client = Sendonly(signaling_urls, channel_id, metadata)
-    client.connect()
+    sendonly = Sendonly(signaling_urls, channel_id, metadata)
+    sendonly.connect()
 
     time.sleep(5)
 
-    stats = client.get_stats()
+    stats = sendonly.get_stats()
     assert len(stats) > 0
 
-    client.disconnect()
+    sendonly.disconnect()

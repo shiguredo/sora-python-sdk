@@ -48,6 +48,7 @@ jobs:
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
+        # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20

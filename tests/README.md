@@ -21,3 +21,14 @@ rye sync
 rye run python run.py
 rye run pytest -m tests/test_messaging.py -s
 ```
+
+## 課題
+
+### macOS
+
+- macos-13 で Video Toolbox の H.264/H.265 のテストが動作しない
+
+### Windows
+
+- 日本語を print する文があると pytest が動作しない
+- OpenH264 のテストが動作しない
