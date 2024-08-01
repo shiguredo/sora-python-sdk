@@ -36,7 +36,7 @@ class Sendonly:
         )
 
         self._connection.on_set_offer = self._on_set_offer
-        self._connection.on_notify = self._on_notify
+        # self._connection.on_notify = self._on_notify
 
     def _on_set_offer(self, raw_offer: str):
         offer = json.loads(raw_offer)
