@@ -31,7 +31,7 @@ class Sendonly:
         # DataChannel へ切り替わった
         self._switched: bool = False
         # 終了
-        self._closed: bool = False
+        self._closed: Event = Event()
 
         self._video_height: int = 480
         self._video_width: int = 640
@@ -80,7 +80,7 @@ class Sendonly:
         return self._switched
 
     def _video_input_loop(self):
-        while not self._closed:
+        while not self._closed.is_set():
             time.sleep(1.0 / 30)
             self._video_source.on_captured(
                 np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
@@ -110,7 +110,7 @@ class Sendonly:
 
     def _on_disconnect(self, error_code, message):
         print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
-        self._closed = True
+        self._closed.set()
         self._connected.clear()
 
     def disconnect(self):
@@ -141,7 +141,7 @@ class Recvonly:
         # 接続した
         self._connected = Event()
         # 終了
-        self._closed = False
+        self._closed = Event()
 
         self._sora: Sora = Sora()
         self._connection: SoraConnection = self._sora.create_connection(
@@ -200,7 +200,7 @@ class Recvonly:
 
     def _on_disconnect(self, error_code, message):
         print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
-        self._closed = True
+        self._closed.is_set()
         self._connected.clear()
 
     def disconnect(self):

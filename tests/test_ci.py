@@ -1,10 +1,129 @@
+import json
 import sys
 import threading
 import time
 import uuid
+from threading import Event
+from typing import Optional
 
 import numpy as np
-from sora_sdk import Sora
+from sora_sdk import Sora, SoraConnection, SoraVideoSource
+
+
+class Sendonly:
+    def __init__(
+        self,
+        signaling_urls: list[str],
+        channel_id: str,
+        metadata: dict,
+        audio: bool = False,
+        video: bool = True,
+        audio_codec_type: str = "OPUS",
+        video_codec_type: str = "VP8",
+        data_channel_signaling: bool = True,
+        openh264_path: Optional[str] = None,
+    ):
+        self._signaling_urls: list[str] = signaling_urls
+        self._channel_id: str = channel_id
+
+        self._connection_id: str
+
+        # 接続した
+        self._connected: Event = Event()
+        # DataChannel へ切り替わった
+        self._switched: bool = False
+        # 終了
+        self._closed: Event = Event()
+
+        self._video_height: int = 480
+        self._video_width: int = 640
+
+        self._sora: Sora = Sora(openh264=openh264_path)
+        self._connected = Event()
+
+        self._video_source: SoraVideoSource = self._sora.create_video_source()
+
+        self._connection: SoraConnection = self._sora.create_connection(
+            signaling_urls=signaling_urls,
+            role="sendonly",
+            channel_id=channel_id,
+            metadata=metadata,
+            audio=False,
+            video=True,
+            video_codec_type=video_codec_type,
+            video_source=self._video_source,
+            data_channel_signaling=data_channel_signaling,
+        )
+
+        self._connection.on_set_offer = self._on_set_offer
+
+        if data_channel_signaling:
+            self._connection.on_switched = self._on_switched
+        self._connection.on_notify = self._on_notify
+        self._connection.on_disconnect = self._on_disconnect
+
+    def connect(self):
+        self._connection.connect()
+
+        self._video_input_thread = threading.Thread(target=self._video_input_loop, daemon=True)
+        self._video_input_thread.start()
+
+        # _connected が set されるまで 30 秒待つ
+        assert self._connected.wait(30)
+
+        return self
+
+    @property
+    def connected(self):
+        return self._connected.is_set()
+
+    @property
+    def switched(self):
+        return self._switched
+
+    def _video_input_loop(self):
+        while not self._closed.is_set():
+            time.sleep(1.0 / 30)
+            self._video_source.on_captured(
+                np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
+            )
+
+    def _on_set_offer(self, raw_offer):
+        offer = json.loads(raw_offer)
+        if offer["type"] == "offer":
+            self._connection_id = offer["connection_id"]
+            print(f"Offer を受信しました: connection_id={self._connection_id}")
+
+    def _on_switched(self, raw_message):
+        message = json.loads(raw_message)
+        if message["type"] == "switched":
+            print(f"DataChannel に切り替わりました: connection_id={self._connection_id}")
+            self._switched = True
+
+    def _on_notify(self, raw_message):
+        message = json.loads(raw_message)
+        if (
+            message["type"] == "notify"
+            and message["event_type"] == "connection.created"
+            and message["connection_id"] == self._connection_id
+        ):
+            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            self._connected.set()
+
+    def _on_disconnect(self, error_code, message):
+        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
+        self._closed.set()
+        self._connected.clear()
+
+    def disconnect(self):
+        self._connection.disconnect()
+        # タイムアウト指定
+        self._video_input_thread.join(timeout=10)
+
+    def get_stats(self):
+        raw_stats = self._connection.get_stats()
+        stats = json.loads(raw_stats)
+        return stats
 
 
 def test_sora(setup):
@@ -14,50 +133,14 @@ def test_sora(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sora = Sora()
-
-    video_source = sora.create_video_source()
-
-    connection = sora.create_connection(
+    sendonly = Sendonly(
         signaling_urls=signaling_urls,
-        role="sendonly",
         channel_id=channel_id,
         metadata=metadata,
-        audio=False,
-        video=True,
-        video_source=video_source,
     )
 
-    closed = threading.Event()
-    connected = threading.Event()
-
-    def _on_signaling_notify(message):
-        print(message)
-
-    def _on_disconnect(error_code, message):
-        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
-        closed.set()
-        print(10)
-        connected.clear()
-        print(20)
-
-    connection.on_notify = _on_signaling_notify
-    connection.on_disconnect = _on_disconnect
-
-    def _video_input_loop():
-        while not closed.is_set():
-            time.sleep(1.0 / 30)
-            video_source.on_captured(np.zeros((480, 640, 3), dtype=np.uint8))
-
-    connection.connect()
-
-    video_input_thread = threading.Thread(target=_video_input_loop, daemon=True)
-    video_input_thread.start()
+    sendonly.connect()
 
     time.sleep(3)
 
-    print(30)
-    connection.disconnect()
-
-    print(40)
-    # video_input_thread.join(timeout=5)
+    sendonly.disconnect()
