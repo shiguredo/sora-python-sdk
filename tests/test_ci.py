@@ -30,7 +30,7 @@ def test_sora(setup):
         video_source=video_source,
     )
 
-    # connection.on_notify = _on_signaling_notify
+    connection.on_notify = _on_signaling_notify
 
     connection.connect()
 
