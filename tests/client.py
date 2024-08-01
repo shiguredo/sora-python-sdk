@@ -37,7 +37,6 @@ class Sendonly:
         self._video_width: int = 640
 
         self._sora: Sora = Sora(openh264=openh264_path)
-        self._connected = Event()
 
         self._video_source: SoraVideoSource = self._sora.create_video_source()
 
@@ -140,6 +139,8 @@ class Recvonly:
 
         # 接続した
         self._connected = Event()
+        # DataChannel へ切り替わった
+        self._switched: bool = False
         # 終了
         self._closed = Event()
 

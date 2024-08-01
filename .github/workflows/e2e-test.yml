@@ -94,6 +94,14 @@ jobs:
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
       - uses: actions/checkout@v4
+      - name: Download openh264
+        shell: pwsh
+        run: |
+          $url = "http://ciscobinary.openh264.org/openh264-2.4.1-win64.dll.bz2"
+          Invoke-WebRequest -Uri $url -OutFile "openh264-2.4.1-win64.dll.bz2"
+          7z e openh264-2.4.1-win64.dll.bz2
+          Rename-Item -Path "openh264-2.4.1-win64.dll" -NewName "libopenh264.dll"
+          echo "OPENH264_PATH=$env:GITHUB_WORKSPACE\libopenh264.dll" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - uses: eifinger/setup-rye@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
