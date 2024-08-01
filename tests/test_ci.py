@@ -1,12 +1,9 @@
 import json
 import sys
-import threading
 import time
 import uuid
 from threading import Event
-from typing import Optional
 
-import numpy as np
 from sora_sdk import Sora, SoraConnection, SoraVideoSource
 
 
@@ -20,8 +17,6 @@ class Sendonly:
         video: bool = True,
         audio_codec_type: str = "OPUS",
         video_codec_type: str = "VP8",
-        data_channel_signaling: bool = True,
-        openh264_path: Optional[str] = None,
     ):
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
@@ -38,7 +33,7 @@ class Sendonly:
         self._video_height: int = 480
         self._video_width: int = 640
 
-        self._sora: Sora = Sora(openh264=openh264_path)
+        self._sora: Sora = Sora()
         self._connected = Event()
 
         self._video_source: SoraVideoSource = self._sora.create_video_source()
@@ -52,21 +47,16 @@ class Sendonly:
             video=True,
             video_codec_type=video_codec_type,
             video_source=self._video_source,
-            data_channel_signaling=data_channel_signaling,
         )
 
         self._connection.on_set_offer = self._on_set_offer
 
-        if data_channel_signaling:
-            self._connection.on_switched = self._on_switched
+        self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
     def connect(self):
         self._connection.connect()
-
-        self._video_input_thread = threading.Thread(target=self._video_input_loop, daemon=True)
-        self._video_input_thread.start()
 
         # _connected が set されるまで 30 秒待つ
         assert self._connected.wait(30)
@@ -80,13 +70,6 @@ class Sendonly:
     @property
     def switched(self):
         return self._switched
-
-    def _video_input_loop(self):
-        while not self._closed.is_set():
-            time.sleep(1.0 / 30)
-            self._video_source.on_captured(
-                np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
-            )
 
     def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
@@ -117,8 +100,6 @@ class Sendonly:
 
     def disconnect(self):
         self._connection.disconnect()
-        # タイムアウト指定
-        self._video_input_thread.join(timeout=10)
 
     def get_stats(self):
         raw_stats = self._connection.get_stats()
