@@ -17,10 +17,22 @@ def setup():
     if test_signaling_url is None and test_signaling_urls is None:
         raise ValueError("TEST_SIGNALING_URL or TEST_SIGNALING_URLS is required.")
 
+    # 前処理
     if test_signaling_urls is not None:
         # , で区切って ['wss://...', ...] に変換
         test_signaling_urls = test_signaling_urls.split(",")
-    signaling_urls = random.choice([[test_signaling_url], test_signaling_urls])
+
+    # TEST_SIGNALING_URL が指定されてなかったら TEST_SIGNALING_URLS を使う
+    if test_signaling_url is None:
+        signaling_urls = test_signaling_urls
+
+    # TEST_SIGNALING_URLS が指定されてなかったら TEST_SIGNALING_URL を使う
+    if test_signaling_urls is None:
+        signaling_urls = [test_signaling_url]
+
+    # 両方指定されてたらランダムで選ぶ
+    if test_signaling_url is not None and test_signaling_urls is not None:
+        signaling_urls = random.choice([[test_signaling_url], test_signaling_urls])
 
     if test_channel_id_prefix := os.environ.get("TEST_CHANNEL_ID_PREFIX") is None:
         raise ValueError("TEST_CHANNEL_ID_PREFIX is required.")
