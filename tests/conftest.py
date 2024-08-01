@@ -11,10 +11,14 @@ def setup():
     load_dotenv()
 
     # signaling_url 単体か複数かをランダムで決めてテストする
-    signaling_url = os.environ.get("TEST_SIGNALING_URL")
-    if signaling_urls := os.environ.get("TEST_SIGNALING_URLS"):
-        signaling_urls = signaling_urls.split(",")
-    signaling_urls = random.choice([[signaling_url], signaling_urls])
+    test_signaling_url = os.environ.get("TEST_SIGNALING_URL")
+    test_signaling_urls = os.environ.get("TEST_SIGNALING_URLS")
+
+    if test_signaling_urls is not None:
+        # , で区切って ['wss://...', ...] に変換
+        test_signaling_urls = test_signaling_urls.split(",")
+    signaling_urls = random.choice([[test_signaling_url], test_signaling_urls])
+    print(signaling_urls)
 
     return {
         "signaling_urls": signaling_urls,
