@@ -1,3 +1,4 @@
+import json
 import sys
 import time
 import uuid
@@ -15,6 +16,8 @@ class Sendonly:
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
 
+        self._connection_id: str | None = None
+
         self._sora: Sora = Sora()
 
         self._video_source: SoraVideoSource = self._sora.create_video_source()
@@ -28,6 +31,13 @@ class Sendonly:
             video=True,
             video_source=self._video_source,
         )
+
+        self._connection.on_set_offer = self._on_set_offer
+
+    def _on_set_offer(self, raw_offer: str):
+        offer = json.loads(raw_offer)
+        if offer["type"] == "offer":
+            self._connection_id = offer["connection_id"]
 
     def connect(self):
         self._connection.connect()
