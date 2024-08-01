@@ -61,7 +61,7 @@ class VAD:
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
             self._connection_id = offer["connection_id"]
-            print(f"Offer を受信しました: connection_id={self._connection_id}")
+            print(f"Received 'Offer': connection_id={self._connection_id}")
 
     def _on_notify(self, raw_message):
         message = json.loads(raw_message)
@@ -70,11 +70,11 @@ class VAD:
             and message["event_type"] == "connection.created"
             and message["connection_id"] == self._connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            print(f"Connected Sora: connection_id={self._connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code, message):
-        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
+        print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._closed = True
         self._connected.clear()
 

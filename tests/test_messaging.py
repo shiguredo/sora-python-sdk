@@ -61,16 +61,16 @@ class Messaging:
             and message["event_type"] == "connection.created"
             and message["connection_id"] == self._connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            print(f"Connected Sora: connection_id={self._connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code, message):
-        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
+        print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._closed = True
         self._connected.clear()
 
     def _on_message(self, label, data):
-        print(f"メッセージを受信しました: label={label}, data={data}")
+        print(f"Received message: label={label}, data={data}")
 
     def _on_data_channel(self, label: str):
         if self._label == label:
@@ -79,7 +79,7 @@ class Messaging:
     def connect(self):
         self._connection.connect()
 
-        assert self._connected.wait(30), "Sora に接続できませんでした"
+        assert self._connected.wait(30), "Could not connect to Sora."
 
         return self
 
@@ -89,7 +89,7 @@ class Messaging:
             time.sleep(0.01)
 
         self._connection.send_data_channel(self._label, data)
-        print(f"メッセージを送信しました: label={self._label}, data={data.decode()}")
+        print(f"Sent message: label={self._label}, data={data.decode()}")
 
     def disconnect(self):
         self._connection.disconnect()
