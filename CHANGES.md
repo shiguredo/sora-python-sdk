@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2024.3.0
+
+**日時**: 2024-08-02
+
 - [CHANGE] Jetson 5 の対応を削除
   - 以降は support/jetson-jetpack-6 ブランチで Jetson 6 のみの対応となる
   - @melpon
