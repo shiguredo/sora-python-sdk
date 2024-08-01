@@ -51,7 +51,7 @@ class Sendonly:
         if message["type"] == "notify" and message["event_type"] == "connection.created":
             print(message)
             print(self._connection_id)
-            # print(f"Sora に接続しました: connection_id={self._connection_id}")
+            print(f"Sora に接続しました: connection_id={self._connection_id}")
         # if (
         #     message["type"] == "notify"
         #     and message["event_type"] == "connection.created"
