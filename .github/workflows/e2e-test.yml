@@ -9,7 +9,6 @@ on:
 
 jobs:
   e2e_ubuntu_test:
-    if: False
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
@@ -46,7 +45,6 @@ jobs:
       - run: rye run pytest tests/test_vad.py -s
 
   e2e_macos_test:
-    if: False
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
@@ -115,7 +113,7 @@ jobs:
       - run: rye run pytest tests/test_vad.py -s
 
   slack_notify_succeeded:
-    needs: [e2e_ubuntu_test, e2e_macos_test]
+    needs: [e2e_ubuntu_test, e2e_macos_test, e2e_windows_test]
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -129,7 +127,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_ubuntu_test, e2e_macos_test]
+    needs: [e2e_ubuntu_test, e2e_macos_test, e2e_windows_test]
     runs-on: ubuntu-latest
     if: failure()
     steps:
