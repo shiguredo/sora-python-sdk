@@ -13,9 +13,6 @@ class Sendonly:
         signaling_urls: list[str],
         channel_id: str,
         metadata: dict,
-        audio: bool = False,
-        video: bool = True,
-        audio_codec_type: str = "OPUS",
         video_codec_type: str = "VP8",
     ):
         self._signaling_urls: list[str] = signaling_urls
@@ -25,13 +22,8 @@ class Sendonly:
 
         # 接続した
         self._connected: Event = Event()
-        # DataChannel へ切り替わった
-        self._switched: bool = False
         # 終了
         self._closed: Event = Event()
-
-        self._video_height: int = 480
-        self._video_width: int = 640
 
         self._sora: Sora = Sora()
         self._connected = Event()
@@ -50,8 +42,6 @@ class Sendonly:
         )
 
         self._connection.on_set_offer = self._on_set_offer
-
-        self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
@@ -63,25 +53,11 @@ class Sendonly:
 
         return self
 
-    @property
-    def connected(self):
-        return self._connected.is_set()
-
-    @property
-    def switched(self):
-        return self._switched
-
     def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
             self._connection_id = offer["connection_id"]
             print(f"Offer を受信しました: connection_id={self._connection_id}")
-
-    def _on_switched(self, raw_message):
-        message = json.loads(raw_message)
-        if message["type"] == "switched":
-            print(f"DataChannel に切り替わりました: connection_id={self._connection_id}")
-            self._switched = True
 
     def _on_notify(self, raw_message):
         message = json.loads(raw_message)
@@ -100,11 +76,6 @@ class Sendonly:
 
     def disconnect(self):
         self._connection.disconnect()
-
-    def get_stats(self):
-        raw_stats = self._connection.get_stats()
-        stats = json.loads(raw_stats)
-        return stats
 
 
 def test_sora(setup):
