@@ -42,10 +42,13 @@ class Sendonly:
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
             self._connection_id = offer["connection_id"]
+            print(self._connection_id)
 
     def _on_notify(self, raw_message: str):
         message = json.loads(raw_message)
         print(message)
+        if message["type"] == "notify" and message["event_type"] == "connection.created":
+            print(f"Sora に接続しました: connection_id={self._connection_id}")
         # if (
         #     message["type"] == "notify"
         #     and message["event_type"] == "connection.created"
