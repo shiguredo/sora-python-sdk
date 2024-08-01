@@ -45,10 +45,10 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - name: ubuntu-24.04_x86_64
-            target: ubuntu-24.04_x86_64
-            runs_on: ubuntu-24.04
-            os: ubuntu
+          # - name: ubuntu-24.04_x86_64
+          #   target: ubuntu-24.04_x86_64
+          #   runs_on: ubuntu-24.04
+          #   os: ubuntu
           - name: ubuntu-22.04_x86_64
             target: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
@@ -204,7 +204,7 @@ jobs:
           fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-13_arm64' && matrix.python_version == '3.10' }}
+        if: ${{ matrix.platform.name == 'macos-14_arm64' && matrix.python_version == '3.10' }}
 
       # テスト用
       # - name: Publish package to TestPyPI
@@ -237,12 +237,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.10" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.11" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.10" }
       - uses: ./.github/actions/download
