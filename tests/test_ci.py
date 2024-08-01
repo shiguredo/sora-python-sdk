@@ -28,25 +28,36 @@ def test_sora(setup):
         video_source=video_source,
     )
 
+    closed = threading.Event()
+    connected = threading.Event()
+
     def _on_signaling_notify(message):
         print(message)
 
-    connection.on_notify = _on_signaling_notify
+    def _on_disconnect(error_code, message):
+        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
+        closed.set()
+        print(10)
+        connected.clear()
+        print(20)
 
-    def _video_input_loop(self):
-        while True:
+    connection.on_notify = _on_signaling_notify
+    connection.on_disconnect = _on_disconnect
+
+    def _video_input_loop():
+        while not closed.is_set():
             time.sleep(1.0 / 30)
-            self._video_source.on_captured(
-                np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
-            )
+            video_source.on_captured(np.zeros((480, 640, 3), dtype=np.uint8))
+
+    connection.connect()
 
     video_input_thread = threading.Thread(target=_video_input_loop, daemon=True)
     video_input_thread.start()
 
-    connection.connect()
-
     time.sleep(3)
 
+    print(30)
     connection.disconnect()
 
-    video_input_thread.join(timeout=10)
+    print(40)
+    # video_input_thread.join(timeout=5)
