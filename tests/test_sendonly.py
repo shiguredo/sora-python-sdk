@@ -9,10 +9,8 @@ def test_sendonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
-    print(signaling_urls)
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-    print(channel_id)
 
     sendonly = Sendonly(
         signaling_urls,
