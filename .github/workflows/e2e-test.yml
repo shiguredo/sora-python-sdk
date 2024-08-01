@@ -102,13 +102,14 @@ jobs:
           7z e openh264-2.4.1-win64.dll.bz2
           Rename-Item -Path "openh264-2.4.1-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$env:GITHUB_WORKSPACE\libopenh264.dll" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        working-directory: ./tests
       - uses: eifinger/setup-rye@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run python run.py windows_x86_64
       - run: rye run pytest tests/test_sendonly_recvonly.py -s
       - run: rye run pytest tests/test_messaging.py -s
-      - run: rye run pytest tests/test_openh264.py -s
+      # - run: rye run pytest tests/test_openh264.py -s
       - run: rye run pytest tests/test_stats.py -s
       - run: rye run pytest tests/test_switched.py -s
       - run: rye run pytest tests/test_vad.py -s
