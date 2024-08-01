@@ -34,7 +34,7 @@ def test_sora(setup):
     connection.on_notify = _on_signaling_notify
 
     def _video_input_loop(self):
-        while not self._closed:
+        while True:
             time.sleep(1.0 / 30)
             self._video_source.on_captured(
                 np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
