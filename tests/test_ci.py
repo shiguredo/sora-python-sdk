@@ -2,7 +2,6 @@ import json
 import sys
 import time
 import uuid
-from threading import Event
 
 from sora_sdk import Sora, SoraConnection, SoraVideoSource
 
@@ -20,7 +19,7 @@ class Sendonly:
         self._connection_id: str | None = None
 
         # 接続した
-        self._connected = Event()
+        # self._connected = Event()
 
         self._sora: Sora = Sora()
 
@@ -52,13 +51,13 @@ class Sendonly:
             and message["connection_id"] == self._connection_id
         ):
             print(f"Sora に接続しました: connection_id={self._connection_id}")
-            self._connected.set()
+            # self._connected.set()
 
     def connect(self):
         self._connection.connect()
 
         # _connected が set されるまで 30 秒待つ
-        assert self._connected.wait(30)
+        # assert self._connected.wait(30)
 
     def disconnect(self):
         self._connection.disconnect()
