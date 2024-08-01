@@ -1,12 +1,10 @@
 import sys
+import threading
 import time
 import uuid
 
+import numpy as np
 from sora_sdk import Sora
-
-
-def _on_signaling_notify(message):
-    print(message)
 
 
 def test_sora(setup):
@@ -30,10 +28,25 @@ def test_sora(setup):
         video_source=video_source,
     )
 
+    def _on_signaling_notify(message):
+        print(message)
+
     connection.on_notify = _on_signaling_notify
+
+    def _video_input_loop(self):
+        while not self._closed:
+            time.sleep(1.0 / 30)
+            self._video_source.on_captured(
+                np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
+            )
+
+    video_input_thread = threading.Thread(target=_video_input_loop, daemon=True)
+    video_input_thread.start()
 
     connection.connect()
 
-    time.sleep(5)
+    time.sleep(3)
 
     connection.disconnect()
+
+    video_input_thread.join(timeout=10)
