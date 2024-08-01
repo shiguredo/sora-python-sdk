@@ -89,12 +89,12 @@ class Sendonly:
         offer = json.loads(raw_offer)
         if offer["type"] == "offer":
             self._connection_id = offer["connection_id"]
-            print(f"Offer を受信しました: connection_id={self._connection_id}")
+            print(f"Received 'Offer' message: connection_id={self._connection_id}")
 
     def _on_switched(self, raw_message):
         message = json.loads(raw_message)
         if message["type"] == "switched":
-            print(f"DataChannel に切り替わりました: connection_id={self._connection_id}")
+            print(f"Switched DataChannel: connection_id={self._connection_id}")
             self._switched = True
 
     def _on_notify(self, raw_message):
@@ -104,11 +104,11 @@ class Sendonly:
             and message["event_type"] == "connection.created"
             and message["connection_id"] == self._connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            print(f"Connected Sora: connection_id={self._connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code, message):
-        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
+        print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._closed.set()
         self._connected.clear()
 
@@ -186,7 +186,7 @@ class Recvonly:
     def _on_switched(self, raw_message):
         message = json.loads(raw_message)
         if message["type"] == "switched":
-            print(f"DataChannel に切り替わりました: connection_id={self._connection_id}")
+            print(f"Switched DataChannel: connection_id={self._connection_id}")
             self._switched = True
 
     def _on_notify(self, raw_message: str):
@@ -196,11 +196,11 @@ class Recvonly:
             and message["event_type"] == "connection.created"
             and message["connection_id"] == self._connection_id
         ):
-            print(f"Sora に接続しました: connection_id={self._connection_id}")
+            print(f"Connected Sora: connection_id={self._connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code, message):
-        print(f"Sora から切断しました: error_code='{error_code}' message='{message}'")
+        print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._closed.is_set()
         self._connected.clear()
 
