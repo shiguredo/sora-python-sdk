@@ -10,6 +10,8 @@ def test_openh264_sendonly_recvonly(setup):
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
+    openh264_path = setup.get("openh264_path")
+
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     sendonly = Sendonly(
@@ -17,6 +19,7 @@ def test_openh264_sendonly_recvonly(setup):
         channel_id,
         metadata,
         video_codec_type="H264",
+        openh264_path=openh264_path,
         use_hardware_encoder=False,
     )
     sendonly.connect()
@@ -25,6 +28,8 @@ def test_openh264_sendonly_recvonly(setup):
         signaling_urls,
         channel_id,
         metadata,
+        openh264_path=openh264_path,
+        use_hardware_encoder=False,
     )
     recvonly.connect()
 

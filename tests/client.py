@@ -132,6 +132,7 @@ class Recvonly:
         metadata: dict[str, Any],
         data_channel_signaling: bool = True,
         openh264_path: Optional[str] = None,
+        use_hardware_encoder: bool = True,
     ):
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
@@ -145,7 +146,7 @@ class Recvonly:
         # 終了
         self._closed = Event()
 
-        self._sora: Sora = Sora()
+        self._sora: Sora = Sora(openh264=openh264_path, use_hardware_encoder=use_hardware_encoder)
         self._connection: SoraConnection = self._sora.create_connection(
             signaling_urls=signaling_urls,
             role="sendrecv",
