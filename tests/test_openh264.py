@@ -2,14 +2,13 @@ import sys
 import time
 import uuid
 
-from client import Sendonly
+from client import Recvonly, Sendonly
 
 
-def test_openh264_sendonly(setup):
+def test_openh264_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
-    openh264_path = setup.get("openh264_path")
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
@@ -18,23 +17,41 @@ def test_openh264_sendonly(setup):
         channel_id,
         metadata,
         video_codec_type="H264",
-        openh264_path=openh264_path,
+        use_hardware_encoder=False,
     )
     sendonly.connect()
 
+    recvonly = Recvonly(
+        signaling_urls,
+        channel_id,
+        metadata,
+    )
+    recvonly.connect()
+
     time.sleep(5)
 
-    stats = sendonly.get_stats()
+    sendonly_stats = sendonly.get_stats()
+    recvonly_stats = recvonly.get_stats()
 
     # codec が無かったら StopIteration 例外が上がる
-    codec_stats = next(s for s in stats if s.get("type") == "codec")
-    # H.264 が採用されているかどうか確認する
-    assert codec_stats["mimeType"] == "video/H264"
+    sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
+    assert sendonly_codec_stats["mimeType"] == "video/H264"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
-    outbound_rtp_stats = next(s for s in stats if s.get("type") == "outbound-rtp")
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
     assert outbound_rtp_stats["encoderImplementation"] == "OpenH264"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
+    # codec が無かったら StopIteration 例外が上がる
+    recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
+    assert recvonly_codec_stats["mimeType"] == "video/H264"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
+    assert outbound_rtp_stats["encoderImplementation"] == "OpenH264"
+    assert inbound_rtp_stats["bytesReceived"] > 0
+    assert inbound_rtp_stats["packetsReceived"] > 0
+
     sendonly.disconnect()
+    recvonly.disconnect()

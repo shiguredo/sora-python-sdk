@@ -20,6 +20,7 @@ class Sendonly:
         video_codec_type: str = "VP8",
         data_channel_signaling: bool = True,
         openh264_path: Optional[str] = None,
+        use_hardware_encoder: bool = True,
     ):
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
@@ -36,7 +37,7 @@ class Sendonly:
         self._video_height: int = 480
         self._video_width: int = 640
 
-        self._sora: Sora = Sora(openh264=openh264_path)
+        self._sora: Sora = Sora(openh264=openh264_path, use_hardware_encoder=use_hardware_encoder)
 
         self._video_source: SoraVideoSource = self._sora.create_video_source()
 
