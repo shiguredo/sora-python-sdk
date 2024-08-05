@@ -32,6 +32,7 @@ class Sendonly:
         video_fps: Optional[int],
         video_fourcc: Optional[str],
         openh264: Optional[str],
+        use_hardware_encoder: bool = True,
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
     ):
@@ -55,7 +56,7 @@ class Sendonly:
         self.audio_channels: int = audio_channels
         self.audio_sample_rate: int = audio_sample_rate
 
-        self._sora: Sora = Sora(openh264=openh264)
+        self._sora: Sora = Sora(openh264=openh264, use_hardware_encoder=use_hardware_encoder)
 
         self._audio_source = self._sora.create_audio_source(
             self.audio_channels, self.audio_sample_rate
@@ -247,6 +248,8 @@ def sendonly() -> None:
 
     openh264_path = os.getenv("OPENH264_PATH")
 
+    use_hwa = bool(os.getenv("USE_HWA", "True"))
+
     sendonly = Sendonly(
         signaling_urls,
         channel_id,
@@ -259,6 +262,7 @@ def sendonly() -> None:
         video_fps,
         video_fourcc,
         openh264_path,
+        use_hardware_encoder=use_hwa,
     )
     sendonly.run()
 
