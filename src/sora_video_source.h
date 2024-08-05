@@ -46,10 +46,9 @@ class SoraVideoSource : public SoraTrackInterface {
    * 
    * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    */
-  void OnCaptured(nb::ndarray<uint8_t,
-                              nb::shape<nb::any, nb::any, 3>,
-                              nb::c_contig,
-                              nb::device::cpu> ndarray);
+  void OnCaptured(
+      nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
+          ndarray);
   /**
    * Sora に映像データとして送るフレームを渡します。
    * 
@@ -61,11 +60,10 @@ class SoraVideoSource : public SoraTrackInterface {
    * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
    */
-  void OnCaptured(nb::ndarray<uint8_t,
-                              nb::shape<nb::any, nb::any, 3>,
-                              nb::c_contig,
-                              nb::device::cpu> ndarray,
-                  double timestamp);
+  void OnCaptured(
+      nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
+          ndarray,
+      double timestamp);
   /**
    * Sora に映像データとして送るフレームを渡します。
    * 
@@ -77,11 +75,10 @@ class SoraVideoSource : public SoraTrackInterface {
    * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    * @param timestamp_us マイクロ秒単位の整数で表されるフレームのタイムスタンプ
    */
-  void OnCaptured(nb::ndarray<uint8_t,
-                              nb::shape<nb::any, nb::any, 3>,
-                              nb::c_contig,
-                              nb::device::cpu> ndarray,
-                  int64_t timestamp_us);
+  void OnCaptured(
+      nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
+          ndarray,
+      int64_t timestamp_us);
 
  private:
   struct Frame {

@@ -9,7 +9,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, BASE_DIR)
 
 
-from run import PlatformTarget, cd, get_build_platform  # noqa: E402
+from buildbase import PlatformTarget, cd, get_build_platform  # noqa: E402
 
 
 def run_setup(build_platform, target_platform):
@@ -17,9 +17,9 @@ def run_setup(build_platform, target_platform):
     if target_platform.os == "jetson":
         plat = "manylinux_2_17_aarch64.manylinux2014_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "x86_64":
-        if target_platform.osver == "20.04":
-            plat = "manylinux_2_17_x86_64.manylinux2014_x86_64"
         if target_platform.osver == "22.04":
+            plat = "manylinux_2_17_x86_64.manylinux2014_x86_64"
+        if target_platform.osver == "24.04":
             plat = "manylinux_2_17_x86_64.manylinux2014_x86_64"
 
     class bdist_wheel(_bdist_wheel):
