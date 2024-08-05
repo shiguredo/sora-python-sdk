@@ -11,9 +11,59 @@
 
 ## develop
 
+## 2024.3.0
+
+**日時**: 2024-08-02
+
+- [CHANGE] Jetson 5 の対応を削除
+  - 以降は support/jetson-jetpack-6 ブランチで Jetson 6 のみの対応となる
+  - @melpon
+- [CHANGE] run.py の実行にターゲットの指定を必須にする
+  - @melpon
+- [UPDATE] 対応 Python バージョンの 3.8 と 3.9 のサポートを終了する
+  - 対応 Ubuntu の最小である 22.04 が Python 3.10 なのでそれに合わせる
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2024.7.0` に上げる
+  - @voluntas
+- [UPDATE] nanobind を `2.0.0` に上げて固定する
+  - @melpon
+- [UPDATE] cmake のバージョンを `3.29.6` に上げる
+  - @voluntas
+- [UPDATE] libwebrtc のバージョンを `m127.6533.1.1` に上げる
+  - rtc::TaskQueue が廃止され、webrtc::TaskQueueBase を直接利用する方式変更に追従した
+  - @voluntas
+- [UPDATE] run.py を buildbase 化する
+  - @melpon
+- [UPDATE] Github Actions の Windows ビルドで Rye を利用する
+  - @voluntas
+- [UPDATE] GitHub Actions で pyi 生成用の Ubuntu を 24.04 に上げる
+  - @voluntas
+- [UPDATE] Github Actions のビルドで windows-2022 を利用する
+  - Sora CPP SDK 2024.7.0 (libwebrtc m127) から windows-2022 でビルドする
+  - @miosakuma
+- [ADD] run.py の対応プラットフォームに ubuntu-24.04_x86_64 を追加する
+  - @voluntas
+- [ADD] Github Actions の対応プラットフォームに ubuntu-24.04_x86_64 と macos-14_arm64 を追加する
+  - @voluntas
+- [ADD] Github Actions でビルドに成功したら Slack へ通知するようにする
+  - @voluntas
+- [ADD] sora_sdk に型を付ける
+  - @melpon
+- [ADD] Sora C++ SDK と libwebrtc のローカルビルドを利用可能にする
+  - @melpon
+- [ADD] SoraConnection に get_stats 関数を追加
+  - @melpon
+- [FIX] SoraAudioSink.read が timeout を無視して失敗を返すケースがあったので修正する
+  - @enm10k
+- [FIX] SoraAudioSink.read が timeout を無視するケースがある問題を修正した結果、
+  read の実行タイミングによってはクラッシュするようになったので修正する
+  - @enm10k
+- [FIX] MSVC の内部コンパイラエラーによって Windows で nanobind のビルドが出来ないのを修正する
+  - @melpon
+
 ## 2024.2.0
 
-**2024-04-09**
+**日時**: 2024-04-09
 
 - [ADD] Sora Python SDK Samples を `examples` に移動する
   - @voluntas
@@ -31,8 +81,11 @@
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
   - WEBRTC_BUILD_VERSION を `m122.6261.1.0` に上げる
-    - Ubuntu のビルドを通すために、 __assertion_handler というファイルをコピーする処理を追加した
-  - BOOST_VERSION を `1.84.0` に上げる
+    - Ubuntu のビルドを通すために、 \_\_assertion_handler というファイルをコピーする処理を追加した
+  - BOOST_VERSION を `1.85.0` に上げる
+  - @enm10k @melpon
+- [UPDATE] Intel VPL を利用した H.265 に対応
+  - Sora C++ SDK のバージョンを `2024.6.0` に上げることで対応
   - @enm10k
 - [FIX] pyproject.toml の `[rye.tool]` virtual = true を削除する
   - virtual = true は pip version 24 からはデフォルトが wheel が削除されるようになったための暫定対応だった

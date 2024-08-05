@@ -11,11 +11,11 @@ Sora Python SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp/) の Python ク
 
 We will not respond to PRs or issues that have not been discussed on Discord. Also, Discord is only available in Japanese.
 
-Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use.
+Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before use.
 
 ## 時雨堂のオープンソースソフトウェアについて
 
-利用前に https://github.com/shiguredo/oss をお読みください。
+利用前に <https://github.com/shiguredo/oss> をお読みください。
 
 ## Sora Python SDK について
 
@@ -26,8 +26,12 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
 - Windows / macOS / Linux (Ubuntu) プラットフォームに対応
-- NVIDIA Jetson に対応
+- NVIDIA Jetson JetPack SDK に対応
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
+  - Intel VPL (AV1 / H.264 / H.265)
+  - Apple Video Toolbox (H.264 / H.265)
+  - NVIDIA Video Codec SDK (VP9 / H.264 / H.265)
+  - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
 - 物体検出などの入力に Sora 経由で受信した映像が利用できる
 - 音声認識などの入力に Sora 経由で受信した音声を利用できる
@@ -46,38 +50,45 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## サンプル集
 
-[examples](examples)を参照してください。
+[examples](examples) を参照してください。
 
 ## sora_sdk パッケージの追加
 
 ### pip
 
-```console
-$ pip install sora_sdk
+```bash
+pip install sora_sdk
 ```
 
 ### Rye
 
 [Rye](https://rye-up.com/)
 
+```bash
+rye add sora_sdk
+rye sync
 ```
-$ rye add sora_sdk
-$ rye sync
-```
+
+### NVIDIA Jetson 向けパッケージ
+
+PyPI 経由ではインストールできません。
+パッケージバイナリを配布しておりますので、そちらをご利用ください。
 
 ## システム条件
 
 - WebRTC SFU Sora 2023.2.0 以降
-- Python 3.8 以上
+- Python 3.10 以上
 
 ## 対応プラットフォーム
 
-- Windows 11 x86_64 以降
-- macOS 13 arm64 以降
-- Ubuntu 22.04 x86_64
-- Ubuntu 20.04 arm64
-  - Python 3.8 のみ対応
-  - NVIDIA Jetson JetPack SDK 5.1.2
+- Windows 11 x86_64
+- Windows Server 2022 x86_64
+- macOS Ventura 14 arm64
+- macOS Sonoma 13 arm64
+- Ubuntu 24.04 LTS x86_64
+- Ubuntu 22.04 LTS x86_64
+- Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
+  - PyPI からではなくパッケージファイルを利用してください
 
 ## 対応機能
 
@@ -94,14 +105,20 @@ $ rye sync
 
 - DataChannel 対応
   - [アダワープジャパン株式会社](https://adawarp.com/) 様
+- Intel VPL H.265 対応
+  - [アダワープジャパン株式会社](https://adawarp.com/) 様
 
 ### 優先実装が可能な機能一覧
 
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
 
+- Windows 11 arm64
+- Ubuntu 24.04 arm64
 - Ubuntu 22.04 arm64
-  - Python 3.10
-  - NVIDIA Jetson JetPack SDK 6.0
+- Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
+- AMD Video Core Next (VCN) 対応
+  - VP9 / AV1 / H.264 / H.265
+- Python 3.9 以前への対応
 
 ## サポートについて
 
@@ -113,7 +130,7 @@ $ rye sync
 
 最新の状況などは Discord で共有しています。質問や相談も Discord でのみ受け付けています。
 
-https://discord.gg/shiguredo
+<https://discord.gg/shiguredo>
 
 ### バグ報告
 
@@ -123,7 +140,7 @@ Discord へお願いします。
 
 Apache License 2.0
 
-```
+```text
 Copyright 2023-2024, tnoho (Original Author)
 Copyright 2023-2024, Wandbox LLC (Original Author)
 Copyright 2023-2024, Shiguredo Inc.
@@ -145,8 +162,8 @@ limitations under the License.
 
 ## OpenH264
 
-https://www.openh264.org/BINARY_LICENSE.txt
+<https://www.openh264.org/BINARY_LICENSE.txt>
 
-```
+```text
 "OpenH264 Video Codec provided by Cisco Systems, Inc."
 ```

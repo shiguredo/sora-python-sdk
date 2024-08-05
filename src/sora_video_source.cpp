@@ -34,26 +34,23 @@ void SoraVideoSource::PublisherDisposed() {
   Disposed();
 }
 
-void SoraVideoSource::OnCaptured(nb::ndarray<uint8_t,
-                                             nb::shape<nb::any, nb::any, 3>,
-                                             nb::c_contig,
-                                             nb::device::cpu> ndarray) {
+void SoraVideoSource::OnCaptured(
+    nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
+        ndarray) {
   OnCaptured(ndarray, rtc::TimeMicros());
 }
 
-void SoraVideoSource::OnCaptured(nb::ndarray<uint8_t,
-                                             nb::shape<nb::any, nb::any, 3>,
-                                             nb::c_contig,
-                                             nb::device::cpu> ndarray,
-                                 double timestamp) {
+void SoraVideoSource::OnCaptured(
+    nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
+        ndarray,
+    double timestamp) {
   OnCaptured(ndarray, (int64_t)(timestamp * 1000000));
 }
 
-void SoraVideoSource::OnCaptured(nb::ndarray<uint8_t,
-                                             nb::shape<nb::any, nb::any, 3>,
-                                             nb::c_contig,
-                                             nb::device::cpu> ndarray,
-                                 int64_t timestamp_us) {
+void SoraVideoSource::OnCaptured(
+    nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
+        ndarray,
+    int64_t timestamp_us) {
   int width = ndarray.shape(1);
   int height = ndarray.shape(0);
   std::unique_ptr<uint8_t> data(new uint8_t[width * height * 3]);

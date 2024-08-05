@@ -4,7 +4,7 @@ import os
 import platform
 from pathlib import Path
 from threading import Event
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import cv2
 import mediapipe as mp
@@ -16,18 +16,36 @@ from sora_sdk import Sora, SoraSignalingErrorCode, SoraVideoSource
 
 
 class LogoStreamer:
+    """顔検出を行い、検出された顔にロゴを重ねて Sora に送信するクラス。"""
+
     def __init__(
         self,
-        signaling_urls: List[str],
+        signaling_urls: list[str],
         role: str,
         channel_id: str,
-        metadata: Optional[Dict[str, Any]],
+        metadata: Optional[dict[str, Any]],
         camera_id: int,
         video_width: Optional[int],
         video_height: Optional[int],
         video_fps: Optional[int],
         video_fourcc: Optional[str],
     ):
+        """
+        LogoStreamer インスタンスを初期化します。
+
+        このクラスは Sora への接続を設定し、カメラからのビデオフレームを処理し、
+        顔検出を行い、検出された顔にロゴを重ねて Sora に送信する機能を提供します。
+
+        :param signaling_urls: Sora シグナリング URL のリスト
+        :param role: 接続ロール（"sendonly" など）
+        :param channel_id: 接続するチャンネル ID
+        :param metadata: 接続のためのオプションのメタデータ
+        :param camera_id: 使用するカメラの ID
+        :param video_width: ビデオの幅
+        :param video_height: ビデオの高さ
+        :param video_fps: ビデオのフレームレート
+        :param video_fourcc: ビデオの FOURCC コード
+        """
         self.mp_face_detection = mp.solutions.face_detection
 
         self._sora = Sora(openh264=None)
@@ -41,21 +59,44 @@ class LogoStreamer:
             video_bit_rate=500,
             video_source=self._video_source,
         )
-        self._connection_id = ""
+        self._connection_id: Optional[str] = None
 
-        self._connected = Event()
-        self._closed = False
-        self._default_connection_timeout_s = 10.0
+        self._connected: Event = Event()
+        self._closed: bool = False
+        self._default_connection_timeout_s: float = 10.0
 
         self._connection.on_set_offer = self._on_set_offer
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
+        self._setup_video_capture(camera_id, video_width, video_height, video_fps, video_fourcc)
+
+        # ロゴを読み込む
+        self._logo = Image.open(Path(__file__).parent.joinpath("shiguremaru.png"))
+
+    def _setup_video_capture(
+        self,
+        camera_id: int,
+        video_width: Optional[int],
+        video_height: Optional[int],
+        video_fps: Optional[int],
+        video_fourcc: Optional[str],
+    ) -> None:
+        """
+        ビデオキャプチャの設定を行います。
+
+        :param camera_id: 使用するカメラの ID
+        :param video_width: ビデオの幅
+        :param video_height: ビデオの高さ
+        :param video_fps: ビデオのフレームレート
+        :param video_fourcc: ビデオの FOURCC コード
+        """
         if platform.system() == "Windows":
             # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
             self._video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
         else:
             self._video_capture = cv2.VideoCapture(camera_id)
+
         if video_width is not None:
             self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
         if video_height is not None:
@@ -64,6 +105,7 @@ class LogoStreamer:
             self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
         if video_fps is not None:
             self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
+
         # Ubuntu → FOURCC を設定すると FPS が初期化される
         # Windows → FPS を設定すると FOURCC が初期化される
         # ので、両方に対応するため２回設定する
@@ -76,30 +118,49 @@ class LogoStreamer:
             if video_fps != int(self._video_capture.get(cv2.CAP_PROP_FPS)):
                 self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
 
-        # ロゴを読み込む
-        self._logo = Image.open(Path(__file__).parent.joinpath("shiguremaru.png"))
+    def connect(self) -> None:
+        """
+        Sora への接続を確立します。
 
-    def connect(self):
+        :raises AssertionError: タイムアウト期間内に接続が確立できなかった場合
+        """
         self._connection.connect()
 
         assert self._connected.wait(
             timeout=self._default_connection_timeout_s
         ), "接続に失敗しました"
 
-    def disconnect(self):
+    def disconnect(self) -> None:
+        """Sora から切断します。"""
         self._connection.disconnect()
 
-    def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str):
+    def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
+        """
+        切断イベントを処理します。
+
+        :param error_code: 切断のエラーコード
+        :param message: 切断メッセージ
+        """
         print(f"Sora から切断されました: error_code='{error_code}' message='{message}'")
         self._connected.clear()
         self._closed = True
 
-    def _on_set_offer(self, raw_message: str):
+    def _on_set_offer(self, raw_message: str) -> None:
+        """
+        オファー設定イベントを処理します。
+
+        :param raw_message: オファーを含む生のメッセージ
+        """
         message = json.loads(raw_message)
         if message["type"] == "offer":
             self._connection_id = message["connection_id"]
 
-    def _on_notify(self, raw_message: str):
+    def _on_notify(self, raw_message: str) -> None:
+        """
+        Sora からの通知イベントを処理します。
+
+        :param raw_message: 生の通知メッセージ
+        """
         message = json.loads(raw_message)
         if (
             message["type"] == "notify"
@@ -109,11 +170,11 @@ class LogoStreamer:
             print("Sora に接続しました")
             self._connected.set()
 
-    def run(self):
+    def run(self) -> None:
+        """ビデオフレームの処理と送信を行うメインループ。"""
         self.connect()
         try:
             # 顔検出を用意する
-            # TODO: face_detection の型を調べる
             with self.mp_face_detection.FaceDetection(
                 model_selection=0, min_detection_confidence=0.5
             ) as face_detection:
@@ -130,7 +191,17 @@ class LogoStreamer:
             self.disconnect()
             self._video_capture.release()
 
-    def run_one_frame(self, face_detection, angle: int, frame: MatLike):
+    def run_one_frame(
+        self, face_detection: mp.solutions.face_detection.FaceDetection, angle: int, frame: MatLike
+    ) -> int:
+        """
+        1フレームの処理を行います。
+
+        :param face_detection: 顔検出オブジェクト
+        :param angle: ロゴの回転角度
+        :param frame: 処理するフレーム
+        :return: 更新されたロゴの回転角度
+        """
         # 高速化の呪文
         frame.flags.writeable = False
         # mediapipe や PIL で処理できるように色の順序を変える
@@ -148,6 +219,7 @@ class LogoStreamer:
         angle += 1
         if angle >= 360:
             angle = 0
+
         if results.detections:
             for detection in results.detections:
                 location = detection.location_data
@@ -184,7 +256,12 @@ class LogoStreamer:
         return angle
 
 
-def hideface_sender():
+def hideface_sender() -> None:
+    """
+    環境変数を使用して LogoStreamer インスタンスを設定し実行します。
+
+    :raises ValueError: 必要な環境変数が設定されていない場合
+    """
     # .env ファイルを読み込む
     load_dotenv()
 

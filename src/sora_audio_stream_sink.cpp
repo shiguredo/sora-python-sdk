@@ -102,13 +102,13 @@ SoraAudioFrame::SoraAudioFrame(
                                            absolute_capture_timestamp_ms));
 }
 
-nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>
-SoraAudioFrame::Data() const {
+nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>> SoraAudioFrame::Data()
+    const {
   // Data はまだ vector の時は返せてない
   size_t shape[2] = {static_cast<size_t>(samples_per_channel()),
                      static_cast<size_t>(num_channels())};
-  return nb::ndarray<nb::numpy, int16_t, nb::shape<nb::any, nb::any>>(
-      (int16_t*)RawData(), 2, shape);
+  return nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>(
+      (int16_t*)RawData(), 2, shape, nb::handle());
 }
 
 const int16_t* SoraAudioFrame::RawData() const {

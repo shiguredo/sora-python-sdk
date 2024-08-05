@@ -195,35 +195,32 @@ NB_MODULE(sora_sdk_ext, m) {
            nb::overload_cast<const int16_t*, size_t>(&SoraAudioSource::OnData),
            "data"_a, "samples_per_channel"_a)
       .def("on_data",
-           nb::overload_cast<nb::ndarray<int16_t, nb::shape<nb::any, nb::any>,
+           nb::overload_cast<nb::ndarray<int16_t, nb::shape<-1, -1>,
                                          nb::c_contig, nb::device::cpu>,
                              double>(&SoraAudioSource::OnData),
            "ndarray"_a, "timestamp"_a)
       .def("on_data",
-           nb::overload_cast<nb::ndarray<int16_t, nb::shape<nb::any, nb::any>,
+           nb::overload_cast<nb::ndarray<int16_t, nb::shape<-1, -1>,
                                          nb::c_contig, nb::device::cpu>>(
                &SoraAudioSource::OnData),
            "ndarray"_a);
 
   nb::class_<SoraVideoSource, SoraTrackInterface>(m, "SoraVideoSource")
-      .def(
-          "on_captured",
-          nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
-                                        nb::c_contig, nb::device::cpu>>(
-              &SoraVideoSource::OnCaptured),
-          "ndarray"_a)
-      .def(
-          "on_captured",
-          nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
-                                        nb::c_contig, nb::device::cpu>,
-                            double>(&SoraVideoSource::OnCaptured),
-          "ndarray"_a, "timestamp"_a)
-      .def(
-          "on_captured",
-          nb::overload_cast<nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, 3>,
-                                        nb::c_contig, nb::device::cpu>,
-                            int64_t>(&SoraVideoSource::OnCaptured),
-          "ndarray"_a, "timestamp_us"_a);
+      .def("on_captured",
+           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<-1, -1, 3>,
+                                         nb::c_contig, nb::device::cpu>>(
+               &SoraVideoSource::OnCaptured),
+           "ndarray"_a)
+      .def("on_captured",
+           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<-1, -1, 3>,
+                                         nb::c_contig, nb::device::cpu>,
+                             double>(&SoraVideoSource::OnCaptured),
+           "ndarray"_a, "timestamp"_a)
+      .def("on_captured",
+           nb::overload_cast<nb::ndarray<uint8_t, nb::shape<-1, -1, 3>,
+                                         nb::c_contig, nb::device::cpu>,
+                             int64_t>(&SoraVideoSource::OnCaptured),
+           "ndarray"_a, "timestamp_us"_a);
 
   nb::class_<SoraAudioSinkImpl>(m, "SoraAudioSinkImpl",
                                 nb::type_slots(audio_sink_slots))
@@ -286,6 +283,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("disconnect", &SoraConnection::Disconnect)
       .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a,
            "data"_a)
+      .def("get_stats", &SoraConnection::GetStats)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
       .def_rw("on_notify", &SoraConnection::on_notify_)
@@ -322,7 +320,50 @@ NB_MODULE(sora_sdk_ext, m) {
            "insecure"_a = nb::none(), "client_cert"_a = nb::none(),
            "client_key"_a = nb::none(), "proxy_url"_a = nb::none(),
            "proxy_username"_a = nb::none(), "proxy_password"_a = nb::none(),
-           "proxy_agent"_a = nb::none())
+           "proxy_agent"_a = nb::none(),
+           nb::sig("def create_connection("
+                   "self, "
+                   "signaling_urls: list[str], "
+                   "role: str, "
+                   "channel_id: str, "
+                   "client_id: Optional[str] = None, "
+                   "bundle_id: Optional[str] = None, "
+                   "metadata: Optional[dict] = None, "
+                   "signaling_notify_metadata: Optional[dict] = None, "
+                   "audio_source: Optional[SoraTrackInterface] = None, "
+                   "video_source: Optional[SoraTrackInterface] = None, "
+                   "audio: Optional[bool] = None, "
+                   "video: Optional[bool] = None, "
+                   "audio_codec_type: Optional[str] = None, "
+                   "video_codec_type: Optional[str] = None, "
+                   "video_bit_rate: Optional[int] = None, "
+                   "audio_bit_rate: Optional[int] = None, "
+                   "video_vp9_params: Optional[dict] = None, "
+                   "video_av1_params: Optional[dict] = None, "
+                   "video_h264_params: Optional[dict] = None, "
+                   "simulcast: Optional[bool] = None, "
+                   "spotlight: Optional[bool] = None, "
+                   "spotlight_number: Optional[int] = None, "
+                   "simulcast_rid: Optional[str] = None, "
+                   "spotlight_focus_rid: Optional[str] = None, "
+                   "spotlight_unfocus_rid: Optional[str] = None, "
+                   "forwarding_filter: Optional[dict] = None, "
+                   "data_channels: Optional[list[dict]] = None, "
+                   "data_channel_signaling: Optional[bool] = None, "
+                   "ignore_disconnect_websocket: Optional[bool] = None, "
+                   "data_channel_signaling_timeout: Optional[int] = None, "
+                   "disconnect_wait_timeout: Optional[int] = None, "
+                   "websocket_close_timeout: Optional[int] = None, "
+                   "websocket_connection_timeout: Optional[int] = None, "
+                   "audio_streaming_language_code: Optional[str] = None, "
+                   "insecure: Optional[bool] = None, "
+                   "client_cert: Optional[str] = None, "
+                   "client_key: Optional[str] = None, "
+                   "proxy_url: Optional[str] = None, "
+                   "proxy_username: Optional[str] = None, "
+                   "proxy_password: Optional[str] = None, "
+                   "proxy_agent: Optional[str] = None"
+                   ") -> SoraConnection"))
       .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
            "sample_rate"_a)
       .def("create_video_source", &Sora::CreateVideoSource);
