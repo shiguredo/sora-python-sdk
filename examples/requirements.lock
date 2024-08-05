@@ -9,7 +9,6 @@
 #   generate-hashes: false
 #   universal: false
 
--e file:.
 absl-py==1.4.0
     # via mediapipe
 attrs==23.1.0
@@ -33,7 +32,6 @@ kiwisolver==1.4.4
 matplotlib==3.7.2
     # via mediapipe
 mediapipe==0.10.14
-    # via sora-sdk-samples
 ml-dtypes==0.2.0
     # via jax
     # via jaxlib
@@ -52,9 +50,7 @@ numpy==1.24.4
 opencv-contrib-python==4.8.0.74
     # via mediapipe
 opencv-python==4.10.0.84
-    # via sora-sdk-samples
 opencv-python-headless==4.10.0.84
-    # via sora-sdk-samples
 opt-einsum==3.3.0
     # via jax
 packaging==23.1
@@ -70,14 +66,11 @@ pyparsing==3.0.9
 python-dateutil==2.8.2
     # via matplotlib
 python-dotenv==1.0.1
-    # via sora-sdk-samples
 scipy==1.10.1
     # via jax
     # via jaxlib
 six==1.16.0
     # via python-dateutil
-sora-sdk==2024.3.0.dev9
-    # via sora-sdk-samples
+sora-sdk==2024.3.0.dev10
 sounddevice==0.4.7
     # via mediapipe
-    # via sora-sdk-samples
