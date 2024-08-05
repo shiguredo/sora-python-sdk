@@ -75,7 +75,7 @@ scipy==1.10.1
     # via jaxlib
 six==1.16.0
     # via python-dateutil
-sora-sdk==2024.3.0.dev10
+sora-sdk==2024.3.0
 sounddevice==0.4.7
     # via mediapipe
 tomli==2.0.1
