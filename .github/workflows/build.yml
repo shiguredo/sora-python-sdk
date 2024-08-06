@@ -58,6 +58,25 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Disk cleanup
+        run: |
+          set -x
+          df -h
+          sudo du -h -d1 /usr/local
+          sudo du -h -d1 /usr/local/share
+          sudo du -h -d1 /usr/local/lib
+          sudo du -h -d1 /usr/share
+          RMI=`docker images -q -a`
+          if [ -n "$RMI" ]; then
+            docker rmi $RMI
+          fi
+          # 4.6G
+          sudo rm -rf /usr/local/.ghcup
+          # 1.7G
+          sudo rm -rf /usr/share/swift
+          # 1.4G
+          sudo rm -rf /usr/share/dotnet
+          df -h
       - uses: actions/download-artifact@v4
         with:
           name: sora_sdk
