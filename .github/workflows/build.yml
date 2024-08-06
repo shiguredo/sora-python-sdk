@@ -75,20 +75,19 @@ jobs:
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
 
-      # Ubuntu 向け
+      # Jetson 向け
+      - name: Set up QEMU
+        if: ${{ matrix.platform.name == 'ubuntu-22.04_armv8_jetson' }}
+        uses: docker/setup-qemu-action@v3
       - run: |
-          rye run python run.py ${{ matrix.platform.target }}
-          rye run python -m build
-        if: ${{ matrix.platform.os == 'ubuntu' }}
-
-      # macOS 向け
-      - run: |
-          rye run python run.py ${{ matrix.platform.target }}
-          rye run python -m build
-        if: ${{ matrix.platform.os == 'macos' }}
+          sudo apt-get install -y multistrap binutils-aarch64-linux-gnu
+          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
+          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+          rye run python run.py
+          ./scripts/package.ubuntu-22.04_armv8_jetson.sh
+        if: ${{ matrix.platform.name == 'ubuntu-22.04_armv8_jetson' }}
         env:
-          _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
-          ARCHFLAGS: ${{ matrix.platform.archflags }}
+          SORA_SDK_TARGET: ubuntu-22.04_armv8_jetson
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
