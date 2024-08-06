@@ -169,7 +169,13 @@ def install_deps(
             apply_patch(patch, nanobind_include_dir, 1)
 
 
-AVAILABLE_TARGETS = ["windows_x86_64", "macos_arm64", "ubuntu-22.04_x86_64", "ubuntu-24.04_x86_64"]
+AVAILABLE_TARGETS = [
+    "windows_x86_64",
+    "macos_arm64",
+    "ubuntu-22.04_x86_64",
+    "ubuntu-24.04_x86_64",
+    "ubuntu-22.04_armv8_jetson",
+]
 
 
 def main():
@@ -193,6 +199,8 @@ def main():
         platform = Platform("ubuntu", "22.04", "x86_64")
     elif args.target == "ubuntu-24.04_x86_64":
         platform = Platform("ubuntu", "24.04", "x86_64")
+    elif args.target == "ubuntu-22.04_armv8_jetson":
+        platform = Platform("jetson", None, "armv8", "ubuntu-22.04")
     else:
         raise Exception(f"Unknown target {args.target}")
 
@@ -275,8 +283,8 @@ def main():
                 "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
                 f"-DCMAKE_SYSROOT={sysroot}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
-                f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.9'))}",
-                "-DNB_SUFFIX=.cpython-38-aarch64-linux-gnu.so",
+                f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.10'))}",
+                "-DNB_SUFFIX=.cpython-310-aarch64-linux-gnu.so",
             ]
 
         # Windows 以外の、クロスコンパイルでない環境では pyi ファイルを生成する

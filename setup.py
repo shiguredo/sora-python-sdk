@@ -52,8 +52,8 @@ def main():
     target = os.getenv("SORA_SDK_TARGET")
     if target is None:
         target_platform = build_platform
-    elif target == "ubuntu-20.04_armv8_jetson":
-        target_platform = PlatformTarget("jetson", None, "armv8")
+    elif target == "ubuntu-22.04_armv8_jetson":
+        target_platform = PlatformTarget("jetson", None, "armv8", "ubuntu-22.04")
     else:
         raise Exception(f"Unknown target {target}")
 
