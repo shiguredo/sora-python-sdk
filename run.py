@@ -131,7 +131,22 @@ def install_deps(
 
     # Sora C++ SDK
     if local_sora_cpp_sdk_dir is None:
-        install_sora_and_deps(platform.target.package_name, source_dir, install_dir)
+        if platform.target.package_name == "ubuntu-22.04_armv8_jetson":
+            install_sora_and_deps(
+                version["SORA_CPP_SDK_JETSON_JETPACK_VERSION"],
+                version["BOOST_VERSION"],
+                platform.target.package_name,
+                source_dir,
+                install_dir,
+            )
+        else:
+            install_sora_and_deps(
+                version["SORA_CPP_SDK_VERSION"],
+                version["BOOST_VERSION"],
+                platform.target.package_name,
+                source_dir,
+                install_dir,
+            )
     else:
         build_sora(
             platform.target.package_name,

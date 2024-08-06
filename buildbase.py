@@ -862,23 +862,23 @@ def install_sora(version, source_dir, install_dir, platform: str):
     extract(archive, output_dir=install_dir, output_dirname="sora")
 
 
-def install_sora_and_deps(platform: str, source_dir: str, install_dir: str):
-    version = read_version_file("VERSION")
-
+def install_sora_and_deps(
+    sora_version: str, boost_version: str, platform: str, source_dir: str, install_dir: str
+):
     # Boost
     install_boost_args = {
-        "version": version["BOOST_VERSION"],
+        "version": boost_version,
         "version_file": os.path.join(install_dir, "boost.version"),
         "source_dir": source_dir,
         "install_dir": install_dir,
-        "sora_version": version["SORA_CPP_SDK_VERSION"],
+        "sora_version": sora_version,
         "platform": platform,
     }
     install_boost(**install_boost_args)
 
     # Sora C++ SDK
     install_sora_args = {
-        "version": version["SORA_CPP_SDK_VERSION"],
+        "version": sora_version,
         "version_file": os.path.join(install_dir, "sora.version"),
         "source_dir": source_dir,
         "install_dir": install_dir,
