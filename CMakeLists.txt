@@ -112,7 +112,10 @@ elseif(TARGET_OS STREQUAL "jetson")
       "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
   )
-  target_link_directories(sora_sdk_ext PRIVATE ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/tegra)
+  target_link_directories(sora_sdk_ext
+    PRIVATE
+      ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/tegra
+      ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/nvidia)
 elseif(TARGET_OS STREQUAL "windows")
   # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
