@@ -67,7 +67,6 @@ jobs:
       - run: rye sync
       - run: rye run pytest tests/test_messaging_sendonly.py -s
 
-  # まだ Windows で E2E テストは早かったかもしれない
   e2e_windows_test:
     strategy:
       matrix:
