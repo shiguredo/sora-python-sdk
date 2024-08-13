@@ -3,9 +3,9 @@ name: examples-e2e-test
 on:
   workflow_dispatch:
   push:
-    paths:
-      - .github/workflows/examples-e2e-test.yml
-      - examples
+    # paths:
+    #   - .github/workflows/examples-e2e-test.yml
+    #   - examples
 
 jobs:
   e2e_ubuntu_test:
