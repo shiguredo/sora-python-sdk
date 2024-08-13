@@ -27,7 +27,6 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.rye]
-virtual = true
 managed = true
 dev-dependencies = ["ruff>=0.5", "mypy>=1.10.0"]
 
