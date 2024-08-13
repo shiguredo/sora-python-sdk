@@ -82,6 +82,7 @@ def sendonly() -> None:
 
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
+    # OpenCV を利用したビデオキャプチャの設定
     video_capture = get_video_capture(
         camera_id=camera_id,
         video_width=video_width,
