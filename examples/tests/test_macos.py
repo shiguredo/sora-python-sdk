@@ -21,10 +21,13 @@ def test_macos_h264_sendonly(setup):
     sendonly = Sendonly(
         signaling_urls,
         channel_id,
-        metadata=metadata,
+        audio=False,
+        video=True,
         video_codec_type="H264",
+        metadata=metadata,
+        use_hwa=True,
     )
-    sendonly.connect()
+    sendonly.connect(fake_video=True)
 
     time.sleep(5)
 
@@ -54,10 +57,13 @@ def test_macos_h265_sendonly(setup):
     sendonly = Sendonly(
         signaling_urls,
         channel_id,
-        metadata,
+        audio=False,
+        video=True,
         video_codec_type="H265",
+        metadata=metadata,
+        use_hwa=True,
     )
-    sendonly.connect()
+    sendonly.connect(fake_video=True)
 
     time.sleep(5)
 
@@ -88,8 +94,11 @@ def test_macos_h264_sendonly_recvonly(setup):
     sendonly = Sendonly(
         signaling_urls,
         channel_id,
-        metadata,
+        audio=False,
+        video=True,
         video_codec_type="H264",
+        metadata=metadata,
+        use_hwa=True,
     )
     sendonly.connect()
 
@@ -97,6 +106,7 @@ def test_macos_h264_sendonly_recvonly(setup):
         signaling_urls,
         channel_id,
         metadata=metadata,
+        use_hwa=True,
     )
     recvonly.connect()
 
@@ -142,8 +152,11 @@ def test_macos_h265_sendonly_recvonly(setup):
     sendonly = Sendonly(
         signaling_urls,
         channel_id,
-        metadata,
+        audio=False,
+        video=True,
         video_codec_type="H265",
+        metadata=metadata,
+        use_hwa=True,
     )
     sendonly.connect()
 
@@ -151,6 +164,7 @@ def test_macos_h265_sendonly_recvonly(setup):
         signaling_urls,
         channel_id,
         metadata=metadata,
+        use_hwa=True,
     )
     recvonly.connect()
 
