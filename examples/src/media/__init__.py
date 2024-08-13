@@ -33,15 +33,11 @@ class Sendonly:
         metadata: Optional[dict[str, Any]] = None,
         video_codec_type: Optional[str] = None,
         video_bit_rate: Optional[int] = None,
-        video_width: Optional[int] = None,
-        video_height: Optional[int] = None,
-        video_fps: Optional[int] = None,
         openh264_path: Optional[str] = None,
         use_hwa: bool = False,
-        video_fourcc: str = "MJPG",
-        camera_id: int = 0,
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
+        video_capture: Optional[cv2.VideoCapture] = None,
     ):
         """
         Sendonly インスタンスを初期化します。
@@ -90,51 +86,8 @@ class Sendonly:
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
-        self._setup_video_capture(camera_id, video_width, video_height, video_fps, video_fourcc)
-
-    def _setup_video_capture(
-        self,
-        camera_id: int,
-        video_width: Optional[int],
-        video_height: Optional[int],
-        video_fps: Optional[int],
-        video_fourcc: Optional[str],
-    ) -> None:
-        """
-        ビデオキャプチャの設定を行います。
-
-        :param camera_id: 使用するカメラの ID
-        :param video_width: ビデオの幅
-        :param video_height: ビデオの高さ
-        :param video_fps: ビデオのフレームレート
-        :param video_fourcc: ビデオの FOURCC コード
-        """
-        if platform.system() == "Windows":
-            # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
-            self._video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
-        else:
-            self._video_capture = cv2.VideoCapture(camera_id)
-
-        if video_width is not None:
-            self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
-        if video_height is not None:
-            self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
-        if video_fourcc is not None:
-            self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
-        if video_fps is not None:
-            self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
-
-        # Ubuntu → FOURCC を設定すると FPS が初期化される
-        # Windows → FPS を設定すると FOURCC が初期化される
-        # ので、両方に対応するため２回設定する
-        if video_fourcc is not None:
-            fourcc = cv2.VideoWriter_fourcc(*video_fourcc)
-            target_fourcc = self._video_capture.get(cv2.CAP_PROP_FOURCC)
-            if fourcc != target_fourcc:
-                self._video_capture.set(cv2.CAP_PROP_FOURCC, fourcc)
-        if video_fps is not None:
-            if video_fps != int(self._video_capture.get(cv2.CAP_PROP_FPS)):
-                self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
+        if video_capture is not None:
+            self._video_capture = video_capture
 
     def connect(self) -> None:
         """
@@ -156,6 +109,13 @@ class Sendonly:
         raw_stats = self._connection.get_stats()
         stats = json.loads(raw_stats)
         return stats
+
+    # def _dummy_video_loop(self):
+    #     while not self._closed.is_set():
+    #         time.sleep(1.0 / 30)
+    #         self._video_source.on_captured(
+    #             np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
+    #         )
 
     def _on_notify(self, raw_message: str) -> None:
         """
