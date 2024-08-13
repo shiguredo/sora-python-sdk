@@ -45,6 +45,8 @@ class Messaging:
 
         self._connected = Event()
         self._closed = False
+        self._default_connection_timeout_s: float = 10.0
+
         self._label = data_channels[0]["label"]
         self._sendable_data_channels: set = set()
         self._is_data_channel_ready = False
@@ -70,7 +72,9 @@ class Messaging:
         """
         self._connection.connect()
 
-        assert self._connected.wait(10), "Could not connect to Sora."
+        assert self._connected.wait(
+            self._default_connection_timeout_s
+        ), "Could not connect to Sora."
 
     def disconnect(self):
         """Sora から切断します。"""

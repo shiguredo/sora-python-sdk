@@ -10,10 +10,6 @@ def test_messaging_sendonly(setup):
     channel_id_prefix = setup.get("channel_id_prefix")
     messaging_label = "#test"
 
-    print(signaling_urls)
-    print(channel_id_prefix)
-    print(messaging_label)
-
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     metadata = setup.get("metadata")
