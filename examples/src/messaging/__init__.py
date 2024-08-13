@@ -70,7 +70,7 @@ class Messaging:
         """
         self._connection.connect()
 
-        assert self._connected.wait(10), "接続に失敗しました"
+        assert self._connected.wait(10), "Could not connect to Sora."
 
     def disconnect(self):
         """Sora から切断します。"""
@@ -113,7 +113,7 @@ class Messaging:
             and message["event_type"] == "connection.created"
             and message["connection_id"] == self._connection_id
         ):
-            print("Sora に接続しました")
+            print(f"Connected Sora: connection_id={self._connection_id}")
             self._connected.set()
 
     def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str):
@@ -123,7 +123,7 @@ class Messaging:
         :param error_code: 切断のエラーコード
         :param message: 切断メッセージ
         """
-        print(f"Sora から切断されました: error_code='{error_code}' message='{message}'")
+        print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._connected.clear()
         self._closed = True
 
@@ -134,7 +134,7 @@ class Messaging:
         :param label: データチャネルのラベル
         :param data: 受信したバイトデータ
         """
-        print(f"メッセージを受信しました: label={label}, data={data.decode('utf-8')}")
+        print(f"Received message: label={label}, data={data.decode('utf-8')}")
 
     def _on_data_channel(self, label: str):
         """
