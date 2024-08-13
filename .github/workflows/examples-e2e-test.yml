@@ -51,9 +51,9 @@ jobs:
         working-directory: ./examples
     timeout-minutes: 20
     env:
-      TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
-      TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+      TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+      TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
@@ -102,13 +102,13 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
     steps:
-      - name: Slack Notification
-        uses: ./.github/actions/slack-notify-succeeded
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/slack-notify-succeeded
 
   slack_notify_failed:
     needs: [e2e_ubuntu_test, e2e_macos_test, e2e_windows_test]
     runs-on: ubuntu-latest
     if: failure()
     steps:
-      - name: Slack Notification
-        uses: ./.github/actions/slack-notify-failed
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/slack-notify-failed

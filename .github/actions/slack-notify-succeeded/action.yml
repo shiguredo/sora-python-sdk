@@ -1,5 +1,7 @@
 name: "Slack Notify Succeeded"
+
 description: "Send a Slack notification for succeeded jobs"
+
 runs:
   using: "composite"
   steps:
