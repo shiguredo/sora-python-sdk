@@ -20,10 +20,14 @@ contourpy==1.1.0
     # via matplotlib
 cycler==0.11.0
     # via matplotlib
+exceptiongroup==1.2.2
+    # via pytest
 flatbuffers==23.5.26
     # via mediapipe
 fonttools==4.40.0
     # via matplotlib
+iniconfig==2.0.0
+    # via pytest
 jax==0.4.13
     # via mediapipe
 jaxlib==0.4.13
@@ -62,14 +66,18 @@ opt-einsum==3.3.0
     # via jax
 packaging==23.1
     # via matplotlib
+    # via pytest
 pillow==10.0.0
     # via matplotlib
+pluggy==1.5.0
+    # via pytest
 protobuf==4.25.4
     # via mediapipe
 pycparser==2.21
     # via cffi
 pyparsing==3.0.9
     # via matplotlib
+pytest==8.3.2
 python-dateutil==2.8.2
     # via matplotlib
 python-dotenv==1.0.1
@@ -87,5 +95,6 @@ sounddevice==0.4.7
     # via sora-sdk-samples
 tomli==2.0.1
     # via mypy
+    # via pytest
 typing-extensions==4.10.0
     # via mypy
