@@ -23,12 +23,17 @@ messaging_recvonly = "messaging.recvonly:recvonly"
 hideface_sender = "ml.hideface_sender:hideface_sender"
 
 [build-system]
-requires = ["hatchling", "setuptools"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.rye]
 managed = true
-dev-dependencies = ["ruff>=0.5", "mypy>=1.10.0", "pytest>=8.3"]
+dev-dependencies = [
+    "ruff>=0.5",
+    "mypy>=1.10.0",
+    "pytest>=8.3",
+    "setuptools>=69.2",
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
