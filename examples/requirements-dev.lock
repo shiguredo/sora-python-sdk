@@ -10,37 +10,38 @@
 #   universal: false
 
 -e file:.
-absl-py==1.4.0
+absl-py==2.1.0
     # via mediapipe
-attrs==23.1.0
+attrs==24.2.0
     # via mediapipe
-cffi==1.15.1
+cffi==1.17.0
     # via sounddevice
-contourpy==1.1.0
+contourpy==1.2.1
     # via matplotlib
-cycler==0.11.0
+cycler==0.12.1
     # via matplotlib
-flatbuffers==23.5.26
+flatbuffers==24.3.25
     # via mediapipe
-fonttools==4.40.0
+fonttools==4.53.1
     # via matplotlib
-jax==0.4.13
+jax==0.4.31
     # via mediapipe
-jaxlib==0.4.13
+jaxlib==0.4.31
+    # via jax
     # via mediapipe
-kiwisolver==1.4.4
+kiwisolver==1.4.5
     # via matplotlib
-matplotlib==3.7.2
+matplotlib==3.9.2
     # via mediapipe
 mediapipe==0.10.14
     # via sora-sdk-samples
-ml-dtypes==0.2.0
+ml-dtypes==0.4.0
     # via jax
     # via jaxlib
-mypy==1.10.1
+mypy==1.11.1
 mypy-extensions==1.0.0
     # via mypy
-numpy==1.24.4
+numpy==2.0.1
     # via contourpy
     # via jax
     # via jaxlib
@@ -52,7 +53,7 @@ numpy==1.24.4
     # via opencv-python-headless
     # via opt-einsum
     # via scipy
-opencv-contrib-python==4.8.0.74
+opencv-contrib-python==4.10.0.84
     # via mediapipe
 opencv-python==4.10.0.84
     # via sora-sdk-samples
@@ -60,22 +61,22 @@ opencv-python-headless==4.10.0.84
     # via sora-sdk-samples
 opt-einsum==3.3.0
     # via jax
-packaging==23.1
+packaging==24.1
     # via matplotlib
-pillow==10.0.0
+pillow==10.4.0
     # via matplotlib
 protobuf==4.25.4
     # via mediapipe
-pycparser==2.21
+pycparser==2.22
     # via cffi
-pyparsing==3.0.9
+pyparsing==3.1.2
     # via matplotlib
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via matplotlib
 python-dotenv==1.0.1
     # via sora-sdk-samples
-ruff==0.5.2
-scipy==1.10.1
+ruff==0.5.7
+scipy==1.14.0
     # via jax
     # via jaxlib
 six==1.16.0
@@ -87,5 +88,5 @@ sounddevice==0.4.7
     # via sora-sdk-samples
 tomli==2.0.1
     # via mypy
-typing-extensions==4.10.0
+typing-extensions==4.12.2
     # via mypy
