@@ -10,8 +10,6 @@ def setup():
     load_dotenv()
 
     # signaling_url 単体か複数かをランダムで決めてテストする
-    test_signaling_urls = os.environ.get("TEST_SIGNALING_URLS")
-
     if (test_signaling_urls := os.environ.get("TEST_SIGNALING_URLS")) is None:
         raise ValueError("TEST_SIGNALING_URLS is required.")
 
