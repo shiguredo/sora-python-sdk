@@ -1,0 +1,13 @@
+name: "Slack Notify Failed"
+description: "Send a Slack notification for failed jobs"
+runs:
+  using: "composite"
+  steps:
+    - name: Slack Notification
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: sora-python-sdk
+        SLACK_COLOR: danger
+        SLACK_TITLE: "FAILED"
+        SLACK_ICON_EMOJI: ":japanese_ogre:"
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
