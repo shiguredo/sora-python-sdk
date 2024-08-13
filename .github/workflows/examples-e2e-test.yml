@@ -38,6 +38,7 @@ jobs:
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run pytest tests/test_messaging_sendonly.py -s
+      - run: rye run pytest tests/test_openh264.py -s
 
   e2e_macos_test:
     strategy:
@@ -66,6 +67,7 @@ jobs:
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run pytest tests/test_macos.py -s
+      - run: rye run pytest tests/test_openh264.py -s
       - run: rye run pytest tests/test_messaging_sendonly.py -s
 
   e2e_windows_test:
