@@ -24,7 +24,7 @@ def test_openh264_sendonly_recvonly(setup):
         openh264_path=openh264_path,
         use_hwa=False,
     )
-    sendonly.connect()
+    sendonly.connect(fake_video=True)
 
     recvonly = Recvonly(
         signaling_urls,
@@ -39,6 +39,8 @@ def test_openh264_sendonly_recvonly(setup):
 
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
+
+    print(sendonly_stats)
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
