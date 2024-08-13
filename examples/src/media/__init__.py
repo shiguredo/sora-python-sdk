@@ -1,10 +1,12 @@
 import json
-import platform
 import queue
+import threading
+import time
 from threading import Event
 from typing import Any, Optional
 
 import cv2
+import numpy
 import sounddevice
 from numpy import ndarray
 from sora_sdk import (
@@ -31,6 +33,8 @@ class Sendonly:
         signaling_urls: list[str],
         channel_id: str,
         metadata: Optional[dict[str, Any]] = None,
+        audio: Optional[bool] = None,
+        video: Optional[bool] = None,
         video_codec_type: Optional[str] = None,
         video_bit_rate: Optional[int] = None,
         openh264_path: Optional[str] = None,
@@ -70,16 +74,18 @@ class Sendonly:
             signaling_urls=signaling_urls,
             role="sendonly",
             channel_id=channel_id,
-            metadata=metadata,
+            audio=audio,
+            video=video,
             video_codec_type=video_codec_type,
             video_bit_rate=video_bit_rate,
+            metadata=metadata,
             audio_source=self._audio_source,
             video_source=self._video_source,
         )
         self._connection_id: Optional[str] = None
 
         self._connected: Event = Event()
-        self._closed: bool = False
+        self._closed: Event = Event()
         self._default_connection_timeout_s: float = 10.0
 
         self._connection.on_set_offer = self._on_set_offer
@@ -89,13 +95,18 @@ class Sendonly:
         if video_capture is not None:
             self._video_capture = video_capture
 
-    def connect(self) -> None:
+    def connect(self, fake_video=False) -> None:
         """
         Sora への接続を確立します。
 
         :raises AssertionError: タイムアウト期間内に接続が確立できなかった場合
         """
         self._connection.connect()
+
+        if fake_video:
+            self._fake_video_thread = threading.Thread(target=self._fake_video_loop, daemon=True)
+            self._fake_video_thread.start()
+            print("Fake video thread started.")
 
         assert self._connected.wait(
             self._default_connection_timeout_s
@@ -110,12 +121,10 @@ class Sendonly:
         stats = json.loads(raw_stats)
         return stats
 
-    # def _dummy_video_loop(self):
-    #     while not self._closed.is_set():
-    #         time.sleep(1.0 / 30)
-    #         self._video_source.on_captured(
-    #             np.zeros((self._video_height, self._video_width, 3), dtype=np.uint8)
-    #         )
+    def _fake_video_loop(self):
+        while not self._closed.is_set():
+            time.sleep(1.0 / 30)
+            self._video_source.on_captured(numpy.zeros((480, 640, 3), dtype=numpy.uint8))
 
     def _on_notify(self, raw_message: str) -> None:
         """
@@ -151,7 +160,10 @@ class Sendonly:
         """
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._connected.clear()
-        self._closed = True
+        self._closed.set()
+
+        if self._fake_video_thread is not None:
+            self._fake_video_thread.join(timeout=10)
 
     def _callback(
         self, indata: ndarray, frames: int, time: Any, status: sounddevice.CallbackFlags
@@ -229,7 +241,7 @@ class Recvonly:
         self._connection_id: Optional[str] = None
 
         self._connected: Event = Event()
-        self._closed: bool = False
+        self._closed: Event = Event()
         self._default_connection_timeout_s: float = 10.0
 
         self._audio_sink: Optional[SoraAudioSink] = None
@@ -297,7 +309,7 @@ class Recvonly:
         """
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._connected.clear()
-        self._closed = True
+        self._closed.is_set()
 
     def _on_video_frame(self, frame: SoraVideoFrame) -> None:
         """

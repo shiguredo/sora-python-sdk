@@ -65,6 +65,7 @@ jobs:
       - uses: eifinger/setup-rye@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
+      - run: rye run pytest tests/test_macos.py -s
       - run: rye run pytest tests/test_messaging_sendonly.py -s
 
   e2e_windows_test:
