@@ -23,7 +23,7 @@ messaging_recvonly = "messaging.recvonly:recvonly"
 hideface_sender = "ml.hideface_sender:hideface_sender"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "setuptools"]
 build-backend = "hatchling.build"
 
 [tool.rye]
