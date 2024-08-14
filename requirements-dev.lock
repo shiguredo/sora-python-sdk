@@ -16,7 +16,7 @@ exceptiongroup==1.2.2
     # via pytest
 iniconfig==2.0.0
     # via pytest
-nanobind==2.0.0
+nanobind==2.1.0
 numpy==2.0.1
     # via opencv-python
 opencv-python==4.10.0.84

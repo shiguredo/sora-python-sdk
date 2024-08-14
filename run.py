@@ -10,7 +10,6 @@ from typing import List, Optional
 from buildbase import (
     Platform,
     add_path,
-    apply_patch,
     build_sora,
     build_webrtc,
     cd,
@@ -156,17 +155,6 @@ def install_deps(
             "is_windows": platform.target.os == "windows",
         }
         install_openh264(**install_openh264_args)
-
-    # nanobind にパッチを適用する
-    nanobind_include_dir = cmdcap([sys.executable, "-m", "nanobind", "--include_dir"])
-    if not os.path.exists(os.path.join(nanobind_include_dir, "nanobind", "nb_func.h.old")):
-        shutil.copyfile(
-            os.path.join(nanobind_include_dir, "nanobind", "nb_func.h"),
-            os.path.join(nanobind_include_dir, "nanobind", "nb_func.h.old"),
-        )
-        patch = os.path.join(BASE_DIR, "fix_nanobind_nb_func.patch")
-        with cd(nanobind_include_dir):
-            apply_patch(patch, nanobind_include_dir, 1)
 
 
 AVAILABLE_TARGETS = [
