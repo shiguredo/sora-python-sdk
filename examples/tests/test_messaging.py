@@ -34,6 +34,8 @@ def test_messaging(setup):
 
     time.sleep(3)
 
+    # data_channel_signaling: true だし
+    # switched のテストはここでやる
     assert messaging_sendonly.switched
     assert messaging_recvonly.switched
 
