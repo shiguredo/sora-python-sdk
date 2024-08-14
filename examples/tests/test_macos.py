@@ -33,6 +33,8 @@ def test_macos_h264_sendonly(setup):
 
     sendonly_stats = sendonly.get_stats()
 
+    sendonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     # H.264 が採用されているかどうか確認する
@@ -43,8 +45,6 @@ def test_macos_h264_sendonly(setup):
     assert outbound_rtp_stats["encoderImplementation"] == "VideoToolbox"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-
-    sendonly.disconnect()
 
 
 def test_macos_h265_sendonly(setup):
@@ -69,6 +69,8 @@ def test_macos_h265_sendonly(setup):
 
     sendonly_stats = sendonly.get_stats()
 
+    sendonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     # H.264 が採用されているかどうか確認する
@@ -79,8 +81,6 @@ def test_macos_h265_sendonly(setup):
     assert outbound_rtp_stats["encoderImplementation"] == "VideoToolbox"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-
-    sendonly.disconnect()
 
 
 @pytest.mark.skip(reason="ローカルでは成功する")
@@ -115,6 +115,9 @@ def test_macos_h264_sendonly_recvonly(setup):
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
+    sendonly.disconnect()
+    recvonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     # H.264 が採用されているかどうか確認する
@@ -136,9 +139,6 @@ def test_macos_h264_sendonly_recvonly(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "VideoToolbox"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    recvonly.disconnect()
 
 
 @pytest.mark.skip(reason="ローカルでは成功する")
@@ -173,6 +173,9 @@ def test_macos_h265_sendonly_recvonly(setup):
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
+    sendonly.disconnect()
+    recvonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == "video/H265"
@@ -192,6 +195,3 @@ def test_macos_h265_sendonly_recvonly(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "VideoToolbox"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    recvonly.disconnect()

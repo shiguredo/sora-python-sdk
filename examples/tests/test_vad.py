@@ -24,6 +24,9 @@ def test_vad(setup):
     sendonly_stats = sendonly.get_stats()
     vad_stats = vad.get_stats()
 
+    sendonly.disconnect()
+    vad.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == "audio/opus"
@@ -43,6 +46,3 @@ def test_vad(setup):
     # audio には decoderImplementation が無い
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    vad.disconnect()
