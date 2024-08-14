@@ -8,11 +8,17 @@
   - 後方互換性がある追加
 - FIX
   - バグ修正
+- TEST
+  - テスト関連
+- DOC
+  - ドキュメント関連
 
 ## develop
 
 - [FIX] examples の設定に virtual = true を指定するようにする
   - これを指定しないとエラーになる
+  - @voluntas
+- [TEST] examples に E2E テストを追加する
   - @voluntas
 
 ## 2024.3.0
