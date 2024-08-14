@@ -44,7 +44,8 @@ class Messaging:
         self._connection_id: Optional[str] = None
 
         self._connected = Event()
-        self._closed = False
+        self._switched: bool = False
+        self._closed = Event()
         self._default_connection_timeout_s: float = 10.0
 
         self._label = data_channels[0]["label"]
@@ -62,7 +63,7 @@ class Messaging:
     @property
     def closed(self):
         """接続が閉じられているかどうかを示すブール値。"""
-        return self._closed
+        return self._closed.is_set()
 
     def connect(self):
         """
@@ -80,6 +81,19 @@ class Messaging:
         """Sora から切断します。"""
         self._connection.disconnect()
 
+    def get_stats(self):
+        raw_stats = self._connection.get_stats()
+        stats = json.loads(raw_stats)
+        return stats
+
+    @property
+    def connected(self) -> bool:
+        return self._connected.is_set()
+
+    @property
+    def switched(self) -> bool:
+        return self._switched
+
     def send(self, data: bytes):
         """
         データチャネルを通じてメッセージを送信します。
@@ -87,7 +101,7 @@ class Messaging:
         :param data: 送信するバイトデータ
         """
         # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
-        while not self._is_data_channel_ready and not self._closed:
+        while not self._is_data_channel_ready and not self._closed.is_set():
             time.sleep(0.01)
 
         self._connection.send_data_channel(self._label, data)
@@ -129,7 +143,7 @@ class Messaging:
         """
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._connected.clear()
-        self._closed = True
+        self._closed.set()
 
     def _on_message(self, label: str, data: bytes):
         """
