@@ -18,6 +18,7 @@ requires-python = ">= 3.10"
 [project.scripts]
 media_sendonly = "media.sendonly:sendonly"
 media_recvonly = "media.recvonly:recvonly"
+media_vad = "media.vad:vad"
 messaging_sendrecv = "messaging.sendrecv:sendrecv"
 messaging_sendonly = "messaging.sendonly:sendonly"
 messaging_recvonly = "messaging.recvonly:recvonly"
