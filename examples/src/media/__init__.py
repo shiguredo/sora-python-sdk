@@ -58,8 +58,11 @@ class Sendonly:
         :param audio_sample_rate: 音声サンプリングレート（デフォルト: 16000）
         :param video_capture: カメラからのビデオキャプチャ
         """
-        self.audio_channels: int = audio_channels
-        self.audio_sample_rate: int = audio_sample_rate
+        self._signaling_urls: list[str] = signaling_urls
+        self._channel_id: str = channel_id
+
+        self._audio_channels: int = audio_channels
+        self._audio_sample_rate: int = audio_sample_rate
 
         self._sora: Sora = Sora(openh264=openh264_path, use_hardware_encoder=use_hwa)
 
@@ -67,7 +70,7 @@ class Sendonly:
         self._fake_video_thread: Optional[threading.Thread] = None
 
         self._audio_source = self._sora.create_audio_source(
-            self.audio_channels, self.audio_sample_rate
+            self._audio_channels, self._audio_sample_rate
         )
         self._video_source = self._sora.create_video_source()
 
@@ -197,8 +200,8 @@ class Sendonly:
         ビデオフレームの送信と音声の送信を行うメインループ。
         """
         with sounddevice.InputStream(
-            samplerate=self.audio_sample_rate,
-            channels=self.audio_channels,
+            samplerate=self._audio_sample_rate,
+            channels=self._audio_channels,
             dtype="int16",
             callback=self._callback,
         ):
@@ -242,6 +245,9 @@ class Recvonly:
         :param output_frequency: 音声出力周波数（Hz）、デフォルトは 16000
         :param output_channels: 音声出力チャンネル数、デフォルトは 1
         """
+        self._signaling_urls: list[str] = signaling_urls
+        self._channel_id: str = channel_id
+
         self._output_frequency: int = output_frequency
         self._output_channels: int = output_channels
 
