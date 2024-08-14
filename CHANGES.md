@@ -8,17 +8,45 @@
   - 後方互換性がある追加
 - FIX
   - バグ修正
-- TEST
-  - テスト関連
-- DOC
-  - ドキュメント関連
+- misc
+  - テストやサンプル、ドキュメントなどの変更
+
+## テンプレート
+
+```markdown
+## develop
+
+### misc
+
+## 2024.1.0 (2024-01-01)
+
+- [CHANGE] A
+  - @voluntas
+- [UPDATE] B
+  - @voluntas
+
+### misc
+
+- [ADD] Y
+  - @voluntas
+- [FIX] X
+  - @voluntas
+```
 
 ## develop
+
+- [CHANGE] Jetson 5 の対応を削除
+  - 以降は support/jetson-jetpack-6 ブランチで Jetson 6 のみの対応となる
+  - @melpon
+- [CHANGE] run.py の実行にターゲットの指定を必須にする
+  - @melpon
+
+### misc
 
 - [FIX] examples の設定に virtual = true を指定するようにする
   - これを指定しないとエラーになる
   - @voluntas
-- [TEST] examples に E2E テストを追加する
+- [ADD] examples に E2E テストを追加する
   - @voluntas
 
 ## 2024.3.0
