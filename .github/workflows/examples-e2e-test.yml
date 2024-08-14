@@ -86,6 +86,8 @@ jobs:
         working-directory: ./examples
     timeout-minutes: 20
     env:
+      # Python を強制的に UTF-8 で利用するおまじない
+      PYTHONUTF8: 1
       TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
