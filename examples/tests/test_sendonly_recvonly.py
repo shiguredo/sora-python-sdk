@@ -33,6 +33,9 @@ def test_sendonly_recvonly_opus(setup):
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
+    sendonly.disconnect()
+    recvonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == "audio/opus"
@@ -52,9 +55,6 @@ def test_sendonly_recvonly_opus(setup):
     # audio には decoderImplementation が無い
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    recvonly.disconnect()
 
 
 def test_sendonly_recvonly_vp8(setup):
@@ -86,6 +86,9 @@ def test_sendonly_recvonly_vp8(setup):
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
+    sendonly.disconnect()
+    recvonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == "video/VP8"
@@ -105,9 +108,6 @@ def test_sendonly_recvonly_vp8(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpx"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    recvonly.disconnect()
 
 
 def test_sendonly_recvonly_vp9(setup):
@@ -139,6 +139,9 @@ def test_sendonly_recvonly_vp9(setup):
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
+    sendonly.disconnect()
+    recvonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == "video/VP9"
@@ -158,9 +161,6 @@ def test_sendonly_recvonly_vp9(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpx"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    recvonly.disconnect()
 
 
 def test_sendonly_recvonly_av1(setup):
@@ -192,6 +192,9 @@ def test_sendonly_recvonly_av1(setup):
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
+    sendonly.disconnect()
+    recvonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == "video/AV1"
@@ -211,6 +214,3 @@ def test_sendonly_recvonly_av1(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "dav1d"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    recvonly.disconnect()
