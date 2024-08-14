@@ -41,6 +41,7 @@ jobs:
       - run: rye run pytest tests/test_messaging_sendonly.py -s
       - run: rye run pytest tests/test_sendonly_recvonly.py -s
       - run: rye run pytest tests/test_vad.py -s
+      - run: rye run pytest tests/test_switched.py -s
 
   e2e_macos_test:
     strategy:
@@ -73,6 +74,7 @@ jobs:
       - run: rye run pytest tests/test_messaging_sendonly.py -s
       - run: rye run pytest tests/test_sendonly_recvonly.py -s
       - run: rye run pytest tests/test_vad.py -s
+      - run: rye run pytest tests/test_switched.py -s
 
   e2e_windows_test:
     strategy:
@@ -104,6 +106,7 @@ jobs:
       - run: rye run pytest tests/test_messaging_sendonly.py -s
       - run: rye run pytest tests/test_sendonly_recvonly.py -s
       - run: rye run pytest tests/test_vad.py -s
+      - run: rye run pytest tests/test_switched.py -s
 
   slack_notify_succeeded:
     needs: [e2e_ubuntu_test, e2e_macos_test, e2e_windows_test]

@@ -37,6 +37,7 @@ class Sendonly:
         video: Optional[bool] = None,
         video_codec_type: Optional[str] = None,
         video_bit_rate: Optional[int] = None,
+        data_channel_signaling: Optional[bool] = None,
         openh264_path: Optional[str] = None,
         use_hwa: bool = False,
         audio_channels: int = 1,
@@ -78,21 +79,24 @@ class Sendonly:
             signaling_urls=signaling_urls,
             role="sendonly",
             channel_id=channel_id,
+            metadata=metadata,
             audio=audio,
             video=video,
             video_codec_type=video_codec_type,
             video_bit_rate=video_bit_rate,
-            metadata=metadata,
+            data_channel_signaling=data_channel_signaling,
             audio_source=self._audio_source,
             video_source=self._video_source,
         )
         self._connection_id: Optional[str] = None
 
         self._connected: Event = Event()
+        self._switched: bool = False
         self._closed: Event = Event()
         self._default_connection_timeout_s: float = 10.0
 
         self._connection.on_set_offer = self._on_set_offer
+        self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
@@ -130,6 +134,14 @@ class Sendonly:
         stats = json.loads(raw_stats)
         return stats
 
+    @property
+    def connected(self) -> bool:
+        return self._connected.is_set()
+
+    @property
+    def switched(self) -> bool:
+        return self._switched
+
     def _fake_audio_loop(self):
         while not self._closed.is_set():
             time.sleep(0.02)
@@ -139,6 +151,22 @@ class Sendonly:
         while not self._closed.is_set():
             time.sleep(1.0 / 30)
             self._video_source.on_captured(numpy.zeros((480, 640, 3), dtype=numpy.uint8))
+
+    def _on_set_offer(self, raw_message: str) -> None:
+        """
+        オファー設定イベントを処理します。
+
+        :param raw_message: オファーを含む生のメッセージ
+        """
+        message: dict[str, Any] = json.loads(raw_message)
+        if message["type"] == "offer":
+            self._connection_id = message["connection_id"]
+
+    def _on_switched(self, raw_message: str) -> None:
+        message = json.loads(raw_message)
+        if message["type"] == "switched":
+            print(f"Switched to DataChannel Signaling: connection_id={self._connection_id}")
+            self._switched = True
 
     def _on_notify(self, raw_message: str) -> None:
         """
@@ -154,16 +182,6 @@ class Sendonly:
         ):
             print(f"Connected Sora: connection_id={self._connection_id}")
             self._connected.set()
-
-    def _on_set_offer(self, raw_message: str) -> None:
-        """
-        オファー設定イベントを処理します。
-
-        :param raw_message: オファーを含む生のメッセージ
-        """
-        message: dict[str, Any] = json.loads(raw_message)
-        if message["type"] == "offer":
-            self._connection_id = message["connection_id"]
 
     def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
         """
@@ -182,7 +200,7 @@ class Sendonly:
         if self._fake_video_thread is not None:
             self._fake_video_thread.join(timeout=10)
 
-    def _callback(
+    def _sounddevice_input_stream_callback(
         self, indata: ndarray, frames: int, time: Any, status: sounddevice.CallbackFlags
     ) -> None:
         """
@@ -203,7 +221,7 @@ class Sendonly:
             samplerate=self._audio_sample_rate,
             channels=self._audio_channels,
             dtype="int16",
-            callback=self._callback,
+            callback=self._sounddevice_input_stream_callback,
         ):
             self.connect()
             try:
@@ -227,6 +245,7 @@ class Recvonly:
         signaling_urls: list[str],
         channel_id: str,
         metadata: Optional[dict[str, Any]] = None,
+        data_channel_signaling: Optional[bool] = None,
         openh264_path: Optional[str] = None,
         use_hwa: Optional[bool] = False,
         output_frequency: int = 16000,
@@ -257,10 +276,12 @@ class Recvonly:
             role="recvonly",
             channel_id=channel_id,
             metadata=metadata,
+            data_channel_signaling=data_channel_signaling,
         )
         self._connection_id: Optional[str] = None
 
         self._connected: Event = Event()
+        self._switched: bool = False
         self._closed: Event = Event()
         self._default_connection_timeout_s: float = 10.0
 
@@ -270,6 +291,7 @@ class Recvonly:
         self._q_out: queue.Queue = queue.Queue()
 
         self._connection.on_set_offer = self._on_set_offer
+        self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
         self._connection.on_track = self._on_track
@@ -295,6 +317,14 @@ class Recvonly:
         stats = json.loads(raw_stats)
         return stats
 
+    @property
+    def connected(self) -> bool:
+        return self._connected.is_set()
+
+    @property
+    def switched(self) -> bool:
+        return self._switched
+
     def _on_set_offer(self, raw_message: str) -> None:
         """
         オファー設定イベントを処理します。
@@ -304,6 +334,12 @@ class Recvonly:
         message: dict[str, Any] = json.loads(raw_message)
         if message["type"] == "offer":
             self._connection_id = message["connection_id"]
+
+    def _on_switched(self, raw_message: str) -> None:
+        message = json.loads(raw_message)
+        if message["type"] == "switched":
+            print(f"Switched to DataChannel Signaling: connection_id={self._connection_id}")
+            self._switched = True
 
     def _on_notify(self, raw_message: str) -> None:
         """
