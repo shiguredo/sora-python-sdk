@@ -15,7 +15,7 @@ class Messaging:
         signaling_urls: list[str],
         channel_id: str,
         data_channels: list[dict[str, Any]],
-        metadata: Optional[dict[str, Any]],
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """
         Messaging インスタンスを初期化します。
@@ -44,7 +44,8 @@ class Messaging:
         self._connection_id: Optional[str] = None
 
         self._connected = Event()
-        self._closed = False
+        self._switched: bool = False
+        self._closed = Event()
         self._default_connection_timeout_s: float = 10.0
 
         self._label = data_channels[0]["label"]
@@ -54,6 +55,7 @@ class Messaging:
         self.sender_id = random.randint(1, 10000)
 
         self._connection.on_set_offer = self._on_set_offer
+        self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_data_channel = self._on_data_channel
         self._connection.on_message = self._on_message
@@ -62,7 +64,7 @@ class Messaging:
     @property
     def closed(self):
         """接続が閉じられているかどうかを示すブール値。"""
-        return self._closed
+        return self._closed.is_set()
 
     def connect(self):
         """
@@ -80,6 +82,19 @@ class Messaging:
         """Sora から切断します。"""
         self._connection.disconnect()
 
+    def get_stats(self):
+        raw_stats = self._connection.get_stats()
+        stats = json.loads(raw_stats)
+        return stats
+
+    @property
+    def connected(self) -> bool:
+        return self._connected.is_set()
+
+    @property
+    def switched(self) -> bool:
+        return self._switched
+
     def send(self, data: bytes):
         """
         データチャネルを通じてメッセージを送信します。
@@ -87,7 +102,7 @@ class Messaging:
         :param data: 送信するバイトデータ
         """
         # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
-        while not self._is_data_channel_ready and not self._closed:
+        while not self._is_data_channel_ready and not self._closed.is_set():
             time.sleep(0.01)
 
         self._connection.send_data_channel(self._label, data)
@@ -102,6 +117,16 @@ class Messaging:
         if message["type"] == "offer":
             # "type": "offer" に入ってくる自分の connection_id を保存する
             self._connection_id = message["connection_id"]
+
+    def _on_switched(self, raw_message: str):
+        """
+        スイッチイベントを処理します。
+
+        :param raw_message: 生のスイッチメッセージ
+        """
+        message: dict[str, Any] = json.loads(raw_message)
+        if message["type"] == "switched":
+            self._switched = True
 
     def _on_notify(self, raw_message: str):
         """
@@ -129,7 +154,7 @@ class Messaging:
         """
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._connected.clear()
-        self._closed = True
+        self._closed.set()
 
     def _on_message(self, label: str, data: bytes):
         """

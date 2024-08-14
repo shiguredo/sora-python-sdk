@@ -40,7 +40,8 @@ def test_openh264_sendonly_recvonly(setup):
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
-    print(sendonly_stats)
+    sendonly.disconnect()
+    recvonly.disconnect()
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
@@ -61,6 +62,3 @@ def test_openh264_sendonly_recvonly(setup):
     assert outbound_rtp_stats["encoderImplementation"] == "OpenH264"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    recvonly.disconnect()
