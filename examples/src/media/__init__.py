@@ -49,16 +49,14 @@ class Sendonly:
         :param signaling_urls: Sora シグナリング URL のリスト
         :param channel_id: 接続するチャンネル ID
         :param metadata: 接続のためのオプションのメタデータ
-        :param camera_id: 使用するカメラの ID
+        :param audio: 音声ストリームを送信するかどうか
+        :param video: ビデオストリームを送信するかどうか
         :param video_codec_type: 使用するビデオコーデックの種類
         :param video_bit_rate: ビデオのビットレート
-        :param video_width: ビデオの幅
-        :param video_height: ビデオの高さ
-        :param video_fps: ビデオのフレームレート
-        :param video_fourcc: ビデオの FOURCC コード
         :param openh264_path: OpenH264 ライブラリへのパス
         :param audio_channels: 音声チャンネル数（デフォルト: 1）
         :param audio_sample_rate: 音声サンプリングレート（デフォルト: 16000）
+        :param video_capture: カメラからのビデオキャプチャ
         """
         self.audio_channels: int = audio_channels
         self.audio_sample_rate: int = audio_sample_rate
