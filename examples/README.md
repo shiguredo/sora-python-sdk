@@ -4,23 +4,23 @@
 
 We will not respond to PRs or issues that have not been discussed on Discord. Also, Discord is only available in Japanese.
 
-Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use.
+Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before use.
 
 ## 時雨堂のオープンソースソフトウェアについて
 
-利用前に https://github.com/shiguredo/oss をお読みください。
+利用前に <https://github.com/shiguredo/oss> をお読みください。
 
 ## サンプルコードの実行方法
 
 [Rye](https://github.com/mitsuhiko/rye) というパッケージマネージャーを利用しています。
 
 Linux と macOS の場合は `curl -sSf https://rye-up.com/get | bash` でインストール可能です。
-Windows は https://rye-up.com/ の Installation Instructions を確認してください。
+Windows は <https://rye-up.com/> の Installation Instructions を確認してください。
 
 ### 依存パッケージのビルド
 
 ```console
-$ rye sync
+rye sync
 ```
 
 ### サンプルコードの実行
@@ -35,7 +35,7 @@ $ rye run media_recvonly
 
 Apache License 2.0
 
-```
+```text
 Copyright 2023-2024, tnoho (Original Author)
 Copyright 2023-2024, Shiguredo Inc.
 

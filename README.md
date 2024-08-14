@@ -21,21 +21,27 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 様々なプラットフォームに対応しすぐに使い始められる WebRTC SFU Sora 向けの Python SDK です。
 
+音声や映像デバイスの処理を SDK から独立させているため、様々なライブラリを利用する事ができます。
+
 ## 特徴
 
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
 - Windows / macOS / Linux (Ubuntu) プラットフォームに対応
-- NVIDIA Jetson JetPack SDK に対応
+- WebRTC 統計情報の取得が可能
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
   - Intel VPL (AV1 / H.264 / H.265)
   - Apple Video Toolbox (H.264 / H.265)
   - NVIDIA Video Codec SDK (VP9 / H.264 / H.265)
   - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
+  - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
-- 物体検出などの入力に Sora 経由で受信した映像が利用できる
-- 音声認識などの入力に Sora 経由で受信した音声を利用できる
-- `pip install sora_sdk` でインストール可能
+- 音声デバイス処理に [sounddevice](https://pypi.org/project/sounddevice/) などが利用できる
+- 映像デバイス処理に [opencv-python](https://pypi.org/project/opencv-python/) などが利用できる
+- 音声認識などの入力に受信した音声を利用できる
+- 物体検出などの入力に受信した映像を利用できる
+- `rye add sora_sdk` や `pip install sora_sdk` でインストール可能
+- [NVIDIA Jetson JetPack SDK](https://developer.nvidia.com/embedded/jetpack) に対応
 
 ## 利用イメージ
 
@@ -89,13 +95,6 @@ PyPI 経由ではインストールできません。
 - Ubuntu 22.04 LTS x86_64
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください
-
-## 対応機能
-
-- Sora の機能へ追従
-- VP8 / VP9 / AV1 / H.264 / H.265 のハードウェアアクセラレーター (HWA) 対応
-  - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
-- OpenH264 を利用した H.264 のソフトウェアエンコーダー/デコーダーへの対応
 
 ## 優先実装
 
@@ -167,3 +166,25 @@ limitations under the License.
 ```text
 "OpenH264 Video Codec provided by Cisco Systems, Inc."
 ```
+
+## H.264 (AVC) と H.265 (HEVC) のライセンスについて
+
+**時雨堂が提供する libwebrtc のビルド済みバイナリには H.264 と H.265 のコーデックは含まれていません**
+
+### H.264
+
+H.264 対応は [Via LA Licensing](https://www.via-la.com/) (旧 MPEG-LA) に連絡を取り、ロイヤリティの対象にならないことを確認しています。
+
+> 時雨堂がエンドユーザーの PC /デバイスに既に存在する AVC / H.264 エンコーダー/デコーダーに依存する製品を提供する場合は、
+> ソフトウェア製品は AVC ライセンスの対象外となり、ロイヤリティの対象にもなりません。
+
+### H.265
+
+H.265 対応は以下の二つの団体に連絡を取り、H.265 ハードウェアアクセラレーターのみを利用し、
+H.265 が利用可能なバイナリを配布する事は、ライセンスが不要であることを確認しています。
+
+また、H.265 のハードウェアアクセラレーターのみを利用した H.265 対応の SDK を OSS で公開し、
+ビルド済みバイナリを配布する事は、ライセンスが不要であることも確認しています。
+
+- [Access Advance](https://accessadvance.com/ja/)
+- [Via LA Licensing](https://www.via-la.com/)
