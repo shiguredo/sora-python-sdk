@@ -20,9 +20,22 @@ def test_messaging_sendonly(setup):
     # Sora に接続する
     messaging_sendonly.connect()
 
-    messaging_sendonly.send("spam".encode("utf-8"))
-    messaging_sendonly.send("エッグ".encode("utf-8"))
+    message1 = "spam".encode("utf-8")
+    message2 = "エッグ".encode("utf-8")
+
+    messaging_sendonly.send(message1)
+    messaging_sendonly.send(message2)
 
     time.sleep(3)
+
+    messaging_sendonly_stats = messaging_sendonly.get_stats()
+    data_channel_stats = next(
+        s
+        for s in messaging_sendonly_stats
+        if s.get("type") == "data-channel" and s.get("label") == messaging_label
+    )
+    assert data_channel_stats["state"] == "open"
+    assert data_channel_stats["messagesSent"] == 2
+    assert data_channel_stats["bytesSent"] == (len(message1) + len(message2))
 
     messaging_sendonly.disconnect()

@@ -325,6 +325,11 @@ class Recvonly:
     def switched(self) -> bool:
         return self._switched
 
+    @property
+    def closed(self):
+        """接続が閉じられているかどうかを示すブール値。"""
+        return self._closed.is_set()
+
     def _on_set_offer(self, raw_message: str) -> None:
         """
         オファー設定イベントを処理します。
