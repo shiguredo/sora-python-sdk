@@ -65,6 +65,9 @@ class Sendonly:
 
         self._sora: Sora = Sora(openh264=openh264_path, use_hardware_encoder=use_hwa)
 
+        self._fake_audio_thread: Optional[threading.Thread] = None
+        self._fake_video_thread: Optional[threading.Thread] = None
+
         self._audio_source = self._sora.create_audio_source(
             self.audio_channels, self.audio_sample_rate
         )
@@ -95,13 +98,18 @@ class Sendonly:
         if video_capture is not None:
             self._video_capture = video_capture
 
-    def connect(self, fake_video=False) -> None:
+    def connect(self, fake_audio=False, fake_video=False) -> None:
         """
         Sora への接続を確立します。
 
         :raises AssertionError: タイムアウト期間内に接続が確立できなかった場合
         """
         self._connection.connect()
+
+        if fake_audio:
+            self._fake_audio_thread = threading.Thread(target=self._fake_audio_loop, daemon=True)
+            self._fake_audio_thread.start()
+            print("Fake audio thread started.")
 
         if fake_video:
             self._fake_video_thread = threading.Thread(target=self._fake_video_loop, daemon=True)
@@ -120,6 +128,11 @@ class Sendonly:
         raw_stats = self._connection.get_stats()
         stats = json.loads(raw_stats)
         return stats
+
+    def _fake_audio_loop(self):
+        while not self._closed.is_set():
+            time.sleep(0.02)
+            self._audio_source.on_data(numpy.zeros((320, 1), dtype=numpy.int16))
 
     def _fake_video_loop(self):
         while not self._closed.is_set():
@@ -161,6 +174,9 @@ class Sendonly:
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._connected.clear()
         self._closed.set()
+
+        if self._fake_audio_thread is not None:
+            self._fake_audio_thread.join(timeout=10)
 
         if self._fake_video_thread is not None:
             self._fake_video_thread.join(timeout=10)
