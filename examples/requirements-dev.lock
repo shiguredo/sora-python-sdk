@@ -20,10 +20,14 @@ contourpy==1.2.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
+exceptiongroup==1.2.2
+    # via pytest
 flatbuffers==24.3.25
     # via mediapipe
 fonttools==4.53.1
     # via matplotlib
+iniconfig==2.0.0
+    # via pytest
 jax==0.4.31
     # via mediapipe
 jaxlib==0.4.31
@@ -53,6 +57,7 @@ numpy==2.0.1
     # via opencv-python-headless
     # via opt-einsum
     # via scipy
+    # via sora-sdk-samples
 opencv-contrib-python==4.10.0.84
     # via mediapipe
 opencv-python==4.10.0.84
@@ -63,14 +68,18 @@ opt-einsum==3.3.0
     # via jax
 packaging==24.1
     # via matplotlib
+    # via pytest
 pillow==10.4.0
     # via matplotlib
+pluggy==1.5.0
+    # via pytest
 protobuf==4.25.4
     # via mediapipe
 pycparser==2.22
     # via cffi
 pyparsing==3.1.2
     # via matplotlib
+pytest==8.3.2
 python-dateutil==2.9.0.post0
     # via matplotlib
 python-dotenv==1.0.1
@@ -88,5 +97,6 @@ sounddevice==0.4.7
     # via sora-sdk-samples
 tomli==2.0.1
     # via mypy
+    # via pytest
 typing-extensions==4.12.2
     # via mypy
