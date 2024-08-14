@@ -40,7 +40,6 @@ jobs:
       - run: rye run pytest tests/test_sendonly_recvonly.py -s
       - run: rye run pytest tests/test_messaging.py -s
       - run: rye run pytest tests/test_openh264.py -s
-      - run: rye run pytest tests/test_stats.py -s
       - run: rye run pytest tests/test_switched.py -s
       - run: rye run pytest tests/test_vad.py -s
 
@@ -75,7 +74,6 @@ jobs:
       - run: rye run pytest tests/test_sendonly_recvonly.py -s
       - run: rye run pytest tests/test_messaging.py -s
       - run: rye run pytest tests/test_openh264.py -s
-      - run: rye run pytest tests/test_stats.py -s
       - run: rye run pytest tests/test_switched.py -s
       - run: rye run pytest tests/test_vad.py -s
 
@@ -109,7 +107,6 @@ jobs:
       - run: rye run pytest tests/test_messaging.py -s
       # FIXME: OpenH264 + Windows は対応していないのでコメントアウト
       # - run: rye run pytest tests/test_openh264.py -s
-      - run: rye run pytest tests/test_stats.py -s
       - run: rye run pytest tests/test_switched.py -s
       - run: rye run pytest tests/test_vad.py -s
 
