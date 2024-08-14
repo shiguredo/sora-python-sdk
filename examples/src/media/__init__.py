@@ -114,12 +114,10 @@ class Sendonly:
         if fake_audio:
             self._fake_audio_thread = threading.Thread(target=self._fake_audio_loop, daemon=True)
             self._fake_audio_thread.start()
-            print("Fake audio thread started.")
 
         if fake_video:
             self._fake_video_thread = threading.Thread(target=self._fake_video_loop, daemon=True)
             self._fake_video_thread.start()
-            print("Fake video thread started.")
 
         assert self._connected.wait(
             self._default_connection_timeout_s
@@ -131,8 +129,7 @@ class Sendonly:
 
     def get_stats(self):
         raw_stats = self._connection.get_stats()
-        stats = json.loads(raw_stats)
-        return stats
+        return json.loads(raw_stats)
 
     @property
     def connected(self) -> bool:
@@ -314,8 +311,7 @@ class Recvonly:
 
     def get_stats(self):
         raw_stats = self._connection.get_stats()
-        stats = json.loads(raw_stats)
-        return stats
+        return json.loads(raw_stats)
 
     @property
     def connected(self) -> bool:
@@ -323,6 +319,7 @@ class Recvonly:
 
     @property
     def switched(self) -> bool:
+        """データチャネルシグナリングへの切り替えが完了しているかどうかを示すブール値。"""
         return self._switched
 
     @property
