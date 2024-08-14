@@ -32,6 +32,9 @@ def test_sendonly_recvonly_vp8(setup):
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
+    sendonly.disconnect()
+    recvonly.disconnect()
+
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == "video/VP8"
@@ -52,9 +55,6 @@ def test_sendonly_recvonly_vp8(setup):
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
 
-    sendonly.disconnect()
-    recvonly.disconnect()
-
 
 def test_sendonly_recvonly_vp9(setup):
     signaling_urls = setup.get("signaling_urls")
@@ -68,6 +68,7 @@ def test_sendonly_recvonly_vp9(setup):
         channel_id,
         metadata,
         video_codec_type="VP9",
+        data_channel_signaling=True,
     )
     sendonly.connect()
 
@@ -75,13 +76,20 @@ def test_sendonly_recvonly_vp9(setup):
         signaling_urls,
         channel_id,
         metadata,
+        data_channel_signaling=True,
     )
     recvonly.connect()
 
     time.sleep(5)
 
+    assert sendonly.switched
+    assert recvonly.switched
+
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
+
+    sendonly.disconnect()
+    recvonly.disconnect()
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
@@ -102,9 +110,6 @@ def test_sendonly_recvonly_vp9(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpx"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    sendonly.disconnect()
-    recvonly.disconnect()
 
 
 def test_sendonly_recvonly_av1(setup):

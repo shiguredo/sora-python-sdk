@@ -46,8 +46,8 @@ class Sendonly:
             role="sendonly",
             channel_id=channel_id,
             metadata=metadata,
-            audio=False,
-            video=True,
+            audio=audio,
+            video=video,
             video_codec_type=video_codec_type,
             video_source=self._video_source,
             data_channel_signaling=data_channel_signaling,
@@ -173,6 +173,10 @@ class Recvonly:
     @property
     def connected(self):
         return self._connected.is_set()
+
+    @property
+    def switched(self):
+        return self._switched
 
     def _on_track(self, track: SoraMediaTrack):
         if track.kind == "audio":
