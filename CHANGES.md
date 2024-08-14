@@ -11,6 +11,10 @@
 
 ## develop
 
+- [FIX] examples の設定に virtual = true を指定するようにする
+  - これを指定しないとエラーになる
+  - @voluntas
+
 ## 2024.3.0
 
 **日時**: 2024-08-05

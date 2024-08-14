@@ -1,221 +1,57 @@
 import json
 import os
 import platform
-from threading import Event
-from typing import Any, Optional
 
 import cv2
-import sounddevice
 from dotenv import load_dotenv
-from numpy import ndarray
-from sora_sdk import Sora, SoraConnection, SoraSignalingErrorCode
+from media import Sendonly
 
 
-class Sendonly:
+def get_video_capture(
+    camera_id: int,
+    video_width: int,
+    video_height: int,
+    video_fps: int,
+    video_fourcc: str,
+) -> cv2.VideoCapture:
     """
-    Sora にビデオと音声ストリームを送信するためのクラス。
+    ビデオキャプチャの設定を行います。
 
-    このクラスは Sora への接続を設定し、カメラからのビデオと
-    マイクからの音声を Sora に送信するメソッドを提供します。
+    :param camera_id: 使用するカメラの ID
+    :param video_width: ビデオの幅
+    :param video_height: ビデオの高さ
+    :param video_fps: ビデオのフレームレート
+    :param video_fourcc: ビデオの FOURCC コード
     """
 
-    def __init__(
-        self,
-        signaling_urls: list[str],
-        channel_id: str,
-        metadata: Optional[dict[str, Any]],
-        camera_id: int,
-        video_codec_type: str,
-        video_bit_rate: int,
-        video_width: Optional[int],
-        video_height: Optional[int],
-        video_fps: Optional[int],
-        video_fourcc: Optional[str],
-        openh264: Optional[str],
-        use_hardware_encoder: bool = True,
-        audio_channels: int = 1,
-        audio_sample_rate: int = 16000,
-    ):
-        """
-        Sendonly インスタンスを初期化します。
+    if platform.system() == "Windows":
+        # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
+        video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+    else:
+        video_capture = cv2.VideoCapture(camera_id)
 
-        :param signaling_urls: Sora シグナリング URL のリスト
-        :param channel_id: 接続するチャンネル ID
-        :param metadata: 接続のためのオプションのメタデータ
-        :param camera_id: 使用するカメラの ID
-        :param video_codec_type: 使用するビデオコーデックの種類
-        :param video_bit_rate: ビデオのビットレート
-        :param video_width: ビデオの幅
-        :param video_height: ビデオの高さ
-        :param video_fps: ビデオのフレームレート
-        :param video_fourcc: ビデオの FOURCC コード
-        :param openh264: OpenH264 ライブラリへのパス
-        :param audio_channels: 音声チャンネル数（デフォルト: 1）
-        :param audio_sample_rate: 音声サンプリングレート（デフォルト: 16000）
-        """
-        self.audio_channels: int = audio_channels
-        self.audio_sample_rate: int = audio_sample_rate
+    if video_width is not None:
+        video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
+    if video_height is not None:
+        video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
+    if video_fourcc is not None:
+        video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
+    if video_fps is not None:
+        video_capture.set(cv2.CAP_PROP_FPS, video_fps)
 
-        self._sora: Sora = Sora(openh264=openh264, use_hardware_encoder=use_hardware_encoder)
+    # Ubuntu → FOURCC を設定すると FPS が初期化される
+    # Windows → FPS を設定すると FOURCC が初期化される
+    # ので、両方に対応するため２回設定する
+    if video_fourcc is not None:
+        fourcc = cv2.VideoWriter_fourcc(*video_fourcc)
+        target_fourcc = video_capture.get(cv2.CAP_PROP_FOURCC)
+        if fourcc != target_fourcc:
+            video_capture.set(cv2.CAP_PROP_FOURCC, fourcc)
+    if video_fps is not None:
+        if video_fps != int(video_capture.get(cv2.CAP_PROP_FPS)):
+            video_capture.set(cv2.CAP_PROP_FPS, video_fps)
 
-        self._audio_source = self._sora.create_audio_source(
-            self.audio_channels, self.audio_sample_rate
-        )
-        self._video_source = self._sora.create_video_source()
-
-        self._connection: SoraConnection = self._sora.create_connection(
-            signaling_urls=signaling_urls,
-            role="sendonly",
-            channel_id=channel_id,
-            metadata=metadata,
-            video_codec_type=video_codec_type,
-            video_bit_rate=video_bit_rate,
-            audio_source=self._audio_source,
-            video_source=self._video_source,
-        )
-        self._connection_id: Optional[str] = None
-
-        self._connected: Event = Event()
-        self._closed: bool = False
-        self._default_connection_timeout_s: float = 10.0
-
-        self._connection.on_set_offer = self._on_set_offer
-        self._connection.on_notify = self._on_notify
-        self._connection.on_disconnect = self._on_disconnect
-
-        self._setup_video_capture(camera_id, video_width, video_height, video_fps, video_fourcc)
-
-    def _setup_video_capture(
-        self,
-        camera_id: int,
-        video_width: Optional[int],
-        video_height: Optional[int],
-        video_fps: Optional[int],
-        video_fourcc: Optional[str],
-    ) -> None:
-        """
-        ビデオキャプチャの設定を行います。
-
-        :param camera_id: 使用するカメラの ID
-        :param video_width: ビデオの幅
-        :param video_height: ビデオの高さ
-        :param video_fps: ビデオのフレームレート
-        :param video_fourcc: ビデオの FOURCC コード
-        """
-        if platform.system() == "Windows":
-            # CAP_DSHOW を設定しないと、カメラの起動がめちゃめちゃ遅くなる
-            self._video_capture = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
-        else:
-            self._video_capture = cv2.VideoCapture(camera_id)
-
-        if video_width is not None:
-            self._video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, video_width)
-        if video_height is not None:
-            self._video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, video_height)
-        if video_fourcc is not None:
-            self._video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*video_fourcc))
-        if video_fps is not None:
-            self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
-
-        # Ubuntu → FOURCC を設定すると FPS が初期化される
-        # Windows → FPS を設定すると FOURCC が初期化される
-        # ので、両方に対応するため２回設定する
-        if video_fourcc is not None:
-            fourcc = cv2.VideoWriter_fourcc(*video_fourcc)
-            target_fourcc = self._video_capture.get(cv2.CAP_PROP_FOURCC)
-            if fourcc != target_fourcc:
-                self._video_capture.set(cv2.CAP_PROP_FOURCC, fourcc)
-        if video_fps is not None:
-            if video_fps != int(self._video_capture.get(cv2.CAP_PROP_FPS)):
-                self._video_capture.set(cv2.CAP_PROP_FPS, video_fps)
-
-    def connect(self) -> None:
-        """
-        Sora への接続を確立します。
-
-        :raises AssertionError: タイムアウト期間内に接続が確立できなかった場合
-        """
-        self._connection.connect()
-
-        assert self._connected.wait(
-            timeout=self._default_connection_timeout_s
-        ), "接続がタイムアウトしました"
-
-    def disconnect(self) -> None:
-        """Sora から切断します。"""
-        self._connection.disconnect()
-
-    def _on_notify(self, raw_message: str) -> None:
-        """
-        Sora からの通知イベントを処理します。
-
-        :param raw_message: 生の通知メッセージ
-        """
-        message: dict[str, Any] = json.loads(raw_message)
-        if (
-            message["type"] == "notify"
-            and message["event_type"] == "connection.created"
-            and message["connection_id"] == self._connection_id
-        ):
-            print("Sora に接続しました")
-            self._connected.set()
-
-    def _on_set_offer(self, raw_message: str) -> None:
-        """
-        オファー設定イベントを処理します。
-
-        :param raw_message: オファーを含む生のメッセージ
-        """
-        message: dict[str, Any] = json.loads(raw_message)
-        if message["type"] == "offer":
-            self._connection_id = message["connection_id"]
-
-    def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
-        """
-        切断イベントを処理します。
-
-        :param error_code: 切断のエラーコード
-        :param message: 切断メッセージ
-        """
-        print(f"Sora から切断されました: error_code='{error_code}' message='{message}'")
-        self._connected.clear()
-        self._closed = True
-
-    def _callback(
-        self, indata: ndarray, frames: int, time: Any, status: sounddevice.CallbackFlags
-    ) -> None:
-        """
-        音声入力のためのコールバック関数。
-
-        :param indata: 入力された音声データ
-        :param frames: 処理するフレーム数
-        :param time: タイミング情報（未使用）
-        :param status: ステータスフラグ
-        """
-        self._audio_source.on_data(indata)
-
-    def run(self) -> None:
-        """
-        ビデオフレームの送信と音声の送信を行うメインループ。
-        """
-        with sounddevice.InputStream(
-            samplerate=self.audio_sample_rate,
-            channels=self.audio_channels,
-            dtype="int16",
-            callback=self._callback,
-        ):
-            self.connect()
-            try:
-                while self._connected.is_set():
-                    success, frame = self._video_capture.read()
-                    if not success:
-                        continue
-                    self._video_source.on_captured(frame)
-            except KeyboardInterrupt:
-                pass
-            finally:
-                self.disconnect()
-                self._video_capture.release()
+    return video_capture
 
 
 def sendonly() -> None:
@@ -246,6 +82,15 @@ def sendonly() -> None:
 
     camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
 
+    # OpenCV を利用したビデオキャプチャの設定
+    video_capture = get_video_capture(
+        camera_id=camera_id,
+        video_width=video_width,
+        video_height=video_height,
+        video_fps=video_fps,
+        video_fourcc=video_fourcc,
+    )
+
     openh264_path = os.getenv("OPENH264_PATH")
 
     use_hwa = bool(os.getenv("USE_HWA", "True"))
@@ -253,16 +98,12 @@ def sendonly() -> None:
     sendonly = Sendonly(
         signaling_urls,
         channel_id,
-        metadata,
-        camera_id,
-        video_codec_type,
-        video_bit_rate,
-        video_width,
-        video_height,
-        video_fps,
-        video_fourcc,
-        openh264_path,
-        use_hardware_encoder=use_hwa,
+        metadata=metadata,
+        video_codec_type=video_codec_type,
+        video_bit_rate=video_bit_rate,
+        openh264_path=openh264_path,
+        use_hwa=use_hwa,
+        video_capture=video_capture,
     )
     sendonly.run()
 
