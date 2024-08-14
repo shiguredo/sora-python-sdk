@@ -15,7 +15,7 @@ class Messaging:
         signaling_urls: list[str],
         channel_id: str,
         data_channels: list[dict[str, Any]],
-        metadata: Optional[dict[str, Any]],
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """
         Messaging インスタンスを初期化します。
@@ -55,6 +55,7 @@ class Messaging:
         self.sender_id = random.randint(1, 10000)
 
         self._connection.on_set_offer = self._on_set_offer
+        self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_data_channel = self._on_data_channel
         self._connection.on_message = self._on_message
@@ -116,6 +117,16 @@ class Messaging:
         if message["type"] == "offer":
             # "type": "offer" に入ってくる自分の connection_id を保存する
             self._connection_id = message["connection_id"]
+
+    def _on_switched(self, raw_message: str):
+        """
+        スイッチイベントを処理します。
+
+        :param raw_message: 生のスイッチメッセージ
+        """
+        message: dict[str, Any] = json.loads(raw_message)
+        if message["type"] == "switched":
+            self._switched = True
 
     def _on_notify(self, raw_message: str):
         """
