@@ -85,6 +85,8 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 20
     env:
+      # Python を強制的に UTF-8 で利用するおまじない
+      PYTHONUTF8: 1
       TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
