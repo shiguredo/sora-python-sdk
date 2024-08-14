@@ -8,30 +8,8 @@
   - 後方互換性がある追加
 - FIX
   - バグ修正
-- misc
+- misc カテゴリ
   - テストやサンプル、ドキュメントなどの変更
-
-## テンプレート
-
-```markdown
-## develop
-
-### misc
-
-## 2024.1.0 (2024-01-01)
-
-- [CHANGE] A
-  - @voluntas
-- [UPDATE] B
-  - @voluntas
-
-### misc
-
-- [ADD] Y
-  - @voluntas
-- [FIX] X
-  - @voluntas
-```
 
 ## develop
 
