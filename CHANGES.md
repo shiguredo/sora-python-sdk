@@ -11,12 +11,6 @@
 
 ## develop
 
-- [CHANGE] Jetson 5 の対応を削除
-  - 以降は support/jetson-jetpack-6 ブランチで Jetson 6 のみの対応となる
-  - @melpon
-- [CHANGE] run.py の実行にターゲットの指定を必須にする
-  - @melpon
-
 ### misc
 
 - [FIX] examples の設定に virtual = true を指定するようにする
