@@ -61,7 +61,7 @@ dev-dependencies = [
     "wheel~=0.43.0",
     "auditwheel~=6.0.0",
     "pytest>=8.3",
-    "ruff>=0.5",
+    "ruff>=0.6",
     "typing-extensions>=4.12.2",
 ]
 
