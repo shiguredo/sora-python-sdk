@@ -38,7 +38,7 @@ mediapipe==0.10.14
 ml-dtypes==0.4.0
     # via jax
     # via jaxlib
-numpy==2.0.1
+numpy==2.1.0
     # via contourpy
     # via jax
     # via jaxlib

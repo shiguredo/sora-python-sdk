@@ -45,7 +45,7 @@ ml-dtypes==0.4.0
 mypy==1.11.1
 mypy-extensions==1.0.0
     # via mypy
-numpy==2.0.1
+numpy==2.1.0
     # via contourpy
     # via jax
     # via jaxlib
@@ -84,7 +84,7 @@ python-dateutil==2.9.0.post0
     # via matplotlib
 python-dotenv==1.0.1
     # via sora-sdk-samples
-ruff==0.5.7
+ruff==0.6.1
 scipy==1.14.0
     # via jax
     # via jaxlib
