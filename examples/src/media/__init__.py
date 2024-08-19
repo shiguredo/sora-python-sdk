@@ -32,6 +32,7 @@ class Sendonly:
         self,
         signaling_urls: list[str],
         channel_id: str,
+        simulcast: Optional[bool] = None,
         metadata: Optional[dict[str, Any]] = None,
         audio: Optional[bool] = None,
         video: Optional[bool] = None,
@@ -79,6 +80,7 @@ class Sendonly:
             signaling_urls=signaling_urls,
             role="sendonly",
             channel_id=channel_id,
+            simulcast=simulcast,
             metadata=metadata,
             audio=audio,
             video=video,
@@ -147,7 +149,7 @@ class Sendonly:
     def _fake_video_loop(self):
         while not self._closed.is_set():
             time.sleep(1.0 / 30)
-            self._video_source.on_captured(numpy.zeros((480, 640, 3), dtype=numpy.uint8))
+            self._video_source.on_captured(numpy.zeros((540, 960, 3), dtype=numpy.uint8))
 
     def _on_set_offer(self, raw_message: str) -> None:
         """
