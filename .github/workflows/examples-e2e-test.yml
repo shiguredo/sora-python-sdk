@@ -6,6 +6,10 @@ on:
     paths:
       - .github/workflows/examples-e2e-test.yml
       - examples
+  # 毎日日本時間（JST）の14:00（UTCの5:00）に実行します。
+  # ただし、週末は除きます。
+  schedule:
+    - cron: "0 5 * * 1-5"
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
@@ -42,6 +46,7 @@ jobs:
       - run: rye run pytest tests/test_messaging.py -s
       - run: rye run pytest tests/test_sendonly_recvonly.py -s
       - run: rye run pytest tests/test_vad.py -s
+      - run: rye run pytest tests/test_simulcast.py -s
 
   e2e_macos_test:
     strategy:
@@ -70,6 +75,7 @@ jobs:
       - run: rye run pytest tests/test_messaging.py -s
       - run: rye run pytest tests/test_sendonly_recvonly.py -s
       - run: rye run pytest tests/test_vad.py -s
+      - run: rye run pytest tests/test_simulcast.py -s
 
   e2e_windows_test:
     strategy:
