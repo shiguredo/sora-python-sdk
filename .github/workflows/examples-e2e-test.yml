@@ -7,6 +7,11 @@ on:
       - .github/workflows/examples-e2e-test.yml
       - examples
 
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+
 jobs:
   e2e_ubuntu_test:
     strategy:
@@ -18,10 +23,6 @@ jobs:
       run:
         working-directory: ./examples
     timeout-minutes: 20
-    env:
-      TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
-      TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
-      TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v4
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
@@ -53,10 +54,6 @@ jobs:
       run:
         working-directory: ./examples
     timeout-minutes: 20
-    env:
-      TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
-      TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
-      TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
@@ -86,9 +83,6 @@ jobs:
     env:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
-      TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
-      TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
-      TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
@@ -99,7 +93,6 @@ jobs:
           7z e openh264-2.4.1-win64.dll.bz2
           Rename-Item -Path "openh264-2.4.1-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
-        working-directory: ./tests
       - uses: eifinger/setup-rye@v4
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
