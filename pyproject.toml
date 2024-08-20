@@ -1,5 +1,5 @@
 [project]
-name = "sora_sdk_jetson_jetpack_6.0.0.0.dev0"
+name = "sora_sdk_jetson_jetpack_6.0.0.0"
 authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
 version = "2024.3.0"
 description = "WebRTC SFU Sora Python SDK"
