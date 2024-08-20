@@ -1,11 +1,13 @@
 name: examples-e2e-test
 
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - .github/workflows/examples-e2e-test.yml
-      - examples
+  pull_request:
+    types: [closed]
+  schedule:
+    # UTC の 01:00 は JST だと 10:00 。
+    # 1-5 で 月曜日から金曜日
+    - cron: "0 1 * * 1-5"
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
@@ -14,6 +16,11 @@ env:
 
 jobs:
   e2e_ubuntu_test:
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        github.event_name == 'schedule'
+      }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
@@ -44,6 +51,11 @@ jobs:
       - run: rye run pytest tests/test_vad.py -s
 
   e2e_macos_test:
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        github.event_name == 'schedule'
+      }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
@@ -72,6 +84,11 @@ jobs:
       - run: rye run pytest tests/test_vad.py -s
 
   e2e_windows_test:
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        github.event_name == 'schedule'
+      }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
