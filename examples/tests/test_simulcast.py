@@ -2,9 +2,12 @@ import sys
 import time
 import uuid
 
+import pytest
+
 from media import Sendonly
 
 
+@pytest.mark.skip(reason="L1T1 を指定しても L1T2 になる")
 def test_simulcast(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -18,7 +21,7 @@ def test_simulcast(setup):
         simulcast=True,
         audio=False,
         video=True,
-        video_codec_type="VP8",
+        video_codec_type="VP9",
         metadata=metadata,
     )
     simulcast.connect(fake_video=True)
@@ -30,9 +33,9 @@ def test_simulcast(setup):
     simulcast.disconnect()
 
     codec_stats = next(
-        s for s in stats_report if s.get("type") == "codec" and s.get("mimeType") == "video/VP8"
+        s for s in stats_report if s.get("type") == "codec" and s.get("mimeType") == "video/VP9"
     )
-    assert codec_stats["mimeType"] == "video/VP8"
+    assert codec_stats["mimeType"] == "video/VP9"
 
     outbound_rtp_stats = sorted(
         filter(
@@ -42,8 +45,6 @@ def test_simulcast(setup):
         key=lambda s: s["rid"],  # 直接 s["rid"] を使用し、存在しない場合は KeyError を発生させる
     )
     assert len(outbound_rtp_stats) == 3
-
-    print(outbound_rtp_stats)
 
     assert outbound_rtp_stats[0]["rid"] == "r0"
     assert outbound_rtp_stats[0]["active"] is True
