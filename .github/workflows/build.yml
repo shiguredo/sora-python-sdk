@@ -1,15 +1,14 @@
 name: build
 
 on:
-  workflow_dispatch:
   push:
     paths-ignore:
       - "examples/**"
       - "**.md"
-  # 毎日日本時間（JST）の14:00（UTCの5:00）に実行します。
-  # ただし、週末は除きます。
   schedule:
-    - cron: "0 5 * * 1-5"
+    # UTC の 01:00 は JST だと 10:00 。
+    # 1-5 で 月曜日から金曜日
+    - cron: "0 1 * * 1-5"
 
 jobs:
   # まず pyi を生成する

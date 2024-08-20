@@ -2,6 +2,8 @@ name: examples-e2e-test
 
 on:
   push:
+    paths-ignore:
+      - "**.md"
   pull_request:
     types: [closed]
   schedule:
