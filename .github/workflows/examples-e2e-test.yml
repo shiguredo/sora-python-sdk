@@ -1,11 +1,9 @@
-name: e2e-test
+name: examples-e2e-test
 
 on:
   push:
     paths-ignore:
       - "**.md"
-  pull_request:
-    types: [closed]
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
