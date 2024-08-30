@@ -27,6 +27,7 @@ jobs:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
+        sdk: ["source", "pkg"]
     runs-on: ${{ matrix.os}}
     defaults:
       run:
@@ -45,15 +46,15 @@ jobs:
           mv libopenh264-2.4.1-linux64.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
       - uses: eifinger/setup-rye@v4
-      - name: pyproject.toml に workspace を追加して examples がビルドした SDK を利用するようにする
+      - if: ${{ matrix.sdk == 'source'}}
         run: |
           echo '[tool.rye.workspace]' >> pyproject.toml
           echo 'packages = ["examples"]' >> pyproject.toml
         working-directory: .
-      - name: SDK ビルドの準備
+      - if: ${{ matrix.sdk == 'source'}}
         run: rye sync
         working-directory: .
-      - name: SDK ビルド
+      - if: ${{ matrix.sdk == 'source'}}
         run: rye run python3 run.py ${{ matrix.os }}_x86_64
         working-directory: .
       - run: rye pin ${{ matrix.python_version }}
@@ -74,6 +75,7 @@ jobs:
         python_version: ["3.10", "3.11", "3.12"]
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14"]
+        sdk: ["source", "pkg"]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -88,6 +90,17 @@ jobs:
           mv libopenh264-2.4.1-mac-arm64.dylib libopenh264.dylib
           echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
       - uses: eifinger/setup-rye@v4
+      - if: ${{ matrix.sdk == 'source'}}
+        run: |
+          echo '[tool.rye.workspace]' >> pyproject.toml
+          echo 'packages = ["examples"]' >> pyproject.toml
+        working-directory: .
+      - if: ${{ matrix.sdk == 'source'}}
+        run: rye sync
+        working-directory: .
+      - if: ${{ matrix.sdk == 'source'}}
+        run: rye run python3 run.py macos_arm64
+        working-directory: .
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run pytest tests/test_macos.py -s
@@ -105,6 +118,7 @@ jobs:
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
+        sdk: ["source", "pkg"]
     runs-on: windows-2022
     defaults:
       run:
@@ -124,6 +138,17 @@ jobs:
           Rename-Item -Path "openh264-2.4.1-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
       - uses: eifinger/setup-rye@v4
+      - if: ${{ matrix.sdk == 'source'}}
+        run: |
+          echo '[tool.rye.workspace]' >> pyproject.toml
+          echo 'packages = ["examples"]' >> pyproject.toml
+        working-directory: .
+      - if: ${{ matrix.sdk == 'source'}}
+        run: rye sync
+        working-directory: .
+      - if: ${{ matrix.sdk == 'source'}}
+        run: rye run python run.py windows_x86_64
+        working-directory: .
       - run: rye pin ${{ matrix.python_version }}
       - run: rye sync
       - run: rye run pytest tests/test_messaging.py -s
