@@ -18,6 +18,8 @@
   - @voluntas
 - [ADD] examples に E2E テストを追加する
   - @voluntas
+- [ADD] PyPI からのパッケージとビルドした SDK のテスト両方を行うようにする
+  - @voluntas
 
 ## 2024.3.0
 
