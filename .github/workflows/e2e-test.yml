@@ -18,11 +18,6 @@ env:
 
 jobs:
   e2e_ubuntu_test:
-    if: >-
-      ${{
-        contains(github.event.head_commit.message, '[e2e]') ||
-        github.event_name == 'schedule'
-      }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
@@ -65,11 +60,6 @@ jobs:
       - run: rye run pytest tests/test_vad.py -s
 
   e2e_macos_test:
-    if: >-
-      ${{
-        contains(github.event.head_commit.message, '[e2e]') ||
-        github.event_name == 'schedule'
-      }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
@@ -110,11 +100,6 @@ jobs:
       - run: rye run pytest tests/test_vad.py -s
 
   e2e_windows_test:
-    if: >-
-      ${{
-        contains(github.event.head_commit.message, '[e2e]') ||
-        github.event_name == 'schedule'
-      }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
