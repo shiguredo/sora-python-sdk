@@ -62,6 +62,8 @@ dev-dependencies = [
     "auditwheel~=6.0.0",
     "ruff>=0.6",
     "typing-extensions>=4.12.2",
+    "pytest>=8.3.2",
+    "numpy>=2.1.0",
 ]
 
 # examples でローカルの sora_sdk を利用したい場合は以下を有効にする
