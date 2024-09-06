@@ -2,7 +2,6 @@
 
 // WebRTC
 #include <api/video/i420_buffer.h>
-#include <rtc_base/helpers.h>
 #include <rtc_base/time_utils.h>
 #include <third_party/libyuv/include/libyuv.h>
 
