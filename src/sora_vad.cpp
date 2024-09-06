@@ -38,5 +38,5 @@ float SoraVAD::Analyze(std::shared_ptr<SoraAudioFrame> frame) {
   audio_buffer_->CopyFrom(frame->RawData(), vad_input_config_);
   return vad_->Analyze(webrtc::AudioFrameView<const float>(
       audio_buffer_->channels(), audio_buffer_->num_channels(),
-      audio_buffer_->num_frames()));
+      audio_buffer_->num_frames()).view());
 }
