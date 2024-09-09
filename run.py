@@ -17,6 +17,7 @@ from buildbase import (
     cmd,
     cmdcap,
     get_macos_osver,
+    get_sora_info,
     get_webrtc_info,
     get_webrtc_platform,
     get_windows_osver,
@@ -218,14 +219,18 @@ def main():
         webrtc_info = get_webrtc_info(
             webrtc_platform, args.local_webrtc_build_dir, install_dir, args.debug
         )
+        
+        sora_info = get_sora_info(
+            webrtc_platform, args.local_sora_cpp_sdk_dir, install_dir, args.debug
+        )
 
         cmake_args = []
         cmake_args.append(f"-DCMAKE_BUILD_TYPE={configuration}")
         cmake_args.append(f"-DTARGET_OS={platform.target.os}")
-        cmake_args.append(f"-DBOOST_ROOT={cmake_path(os.path.join(install_dir, 'boost'))}")
+        cmake_args.append(f"-DBOOST_ROOT={cmake_path(sora_info.boost_install_dir)}")
         cmake_args.append(f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
         cmake_args.append(f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
-        cmake_args.append(f"-DSORA_DIR={cmake_path(os.path.join(install_dir, 'sora'))}")
+        cmake_args.append(f"-DSORA_DIR={cmake_path(sora_info.sora_install_dir)}")
         cmake_args.append(f"-DOPENH264_DIR={cmake_path(os.path.join(install_dir, 'openh264'))}")
         python_version = get_python_version()
         cmake_args.append(f"-DPYTHON_VERSION_STRING={python_version}")
