@@ -183,6 +183,12 @@ void SoraConnection::OnSwitched(std::string text) {
   }
 }
 
+void SoraConnection::OnSignaling(std::string text) {
+  if (on_signaling_) {
+    on_signaling_(text);
+  }
+}
+
 void SoraConnection::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   if (on_track_) {

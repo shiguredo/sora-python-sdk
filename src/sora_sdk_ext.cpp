@@ -286,6 +286,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("get_stats", &SoraConnection::GetStats)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
+      .def_rw("on_signaling", &SoraConnection::on_signaling_)
       .def_rw("on_notify", &SoraConnection::on_notify_)
       .def_rw("on_push", &SoraConnection::on_push_)
       .def_rw("on_message", &SoraConnection::on_message_)
