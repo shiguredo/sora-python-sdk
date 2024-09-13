@@ -102,7 +102,9 @@ class SoraConnection : public sora::SoraSignalingObserver,
   void OnPush(std::string text) override;
   void OnMessage(std::string label, std::string data) override;
   void OnSwitched(std::string text) override;
-  void OnSignaling(std::string text) override;
+  void OnSignalingMessage(sora::SoraSignalingType type,
+                          sora::SoraSignalingDirection direction,
+                          std::string message) override;
   void OnTrack(
       rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
   void OnRemoveTrack(
@@ -110,7 +112,9 @@ class SoraConnection : public sora::SoraSignalingObserver,
   void OnDataChannel(std::string label) override;
 
   // sora::SoraSignalingObserver のコールバック関数が呼び出された時に対応して呼び出す Python の関数を保持する
-  std::function<void(std::string)> on_signaling_;
+  std::function<
+      void(sora::SoraSignalingType, sora::SoraSignalingDirection, std::string)>
+      on_signaling_message_;
   std::function<void(std::string)> on_set_offer_;
   std::function<void(sora::SoraSignalingErrorCode, std::string)> on_disconnect_;
   std::function<void(std::string)> on_notify_;
