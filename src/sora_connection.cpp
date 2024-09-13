@@ -183,9 +183,11 @@ void SoraConnection::OnSwitched(std::string text) {
   }
 }
 
-void SoraConnection::OnSignaling(std::string text) {
-  if (on_signaling_) {
-    on_signaling_(text);
+void SoraConnection::OnSignalingMessage(sora::SoraSignalingType type,
+                                        sora::SoraSignalingDirection direction,
+                                        std::string message) {
+  if (on_signaling_message_) {
+    on_signaling_message_(type, direction, message);
   }
 }
 
