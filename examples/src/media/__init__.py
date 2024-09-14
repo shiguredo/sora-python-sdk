@@ -14,7 +14,9 @@ from sora_sdk import (
     SoraAudioSink,
     SoraConnection,
     SoraMediaTrack,
+    SoraSignalingDirection,
     SoraSignalingErrorCode,
+    SoraSignalingType,
     SoraVideoFrame,
     SoraVideoSink,
 )
@@ -95,6 +97,16 @@ class Sendonly:
         self._closed: Event = Event()
         self._default_connection_timeout_s: float = 10.0
 
+        # メッセージ
+        self._connect_message: Optional[dict[str, Any]] = None
+        self._redirect_message: Optional[dict[str, Any]] = None
+        self._offer_message: Optional[dict[str, Any]] = None
+        self._answer_message: Optional[dict[str, Any]] = None
+        self._candidate_messages: list[dict[str, Any]] = []
+        self._re_offer_messages: list[dict[str, Any]] = []
+        self._re_answer_messages: list[dict[str, Any]] = []
+
+        self._connection.on_signaling_message = self._on_signaling_message
         self._connection.on_set_offer = self._on_set_offer
         self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
@@ -132,6 +144,34 @@ class Sendonly:
         return json.loads(raw_stats)
 
     @property
+    def connect_message(self) -> Optional[dict[str, Any]]:
+        return self._connect_message
+
+    @property
+    def redirect_message(self) -> Optional[dict[str, Any]]:
+        return self._redirect_message
+
+    @property
+    def offer_message(self) -> Optional[dict[str, Any]]:
+        return self._offer_message
+
+    @property
+    def answer_message(self) -> Optional[dict[str, Any]]:
+        return self._answer_message
+
+    @property
+    def candidate_messages(self) -> list[dict[str, Any]]:
+        return self._candidate_messages
+
+    @property
+    def re_offer_messages(self) -> list[dict[str, Any]]:
+        return self._re_offer_messages
+
+    @property
+    def re_answer_messages(self) -> list[dict[str, Any]]:
+        return self._re_answer_messages
+
+    @property
     def connected(self) -> bool:
         return self._connected.is_set()
 
@@ -148,6 +188,40 @@ class Sendonly:
         while not self._closed.is_set():
             time.sleep(1.0 / 30)
             self._video_source.on_captured(numpy.zeros((480, 640, 3), dtype=numpy.uint8))
+
+    def _on_signaling_message(
+        self,
+        signaling_type: SoraSignalingType,
+        signaling_direction: SoraSignalingDirection,
+        raw_message: str,
+    ):
+        print(raw_message)
+        message: dict[str, Any] = json.loads(raw_message)
+        match message["type"]:
+            case "connect":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.SENT
+                self._connect_message = message
+            case "redirect":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
+                self._redirect_message = message
+            case "offer":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
+                self._offer_message = message
+            case "answer":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.SENT
+                self._answer_message = message
+            case "candidate":
+                self._candidate_messages.append(message)
+            case "re-offer":
+                self._re_offer_messages.append(message)
+            case "re-answer":
+                self._re_answer_messages.append(message)
+            case _:
+                NotImplementedError(f"Unknown signaling message type: {message['type']}")
 
     def _on_set_offer(self, raw_message: str) -> None:
         """
