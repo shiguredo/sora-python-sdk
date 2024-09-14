@@ -8,7 +8,6 @@
 #include <modules/audio_processing/agc2/agc2_common.h>
 #include <modules/audio_processing/agc2/cpu_features.h>
 #include <modules/audio_processing/agc2/rnn_vad/common.h>
-#include <modules/audio_processing/include/audio_frame_view.h>
 
 SoraVAD::SoraVAD() {
   vad_ = std::make_unique<webrtc::VoiceActivityDetectorWrapper>(
@@ -36,7 +35,5 @@ float SoraVAD::Analyze(std::shared_ptr<SoraAudioFrame> frame) {
         webrtc::StreamConfig(frame->sample_rate_hz(), frame->num_channels());
   }
   audio_buffer_->CopyFrom(frame->RawData(), vad_input_config_);
-  return vad_->Analyze(webrtc::AudioFrameView<const float>(
-      audio_buffer_->channels(), audio_buffer_->num_channels(),
-      audio_buffer_->num_frames()));
+  return vad_->Analyze(audio_buffer_->view());
 }
