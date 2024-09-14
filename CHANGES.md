@@ -11,8 +11,16 @@
 
 ## develop
 
+- [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
+  - @torikizi
+- [UPDATE] libwebrtc のバージョンを `m128.6613.2.0` に上げる
+  - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
+  - @torikizi
+
 ### misc
 
+- [FIX] run.py で local_sora_cpp_sdk_dir を設定した際に boost が引けなくなってしまっている問題を修正する
+  - @tnoho
 - [FIX] examples の設定に virtual = true を指定するようにする
   - これを指定しないとエラーになる
   - @voluntas

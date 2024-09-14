@@ -20,8 +20,8 @@ pyelftools==0.31
     # via auditwheel
 pyproject-hooks==1.1.0
     # via build
-ruff==0.6.1
-setuptools==72.2.0
+ruff==0.6.4
+setuptools==74.1.2
 tomli==2.0.1
     # via build
 typing-extensions==4.12.2
