@@ -3,6 +3,7 @@ import time
 import uuid
 
 import pytest
+
 from media import Recvonly, Sendonly
 
 """
@@ -30,6 +31,9 @@ def test_macos_h264_sendonly(setup):
     sendonly.connect(fake_video=True)
 
     time.sleep(5)
+
+    assert sendonly.connect_message.get("channel_id") == channel_id
+    assert sendonly.connect_message.get("video").get("codec_type") == "H264"
 
     sendonly_stats = sendonly.get_stats()
 
