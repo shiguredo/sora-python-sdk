@@ -3,6 +3,9 @@
 #include <chrono>
 #include <stdexcept>
 
+// WebRTC
+#include <rtc_base/crypto_random.h>
+
 // Sora C++ SDK
 #include <sora/rtc_stats.h>
 

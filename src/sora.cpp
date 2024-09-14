@@ -2,6 +2,9 @@
 
 #include "sora.h"
 
+// WebRTC
+#include <rtc_base/crypto_random.h>
+
 Sora::Sora(std::optional<bool> use_hardware_encoder,
            std::optional<std::string> openh264) {
   factory_.reset(new SoraFactory(use_hardware_encoder, openh264));
