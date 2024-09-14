@@ -90,7 +90,7 @@ scipy==1.14.0
     # via jaxlib
 six==1.16.0
     # via python-dateutil
-sora-sdk==2024.3.0
+sora-sdk==2024.4.0.dev0
     # via sora-sdk-samples
 sounddevice==0.4.7
     # via mediapipe
