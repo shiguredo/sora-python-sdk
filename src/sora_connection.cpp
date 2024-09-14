@@ -12,6 +12,9 @@
 // Boost
 #include <boost/asio/signal_set.hpp>
 
+// WebRTC
+#include <rtc_base/crypto_random.h>
+
 // nonobind
 #include <nanobind/nanobind.h>
 
