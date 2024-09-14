@@ -103,6 +103,12 @@ int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
     Py_VISIT(on_disconnect.ptr());
   }
 
+  if (conn->on_signaling_message_) {
+    nb::object on_disconnect =
+        nb::cast(conn->on_signaling_message_, nb::rv_policy::none);
+    Py_VISIT(on_disconnect.ptr());
+  }
+
   if (conn->on_notify_) {
     nb::object on_notify = nb::cast(conn->on_notify_, nb::rv_policy::none);
     Py_VISIT(on_notify.ptr());
