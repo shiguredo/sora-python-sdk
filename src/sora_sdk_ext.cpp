@@ -103,6 +103,12 @@ int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
     Py_VISIT(on_disconnect.ptr());
   }
 
+  if (conn->on_signaling_message_) {
+    nb::object on_disconnect =
+        nb::cast(conn->on_signaling_message_, nb::rv_policy::none);
+    Py_VISIT(on_disconnect.ptr());
+  }
+
   if (conn->on_notify_) {
     nb::object on_notify = nb::cast(conn->on_notify_, nb::rv_policy::none);
     Py_VISIT(on_notify.ptr());
@@ -161,6 +167,16 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("PEER_CONNECTION_STATE_FAILED",
              sora::SoraSignalingErrorCode::PEER_CONNECTION_STATE_FAILED)
       .value("ICE_FAILED", sora::SoraSignalingErrorCode::ICE_FAILED);
+
+  nb::enum_<sora::SoraSignalingType>(m, "SoraSignalingType",
+                                     nb::is_arithmetic())
+      .value("WEBSOCKET", sora::SoraSignalingType::WEBSOCKET)
+      .value("DATACHANNEL", sora::SoraSignalingType::DATACHANNEL);
+
+  nb::enum_<sora::SoraSignalingDirection>(m, "SoraSignalingDirection",
+                                          nb::is_arithmetic())
+      .value("SENT", sora::SoraSignalingDirection::SENT)
+      .value("RECEIVED", sora::SoraSignalingDirection::RECEIVED);
 
   nb::enum_<webrtc::MediaStreamTrackInterface::TrackState>(m, "SoraTrackState",
                                                            nb::is_arithmetic())
@@ -286,6 +302,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("get_stats", &SoraConnection::GetStats)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
+      .def_rw("on_signaling_message", &SoraConnection::on_signaling_message_)
       .def_rw("on_notify", &SoraConnection::on_notify_)
       .def_rw("on_push", &SoraConnection::on_push_)
       .def_rw("on_message", &SoraConnection::on_message_)

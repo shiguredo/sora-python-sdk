@@ -3,6 +3,9 @@
 #include <chrono>
 #include <stdexcept>
 
+// WebRTC
+#include <rtc_base/crypto_random.h>
+
 // Sora C++ SDK
 #include <sora/rtc_stats.h>
 
@@ -183,6 +186,14 @@ void SoraConnection::OnMessage(std::string label, std::string data) {
 void SoraConnection::OnSwitched(std::string text) {
   if (on_switched_) {
     on_switched_(text);
+  }
+}
+
+void SoraConnection::OnSignalingMessage(sora::SoraSignalingType type,
+                                        sora::SoraSignalingDirection direction,
+                                        std::string message) {
+  if (on_signaling_message_) {
+    on_signaling_message_(type, direction, message);
   }
 }
 

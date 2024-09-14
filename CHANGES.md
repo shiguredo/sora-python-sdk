@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] on_signaling_message コールバックを追加する
+  - @tnoho
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
   - @torikizi
 - [UPDATE] libwebrtc のバージョンを `m128.6613.2.0` に上げる
