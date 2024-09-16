@@ -263,6 +263,17 @@ class Recvonly:
 
         self._q_out: queue.Queue = queue.Queue()
 
+        # signaling message
+        self._connect_message: Optional[dict[str, Any]] = None
+        self._redirect_message: Optional[dict[str, Any]] = None
+        self._offer_message: Optional[dict[str, Any]] = None
+        self._answer_message: Optional[dict[str, Any]] = None
+        self._candidate_messages: list[dict[str, Any]] = []
+        self._re_offer_messages: list[dict[str, Any]] = []
+        self._re_answer_messages: list[dict[str, Any]] = []
+
+        # callback
+        self._connection.on_signaling_message = self._on_signaling_message
         self._connection.on_set_offer = self._on_set_offer
         self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
@@ -284,6 +295,34 @@ class Recvonly:
         return json.loads(raw_stats)
 
     @property
+    def connect_message(self) -> Optional[dict[str, Any]]:
+        return self._connect_message
+
+    @property
+    def redirect_message(self) -> Optional[dict[str, Any]]:
+        return self._redirect_message
+
+    @property
+    def offer_message(self) -> Optional[dict[str, Any]]:
+        return self._offer_message
+
+    @property
+    def answer_message(self) -> Optional[dict[str, Any]]:
+        return self._answer_message
+
+    @property
+    def candidate_messages(self) -> list[dict[str, Any]]:
+        return self._candidate_messages
+
+    @property
+    def re_offer_messages(self) -> list[dict[str, Any]]:
+        return self._re_offer_messages
+
+    @property
+    def re_answer_messages(self) -> list[dict[str, Any]]:
+        return self._re_answer_messages
+
+    @property
     def connected(self) -> bool:
         return self._connected.is_set()
 
@@ -294,6 +333,40 @@ class Recvonly:
     @property
     def closed(self):
         return self._closed.is_set()
+
+    def _on_signaling_message(
+        self,
+        signaling_type: SoraSignalingType,
+        signaling_direction: SoraSignalingDirection,
+        raw_message: str,
+    ):
+        print(raw_message)
+        message: dict[str, Any] = json.loads(raw_message)
+        match message["type"]:
+            case "connect":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.SENT
+                self._connect_message = message
+            case "redirect":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
+                self._redirect_message = message
+            case "offer":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
+                self._offer_message = message
+            case "answer":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.SENT
+                self._answer_message = message
+            case "candidate":
+                self._candidate_messages.append(message)
+            case "re-offer":
+                self._re_offer_messages.append(message)
+            case "re-answer":
+                self._re_answer_messages.append(message)
+            case _:
+                NotImplementedError(f"Unknown signaling message type: {message['type']}")
 
     def _on_set_offer(self, raw_message: str) -> None:
         message: dict[str, Any] = json.loads(raw_message)
@@ -379,6 +452,17 @@ class Messaging:
 
         self.sender_id = random.randint(1, 10000)
 
+        # signaling message
+        self._connect_message: Optional[dict[str, Any]] = None
+        self._redirect_message: Optional[dict[str, Any]] = None
+        self._offer_message: Optional[dict[str, Any]] = None
+        self._answer_message: Optional[dict[str, Any]] = None
+        self._candidate_messages: list[dict[str, Any]] = []
+        self._re_offer_messages: list[dict[str, Any]] = []
+        self._re_answer_messages: list[dict[str, Any]] = []
+
+        # callback
+        self._connection.on_signaling_message = self._on_signaling_message
         self._connection.on_set_offer = self._on_set_offer
         self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
@@ -413,6 +497,34 @@ class Messaging:
         return stats
 
     @property
+    def connect_message(self) -> Optional[dict[str, Any]]:
+        return self._connect_message
+
+    @property
+    def redirect_message(self) -> Optional[dict[str, Any]]:
+        return self._redirect_message
+
+    @property
+    def offer_message(self) -> Optional[dict[str, Any]]:
+        return self._offer_message
+
+    @property
+    def answer_message(self) -> Optional[dict[str, Any]]:
+        return self._answer_message
+
+    @property
+    def candidate_messages(self) -> list[dict[str, Any]]:
+        return self._candidate_messages
+
+    @property
+    def re_offer_messages(self) -> list[dict[str, Any]]:
+        return self._re_offer_messages
+
+    @property
+    def re_answer_messages(self) -> list[dict[str, Any]]:
+        return self._re_answer_messages
+
+    @property
     def connected(self) -> bool:
         return self._connected.is_set()
 
@@ -431,6 +543,40 @@ class Messaging:
             time.sleep(0.01)
 
         self._connection.send_data_channel(self._label, data)
+
+    def _on_signaling_message(
+        self,
+        signaling_type: SoraSignalingType,
+        signaling_direction: SoraSignalingDirection,
+        raw_message: str,
+    ):
+        print(raw_message)
+        message: dict[str, Any] = json.loads(raw_message)
+        match message["type"]:
+            case "connect":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.SENT
+                self._connect_message = message
+            case "redirect":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
+                self._redirect_message = message
+            case "offer":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
+                self._offer_message = message
+            case "answer":
+                assert signaling_type == SoraSignalingType.WEBSOCKET
+                assert signaling_direction == SoraSignalingDirection.SENT
+                self._answer_message = message
+            case "candidate":
+                self._candidate_messages.append(message)
+            case "re-offer":
+                self._re_offer_messages.append(message)
+            case "re-answer":
+                self._re_answer_messages.append(message)
+            case _:
+                NotImplementedError(f"Unknown signaling message type: {message['type']}")
 
     def _on_set_offer(self, raw_message: str):
         """
@@ -505,4 +651,3 @@ class Messaging:
                 # データチャネルの準備ができたのでフラグを立てる
                 self._is_data_channel_ready = True
                 break
-
