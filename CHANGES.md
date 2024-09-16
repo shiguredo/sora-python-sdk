@@ -21,6 +21,8 @@
 
 ### misc
 
+- [CHANGE] rye から uv に変更する
+  - @voluntas
 - [CHANGE] サンプルアプリの src ディレクトリ構成を変更する
   - @voluntas
 - [CHANGE] サンプルアプリの E2E テストを一旦削除する
