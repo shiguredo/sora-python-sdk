@@ -11,7 +11,7 @@
 
 -e file:.
 auditwheel==6.0.0
-build==1.2.1
+build==1.2.2
 nanobind==2.1.0
 packaging==24.1
     # via auditwheel
@@ -20,8 +20,8 @@ pyelftools==0.31
     # via auditwheel
 pyproject-hooks==1.1.0
     # via build
-ruff==0.6.4
-setuptools==74.1.2
+ruff==0.6.5
+setuptools==75.0.0
 tomli==2.0.1
     # via build
 typing-extensions==4.12.2
