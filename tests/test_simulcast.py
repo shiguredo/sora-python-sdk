@@ -2,10 +2,21 @@ import sys
 import time
 import uuid
 
+import pytest
 from client import Sendonly
 
 
-def test_simulcast_vp8(setup):
+@pytest.fixture(params=[
+    ("VP8", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
+    ("VP9", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
+    ("AV1", "SimulcastEncoderAdapter (libaom, libaom, libaom)")
+])
+def video_codec_and_implementation(request):
+    return request.param
+
+
+def test_simulcast(setup, video_codec_and_implementation):
+    video_codec, expected_implementation = video_codec_and_implementation
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -18,7 +29,7 @@ def test_simulcast_vp8(setup):
         simulcast=True,
         audio=False,
         video=True,
-        video_codec_type="VP8",
+        video_codec_type=video_codec,
         video_bit_rate=3000,
         metadata=metadata,
         video_width=1280,
@@ -34,7 +45,7 @@ def test_simulcast_vp8(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    assert sendonly_codec_stats["mimeType"] == "video/VP8"
+    assert sendonly_codec_stats["mimeType"] == f"video/{video_codec}"
 
     # 複数のoutbound-rtp統計情報を取得
     outbound_rtp_stats = [
@@ -47,8 +58,6 @@ def test_simulcast_vp8(setup):
 
     for i, rtp_stat in enumerate(sorted_stats):
         assert rtp_stat["rid"] == f"r{i}"
-        assert (
-            rtp_stat["encoderImplementation"] == "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"
-        )
+        assert rtp_stat["encoderImplementation"] == expected_implementation
         assert rtp_stat["bytesSent"] > 0
         assert rtp_stat["packetsSent"] > 0
