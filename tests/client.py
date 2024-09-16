@@ -37,12 +37,17 @@ class Sendonly:
         use_hwa: bool = False,
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
+        video_width: int = 640,
+        video_height: int = 480,
     ):
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
 
         self._audio_channels: int = audio_channels
         self._audio_sample_rate: int = audio_sample_rate
+
+        self._video_width: int = video_width
+        self._video_height: int = video_height
 
         self._sora: Sora = Sora(openh264=openh264_path, use_hardware_encoder=use_hwa)
 
@@ -162,7 +167,9 @@ class Sendonly:
     def _fake_video_loop(self):
         while not self._closed.is_set():
             time.sleep(1.0 / 30)
-            self._video_source.on_captured(numpy.zeros((480, 640, 3), dtype=numpy.uint8))
+            self._video_source.on_captured(
+                numpy.zeros((self._video_height, self._video_width, 3), dtype=numpy.uint8)
+            )
 
     def _on_signaling_message(
         self,
