@@ -27,6 +27,8 @@ def test_random_signaling_message(setup):
 
     time.sleep(5)
 
+    sendonly.disconnect()
+
     assert sendonly.connect_message is not None
     assert sendonly.offer_message is not None
     assert sendonly.answer_message is not None
@@ -36,5 +38,3 @@ def test_random_signaling_message(setup):
     assert sendonly.connect_message["audio"] is selected_audio
     assert sendonly.connect_message["video"] is selected_video
     assert sendonly.connect_message["metadata"] == metadata
-
-    sendonly.disconnect()
