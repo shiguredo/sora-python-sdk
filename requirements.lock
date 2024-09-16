@@ -10,5 +10,3 @@
 #   universal: false
 
 -e file:.
-pillow==10.4.0
-    # via sora-sdk
