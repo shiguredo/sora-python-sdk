@@ -88,6 +88,7 @@ class Sendonly:
         self._candidate_messages: list[dict[str, Any]] = []
         self._re_offer_messages: list[dict[str, Any]] = []
         self._re_answer_messages: list[dict[str, Any]] = []
+        self._disconnect_message: Optional[dict[str, Any]] = None
 
         # callback
         self._connection.on_signaling_message = self._on_signaling_message
@@ -203,6 +204,9 @@ class Sendonly:
             case "re-answer":
                 assert signaling_direction == SoraSignalingDirection.RECEIVED
                 self._re_answer_messages.append(message)
+            case "disconnect":
+                assert signaling_direction == SoraSignalingDirection.SENT
+                self._disconnect_message = message
             case _:
                 NotImplementedError(f"Unknown signaling message type: {message['type']}")
 
