@@ -2,14 +2,14 @@
 
 ## セットアップ
 
-[Rye](https://rye.astral.sh/) というパッケージマネージャーを利用しています。
+[uv](https://docs.astral.sh/uv/) というパッケージマネージャーを利用しています。
 
 インストール方法は <https://rye.astral.sh/guide/installation/> をご確認ください。
 
 ### 依存パッケージのビルド
 
 ```bash
-rye sync
+uv sync
 ```
 
 ## サンプルコードの実行
@@ -23,5 +23,5 @@ cp .env.template .env
 例えば `media_sendonly.py` を実行する場合は以下のコマンドを実行してください。
 
 ```bash
-rye run python3 src/media_sendonly.py
+uv run python3 src/media_sendonly.py
 ```
