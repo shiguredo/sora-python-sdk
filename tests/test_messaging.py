@@ -2,7 +2,7 @@ import sys
 import time
 import uuid
 
-from messaging import Messaging
+from client import Messaging
 
 
 def test_messaging(setup):

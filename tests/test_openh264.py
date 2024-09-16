@@ -2,7 +2,7 @@ import sys
 import time
 import uuid
 
-from media import Recvonly, Sendonly
+from client import Recvonly, Sendonly
 
 
 def test_openh264_sendonly_recvonly(setup):
