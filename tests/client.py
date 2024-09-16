@@ -177,7 +177,6 @@ class Sendonly:
         signaling_direction: SoraSignalingDirection,
         raw_message: str,
     ):
-        print(raw_message)
         message: dict[str, Any] = json.loads(raw_message)
         match message["type"]:
             case "connect":
