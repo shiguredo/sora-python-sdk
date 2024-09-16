@@ -10,19 +10,37 @@
 #   universal: false
 
 -e file:.
-auditwheel==6.0.0
+auditwheel==6.1.0
 build==1.2.2
+exceptiongroup==1.2.2
+    # via pytest
+iniconfig==2.0.0
+    # via pytest
+mypy==1.11.2
+mypy-extensions==1.0.0
+    # via mypy
 nanobind==2.1.0
+numpy==2.1.1
 packaging==24.1
     # via auditwheel
     # via build
+    # via pytest
+pillow==10.4.0
+    # via sora-sdk
+pluggy==1.5.0
+    # via pytest
 pyelftools==0.31
     # via auditwheel
 pyproject-hooks==1.1.0
     # via build
+pytest==8.3.3
+python-dotenv==1.0.1
 ruff==0.6.5
 setuptools==75.0.0
 tomli==2.0.1
     # via build
+    # via mypy
+    # via pytest
 typing-extensions==4.12.2
-wheel==0.43.0
+    # via mypy
+wheel==0.44.0

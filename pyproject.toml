@@ -13,6 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 requires-python = ">= 3.10"
+dependencies = ["pillow>=10.4.0"]
 
 [project.urls]
 Source = "https://github.com/shiguredo/sora-python-sdk"
@@ -50,23 +51,23 @@ Discord = "https://discord.gg/shiguredo"
 # - https://setuptools.pypa.io/en/latest/build_meta.html
 #   - setuptools の build-system サポートについて解説されていて参考になる
 [build-system]
-requires = ["setuptools>=69.2", "wheel~=0.43.0"]
+requires = ["setuptools>=75.0", "wheel~=0.44.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.rye]
 dev-dependencies = [
     "nanobind~=2.1.0",
-    "setuptools>=69.2",
-    "build~=1.2.1",
-    "wheel~=0.43.0",
-    "auditwheel~=6.0.0",
+    "setuptools>=75.0",
+    "build~=1.2.2",
+    "wheel~=0.44.0",
+    "auditwheel~=6.1.0",
     "ruff>=0.6",
-    "typing-extensions>=4.12.2",
+    "typing-extensions>=4.12",
+    "pytest>=8.3",
+    "python-dotenv>=1.0",
+    "numpy>=2.1",
+    "mypy>=1.11",
 ]
-
-# examples でローカルの sora_sdk を利用したい場合は以下を有効にする
-# [tool.rye.workspace]
-# packages = ["examples"]
 
 [tool.ruff]
 target-version = "py310"
