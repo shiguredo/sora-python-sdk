@@ -31,6 +31,8 @@ def test_random_signaling_message(setup):
     assert sendonly.offer_message is not None
     assert sendonly.answer_message is not None
 
+    assert sendonly.connect_message["role"] == "sendonly"
+    assert sendonly.connect_message["channel_id"] is channel_id
     assert sendonly.connect_message["audio"] is selected_audio
     assert sendonly.connect_message["video"] is selected_video
     assert sendonly.connect_message["metadata"] == metadata
