@@ -41,14 +41,14 @@ jobs:
           bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
           mv libopenh264-2.4.1-linux64.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-      - uses: eifinger/setup-rye@v4
-      - run: rye pin ${{ matrix.python_version }}
-      - run: rye sync
-      - run: rye run python run.py ${{ matrix.os }}_x86_64
-      - run: rye run pytest tests/test_openh264.py -s
-      - run: rye run pytest tests/test_messaging.py -s
-      - run: rye run pytest tests/test_sendonly_recvonly.py -s
-      - run: rye run pytest tests/test_vad.py -s
+      - uses: astral-sh/setup-uv@v2
+      - run: uv python pin ${{ matrix.python_version }}
+      - run: uv sync
+      - run: uv run python run.py ${{ matrix.os }}_x86_64
+      - run: uv run pytest tests/test_openh264.py -s
+      - run: uv run pytest tests/test_messaging.py -s
+      - run: uv run pytest tests/test_sendonly_recvonly.py -s
+      - run: uv run pytest tests/test_vad.py -s
 
   e2e_test_macos:
     if: >-
@@ -71,15 +71,15 @@ jobs:
           bzip2 -d libopenh264-2.4.1-mac-arm64.dylib.bz2
           mv libopenh264-2.4.1-mac-arm64.dylib libopenh264.dylib
           echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
-      - uses: eifinger/setup-rye@v4
-      - run: rye pin ${{ matrix.python_version }}
-      - run: rye sync
-      - run: rye run python run.py macos_arm64
-      - run: rye run pytest tests/test_macos.py -s
-      - run: rye run pytest tests/test_openh264.py -s
-      - run: rye run pytest tests/test_messaging.py -s
-      - run: rye run pytest tests/test_sendonly_recvonly.py -s
-      - run: rye run pytest tests/test_vad.py -s
+      - uses: astral-sh/setup-uv@v2
+      - run: uv python pin ${{ matrix.python_version }}
+      - run: uv sync
+      - run: uv run python run.py macos_arm64
+      - run: uv run pytest tests/test_macos.py -s
+      - run: uv run pytest tests/test_openh264.py -s
+      - run: uv run pytest tests/test_messaging.py -s
+      - run: uv run pytest tests/test_sendonly_recvonly.py -s
+      - run: uv run pytest tests/test_vad.py -s
 
   e2e_test_windows:
     if: >-
@@ -105,13 +105,13 @@ jobs:
           7z e openh264-2.4.1-win64.dll.bz2
           Rename-Item -Path "openh264-2.4.1-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
-      - uses: eifinger/setup-rye@v4
-      - run: rye pin ${{ matrix.python_version }}
-      - run: rye sync
-      - run: rye run python run.py windows_x86_64
-      - run: rye run pytest tests/test_messaging.py -s
-      - run: rye run pytest tests/test_sendonly_recvonly.py -s
-      - run: rye run pytest tests/test_vad.py -s
+      - uses: astral-sh/setup-uv@v2
+      - run: uv python pin ${{ matrix.python_version }}
+      - run: uv sync
+      - run: uv run python run.py windows_x86_64
+      - run: uv run pytest tests/test_messaging.py -s
+      - run: uv run pytest tests/test_sendonly_recvonly.py -s
+      - run: uv run pytest tests/test_vad.py -s
 
   slack_notify_succeeded:
     needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
