@@ -6,10 +6,10 @@ from pathlib import Path
 from threading import Event
 from typing import Any, Optional
 
-import cv2
-import mediapipe as mp
+import cv2  # type: ignore
+import mediapipe as mp  # type: ignore
 import numpy as np
-from cv2.typing import MatLike
+from cv2.typing import MatLike  # type: ignore
 from dotenv import load_dotenv
 from PIL import Image
 from sora_sdk import Sora, SoraSignalingErrorCode, SoraVideoSource
@@ -46,7 +46,7 @@ class LogoStreamer:
         :param video_fps: ビデオのフレームレート
         :param video_fourcc: ビデオの FOURCC コード
         """
-        self.mp_face_detection = mp.solutions.face_detection
+        self.mp_face_detection = mp.solutions.face_detection  # type: ignore
 
         self._sora = Sora(openh264=None)
         self._video_source: SoraVideoSource = self._sora.create_video_source()
@@ -192,7 +192,10 @@ class LogoStreamer:
             self._video_capture.release()
 
     def run_one_frame(
-        self, face_detection: mp.solutions.face_detection.FaceDetection, angle: int, frame: MatLike
+        self,
+        face_detection: mp.solutions.face_detection.FaceDetection,  # type: ignore
+        angle: int,
+        frame: MatLike,  # type: ignore
     ) -> int:
         """
         1フレームの処理を行います。
@@ -283,7 +286,7 @@ def hideface_sender() -> None:
     video_fps = int(os.getenv("SORA_VIDEO_FPS", "30"))
     video_fourcc = os.getenv("SORA_VIDEO_FOURCC", "MJPG")
 
-    camera_id = int(os.getenv("SORA_CAMERA_ID", "0"))
+    camera_id = int(os.getenv("SORA_CAMERA_ID", "1"))
 
     streamer = LogoStreamer(
         signaling_urls=signaling_urls,

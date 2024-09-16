@@ -12,15 +12,6 @@
 rye sync
 ```
 
-## サンプルの種類
-
-- media_sendonly
-- media_recvonly
-- messaging_sendrecv
-- messaging_sendonly
-- messaging_recvonly
-- hideface_sender
-
 ## サンプルコードの実行
 
 `.env.template` をコピーして `.env` に必要な変数を設定してください。
@@ -29,8 +20,8 @@ rye sync
 cp .env.template .env
 ```
 
-例えば `media_recvonly` サンプルを実行する場合は以下のコマンドを実行してください。
+例えば `media_sendonly.py` を実行する場合は以下のコマンドを実行してください。
 
 ```bash
-rye run media_recvonly
+rye run python3 src/media_sendonly.py
 ```
