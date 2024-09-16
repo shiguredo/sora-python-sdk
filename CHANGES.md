@@ -14,10 +14,11 @@
 - [ADD] on_signaling_message コールバックを追加する
   - @tnoho
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
-  - @torikizi
-- [UPDATE] libwebrtc のバージョンを `m128.6613.2.0` に上げる
-  - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
-  - @torikizi
+  - WEBRTC_BUILD_VERSION を `m128.6613.2.0` に上げる
+    - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
+  - CMAKE_VERSION を `3.30.3` に上げる
+  - BOOST_VERSION を `1.86.0` に上げる
+  - @torikizi @voluntas
 
 ### misc
 
