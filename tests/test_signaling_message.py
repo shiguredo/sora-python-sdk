@@ -2,7 +2,7 @@ import sys
 import time
 import uuid
 
-from media import Sendonly
+from client import Sendonly
 
 
 def test_signaling_message(setup):
