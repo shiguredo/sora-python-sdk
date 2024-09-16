@@ -40,7 +40,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - 映像デバイス処理に [opencv-python](https://pypi.org/project/opencv-python/) などが利用できる
 - 音声認識などの入力に受信した音声を利用できる
 - 物体検出などの入力に受信した映像を利用できる
-- `rye add sora_sdk` や `pip install sora_sdk` でインストール可能
+- `uv add sora_sdk` や `pip install sora_sdk` でインストール可能
 - [NVIDIA Jetson JetPack SDK](https://developer.nvidia.com/embedded/jetpack) に対応
 
 ## 利用イメージ
@@ -66,13 +66,13 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 pip install sora_sdk
 ```
 
-### Rye
+### uv
 
-[Rye](https://rye-up.com/)
+[uv](https://docs.astral.sh/uv/)
 
 ```bash
-rye add sora_sdk
-rye sync
+uv add sora_sdk
+uv sync
 ```
 
 ### NVIDIA Jetson 向けパッケージ
