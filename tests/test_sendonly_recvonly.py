@@ -6,7 +6,7 @@ import pytest
 from client import Recvonly, Sendonly
 
 
-def test_sendonly_recvonly_opus(setup):
+def test_sendonly_recvonly_audio(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -60,17 +60,18 @@ def test_sendonly_recvonly_opus(setup):
 
 @pytest.fixture(
     params=[
+        # video_codec, encoder_implementation, decoder_implementation
         ("VP8", "libvpx", "libvpx"),
         ("VP9", "libvpx", "libvpx"),
         ("AV1", "libaom", "dav1d"),
     ]
 )
-def video_codec_and_implementation(request):
+def video_codec_params(request):
     return request.param
 
 
-def test_sendonly_recvonly(setup, video_codec_and_implementation):
-    video_codec, encoder_implementation, decoder_implementation = video_codec_and_implementation
+def test_sendonly_recvonly_video(setup, video_codec_params):
+    video_codec, encoder_implementation, decoder_implementation = video_codec_params
 
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
