@@ -13,7 +13,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 requires-python = ">= 3.10"
-dependencies = ["pillow>=10.4.0"]
 
 [project.urls]
 Source = "https://github.com/shiguredo/sora-python-sdk"
