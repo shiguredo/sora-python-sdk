@@ -21,6 +21,12 @@
 
 ### misc
 
+- [CHANGE] サンプルアプリの src ディレクトリ構成を変更する
+  - @voluntas
+- [CHANGE] サンプルアプリの E2E テストを一旦削除する
+  - @voluntas
+- [ADD] tests/ に E2E テストを追加する
+  - @voluntas
 - [FIX] run.py で local_sora_cpp_sdk_dir を設定した際に boost が引けなくなってしまっている問題を修正する
   - @tnoho
 - [FIX] examples の設定に virtual = true を指定するようにする
