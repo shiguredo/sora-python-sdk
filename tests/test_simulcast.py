@@ -6,11 +6,13 @@ import pytest
 from client import Sendonly
 
 
-@pytest.fixture(params=[
-    ("VP8", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
-    ("VP9", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
-    ("AV1", "SimulcastEncoderAdapter (libaom, libaom, libaom)")
-])
+@pytest.fixture(
+    params=[
+        ("VP8", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
+        ("VP9", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
+        ("AV1", "SimulcastEncoderAdapter (libaom, libaom, libaom)"),
+    ]
+)
 def video_codec_params(request):
     return request.param
 
@@ -42,6 +44,11 @@ def test_simulcast(setup, video_codec_params):
     sendonly_stats = sendonly.get_stats()
 
     sendonly.disconnect()
+
+    # "type": "answer" の SDP で Simulcast があるかどうか
+    assert sendonly.answer_message is not None
+    assert "sdp" in sendonly.answer_message
+    assert "a=simulcast:send r0;r1;r2" in sendonly.answer_message["sdp"]
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
