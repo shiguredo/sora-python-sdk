@@ -15,16 +15,20 @@ def test_signaling_message(setup):
     sendonly = Sendonly(
         signaling_urls,
         channel_id,
-        audio=False,
+        audio=True,
         video=True,
         metadata=metadata,
     )
-    sendonly.connect(fake_audio=True)
+    sendonly.connect(fake_video=True, fake_audio=True)
 
     time.sleep(5)
 
     assert sendonly.connect_message is not None
     assert sendonly.offer_message is not None
     assert sendonly.answer_message is not None
+
+    assert sendonly.connect_message["audio"] is True
+    assert sendonly.connect_message["video"] is True
+    assert sendonly.connect_message["metadata"] == metadata
 
     sendonly.disconnect()
