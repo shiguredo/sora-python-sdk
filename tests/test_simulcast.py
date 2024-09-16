@@ -11,12 +11,12 @@ from client import Sendonly
     ("VP9", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
     ("AV1", "SimulcastEncoderAdapter (libaom, libaom, libaom)")
 ])
-def video_codec_and_implementation(request):
+def video_codec_params(request):
     return request.param
 
 
-def test_simulcast(setup, video_codec_and_implementation):
-    video_codec, expected_implementation = video_codec_and_implementation
+def test_simulcast(setup, video_codec_params):
+    video_codec, expected_implementation = video_codec_params
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
