@@ -55,7 +55,7 @@ class Sendonly:
 
         self._connection: SoraConnection = self._sora.create_connection(
             signaling_urls=signaling_urls,
-            role="sendonly",
+            role=self.role,
             channel_id=channel_id,
             metadata=metadata,
             audio=audio,
@@ -111,6 +111,10 @@ class Sendonly:
     def get_stats(self):
         raw_stats = self._connection.get_stats()
         return json.loads(raw_stats)
+
+    @property
+    def role(self) -> str:
+        return "sendonly"
 
     @property
     def connect_message(self) -> Optional[dict[str, Any]]:
@@ -186,8 +190,10 @@ class Sendonly:
             case "candidate":
                 self._candidate_messages.append(message)
             case "re-offer":
+                assert signaling_direction == SoraSignalingDirection.SENT
                 self._re_offer_messages.append(message)
             case "re-answer":
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
                 self._re_answer_messages.append(message)
             case _:
                 NotImplementedError(f"Unknown signaling message type: {message['type']}")
@@ -246,7 +252,7 @@ class Recvonly:
         self._sora: Sora = Sora(openh264=openh264_path, use_hardware_encoder=use_hwa)
         self._connection: SoraConnection = self._sora.create_connection(
             signaling_urls=signaling_urls,
-            role="recvonly",
+            role=self.role,
             channel_id=channel_id,
             metadata=metadata,
             data_channel_signaling=data_channel_signaling,
@@ -293,6 +299,10 @@ class Recvonly:
     def get_stats(self):
         raw_stats = self._connection.get_stats()
         return json.loads(raw_stats)
+
+    @property
+    def role(self) -> str:
+        return "recvonly"
 
     @property
     def connect_message(self) -> Optional[dict[str, Any]]:
@@ -362,8 +372,10 @@ class Recvonly:
             case "candidate":
                 self._candidate_messages.append(message)
             case "re-offer":
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
                 self._re_offer_messages.append(message)
             case "re-answer":
+                assert signaling_direction == SoraSignalingDirection.SENT
                 self._re_answer_messages.append(message)
             case _:
                 NotImplementedError(f"Unknown signaling message type: {message['type']}")
