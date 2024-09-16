@@ -53,7 +53,7 @@ Discord = "https://discord.gg/shiguredo"
 requires = ["setuptools>=75.0", "wheel~=0.44.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.rye]
+[tool.uv]
 dev-dependencies = [
     "nanobind~=2.1.0",
     "setuptools>=75.0",
