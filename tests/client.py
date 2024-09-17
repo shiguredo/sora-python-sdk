@@ -289,6 +289,7 @@ class Recvonly:
         self._candidate_messages: list[dict[str, Any]] = []
         self._re_offer_messages: list[dict[str, Any]] = []
         self._re_answer_messages: list[dict[str, Any]] = []
+        self._disconnect_message: Optional[dict[str, Any]] = None
 
         # callback
         self._connection.on_signaling_message = self._on_signaling_message
@@ -345,6 +346,10 @@ class Recvonly:
         return self._re_answer_messages
 
     @property
+    def disconnect_message(self) -> Optional[dict[str, Any]]:
+        return self._disconnect_message
+
+    @property
     def connected(self) -> bool:
         return self._connected.is_set()
 
@@ -362,7 +367,6 @@ class Recvonly:
         signaling_direction: SoraSignalingDirection,
         raw_message: str,
     ):
-        print(raw_message)
         message: dict[str, Any] = json.loads(raw_message)
         match message["type"]:
             case "connect":
@@ -389,6 +393,9 @@ class Recvonly:
             case "re-answer":
                 assert signaling_direction == SoraSignalingDirection.SENT
                 self._re_answer_messages.append(message)
+            case "disconnect":
+                assert signaling_direction == SoraSignalingDirection.SENT
+                self._disconnect_message = message
             case _:
                 NotImplementedError(f"Unknown signaling message type: {message['type']}")
 
