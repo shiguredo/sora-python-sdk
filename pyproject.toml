@@ -54,6 +54,7 @@ requires = ["setuptools>=75.0", "wheel~=0.44.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
+python-preference = "only-managed"
 dev-dependencies = [
     "nanobind~=2.1.0",
     "setuptools>=75.0",
