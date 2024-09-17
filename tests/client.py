@@ -199,10 +199,10 @@ class Sendonly:
             case "candidate":
                 self._candidate_messages.append(message)
             case "re-offer":
-                assert signaling_direction == SoraSignalingDirection.SENT
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
                 self._re_offer_messages.append(message)
             case "re-answer":
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
+                assert signaling_direction == SoraSignalingDirection.SENT
                 self._re_answer_messages.append(message)
             case "disconnect":
                 assert signaling_direction == SoraSignalingDirection.SENT
