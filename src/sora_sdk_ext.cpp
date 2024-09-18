@@ -335,9 +335,9 @@ NB_MODULE(sora_sdk_ext, m) {
            "websocket_connection_timeout"_a = nb::none(),
            "audio_streaming_language_code"_a = nb::none(),
            "insecure"_a = nb::none(), "client_cert"_a = nb::none(),
-           "client_key"_a = nb::none(), "proxy_url"_a = nb::none(),
-           "proxy_username"_a = nb::none(), "proxy_password"_a = nb::none(),
-           "proxy_agent"_a = nb::none(),
+           "client_key"_a = nb::none(), "ca_cert"_a = nb::none(),
+           "proxy_url"_a = nb::none(), "proxy_username"_a = nb::none(),
+           "proxy_password"_a = nb::none(), "proxy_agent"_a = nb::none(),
            nb::sig("def create_connection("
                    "self, "
                    "signaling_urls: list[str], "
@@ -376,6 +376,7 @@ NB_MODULE(sora_sdk_ext, m) {
                    "insecure: Optional[bool] = None, "
                    "client_cert: Optional[str] = None, "
                    "client_key: Optional[str] = None, "
+                   "ca_cert: Optional[str] = None, "
                    "proxy_url: Optional[str] = None, "
                    "proxy_username: Optional[str] = None, "
                    "proxy_password: Optional[str] = None, "
