@@ -51,6 +51,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<bool> insecure,
     std::optional<std::string> client_cert,
     std::optional<std::string> client_key,
+    std::optional<std::string> ca_cert,
     std::optional<std::string> proxy_url,
     std::optional<std::string> proxy_username,
     std::optional<std::string> proxy_password,
@@ -153,6 +154,9 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   }
   if (client_key) {
     config.client_key = *client_key;
+  }
+  if (ca_cert) {
+    config.ca_cert = *ca_cert;
   }
   if (proxy_url) {
     config.proxy_url = *proxy_url;

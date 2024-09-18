@@ -74,6 +74,7 @@ class Sora : public DisposePublisher {
    * @param insecure (オプション) 証明書チェックの有効無効 デフォルト: false
    * @param client_cert (オプション) クライアント証明書
    * @param client_key (オプション) クライアントシークレットキー
+   * @param ca_cert (オプション) サーバー証明書チェック用の CA 証明書
    * @param proxy_url (オプション) Proxy URL
    * @param proxy_username (オプション) Proxy ユーザー名
    * @param proxy_password (オプション) Proxy パスワード
@@ -121,6 +122,7 @@ class Sora : public DisposePublisher {
       std::optional<bool> insecure,
       std::optional<std::string> client_cert,
       std::optional<std::string> client_key,
+      std::optional<std::string> ca_cert,
       std::optional<std::string> proxy_url,
       std::optional<std::string> proxy_username,
       std::optional<std::string> proxy_password,
