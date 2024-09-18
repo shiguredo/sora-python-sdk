@@ -11,6 +11,7 @@ GitHub Actions で Video Toolbox を送受信で利用しようとするとエ�
 """
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS でのみ実行する")
 @pytest.mark.parametrize(
     "video_codec_type",
     ["H264", "H265"],
