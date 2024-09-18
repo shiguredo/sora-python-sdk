@@ -26,7 +26,7 @@ jobs:
         python_version: ["3.10", "3.11", "3.12"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.os}}
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
@@ -64,7 +64,7 @@ jobs:
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14"]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
@@ -98,7 +98,7 @@ jobs:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
     runs-on: windows-2022
-    timeout-minutes: 30
+    timeout-minutes: 15
     env:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
