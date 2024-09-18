@@ -5,7 +5,7 @@ import uuid
 from client import Sendonly
 
 
-def test_random_signaling_message(setup):
+def test_signaling_message(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
