@@ -39,6 +39,7 @@ class Sendonly:
         audio_sample_rate: int = 16000,
         video_width: int = 640,
         video_height: int = 480,
+        ca_cert: Optional[str] = None,
     ):
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
@@ -72,6 +73,7 @@ class Sendonly:
             data_channel_signaling=data_channel_signaling,
             audio_source=self._audio_source,
             video_source=self._video_source,
+            ca_cert=ca_cert,
         )
         self._connection_id: Optional[str] = None
 
