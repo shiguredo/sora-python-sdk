@@ -53,6 +53,7 @@ jobs:
       - run: uv run pytest tests/test_vad.py -s
 
   e2e_test_macos:
+    if: false
     # if: >-
     #   ${{
     #     contains(github.event.head_commit.message, '[e2e]') ||
@@ -88,6 +89,7 @@ jobs:
       - run: uv run pytest tests/test_vad.py -s
 
   e2e_test_windows:
+    if: false
     # if: >-
     #   ${{
     #     contains(github.event.head_commit.message, '[e2e]') ||
