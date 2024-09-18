@@ -6,19 +6,15 @@ import pytest
 from client import Sendonly
 
 
-@pytest.fixture(
-    params=[
+@pytest.mark.parametrize(
+    ("video_codec_type", "expected_implementation"),
+    [
         ("VP8", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
         ("VP9", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
         ("AV1", "SimulcastEncoderAdapter (libaom, libaom, libaom)"),
-    ]
+    ],
 )
-def video_codec_params(request):
-    return request.param
-
-
-def test_simulcast(setup, video_codec_params):
-    video_codec, expected_implementation = video_codec_params
+def test_simulcast(setup, video_codec_type, expected_implementation):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -31,7 +27,7 @@ def test_simulcast(setup, video_codec_params):
         simulcast=True,
         audio=False,
         video=True,
-        video_codec_type=video_codec,
+        video_codec_type=video_codec_type,
         video_bit_rate=3000,
         metadata=metadata,
         video_width=1280,
@@ -52,7 +48,7 @@ def test_simulcast(setup, video_codec_params):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    assert sendonly_codec_stats["mimeType"] == f"video/{video_codec}"
+    assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # 複数のoutbound-rtp統計情報を取得
     outbound_rtp_stats = [
