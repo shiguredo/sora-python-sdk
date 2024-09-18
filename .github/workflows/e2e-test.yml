@@ -16,17 +16,12 @@ env:
 
 jobs:
   e2e_test_ubuntu:
-    # if: >-
-    #   ${{
-    #     contains(github.event.head_commit.message, '[e2e]') ||
-    #     github.event_name == 'schedule'
-    #   }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.os}}
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
@@ -49,21 +44,17 @@ jobs:
       - run: uv run pytest tests/test_signaling_message.py -s
       - run: uv run pytest tests/test_re_offer_re_answer_sdp.py -s
       - run: uv run pytest tests/test_messaging.py -s
+      - run: uv run pytest tests/test_ca_cert.py -s
       - run: uv run pytest tests/test_vad.py -s
 
   e2e_test_macos:
-    # if: >-
-    #   ${{
-    #     contains(github.event.head_commit.message, '[e2e]') ||
-    #     github.event_name == 'schedule'
-    #   }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14"]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
@@ -83,19 +74,15 @@ jobs:
       - run: uv run pytest tests/test_signaling_message.py -s
       - run: uv run pytest tests/test_re_offer_re_answer_sdp.py -s
       - run: uv run pytest tests/test_messaging.py -s
+      - run: uv run pytest tests/test_ca_cert.py -s
       - run: uv run pytest tests/test_vad.py -s
 
   e2e_test_windows:
-    # if: >-
-    #   ${{
-    #     contains(github.event.head_commit.message, '[e2e]') ||
-    #     github.event_name == 'schedule'
-    #   }}
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12"]
     runs-on: windows-2022
-    timeout-minutes: 30
+    timeout-minutes: 15
     env:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
@@ -118,6 +105,7 @@ jobs:
       - run: uv run pytest tests/test_signaling_message.py -s
       - run: uv run pytest tests/test_re_offer_re_answer_sdp.py -s
       - run: uv run pytest tests/test_messaging.py -s
+      - run: uv run pytest tests/test_ca_cert.py -s
       - run: uv run pytest tests/test_vad.py -s
 
   slack_notify_succeeded:
