@@ -11,7 +11,10 @@
 
 ## develop
 
-- [ADD] on_signaling_message コールバックを追加する
+- [ADD] サーバー証明書チェック用の CA 証明書を指定できるようにする
+  - `Sora.create_connection()` の引数に `ca_cert` を追加する
+  - @voluntas
+- [ADD] `on_signaling_message` コールバックを追加する
   - @tnoho
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
   - WEBRTC_BUILD_VERSION を `m128.6613.2.0` に上げる
