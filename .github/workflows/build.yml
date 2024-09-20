@@ -109,7 +109,7 @@ jobs:
           uv python pin ${{ matrix.python_version }}
           uv sync
           uv run python run.py ${{ matrix.platform.target }}
-          uv run pytest -s
+          uv run pytest tests -s
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.python_version == '3.10' }}
 
       # macOS 向け
