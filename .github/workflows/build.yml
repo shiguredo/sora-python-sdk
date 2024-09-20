@@ -5,10 +5,15 @@ on:
     paths-ignore:
       - "examples/**"
       - "**.md"
-  schedule:
-    # UTC の 01:00 は JST だと 10:00 。
-    # 1-5 で 月曜日から金曜日
-    - cron: "0 1 * * 1-5"
+  # schedule:
+  #   # UTC の 01:00 は JST だと 10:00 。
+  #   # 1-5 で 月曜日から金曜日
+  #   - cron: "0 1 * * 1-5"
+
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
 
 jobs:
   # まず pyi を生成する
@@ -91,6 +96,21 @@ jobs:
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
         if: ${{ matrix.platform.os == 'ubuntu' }}
+
+      # Ubuntu 向けに E2E テストを実行する
+      - name: Download openh264
+        run: |
+          curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-linux64.7.so.bz2
+          bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
+          mv libopenh264-2.4.1-linux64.7.so libopenh264.so
+          echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
+        if: ${{ matrix.platform.os == 'ubuntu' }}
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+          uv run python run.py ${{ matrix.platform.target }}
+          uv run pytest -s
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.python_version == '3.10' }}
 
       # macOS 向け
       - run: |
