@@ -687,6 +687,7 @@ def build_and_install_boost(
     android_ndk,
     native_api_level,
     address_model="64",
+    runtime_link=None,
 ):
     version_underscore = version.replace(".", "_")
     archive = download(
@@ -697,7 +698,8 @@ def build_and_install_boost(
     with cd(os.path.join(build_dir, "boost")):
         bootstrap = ".\\bootstrap.bat" if target_os == "windows" else "./bootstrap.sh"
         b2 = "b2" if target_os == "windows" else "./b2"
-        runtime_link = "static" if target_os == "windows" else "shared"
+        if runtime_link is None:
+            runtime_link = "static" if target_os == "windows" else "shared"
 
         # Windows かつ Boost 1.85.0 の場合はパッチを当てる
         if target_os == "windows" and version == "1.85.0":
@@ -862,23 +864,23 @@ def install_sora(version, source_dir, install_dir, platform: str):
     extract(archive, output_dir=install_dir, output_dirname="sora")
 
 
-def install_sora_and_deps(platform: str, source_dir: str, install_dir: str):
-    version = read_version_file("VERSION")
-
+def install_sora_and_deps(
+    sora_version: str, boost_version: str, platform: str, source_dir: str, install_dir: str
+):
     # Boost
     install_boost_args = {
-        "version": version["BOOST_VERSION"],
+        "version": boost_version,
         "version_file": os.path.join(install_dir, "boost.version"),
         "source_dir": source_dir,
         "install_dir": install_dir,
-        "sora_version": version["SORA_CPP_SDK_VERSION"],
+        "sora_version": sora_version,
         "platform": platform,
     }
     install_boost(**install_boost_args)
 
     # Sora C++ SDK
     install_sora_args = {
-        "version": version["SORA_CPP_SDK_VERSION"],
+        "version": sora_version,
         "version_file": os.path.join(install_dir, "sora.version"),
         "source_dir": source_dir,
         "install_dir": install_dir,
@@ -1768,8 +1770,10 @@ class Platform(object):
             self._check(p.arch == "armv8")
         elif p.os in ("ios", "android"):
             self._check(p.arch is None)
+        elif p.os == "ubuntu":
+            self._check(p.arch in ("x86_64", "armv8"))
         else:
-            self._check(p.arch in ("x86_64", "arm64"))
+            self._check(p.arch in ("x86_64", "arm64", "hololens2"))
 
     def __init__(self, target_os, target_osver, target_arch, target_extra=None):
         build = get_build_platform()
@@ -1779,7 +1783,7 @@ class Platform(object):
         self._check_platform_target(target)
 
         if target.os == "windows":
-            self._check(target.arch == "x86_64")
+            self._check(target.arch in ("x86_64", "arm64", "hololens2"))
             self._check(build.os == "windows")
             self._check(build.arch == "x86_64")
         if target.os == "macos":
@@ -1797,7 +1801,8 @@ class Platform(object):
         if target.os == "ubuntu":
             self._check(build.os == "ubuntu")
             self._check(build.arch == "x86_64")
-            self._check(build.osver == target.osver)
+            if target.arch == "x86_64":
+                self._check(build.osver == target.osver)
         if target.os == "raspberry-pi-os":
             self._check(build.os == "ubuntu")
             self._check(build.arch == "x86_64")
