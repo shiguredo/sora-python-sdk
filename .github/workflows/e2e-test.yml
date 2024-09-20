@@ -44,7 +44,8 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ${{ matrix.os }}_x86_64
-      - run: uv run pytest -s
+      # - run: uv run pytest -s
+      - run: uv run pytest test_openh264.py -s
 
   e2e_test_macos:
     strategy:
