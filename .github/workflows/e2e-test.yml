@@ -22,6 +22,12 @@ jobs:
         os: ["ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.os}}
     timeout-minutes: 15
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'schedule'
+      }}
     steps:
       - uses: actions/checkout@v4
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
@@ -38,14 +44,7 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ${{ matrix.os }}_x86_64
-      - run: uv run pytest tests/test_openh264.py -s
-      - run: uv run pytest tests/test_sendonly_recvonly.py -s
-      - run: uv run pytest tests/test_simulcast.py -s
-      - run: uv run pytest tests/test_signaling_message.py -s
-      - run: uv run pytest tests/test_re_offer_re_answer_sdp.py -s
-      - run: uv run pytest tests/test_messaging.py -s
-      - run: uv run pytest tests/test_ca_cert.py -s
-      - run: uv run pytest tests/test_vad.py -s
+      - run: uv run pytest -s
 
   e2e_test_macos:
     strategy:
@@ -55,6 +54,12 @@ jobs:
         os: ["macos-14"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'schedule'
+      }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
@@ -66,16 +71,7 @@ jobs:
       - uses: astral-sh/setup-uv@v2
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
-      - run: uv run python run.py macos_arm64
-      - run: uv run pytest tests/test_macos.py -s
-      - run: uv run pytest tests/test_openh264.py -s
-      - run: uv run pytest tests/test_sendonly_recvonly.py -s
-      - run: uv run pytest tests/test_simulcast.py -s
-      - run: uv run pytest tests/test_signaling_message.py -s
-      - run: uv run pytest tests/test_re_offer_re_answer_sdp.py -s
-      - run: uv run pytest tests/test_messaging.py -s
-      - run: uv run pytest tests/test_ca_cert.py -s
-      - run: uv run pytest tests/test_vad.py -s
+      - run: uv run pytest -s
 
   e2e_test_windows:
     strategy:
@@ -86,6 +82,12 @@ jobs:
     env:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'schedule'
+      }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
@@ -100,13 +102,7 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py windows_x86_64
-      - run: uv run pytest tests/test_sendonly_recvonly.py -s
-      - run: uv run pytest tests/test_simulcast.py -s
-      - run: uv run pytest tests/test_signaling_message.py -s
-      - run: uv run pytest tests/test_re_offer_re_answer_sdp.py -s
-      - run: uv run pytest tests/test_messaging.py -s
-      - run: uv run pytest tests/test_ca_cert.py -s
-      - run: uv run pytest tests/test_vad.py -s
+      - run: uv run pytest -s
 
   slack_notify_succeeded:
     needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
