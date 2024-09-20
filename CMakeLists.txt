@@ -33,11 +33,14 @@ message(STATUS "-- Python_LIBRARIES: ${Python_LIBRARIES}")
 message(STATUS "-- Python_LIBRARY_DIRS: ${Python_LIBRARY_DIRS}")
 message(STATUS "-- Python_RUNTIME_LIBRARY_DIRS: ${Python_RUNTIME_LIBRARY_DIRS}")
 
-
-execute_process(
-  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
-list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
+if (NB_CMAKE_DIR)
+  list(APPEND CMAKE_PREFIX_PATH "${NB_CMAKE_DIR}")
+else()
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
+  list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
+endif()
 
 set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な値は windows, macos, ubuntu")
 set(WEBRTC_INCLUDE_DIR "" CACHE PATH "WebRTC のインクルードディレクトリ")
@@ -61,7 +64,7 @@ find_package(nanobind CONFIG REQUIRED)
 if(NOT TARGET_OS STREQUAL "windows")
   find_package(Threads REQUIRED)
 endif()
-if(TARGET_OS STREQUAL "ubuntu")
+if(TARGET_OS STREQUAL "ubuntu" AND NOT CMAKE_CROSSCOMPILING)
   find_package(Libva REQUIRED)
   find_package(Libdrm REQUIRED)
 endif()

@@ -49,7 +49,11 @@ def install_deps(
     version = read_version_file("VERSION")
 
     # multistrap を使った sysroot の構築
-    if platform.target.os == "jetson":
+    if (
+        platform.target.os == "jetson"
+        or platform.target.os == "ubuntu"
+        and platform.target.arch == "armv8"
+    ):
         conf = os.path.join("multistrap", f"{platform.target.package_name}.conf")
         # conf ファイルのハッシュ値をバージョンとする
         version_md5 = hashlib.md5(open(conf, "rb").read()).hexdigest()
@@ -131,7 +135,13 @@ def install_deps(
 
     # Sora C++ SDK
     if local_sora_cpp_sdk_dir is None:
-        install_sora_and_deps(platform.target.package_name, source_dir, install_dir)
+        install_sora_and_deps(
+            version["SORA_CPP_SDK_VERSION"],
+            version["BOOST_VERSION"],
+            platform.target.package_name,
+            source_dir,
+            install_dir,
+        )
     else:
         build_sora(
             platform.target.package_name,
@@ -163,6 +173,7 @@ AVAILABLE_TARGETS = [
     "macos_arm64",
     "ubuntu-22.04_x86_64",
     "ubuntu-24.04_x86_64",
+    "ubuntu-24.04_armv8",
     "ubuntu-22.04_armv8_jetson",
 ]
 
@@ -188,6 +199,8 @@ def main():
         platform = Platform("ubuntu", "22.04", "x86_64")
     elif args.target == "ubuntu-24.04_x86_64":
         platform = Platform("ubuntu", "24.04", "x86_64")
+    elif args.target == "ubuntu-24.04_armv8":
+        platform = Platform("ubuntu", "24.04", "armv8")
     elif args.target == "ubuntu-22.04_armv8_jetson":
         platform = Platform("jetson", None, "armv8", "ubuntu-22.04")
     else:
@@ -219,7 +232,7 @@ def main():
         webrtc_info = get_webrtc_info(
             webrtc_platform, args.local_webrtc_build_dir, install_dir, args.debug
         )
-        
+
         sora_info = get_sora_info(
             webrtc_platform, args.local_sora_cpp_sdk_dir, install_dir, args.debug
         )
@@ -249,6 +262,25 @@ def main():
                 f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
             ]
+            if platform.target.arch == "armv8":
+                sysroot = os.path.join(install_dir, "rootfs")
+                nb_cmake_dir = cmdcap(["uv", "run", "python", "-m", "nanobind", "--cmake_dir"])
+                cmake_args += [
+                    "-DCMAKE_SYSTEM_NAME=Linux",
+                    "-DCMAKE_SYSTEM_PROCESSOR=aarch64",
+                    "-DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu",
+                    "-DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu",
+                    f"-DCMAKE_FIND_ROOT_PATH={sysroot}",
+                    "-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER",
+                    "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH",
+                    "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH",
+                    "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
+                    f"-DCMAKE_SYSROOT={sysroot}",
+                    f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.12'))}",
+                    f"-DCMAKE_SYSROOT={sysroot}",
+                    f"-DNB_CMAKE_DIR={nb_cmake_dir}",
+                    "-DNB_SUFFIX=.cpython-312-aarch64-linux-gnu.so",
+                ]
         elif platform.target.os == "macos":
             sysroot = cmdcap(["xcrun", "--sdk", "macosx", "--show-sdk-path"])
             cmake_args += [
