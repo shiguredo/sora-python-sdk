@@ -71,6 +71,7 @@ jobs:
       - uses: astral-sh/setup-uv@v2
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
+      - run: uv run python run.py macos_arm64
       - run: uv run pytest -s
 
   e2e_test_windows:
