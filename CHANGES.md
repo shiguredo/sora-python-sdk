@@ -25,6 +25,8 @@
 
 ### misc
 
+- [CHANGE] examples を <https://github.com/shiguredo/sora-python-sdk-examples> に移動する
+  - @voluntas
 - [CHANGE] rye から uv に変更する
   - @voluntas
 - [CHANGE] サンプルアプリの src ディレクトリ構成を変更する
