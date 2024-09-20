@@ -264,6 +264,7 @@ def main():
             ]
             if platform.target.arch == "armv8":
                 sysroot = os.path.join(install_dir, "rootfs")
+                nb_cmake_dir = cmdcap(["uv", "run", "python", "-m", "nanobind", "--cmake_dir"])
                 cmake_args += [
                     "-DCMAKE_SYSTEM_NAME=Linux",
                     "-DCMAKE_SYSTEM_PROCESSOR=aarch64",
@@ -276,7 +277,9 @@ def main():
                     "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
                     f"-DCMAKE_SYSROOT={sysroot}",
                     f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.12'))}",
-                    # "-DNB_SUFFIX=.cpython-310-aarch64-linux-gnu.so",
+                    f"-DCMAKE_SYSROOT={sysroot}",
+                    f"-DNB_CMAKE_DIR={nb_cmake_dir}",
+                    "-DNB_SUFFIX=.cpython-312-aarch64-linux-gnu.so",
                 ]
         elif platform.target.os == "macos":
             sysroot = cmdcap(["xcrun", "--sdk", "macosx", "--show-sdk-path"])

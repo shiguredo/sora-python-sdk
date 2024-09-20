@@ -16,6 +16,8 @@ def run_setup(build_platform, target_platform):
     plat = None
     if target_platform.os == "jetson":
         plat = "manylinux_2_17_aarch64.manylinux2014_aarch64"
+    elif target_platform.os == "ubuntu" and target_platform.arch == "armv8":
+        plat = "manylinux_2_17_aarch64.manylinux2014_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "x86_64":
         if target_platform.osver == "22.04":
             plat = "manylinux_2_17_x86_64.manylinux2014_x86_64"
@@ -52,6 +54,8 @@ def main():
     target = os.getenv("SORA_SDK_TARGET")
     if target is None:
         target_platform = build_platform
+    elif target == "ubuntu-24.04_armv8":
+        target_platform = PlatformTarget("ubuntu", "24.04", "armv8")
     elif target == "ubuntu-22.04_armv8_jetson":
         target_platform = PlatformTarget("jetson", None, "armv8", "ubuntu-22.04")
     else:
