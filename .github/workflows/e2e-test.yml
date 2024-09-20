@@ -44,8 +44,7 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ${{ matrix.os }}_x86_64
-      # - run: uv run pytest -s
-      - run: uv run pytest test_openh264.py -s
+      - run: uv run pytest tests -s
 
   e2e_test_macos:
     strategy:
@@ -73,7 +72,7 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py macos_arm64
-      - run: uv run pytest -s
+      - run: uv run pytest tests -s
 
   e2e_test_windows:
     strategy:
@@ -104,7 +103,7 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py windows_x86_64
-      - run: uv run pytest -s
+      - run: uv run pytest tests-s
 
   slack_notify_succeeded:
     needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
