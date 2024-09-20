@@ -54,17 +54,11 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 [Sora Python SDK](https://sora-python-sdk.shiguredo.jp/)
 
-## サンプル集
+## 例
 
-[examples](examples) を参照してください。
+[shiguredo/sora-python-sdk-examples](https://github.com/shiguredo/sora-python-sdk-examples)
 
 ## sora_sdk パッケージの追加
-
-### pip
-
-```bash
-pip install sora_sdk
-```
 
 ### uv
 
@@ -73,6 +67,12 @@ pip install sora_sdk
 ```bash
 uv add sora_sdk
 uv sync
+```
+
+### pip
+
+```bash
+pip install sora_sdk
 ```
 
 ### NVIDIA Jetson 向けパッケージ
@@ -156,8 +156,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
-
-このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
 
 ## OpenH264
 
