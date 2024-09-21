@@ -105,11 +105,19 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
 
-      # Ubuntu 向け
+      # Ubuntu x86_64 向け
       - run: |
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
-        if: ${{ matrix.platform.os == 'ubuntu' }}
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' }}
+
+      # Ubuntu armv8 向け
+      - run: |
+          uv run python run.py ${{ matrix.platform.target }}
+          uv run python -m build
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
+        env:
+          SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
       # Ubuntu 向けに Python 3.10 では E2E テストを実行する
       - name: Download openh264
@@ -118,9 +126,9 @@ jobs:
           bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
           mv libopenh264-2.4.1-linux64.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-        if: ${{ matrix.platform.os == 'ubuntu' && matrix.python_version == '3.10' }}
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.10' }}
       - run: uv run pytest tests -s
-        if: ${{ matrix.platform.os == 'ubuntu' && matrix.python_version == '3.10' }}
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.10' }}
 
       # macOS 向け
       - run: |
