@@ -105,6 +105,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   void OnSignalingMessage(sora::SoraSignalingType type,
                           sora::SoraSignalingDirection direction,
                           std::string message) override;
+  void OnWsClose(uint16_t code, std::string message);
   void OnTrack(
       rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
   void OnRemoveTrack(
@@ -116,6 +117,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
       void(sora::SoraSignalingType, sora::SoraSignalingDirection, std::string)>
       on_signaling_message_;
   std::function<void(std::string)> on_set_offer_;
+  std::function<void(int, std::string)> on_ws_close_;
   std::function<void(sora::SoraSignalingErrorCode, std::string)> on_disconnect_;
   std::function<void(std::string)> on_notify_;
   std::function<void(std::string)> on_push_;
