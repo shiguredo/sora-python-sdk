@@ -18,6 +18,8 @@
   - @tnoho
 - [ADD] Ubuntu 24.04 armv8 に対応する
   - @melpon
+- [ADD] `on_ws_close` コールバックを追加する
+  - @tnoho
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
   - WEBRTC_BUILD_VERSION を `m128.6613.2.0` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
