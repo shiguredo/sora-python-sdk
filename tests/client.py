@@ -33,6 +33,7 @@ class Sendonly:
         video_codec_type: Optional[str] = None,
         video_bit_rate: Optional[int] = None,
         data_channel_signaling: Optional[bool] = None,
+        ignore_disconnect_websocket: Optional[bool] = None,
         openh264_path: Optional[str] = None,
         use_hwa: bool = False,
         audio_channels: int = 1,
@@ -71,6 +72,7 @@ class Sendonly:
             video_codec_type=video_codec_type,
             video_bit_rate=video_bit_rate,
             data_channel_signaling=data_channel_signaling,
+            ignore_disconnect_websocket=ignore_disconnect_websocket,
             audio_source=self._audio_source,
             video_source=self._video_source,
             ca_cert=ca_cert,
@@ -79,6 +81,8 @@ class Sendonly:
 
         self._connected: Event = Event()
         self._switched: bool = False
+        self._ignore_disconnect_websocket: bool = False
+        self._ws_close: bool = False
         self._closed: Event = Event()
         self._default_connection_timeout_s: float = 10.0
 
@@ -98,6 +102,7 @@ class Sendonly:
         self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
+        self._connection.on_ws_close = self._on_ws_close
 
     def connect(self, fake_audio=False, fake_video=False) -> None:
         self._connection.connect()
@@ -162,6 +167,14 @@ class Sendonly:
     def switched(self) -> bool:
         return self._switched
 
+    @property
+    def ignore_disconnect_websocket(self) -> bool:
+        return self._ignore_disconnect_websocket
+
+    @property
+    def ws_close(self) -> bool:
+        return self._ws_close
+
     def _fake_audio_loop(self):
         while not self._closed.is_set():
             time.sleep(0.02)
@@ -222,6 +235,7 @@ class Sendonly:
         if message["type"] == "switched":
             print(f"Switched to DataChannel Signaling: connection_id={self._connection_id}")
             self._switched = True
+            self._ignore_disconnect_websocket = message["ignore_disconnect_websocket"]
 
     def _on_notify(self, raw_message: str) -> None:
         message: dict[str, Any] = json.loads(raw_message)
@@ -243,6 +257,10 @@ class Sendonly:
 
         if self._fake_video_thread is not None:
             self._fake_video_thread.join(timeout=10)
+
+    def _on_ws_close(self, code: int, reason: str) -> None:
+        print(f"WebSocket closed: code={code} reason={reason}")
+        self._ws_close = True
 
 
 class Recvonly:
