@@ -11,15 +11,22 @@
 
 ## develop
 
+- [CHANGE] client_cert と client_key の指定にはパスではなく中身の文字列を指定するようにする
+  - C++ SDK 側の仕様変更に追従する
+  - @voluntas
 - [ADD] サーバー証明書チェック用の CA 証明書を指定できるようにする
   - `Sora.create_connection()` の引数に `ca_cert` を追加する
   - @voluntas
+- [ADD] `on_ws_close` コールバックを追加する
+  - @tnoho
 - [ADD] `on_signaling_message` コールバックを追加する
   - @tnoho
 - [ADD] Ubuntu 24.04 armv8 に対応する
   - @melpon
+- [ADD] `on_ws_close` コールバックを追加する
+  - @tnoho
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
-  - WEBRTC_BUILD_VERSION を `m128.6613.2.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m129.6668.1.0` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
   - CMAKE_VERSION を `3.30.3` に上げる
   - BOOST_VERSION を `1.86.0` に上げる

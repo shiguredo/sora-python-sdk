@@ -197,6 +197,12 @@ void SoraConnection::OnSignalingMessage(sora::SoraSignalingType type,
   }
 }
 
+void SoraConnection::OnWsClose(uint16_t code, std::string message) {
+  if (on_ws_close_) {
+    on_ws_close_(code, message);
+  }
+}
+
 void SoraConnection::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   if (on_track_) {

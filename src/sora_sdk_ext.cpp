@@ -97,6 +97,11 @@ int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
     Py_VISIT(on_set_offer.ptr());
   }
 
+  if (conn->on_ws_close_) {
+    nb::object on_ws_close = nb::cast(conn->on_ws_close_, nb::rv_policy::none);
+    Py_VISIT(on_ws_close.ptr());
+  }
+
   if (conn->on_disconnect_) {
     nb::object on_disconnect =
         nb::cast(conn->on_disconnect_, nb::rv_policy::none);
@@ -301,6 +306,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "data"_a)
       .def("get_stats", &SoraConnection::GetStats)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
+      .def_rw("on_ws_close", &SoraConnection::on_ws_close_)
       .def_rw("on_disconnect", &SoraConnection::on_disconnect_)
       .def_rw("on_signaling_message", &SoraConnection::on_signaling_message_)
       .def_rw("on_notify", &SoraConnection::on_notify_)
