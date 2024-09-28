@@ -80,6 +80,8 @@ pip install sora_sdk
 PyPI 経由ではインストールできません。
 パッケージバイナリを配布しておりますので、そちらをご利用ください。
 
+https://github.com/shiguredo/sora-python-sdk/releases/tag/2024.3.0-jetson-jetpack-6.0.0.0
+
 ## システム条件
 
 - WebRTC SFU Sora 2023.2.0 以降
