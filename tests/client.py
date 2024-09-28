@@ -293,6 +293,7 @@ class Recvonly:
 
         self._connected: Event = Event()
         self._switched: bool = False
+        self._ws_close: bool = False
         self._closed: Event = Event()
         self._default_connection_timeout_s: float = 10.0
 
@@ -317,6 +318,7 @@ class Recvonly:
         self._connection.on_switched = self._on_switched
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
+        self._connection.on_ws_close = self._on_ws_close
         self._connection.on_track = self._on_track
 
     def connect(self) -> None:
@@ -376,6 +378,10 @@ class Recvonly:
     @property
     def switched(self) -> bool:
         return self._switched
+
+    @property
+    def ws_close(self) -> bool:
+        return self._ws_close
 
     @property
     def closed(self):
@@ -444,6 +450,10 @@ class Recvonly:
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._connected.clear()
         self._closed.is_set()
+
+    def _on_ws_close(self, code: int, reason: str) -> None:
+        print(f"WebSocket closed: code={code} reason={reason}")
+        self._ws_close = True
 
     def _on_video_frame(self, frame: SoraVideoFrame) -> None:
         self._q_out.put(frame)
