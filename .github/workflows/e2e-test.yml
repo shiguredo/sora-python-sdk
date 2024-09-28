@@ -40,7 +40,7 @@ jobs:
           bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
           mv libopenh264-2.4.1-linux64.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v2
+      - uses: astral-sh/setup-uv@v3
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ${{ matrix.os }}_x86_64
@@ -68,7 +68,7 @@ jobs:
           bzip2 -d libopenh264-2.4.1-mac-arm64.dylib.bz2
           mv libopenh264-2.4.1-mac-arm64.dylib libopenh264.dylib
           echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v2
+      - uses: astral-sh/setup-uv@v3
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py macos_arm64
@@ -99,7 +99,7 @@ jobs:
           7z e openh264-2.4.1-win64.dll.bz2
           Rename-Item -Path "openh264-2.4.1-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
-      - uses: astral-sh/setup-uv@v2
+      - uses: astral-sh/setup-uv@v3
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py windows_x86_64
