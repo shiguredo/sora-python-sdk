@@ -49,9 +49,9 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<int> websocket_connection_timeout,
     std::optional<std::string> audio_streaming_language_code,
     std::optional<bool> insecure,
-    std::optional<std::string> client_cert,
-    std::optional<std::string> client_key,
-    std::optional<std::string> ca_cert,
+    std::optional<nb::bytes> client_cert,
+    std::optional<nb::bytes> client_key,
+    std::optional<nb::bytes> ca_cert,
     std::optional<std::string> proxy_url,
     std::optional<std::string> proxy_username,
     std::optional<std::string> proxy_password,
@@ -150,13 +150,13 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     config.insecure = *insecure;
   }
   if (client_cert) {
-    config.client_cert = *client_cert;
+    config.client_cert = client_cert->c_str();
   }
   if (client_key) {
-    config.client_key = *client_key;
+    config.client_key = client_key->c_str();
   }
   if (ca_cert) {
-    config.ca_cert = *ca_cert;
+    config.ca_cert = ca_cert->c_str();
   }
   if (proxy_url) {
     config.proxy_url = *proxy_url;

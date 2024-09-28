@@ -79,7 +79,7 @@ def test_ca_cert(setup):
         audio=True,
         video=True,
         metadata=metadata,
-        ca_cert=letsencrypt_org_ca_cert,
+        ca_cert=letsencrypt_org_ca_cert.encode('utf-8'),
     )
     sendonly.connect(fake_audio=True, fake_video=True)
 
@@ -102,6 +102,6 @@ def test_ca_cert_invalid(setup):
         audio=True,
         video=True,
         metadata=metadata,
-        ca_cert=pki_goog_ca_cert,
+        ca_cert=pki_goog_ca_cert.encode('utf-8'),
     )
     sendonly.connect(fake_audio=True, fake_video=True)
