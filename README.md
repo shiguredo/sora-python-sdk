@@ -54,7 +54,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 [Sora Python SDK](https://sora-python-sdk.shiguredo.jp/)
 
-## 例
+## サンプル集
 
 [shiguredo/sora-python-sdk-examples](https://github.com/shiguredo/sora-python-sdk-examples)
 
