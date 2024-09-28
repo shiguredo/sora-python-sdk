@@ -92,6 +92,7 @@ PyPI 経由ではインストールできません。
 - macOS Ventura 14 arm64
 - macOS Sonoma 13 arm64
 - Ubuntu 24.04 LTS x86_64
+- Ubuntu 24.04 LTS arm64
 - Ubuntu 22.04 LTS x86_64
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください
