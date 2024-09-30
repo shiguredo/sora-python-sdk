@@ -1,8 +1,8 @@
 import json
 import queue
-import random
 import threading
 import time
+from enum import Enum
 from threading import Event
 from typing import Any, Optional
 
@@ -11,6 +11,7 @@ import numpy
 from sora_sdk import (
     Sora,
     SoraAudioSink,
+    SoraAudioSource,
     SoraConnection,
     SoraMediaTrack,
     SoraSignalingDirection,
@@ -18,15 +19,24 @@ from sora_sdk import (
     SoraSignalingType,
     SoraVideoFrame,
     SoraVideoSink,
+    SoraVideoSource,
 )
 
 
-class Sendonly:
+class SoraRole(Enum):
+    SENDRECV = "sendrecv"
+    SENDONLY = "sendonly"
+    RECVONLY = "recvonly"
+
+
+class SoraClient:
     def __init__(
         self,
         signaling_urls: list[str],
+        role: SoraRole,
         channel_id: str,
         simulcast: Optional[bool] = None,
+        spotlight: Optional[list[str]] = None,
         metadata: Optional[dict[str, Any]] = None,
         audio: Optional[bool] = None,
         video: Optional[bool] = None,
@@ -34,22 +44,36 @@ class Sendonly:
         video_bit_rate: Optional[int] = None,
         data_channel_signaling: Optional[bool] = None,
         ignore_disconnect_websocket: Optional[bool] = None,
+        data_channels: Optional[list[dict[str, Any]]] = None,
         openh264_path: Optional[str] = None,
+        client_key: Optional[bytes] = None,
+        client_cert: Optional[bytes] = None,
+        ca_cert: Optional[bytes] = None,
         use_hwa: bool = False,
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
+        audio_output_channels: int = 1,
+        audio_output_frequency: int = 16000,
         video_width: int = 640,
         video_height: int = 480,
-        ca_cert: Optional[bytes] = None,
     ):
-        self._signaling_urls: list[str] = signaling_urls
-        self._channel_id: str = channel_id
+        self._signaling_urls = signaling_urls
+        self._role = role.value
+        self._channel_id = channel_id
 
         self._audio = audio
         self._video = video
 
-        self._audio_channels: int = audio_channels
-        self._audio_sample_rate: int = audio_sample_rate
+        # "type": "connect" のパラメータ
+        self._connect_data_channel_signaling = data_channel_signaling
+        self._connect_ignore_disconnect_websocket = ignore_disconnect_websocket
+        self._connect_data_channels = data_channels
+
+        self._audio_channels = audio_channels
+        self._audio_sample_rate = audio_sample_rate
+
+        self._audio_output_channels = audio_output_channels
+        self._audio_output_frequency = audio_output_frequency
 
         self._video_width: int = video_width
         self._video_height: int = video_height
@@ -59,34 +83,54 @@ class Sendonly:
         self._fake_audio_thread: Optional[threading.Thread] = None
         self._fake_video_thread: Optional[threading.Thread] = None
 
-        self._audio_source = self._sora.create_audio_source(
-            self._audio_channels, self._audio_sample_rate
-        )
-        self._video_source = self._sora.create_video_source()
+        self._audio_source: Optional[SoraAudioSource] = None
+        if self._audio:
+            self._audio_source = self._sora.create_audio_source(
+                self._audio_channels, self._audio_sample_rate
+            )
+
+        self._video_source: Optional[SoraVideoSource] = None
+        if self._video:
+            self._video_source = self._sora.create_video_source()
+
+        self._audio_sink: Optional[SoraAudioSink] = None
+        self._video_sink: Optional[SoraVideoSink] = None
+
+        self._sendable_data_channels: set[str] = set()
+        self._q_out: queue.Queue = queue.Queue()
 
         self._connection: SoraConnection = self._sora.create_connection(
-            signaling_urls=signaling_urls,
-            role=self.role,
+            signaling_urls=self._signaling_urls,
+            role=self._role,
             channel_id=channel_id,
             simulcast=simulcast,
+            spotlight=spotlight,
             metadata=metadata,
-            audio=audio,
-            video=video,
+            audio=self._audio,
+            video=self._video,
             video_codec_type=video_codec_type,
             video_bit_rate=video_bit_rate,
-            data_channel_signaling=data_channel_signaling,
-            ignore_disconnect_websocket=ignore_disconnect_websocket,
+            data_channel_signaling=self._connect_data_channel_signaling,
+            ignore_disconnect_websocket=self._connect_ignore_disconnect_websocket,
+            data_channels=self._connect_data_channels,
             audio_source=self._audio_source,
             video_source=self._video_source,
             ca_cert=ca_cert,
         )
+
+        # "type": "offer" のパラメータ
+        self._offer_data_channel_signaling: Optional[bool] = None
+        self._offer_ignore_disconnect_websocket: Optional[bool] = None
+        self._offer_data_channels: Optional[list[dict[str, Any]]] = None
+
         self._connection_id: Optional[str] = None
 
+        # state
         self._connected: Event = Event()
         self._switched: bool = False
-        self._ignore_disconnect_websocket: bool = False
         self._ws_close: bool = False
         self._closed: Event = Event()
+
         self._default_connection_timeout_s: float = 10.0
 
         # signaling message
@@ -103,11 +147,15 @@ class Sendonly:
         self._connection.on_signaling_message = self._on_signaling_message
         self._connection.on_set_offer = self._on_set_offer
         self._connection.on_switched = self._on_switched
+        self._connection.on_ws_close = self._on_ws_close
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
-        self._connection.on_ws_close = self._on_ws_close
+        self._connection.on_track = self._on_track
 
     def __enter__(self) -> None:
+        if self._role == SoraRole.RECVONLY:
+            return self.connect()
+
         return self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
@@ -130,6 +178,14 @@ class Sendonly:
 
     def disconnect(self) -> None:
         self._connection.disconnect()
+
+    def send(self, label: str, data: bytes):
+        # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
+        if not self._is_data_channel_ready:
+            while not self._is_data_channel_ready and not self._closed.is_set():
+                time.sleep(0.01)
+
+            self._connection.send_data_channel(label, data)
 
     def get_stats(self):
         raw_stats = self._connection.get_stats()
@@ -176,7 +232,7 @@ class Sendonly:
         return self._switched
 
     @property
-    def ignore_disconnect_websocket(self) -> bool:
+    def ignore_disconnect_websocket(self) -> Optional[bool]:
         return self._ignore_disconnect_websocket
 
     @property
@@ -237,6 +293,12 @@ class Sendonly:
         message: dict[str, Any] = json.loads(raw_message)
         if message["type"] == "offer":
             self._connection_id = message["connection_id"]
+            if "data_channel_signaling" in message:
+                self._offer_data_channel_signaling = message["data_channel_signaling"]
+            if "ignore_disconnect_websocket" in message:
+                self._offer_ignore_disconnect_websocket = message["ignore_disconnect_websocket"]
+            if "data_channels" in message:
+                self._offer_data_channels = message["data_channels"]
 
     def _on_switched(self, raw_message: str) -> None:
         message = json.loads(raw_message)
@@ -255,6 +317,23 @@ class Sendonly:
             print(f"Connected Sora: connection_id={self._connection_id}")
             self._connected.set()
 
+    def _on_message(self, label: str, data: bytes):
+        print(f"Received message: label={label}, data={data.decode('utf-8')}")
+
+    def _on_data_channel(self, label: str):
+        if self._offer_data_channel_signaling and self._offer_data_channels:
+            for data_channel in self._offer_data_channels:
+                if data_channel["label"] != label:
+                    continue
+
+                if data_channel["direction"] in ["sendrecv", "sendonly"]:
+                    self._sendable_data_channels.add(label)
+
+                    # 全てのデータチャネルの準備ができたのでフラグを立てる
+                    if len(self._sendable_data_channels) == len(self._offer_data_channels):
+                        self._is_data_channel_ready = True
+                        break
+
     def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
         self._connected.clear()
@@ -270,396 +349,14 @@ class Sendonly:
         print(f"WebSocket closed: code={code} reason={reason}")
         self._ws_close = True
 
-
-class Recvonly:
-    def __init__(
-        self,
-        signaling_urls: list[str],
-        channel_id: str,
-        metadata: Optional[dict[str, Any]] = None,
-        data_channel_signaling: Optional[bool] = None,
-        openh264_path: Optional[str] = None,
-        use_hwa: Optional[bool] = False,
-        output_frequency: int = 16000,
-        output_channels: int = 1,
-    ):
-        self._signaling_urls: list[str] = signaling_urls
-        self._channel_id: str = channel_id
-
-        self._output_frequency: int = output_frequency
-        self._output_channels: int = output_channels
-
-        self._sora: Sora = Sora(openh264=openh264_path, use_hardware_encoder=use_hwa)
-        self._connection: SoraConnection = self._sora.create_connection(
-            signaling_urls=signaling_urls,
-            role=self.role,
-            channel_id=channel_id,
-            metadata=metadata,
-            data_channel_signaling=data_channel_signaling,
-        )
-        self._connection_id: Optional[str] = None
-
-        self._connected: Event = Event()
-        self._switched: bool = False
-        self._ws_close: bool = False
-        self._closed: Event = Event()
-        self._default_connection_timeout_s: float = 10.0
-
-        self._audio_sink: Optional[SoraAudioSink] = None
-        self._video_sink: Optional[SoraVideoSink] = None
-
-        self._q_out: queue.Queue = queue.Queue()
-
-        # signaling message
-        self._connect_message: Optional[dict[str, Any]] = None
-        self._redirect_message: Optional[dict[str, Any]] = None
-        self._offer_message: Optional[dict[str, Any]] = None
-        self._answer_message: Optional[dict[str, Any]] = None
-        self._candidate_messages: list[dict[str, Any]] = []
-        self._re_offer_messages: list[dict[str, Any]] = []
-        self._re_answer_messages: list[dict[str, Any]] = []
-        self._disconnect_message: Optional[dict[str, Any]] = None
-
-        # callback
-        self._connection.on_signaling_message = self._on_signaling_message
-        self._connection.on_set_offer = self._on_set_offer
-        self._connection.on_switched = self._on_switched
-        self._connection.on_notify = self._on_notify
-        self._connection.on_disconnect = self._on_disconnect
-        self._connection.on_ws_close = self._on_ws_close
-        self._connection.on_track = self._on_track
-
-    def connect(self) -> None:
-        self._connection.connect()
-
-        assert self._connected.wait(
-            self._default_connection_timeout_s
-        ), "Could not connect to Sora."
-
-    def disconnect(self) -> None:
-        self._connection.disconnect()
-
-    def get_stats(self):
-        raw_stats = self._connection.get_stats()
-        return json.loads(raw_stats)
-
-    @property
-    def role(self) -> str:
-        return "recvonly"
-
-    @property
-    def connect_message(self) -> Optional[dict[str, Any]]:
-        return self._connect_message
-
-    @property
-    def redirect_message(self) -> Optional[dict[str, Any]]:
-        return self._redirect_message
-
-    @property
-    def offer_message(self) -> Optional[dict[str, Any]]:
-        return self._offer_message
-
-    @property
-    def answer_message(self) -> Optional[dict[str, Any]]:
-        return self._answer_message
-
-    @property
-    def candidate_messages(self) -> list[dict[str, Any]]:
-        return self._candidate_messages
-
-    @property
-    def re_offer_messages(self) -> list[dict[str, Any]]:
-        return self._re_offer_messages
-
-    @property
-    def re_answer_messages(self) -> list[dict[str, Any]]:
-        return self._re_answer_messages
-
-    @property
-    def disconnect_message(self) -> Optional[dict[str, Any]]:
-        return self._disconnect_message
-
-    @property
-    def connected(self) -> bool:
-        return self._connected.is_set()
-
-    @property
-    def switched(self) -> bool:
-        return self._switched
-
-    @property
-    def ws_close(self) -> bool:
-        return self._ws_close
-
-    @property
-    def closed(self):
-        return self._closed.is_set()
-
-    def _on_signaling_message(
-        self,
-        signaling_type: SoraSignalingType,
-        signaling_direction: SoraSignalingDirection,
-        raw_message: str,
-    ):
-        message: dict[str, Any] = json.loads(raw_message)
-        match message["type"]:
-            case "connect":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._connect_message = message
-            case "redirect":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._redirect_message = message
-            case "offer":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._offer_message = message
-            case "answer":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._answer_message = message
-            case "candidate":
-                self._candidate_messages.append(message)
-            case "re-offer":
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._re_offer_messages.append(message)
-            case "re-answer":
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._re_answer_messages.append(message)
-            case "disconnect":
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._disconnect_message = message
-            case _:
-                NotImplementedError(f"Unknown signaling message type: {message['type']}")
-
-    def _on_set_offer(self, raw_message: str) -> None:
-        message: dict[str, Any] = json.loads(raw_message)
-        if message["type"] == "offer":
-            self._connection_id = message["connection_id"]
-
-    def _on_switched(self, raw_message: str) -> None:
-        message = json.loads(raw_message)
-        if message["type"] == "switched":
-            print(f"Switched to DataChannel Signaling: connection_id={self._connection_id}")
-            self._switched = True
-
-    def _on_notify(self, raw_message: str) -> None:
-        message: dict[str, Any] = json.loads(raw_message)
-        if (
-            message["type"] == "notify"
-            and message["event_type"] == "connection.created"
-            and message["connection_id"] == self._connection_id
-        ):
-            print(f"Connected Sora: connection_id={self._connection_id}")
-            self._connected.set()
-
-    def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
-        print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
-        self._connected.clear()
-        self._closed.is_set()
-
-    def _on_ws_close(self, code: int, reason: str) -> None:
-        print(f"WebSocket closed: code={code} reason={reason}")
-        self._ws_close = True
-
     def _on_video_frame(self, frame: SoraVideoFrame) -> None:
         self._q_out.put(frame)
 
     def _on_track(self, track: SoraMediaTrack) -> None:
         if track.kind == "audio":
-            self._audio_sink = SoraAudioSink(track, self._output_frequency, self._output_channels)
+            self._audio_sink = SoraAudioSink(
+                track, self._audio_output_frequency, self._audio_output_channels
+            )
         if track.kind == "video":
             self._video_sink = SoraVideoSink(track)
             self._video_sink.on_frame = self._on_video_frame
-
-
-class Messaging:
-    def __init__(
-        self,
-        signaling_urls: list[str],
-        channel_id: str,
-        data_channels: list[dict[str, Any]],
-        metadata: Optional[dict[str, Any]] = None,
-    ):
-        self._data_channels = data_channels
-
-        self._sora = Sora()
-        self._connection: SoraConnection = self._sora.create_connection(
-            signaling_urls=signaling_urls,
-            role="sendrecv",
-            channel_id=channel_id,
-            metadata=metadata,
-            audio=False,
-            video=False,
-            data_channels=self._data_channels,
-            data_channel_signaling=True,
-        )
-        self._connection_id: Optional[str] = None
-
-        self._connected = Event()
-        self._switched: bool = False
-        self._closed = Event()
-        self._default_connection_timeout_s: float = 10.0
-
-        self._label = data_channels[0]["label"]
-        self._sendable_data_channels: set = set()
-        self._is_data_channel_ready = False
-
-        self.sender_id = random.randint(1, 10000)
-
-        # signaling message
-        self._connect_message: Optional[dict[str, Any]] = None
-        self._redirect_message: Optional[dict[str, Any]] = None
-        self._offer_message: Optional[dict[str, Any]] = None
-        self._answer_message: Optional[dict[str, Any]] = None
-        self._candidate_messages: list[dict[str, Any]] = []
-        self._re_offer_messages: list[dict[str, Any]] = []
-        self._re_answer_messages: list[dict[str, Any]] = []
-
-        # callback
-        self._connection.on_signaling_message = self._on_signaling_message
-        self._connection.on_set_offer = self._on_set_offer
-        self._connection.on_switched = self._on_switched
-        self._connection.on_notify = self._on_notify
-        self._connection.on_data_channel = self._on_data_channel
-        self._connection.on_message = self._on_message
-        self._connection.on_disconnect = self._on_disconnect
-
-    @property
-    def closed(self):
-        return self._closed.is_set()
-
-    def connect(self):
-        self._connection.connect()
-
-        assert self._connected.wait(
-            self._default_connection_timeout_s
-        ), "Could not connect to Sora."
-
-    def disconnect(self):
-        self._connection.disconnect()
-
-    def get_stats(self):
-        raw_stats = self._connection.get_stats()
-        stats = json.loads(raw_stats)
-        return stats
-
-    @property
-    def connect_message(self) -> Optional[dict[str, Any]]:
-        return self._connect_message
-
-    @property
-    def redirect_message(self) -> Optional[dict[str, Any]]:
-        return self._redirect_message
-
-    @property
-    def offer_message(self) -> Optional[dict[str, Any]]:
-        return self._offer_message
-
-    @property
-    def answer_message(self) -> Optional[dict[str, Any]]:
-        return self._answer_message
-
-    @property
-    def candidate_messages(self) -> list[dict[str, Any]]:
-        return self._candidate_messages
-
-    @property
-    def re_offer_messages(self) -> list[dict[str, Any]]:
-        return self._re_offer_messages
-
-    @property
-    def re_answer_messages(self) -> list[dict[str, Any]]:
-        return self._re_answer_messages
-
-    @property
-    def connected(self) -> bool:
-        return self._connected.is_set()
-
-    @property
-    def switched(self) -> bool:
-        return self._switched
-
-    def send(self, data: bytes):
-        # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
-        while not self._is_data_channel_ready and not self._closed.is_set():
-            time.sleep(0.01)
-
-        self._connection.send_data_channel(self._label, data)
-
-    def _on_signaling_message(
-        self,
-        signaling_type: SoraSignalingType,
-        signaling_direction: SoraSignalingDirection,
-        raw_message: str,
-    ):
-        print(raw_message)
-        message: dict[str, Any] = json.loads(raw_message)
-        match message["type"]:
-            case "connect":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._connect_message = message
-            case "redirect":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._redirect_message = message
-            case "offer":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._offer_message = message
-            case "answer":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._answer_message = message
-            case "candidate":
-                self._candidate_messages.append(message)
-            case "re-offer":
-                self._re_offer_messages.append(message)
-            case "re-answer":
-                self._re_answer_messages.append(message)
-            case _:
-                NotImplementedError(f"Unknown signaling message type: {message['type']}")
-
-    def _on_set_offer(self, raw_message: str):
-        message: dict[str, Any] = json.loads(raw_message)
-        if message["type"] == "offer":
-            # "type": "offer" に入ってくる自分の connection_id を保存する
-            self._connection_id = message["connection_id"]
-
-    def _on_switched(self, raw_message: str):
-        message: dict[str, Any] = json.loads(raw_message)
-        if message["type"] == "switched":
-            self._switched = True
-
-    def _on_notify(self, raw_message: str):
-        message: dict[str, Any] = json.loads(raw_message)
-        # "type": "notify" の "connection.created" で通知される connection_id が
-        # 自分の connection_id と一致する場合に接続完了とする
-        if (
-            message["type"] == "notify"
-            and message["event_type"] == "connection.created"
-            and message["connection_id"] == self._connection_id
-        ):
-            print(f"Connected Sora: connection_id={self._connection_id}")
-            self._connected.set()
-
-    def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str):
-        print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
-        self._connected.clear()
-        self._closed.set()
-
-    def _on_message(self, label: str, data: bytes):
-        print(f"Received message: label={label}, data={data.decode('utf-8')}")
-
-    def _on_data_channel(self, label: str):
-        for data_channel in self._data_channels:
-            if data_channel["label"] != label:
-                continue
-
-            if data_channel["direction"] in ["sendrecv", "sendonly"]:
-                self._sendable_data_channels.add(label)
-                # データチャネルの準備ができたのでフラグを立てる
-                self._is_data_channel_ready = True
-                break

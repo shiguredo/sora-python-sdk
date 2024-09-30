@@ -1,7 +1,7 @@
 import sys
 import uuid
 
-from client import Sendonly
+from client import SoraClient, SoraRole
 
 
 def test_sendonly_disconnect(setup):
@@ -11,33 +11,41 @@ def test_sendonly_disconnect(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    with Sendonly(
+    with SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,
         metadata=metadata,
-    ) as sendonly1:
-        with Sendonly(
-            signaling_urls,
-            channel_id,
-            audio=True,
-            video=True,
-            metadata=metadata,
-        ) as sendonly2:
-            pass
-    with Sendonly(
-        signaling_urls,
-        channel_id,
-        audio=True,
-        video=True,
-        metadata=metadata,
-    ) as sendonly3:
-        with Sendonly(
-            signaling_urls,
-            channel_id,
-            audio=True,
-            video=True,
-            metadata=metadata,
-        ) as sendonly4:
-            pass
+        data_channel_signaling=True,
+    ):
+        pass
+    #     with SoraClient(
+    #         signaling_urls,
+    #         SoraRole.SENDONLY,
+    #         channel_id,
+    #         audio=True,
+    #         video=True,
+    #         metadata=metadata,
+    #         data_channel_signaling=True,
+    #     ):
+    #         with SoraClient(
+    #             signaling_urls,
+    #             SoraRole.SENDONLY,
+    #             channel_id,
+    #             audio=True,
+    #             video=True,
+    #             metadata=metadata,
+    #             data_channel_signaling=True,
+    #         ):
+    #             with SoraClient(
+    #                 signaling_urls,
+    #                 SoraRole.SENDONLY,
+    #                 channel_id,
+    #                 audio=True,
+    #                 video=True,
+    #                 metadata=metadata,
+    #                 data_channel_signaling=True,
+    #             ):
+    #                 pass

@@ -3,7 +3,7 @@ import time
 import uuid
 
 import pytest
-from client import Recvonly, Sendonly
+from client import SoraClient, SoraRole
 
 """
 GitHub Actions で Video Toolbox を送受信で利用しようとするとエラーになるので、
@@ -23,8 +23,9 @@ def test_macos_video_hwa_sendonly(setup, video_codec_type):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=False,
         video=True,
@@ -65,8 +66,9 @@ def test_macos_h264_sendonly_recvonly(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=False,
         video=True,
@@ -76,8 +78,9 @@ def test_macos_h264_sendonly_recvonly(setup):
     )
     sendonly.connect()
 
-    recvonly = Recvonly(
+    recvonly = SoraClient(
         signaling_urls,
+        SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
         use_hwa=True,
@@ -123,8 +126,9 @@ def test_macos_h265_sendonly_recvonly(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=False,
         video=True,
@@ -134,8 +138,9 @@ def test_macos_h265_sendonly_recvonly(setup):
     )
     sendonly.connect()
 
-    recvonly = Recvonly(
+    recvonly = SoraClient(
         signaling_urls,
+        SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
         use_hwa=True,
