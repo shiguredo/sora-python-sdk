@@ -96,6 +96,7 @@ class SoraClient:
         self._audio_sink: Optional[SoraAudioSink] = None
         self._video_sink: Optional[SoraVideoSink] = None
 
+        self._is_data_channel_ready = False
         self._sendable_data_channels: set[str] = set()
         self._q_out: queue.Queue = queue.Queue()
 
@@ -149,8 +150,10 @@ class SoraClient:
         self._connection.on_switched = self._on_switched
         self._connection.on_ws_close = self._on_ws_close
         self._connection.on_notify = self._on_notify
-        self._connection.on_disconnect = self._on_disconnect
         self._connection.on_track = self._on_track
+        self._connection.on_data_channel = self._on_data_channel
+        self._connection.on_message = self._on_message
+        self._connection.on_disconnect = self._on_disconnect
 
     def __enter__(self) -> None:
         if self._role == SoraRole.RECVONLY:
@@ -180,12 +183,13 @@ class SoraClient:
         self._connection.disconnect()
 
     def send(self, label: str, data: bytes):
+        print(f"send: label={label}, data={data!r}")
         # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
         if not self._is_data_channel_ready:
             while not self._is_data_channel_ready and not self._closed.is_set():
                 time.sleep(0.01)
 
-            self._connection.send_data_channel(label, data)
+        self._connection.send_data_channel(label, data)
 
     def get_stats(self):
         raw_stats = self._connection.get_stats()
@@ -242,14 +246,16 @@ class SoraClient:
     def _fake_audio_loop(self):
         while not self._closed.is_set():
             time.sleep(0.02)
-            self._audio_source.on_data(numpy.zeros((320, 1), dtype=numpy.int16))
+            if self._audio_source is not None:
+                self._audio_source.on_data(numpy.zeros((320, 1), dtype=numpy.int16))
 
     def _fake_video_loop(self):
         while not self._closed.is_set():
             time.sleep(1.0 / 30)
-            self._video_source.on_captured(
-                numpy.zeros((self._video_height, self._video_width, 3), dtype=numpy.uint8)
-            )
+            if self._video_source is not None:
+                self._video_source.on_captured(
+                    numpy.zeros((self._video_height, self._video_width, 3), dtype=numpy.uint8)
+                )
 
     def _on_signaling_message(
         self,
@@ -321,18 +327,17 @@ class SoraClient:
         print(f"Received message: label={label}, data={data.decode('utf-8')}")
 
     def _on_data_channel(self, label: str):
-        if self._offer_data_channel_signaling and self._offer_data_channels:
+        print(f"DataChannel opened: label={label}")
+        if self._offer_data_channels:
             for data_channel in self._offer_data_channels:
                 if data_channel["label"] != label:
                     continue
 
                 if data_channel["direction"] in ["sendrecv", "sendonly"]:
                     self._sendable_data_channels.add(label)
-
-                    # 全てのデータチャネルの準備ができたのでフラグを立てる
-                    if len(self._sendable_data_channels) == len(self._offer_data_channels):
-                        self._is_data_channel_ready = True
-                        break
+                    # メッセージングで利用するチャネルが利用可能になったのでフラグを立てる
+                    self._is_data_channel_ready = True
+                    break
 
     def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
