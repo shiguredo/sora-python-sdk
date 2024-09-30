@@ -107,12 +107,10 @@ class Sendonly:
         self._connection.on_disconnect = self._on_disconnect
         self._connection.on_ws_close = self._on_ws_close
 
-    def __enter__(self):
-        print(f"self._audio: {self._audio}")
-        print(f"self._video: {self._video}")
+    def __enter__(self) -> None:
         return self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.disconnect()
 
     def connect(self, fake_audio=False, fake_video=False) -> None:
