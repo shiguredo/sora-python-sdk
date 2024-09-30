@@ -25,18 +25,19 @@ def test_sendonly_disconnect(setup):
             video=True,
             metadata=metadata,
         ) as sendonly2:
-            with Sendonly(
-                signaling_urls,
-                channel_id,
-                audio=True,
-                video=True,
-                metadata=metadata,
-            ) as sendonly3:
-                with Sendonly(
-                    signaling_urls,
-                    channel_id,
-                    audio=True,
-                    video=True,
-                    metadata=metadata,
-                ) as sendonly4:
-                    pass
+            pass
+    with Sendonly(
+        signaling_urls,
+        channel_id,
+        audio=True,
+        video=True,
+        metadata=metadata,
+    ) as sendonly3:
+        with Sendonly(
+            signaling_urls,
+            channel_id,
+            audio=True,
+            video=True,
+            metadata=metadata,
+        ) as sendonly4:
+            pass
