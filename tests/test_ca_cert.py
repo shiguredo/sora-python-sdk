@@ -3,7 +3,7 @@ import time
 import uuid
 
 import pytest
-from client import Sendonly
+from client import SoraClient, SoraRole
 
 """
 このテストは、Sora の CA 証明書が有効かどうかを確認するためのものです。
@@ -73,8 +73,9 @@ def test_ca_cert(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,
@@ -96,8 +97,9 @@ def test_ca_cert_invalid(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,
