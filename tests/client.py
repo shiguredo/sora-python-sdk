@@ -45,6 +45,9 @@ class Sendonly:
         self._signaling_urls: list[str] = signaling_urls
         self._channel_id: str = channel_id
 
+        self._audio = audio
+        self._video = video
+
         self._audio_channels: int = audio_channels
         self._audio_sample_rate: int = audio_sample_rate
 
@@ -104,6 +107,14 @@ class Sendonly:
         self._connection.on_disconnect = self._on_disconnect
         self._connection.on_ws_close = self._on_ws_close
 
+    def __enter__(self):
+        print(f"self._audio: {self._audio}")
+        print(f"self._video: {self._video}")
+        return self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.disconnect()
+
     def connect(self, fake_audio=False, fake_video=False) -> None:
         self._connection.connect()
 
@@ -120,7 +131,6 @@ class Sendonly:
         ), "Could not connect to Sora."
 
     def disconnect(self) -> None:
-        """Sora から切断します。"""
         self._connection.disconnect()
 
     def get_stats(self):
