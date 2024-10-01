@@ -20,32 +20,31 @@ def test_sendonly_disconnect(setup):
         metadata=metadata,
         data_channel_signaling=True,
     ):
-        pass
-    #     with SoraClient(
-    #         signaling_urls,
-    #         SoraRole.SENDONLY,
-    #         channel_id,
-    #         audio=True,
-    #         video=True,
-    #         metadata=metadata,
-    #         data_channel_signaling=True,
-    #     ):
-    #         with SoraClient(
-    #             signaling_urls,
-    #             SoraRole.SENDONLY,
-    #             channel_id,
-    #             audio=True,
-    #             video=True,
-    #             metadata=metadata,
-    #             data_channel_signaling=True,
-    #         ):
-    #             with SoraClient(
-    #                 signaling_urls,
-    #                 SoraRole.SENDONLY,
-    #                 channel_id,
-    #                 audio=True,
-    #                 video=True,
-    #                 metadata=metadata,
-    #                 data_channel_signaling=True,
-    #             ):
-    #                 pass
+        with SoraClient(
+            signaling_urls,
+            SoraRole.SENDONLY,
+            channel_id,
+            audio=True,
+            video=True,
+            metadata=metadata,
+            data_channel_signaling=True,
+        ):
+            with SoraClient(
+                signaling_urls,
+                SoraRole.SENDONLY,
+                channel_id,
+                audio=True,
+                video=True,
+                metadata=metadata,
+                data_channel_signaling=True,
+            ):
+                with SoraClient(
+                    signaling_urls,
+                    SoraRole.SENDONLY,
+                    channel_id,
+                    audio=True,
+                    video=True,
+                    metadata=metadata,
+                    data_channel_signaling=True,
+                ):
+                    pass
