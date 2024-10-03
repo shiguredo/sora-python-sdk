@@ -36,6 +36,8 @@
 
 ### misc
 
+- [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
 - [CHANGE] examples を <https://github.com/shiguredo/sora-python-sdk-examples> に移動する
   - @voluntas
 - [CHANGE] rye から uv に変更する
