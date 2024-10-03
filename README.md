@@ -80,7 +80,7 @@ pip install sora_sdk
 PyPI 経由ではインストールできません。
 パッケージバイナリを配布しておりますので、そちらをご利用ください。
 
-https://github.com/shiguredo/sora-python-sdk/releases/tag/2024.3.0-jetson-jetpack-6.0.0.0
+<https://github.com/shiguredo/sora-python-sdk/releases/tag/2024.3.0-jetson-jetpack-6.0.0.0>
 
 ## システム条件
 
@@ -91,6 +91,7 @@ https://github.com/shiguredo/sora-python-sdk/releases/tag/2024.3.0-jetson-jetpac
 
 - Windows 11 x86_64
 - Windows Server 2022 x86_64
+- macOS Sequoia 15 arm64
 - macOS Ventura 14 arm64
 - macOS Sonoma 13 arm64
 - Ubuntu 24.04 LTS x86_64
