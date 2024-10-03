@@ -130,6 +130,8 @@ class SoraClient:
         self._connected: Event = Event()
         self._switched: bool = False
         self._ws_close: bool = False
+        self._ws_close_code: Optional[int] = None
+        self._ws_close_reason: Optional[str] = None
         self._closed: Event = Event()
 
         self._default_connection_timeout_s: float = 10.0
@@ -155,11 +157,14 @@ class SoraClient:
         self._connection.on_message = self._on_message
         self._connection.on_disconnect = self._on_disconnect
 
-    def __enter__(self) -> None:
+    def __enter__(self) -> "SoraClient":
         if self._role == SoraRole.RECVONLY:
-            return self.connect()
+            self.connect()
+            return self
 
-        return self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
+        self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
+
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.disconnect()
@@ -197,7 +202,11 @@ class SoraClient:
 
     @property
     def role(self) -> str:
-        return "sendonly"
+        return self._role
+
+    @property
+    def connection_id(self) -> Optional[str]:
+        return self._connection_id
 
     @property
     def connect_message(self) -> Optional[dict[str, Any]]:
@@ -242,6 +251,14 @@ class SoraClient:
     @property
     def ws_close(self) -> bool:
         return self._ws_close
+
+    @property
+    def ws_close_code(self) -> Optional[int]:
+        return self._ws_close_code
+
+    @property
+    def ws_close_reason(self) -> Optional[str]:
+        return self._ws_close_reason
 
     def _fake_audio_loop(self):
         while not self._closed.is_set():
@@ -353,6 +370,8 @@ class SoraClient:
     def _on_ws_close(self, code: int, reason: str) -> None:
         print(f"WebSocket closed: code={code} reason={reason}")
         self._ws_close = True
+        self._ws_close_code = code
+        self._ws_close_reason = reason
 
     def _on_video_frame(self, frame: SoraVideoFrame) -> None:
         self._q_out.put(frame)
