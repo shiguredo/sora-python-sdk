@@ -14,6 +14,7 @@ env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
 
 jobs:
   # まず pyi を生成する
@@ -106,6 +107,13 @@ jobs:
       - run: uv sync
 
       # Ubuntu x86_64 向け
+      - name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' }}
       - run: |
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
