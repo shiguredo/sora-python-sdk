@@ -42,8 +42,10 @@ def test_disconnect_api(setup):
         response = disconnect_connection_api(api_url, channel_id, conn.connection_id)
         assert response.status_code == 200
 
-        assert conn.ws_close_code is not None
-        assert conn.ws_close_reason is not None
+        assert conn.ws_close_code == 1000
+        assert conn.ws_close_reason == "DISCONNECTED-API"
+
+    # TODO: LIFETIME-EXPIRED のテスト
 
 
 def test_sendonly_disconnect(setup):
