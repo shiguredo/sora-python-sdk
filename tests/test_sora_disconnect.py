@@ -16,7 +16,7 @@ def disconnect_connection_api(url: str, channel_id: str, connection_id: str) -> 
         "channel_id": channel_id,
         "connection_id": connection_id,
     }
-    return httpx.post(url, headers=headers, json=body)
+    return httpx.post(url, headers=headers, json=body, follow_redirects=True)
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
