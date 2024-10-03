@@ -121,8 +121,10 @@ class SoraClient:
 
         # "type": "offer" のパラメータ
         self._offer_data_channel_signaling: Optional[bool] = None
-        self._offer_ignore_disconnect_websocket: Optional[bool] = None
         self._offer_data_channels: Optional[list[dict[str, Any]]] = None
+
+        # "type": "switched" のパラメータ
+        self._ignore_disconnect_websocket: Optional[bool] = None
 
         self._connection_id: Optional[str] = None
 
@@ -145,6 +147,7 @@ class SoraClient:
         self._re_offer_messages: list[dict[str, Any]] = []
         self._re_answer_messages: list[dict[str, Any]] = []
         self._disconnect_message: Optional[dict[str, Any]] = None
+        self._close_message: Optional[dict[str, Any]] = None
 
         # callback
         self._connection.on_signaling_message = self._on_signaling_message
@@ -237,6 +240,14 @@ class SoraClient:
         return self._re_answer_messages
 
     @property
+    def disconnect_message(self) -> Optional[dict[str, Any]]:
+        return self._disconnect_message
+
+    @property
+    def close_message(self) -> Optional[dict[str, Any]]:
+        return self._close_message
+
+    @property
     def connected(self) -> bool:
         return self._connected.is_set()
 
@@ -259,6 +270,7 @@ class SoraClient:
     @property
     def ws_close_reason(self) -> Optional[str]:
         return self._ws_close_reason
+
 
     def _fake_audio_loop(self):
         while not self._closed.is_set():
@@ -309,6 +321,11 @@ class SoraClient:
             case "disconnect":
                 assert signaling_direction == SoraSignalingDirection.SENT
                 self._disconnect_message = message
+            case "close":
+                print(f"type: close: {message}")
+                assert signaling_type == SoraSignalingType.DATACHANNEL
+                assert signaling_direction == SoraSignalingDirection.RECEIVED
+                self._close_message = message
             case _:
                 NotImplementedError(f"Unknown signaling message type: {message['type']}")
 
