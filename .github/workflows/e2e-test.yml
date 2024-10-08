@@ -19,7 +19,7 @@ jobs:
   e2e_test_ubuntu:
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.os}}
     timeout-minutes: 15
@@ -56,7 +56,7 @@ jobs:
   e2e_test_macos:
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
@@ -84,7 +84,7 @@ jobs:
   e2e_test_windows:
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: windows-2022
     timeout-minutes: 15
     env:
