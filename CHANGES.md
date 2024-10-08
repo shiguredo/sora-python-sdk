@@ -19,6 +19,8 @@
 - [ADD] サーバー証明書チェック用の CA 証明書を指定できるようにする
   - `Sora.create_connection()` の引数に `ca_cert` を追加する
   - @voluntas
+- [ADD] Python 3.13 に対応する
+  - @voluntas
 - [ADD] `on_ws_close` コールバックを追加する
   - @tnoho
 - [ADD] `on_signaling_message` コールバックを追加する
