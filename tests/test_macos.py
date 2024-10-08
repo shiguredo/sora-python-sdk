@@ -62,8 +62,8 @@ def test_macos_video_hwa_sendonly(setup, video_codec_type):
 @pytest.mark.parametrize(
     ("video_codec_type", "expected_implementation"),
     [
-        ("H264", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
-        ("H265", "SimulcastEncoderAdapter (libaom, libaom, libaom)"),
+        ("H264", "SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)"),
+        ("H265", "SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)"),
     ],
 )
 def test_macos_simulcast(setup, video_codec_type, expected_implementation):
@@ -85,6 +85,7 @@ def test_macos_simulcast(setup, video_codec_type, expected_implementation):
         metadata=metadata,
         video_width=1280,
         video_height=720,
+        use_hwa=True,
     )
     sendonly.connect(fake_video=True)
 
