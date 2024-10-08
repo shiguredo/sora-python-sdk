@@ -180,10 +180,11 @@ wheels = [
 
 [[package]]
 name = "nanobind"
-version = "2.1.0"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c5/f2/f1e6c86edf90caf04a4c28e789b15a6a5aa87a5e037e0bf03bbfcc4937b6/nanobind-2.2.0.tar.gz", hash = "sha256:53fa7a6227bddecaa4a0710e0b8dc18fad4c8ded7a0a31d6eddcf68009ead603", size = 944277 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/48/dea3d75657366b5a75b9d57a4e4fa7b224d98e8385f72fc7762d504533df/nanobind-2.1.0-py3-none-any.whl", hash = "sha256:a613a2ce750fee63f03dc8a36593be2bdc2929cb4cea56b38fafeb74b85c3a5f", size = 220742 },
+    { url = "https://files.pythonhosted.org/packages/52/af/7032b05a35284e741666acbf3eac3a14b5e81cd92264ac775426884ed460/nanobind-2.2.0-py3-none-any.whl", hash = "sha256:138685ec9c5de4f57dd02d715b89ffcbcabae39c4e36b8b2c40eea2f1aa2f0d7", size = 231618 },
 ]
 
 [[package]]
@@ -380,7 +381,7 @@ dev = [
     { name = "build", specifier = "~=1.2.2" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "mypy", specifier = ">=1.11" },
-    { name = "nanobind", specifier = "~=2.1.0" },
+    { name = "nanobind", specifier = "~=2.2.0" },
     { name = "numpy", specifier = ">=2.1" },
     { name = "pytest", specifier = ">=8.3" },
     { name = "python-dotenv", specifier = ">=1.0" },
