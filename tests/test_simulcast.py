@@ -65,3 +65,4 @@ def test_simulcast(setup, video_codec_type, expected_implementation):
         assert rtp_stat["encoderImplementation"] == expected_implementation
         assert rtp_stat["bytesSent"] > 0
         assert rtp_stat["packetsSent"] > 0
+
