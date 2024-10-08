@@ -11,10 +11,10 @@
 
 ## develop
 
-- [CHANGE] client_cert と client_key の指定にはパスではなく中身の文字列を指定するようにする
+- [CHANGE] `client_cert` と `client_key` の指定にはパスではなく中身の文字列を指定するようにする
   - C++ SDK 側の仕様変更に追従する
   - @voluntas
-- [CHANGE] ca_cert, client_cert, client_key の指定には str ではなく bytes を使うようにする
+- [CHANGE] `ca_cert`, `client_cert`, `client_key` の指定には `str` ではなく `bytes` を使うようにする
   - @tnoho
 - [ADD] サーバー証明書チェック用の CA 証明書を指定できるようにする
   - `Sora.create_connection()` の引数に `ca_cert` を追加する
@@ -29,6 +29,8 @@
   - @melpon
 - [ADD] `on_ws_close` コールバックを追加する
   - @tnoho
+- [UPDATE] nanobind を `2.2.0` に上げる
+  - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
   - WEBRTC_BUILD_VERSION を `m129.6668.1.0` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
