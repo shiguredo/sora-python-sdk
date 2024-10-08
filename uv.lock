@@ -354,7 +354,7 @@ wheels = [
 
 [[package]]
 name = "sora-sdk"
-version = "2024.4.0.dev11"
+version = "2024.4.0.dev12"
 source = { editable = "." }
 
 [package.dev-dependencies]
