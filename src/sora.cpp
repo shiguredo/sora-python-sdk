@@ -24,6 +24,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const nb::handle& signaling_notify_metadata,
     SoraTrackInterface* audio_source,
     SoraTrackInterface* video_source,
+    SoraAudioFrameTransformer* audio_frame_transformer,
+    SoraVideoFrameTransformer* video_frame_transformer,
     std::optional<bool> audio,
     std::optional<bool> video,
     std::optional<std::string> audio_codec_type,
@@ -194,6 +196,12 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   }
   if (video_source) {
     conn->SetVideoTrack(video_source);
+  }
+  if (audio_frame_transformer) {
+    conn->SetAudioSenderFrameTransformer(audio_frame_transformer);
+  }
+  if (video_frame_transformer) {
+    conn->SetVideoSenderFrameTransformer(video_frame_transformer);
   }
   return conn;
 }
