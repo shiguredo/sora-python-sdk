@@ -3,6 +3,7 @@
 
 // nonobind
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/unique_ptr.h>
 
 // WebRTC
 #include <api/frame_transformer_interface.h>
