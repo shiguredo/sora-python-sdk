@@ -19,6 +19,7 @@
 #include <sora/sora_signaling.h>
 
 #include "dispose_listener.h"
+#include "sora_frame_transformer.h"
 #include "sora_track_interface.h"
 
 namespace nb = nanobind;
@@ -79,6 +80,24 @@ class SoraConnection : public sora::SoraSignalingObserver,
    */
   void SetVideoTrack(SoraTrackInterface* video_source);
   /**
+   * 音声送信時の SoraFrameTransformer を設定する関数です。 Encoded Transform に相当します。
+   * 
+   * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
+   * 
+   * @param audio_sender_frame_transformer 音声送信時の SoraFrameTransformer
+   */
+  void SetAudioSenderFrameTransformer(
+      SoraAudioFrameTransformer* audio_sender_frame_transformer);
+  /**
+   * 映像送信時の SoraFrameTransformer を設定する関数です。 Encoded Transform に相当します。
+   * 
+   * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
+   * 
+   * @param video_sender_frame_transformer 映像送信時の SoraFrameTransformer
+   */
+  void SetVideoSenderFrameTransformer(
+      SoraVideoFrameTransformer* video_sender_frame_transformer);
+  /**
    * DataChannel でデータを送信する関数です。
    * 
    * @param label 送信する DataChannel の label
@@ -131,12 +150,14 @@ class SoraConnection : public sora::SoraSignalingObserver,
   std::unique_ptr<boost::asio::io_context> ioc_;
   std::shared_ptr<sora::SoraSignaling> conn_;
   std::unique_ptr<std::thread> thread_;
-  // javascript でいう replaceTrack された際に RemoveSubscriber を呼び出すために参照を保持する
   SoraTrackInterface* audio_source_ = nullptr;
   SoraTrackInterface* video_source_ = nullptr;
-  // javascript でいう replaceTrack を実装するために webrtc::RtpSenderInterface の参照を保持する
   rtc::scoped_refptr<webrtc::RtpSenderInterface> audio_sender_;
   rtc::scoped_refptr<webrtc::RtpSenderInterface> video_sender_;
+  rtc::scoped_refptr<SoraFrameTransformerInterface>
+      audio_sender_frame_transformer_;
+  rtc::scoped_refptr<SoraFrameTransformerInterface>
+      video_sender_frame_transformer_;
 };
 
 #endif

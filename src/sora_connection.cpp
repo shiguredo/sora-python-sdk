@@ -110,6 +110,28 @@ void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
   video_source_ = video_source;
 }
 
+void SoraConnection::SetAudioSenderFrameTransformer(
+    SoraAudioFrameTransformer* audio_sender_frame_transformer) {
+  // TODO(tnoho): audio_sender_ がないと意味がないので、エラーを返すようにするべき
+  auto interface =
+      audio_sender_frame_transformer->GetFrameTransformerInterface();
+  if (audio_sender_) {
+    audio_sender_->SetFrameTransformer(interface);
+  }
+  audio_sender_frame_transformer_ = interface;
+}
+
+void SoraConnection::SetVideoSenderFrameTransformer(
+    SoraVideoFrameTransformer* video_sender_frame_transformer) {
+  // TODO(tnoho): video_sender_ がないと意味がないので、エラーを返すようにするべき
+  auto interface =
+      video_sender_frame_transformer->GetFrameTransformerInterface();
+  if (video_sender_) {
+    video_sender_->SetFrameTransformer(interface);
+  }
+  video_sender_frame_transformer_ = interface;
+}
+
 bool SoraConnection::SendDataChannel(const std::string& label,
                                      nb::bytes& data) {
   return conn_->SendDataChannel(label, std::string(data.c_str(), data.size()));
@@ -141,6 +163,9 @@ void SoraConnection::OnSetOffer(std::string offer) {
     if (audio_result.ok()) {
       // javascript でいう replaceTrack を実装するために webrtc::RtpSenderInterface の参照をとっておく
       audio_sender_ = audio_result.value();
+      if (audio_sender_frame_transformer_) {
+        audio_sender_->SetFrameTransformer(audio_sender_frame_transformer_);
+      }
     }
   }
   if (video_source_) {
@@ -149,6 +174,9 @@ void SoraConnection::OnSetOffer(std::string offer) {
             video_source_->GetTrack(), {stream_id});
     if (video_result.ok()) {
       video_sender_ = video_result.value();
+      if (video_sender_frame_transformer_) {
+        video_sender_->SetFrameTransformer(video_sender_frame_transformer_);
+      }
     }
   }
   if (on_set_offer_) {

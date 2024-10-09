@@ -9,6 +9,7 @@
 #include "sora_audio_source.h"
 #include "sora_connection.h"
 #include "sora_factory.h"
+#include "sora_frame_transformer.h"
 #include "sora_track_interface.h"
 #include "sora_video_source.h"
 
@@ -95,6 +96,8 @@ class Sora : public DisposePublisher {
       const nb::handle& signaling_notify_metadata,
       SoraTrackInterface* audio_source,
       SoraTrackInterface* video_source,
+      SoraAudioFrameTransformer* audio_transformer,
+      SoraVideoFrameTransformer* video_transformer,
       std::optional<bool> audio,
       std::optional<bool> video,
       std::optional<std::string> audio_codec_type,
