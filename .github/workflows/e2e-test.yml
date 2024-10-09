@@ -13,12 +13,13 @@ env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
 
 jobs:
   e2e_test_ubuntu:
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.os}}
     timeout-minutes: 15
@@ -30,6 +31,12 @@ jobs:
       }}
     steps:
       - uses: actions/checkout@v4
+      - name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
@@ -49,9 +56,9 @@ jobs:
   e2e_test_macos:
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
-        os: ["macos-14"]
+        os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     if: >-
@@ -77,7 +84,7 @@ jobs:
   e2e_test_windows:
     strategy:
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: windows-2022
     timeout-minutes: 15
     env:

@@ -3,7 +3,7 @@ import time
 import uuid
 
 import pytest
-from client import Recvonly, Sendonly
+from client import SoraClient, SoraRole
 
 
 def test_sendonly_recvonly_audio(setup):
@@ -13,8 +13,9 @@ def test_sendonly_recvonly_audio(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=False,
@@ -22,8 +23,9 @@ def test_sendonly_recvonly_audio(setup):
     )
     sendonly.connect(fake_audio=True)
 
-    recvonly = Recvonly(
+    recvonly = SoraClient(
         signaling_urls,
+        SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
     )
@@ -79,8 +81,9 @@ def test_sendonly_recvonly_video(setup, video_codec_params):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=False,
         video=True,
@@ -89,8 +92,9 @@ def test_sendonly_recvonly_video(setup, video_codec_params):
     )
     sendonly.connect(fake_video=True)
 
-    recvonly = Recvonly(
+    recvonly = SoraClient(
         signaling_urls,
+        SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
     )
