@@ -2,7 +2,7 @@ import sys
 import time
 import uuid
 
-from client import Messaging
+from client import SoraClient, SoraRole
 
 
 def test_messaging(setup):
@@ -14,17 +14,21 @@ def test_messaging(setup):
 
     metadata = setup.get("metadata")
 
-    messaging_sendonly = Messaging(
+    messaging_sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
-        [{"label": messaging_label, "direction": "sendonly"}],
+        data_channel_signaling=True,
+        data_channels=[{"label": messaging_label, "direction": "sendonly"}],
         metadata=metadata,
     )
 
-    messaging_recvonly = Messaging(
+    messaging_recvonly = SoraClient(
         signaling_urls,
+        SoraRole.RECVONLY,
         channel_id,
-        [{"label": messaging_label, "direction": "recvonly"}],
+        data_channel_signaling=True,
+        data_channels=[{"label": messaging_label, "direction": "recvonly"}],
         metadata=metadata,
     )
 
@@ -42,8 +46,8 @@ def test_messaging(setup):
     message1 = "spam".encode("utf-8")
     message2 = "はむ".encode("utf-8")
 
-    messaging_sendonly.send(message1)
-    messaging_sendonly.send(message2)
+    messaging_sendonly.send(messaging_label, message1)
+    messaging_sendonly.send(messaging_label, message2)
 
     time.sleep(3)
 

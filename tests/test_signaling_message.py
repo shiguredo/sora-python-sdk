@@ -2,7 +2,7 @@ import sys
 import time
 import uuid
 
-from client import Sendonly
+from client import SoraClient, SoraRole
 
 
 def test_signaling_message(setup):
@@ -12,8 +12,9 @@ def test_signaling_message(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,
