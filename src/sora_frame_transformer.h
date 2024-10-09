@@ -132,6 +132,9 @@ class SoraFrameTransformer : public SoraTransformFrameCallback {
 
 class SoraTransformableAudioFrame : public SoraTransformableFrame {
  public:
+  SoraTransformableAudioFrame(
+      std::unique_ptr<webrtc::TransformableFrameInterface> frame)
+      : SoraTransformableFrame(std::move(frame)) {}
   // TODO(tnoho) まだある
  private:
   const webrtc::TransformableAudioFrameInterface* frame() const {
@@ -153,6 +156,9 @@ class SoraAudioFrameTransformer : public SoraFrameTransformer {
 
 class SoraTransformableVideoFrame : public SoraTransformableFrame {
  public:
+  SoraTransformableVideoFrame(
+      std::unique_ptr<webrtc::TransformableFrameInterface> frame)
+      : SoraTransformableFrame(std::move(frame)) {}
   // TODO(tnoho) まだある
  private:
   const webrtc::TransformableVideoFrameInterface* frame() const {
