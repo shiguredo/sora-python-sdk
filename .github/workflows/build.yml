@@ -233,6 +233,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         include:
           - platform:
               name: ubuntu-24.04_armv8
