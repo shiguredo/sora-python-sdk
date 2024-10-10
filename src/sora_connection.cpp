@@ -234,12 +234,12 @@ void SoraConnection::OnWsClose(uint16_t code, std::string message) {
 void SoraConnection::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   if (on_track_) {
+    auto receiver = transceiver->receiver();
     // shared_ptr になってないとリークする
-    auto track = std::make_shared<SoraMediaTrack>(
-        this, transceiver->receiver()->track(),
-        transceiver->receiver()->stream_ids()[0]);
+    auto track = std::make_shared<SoraMediaTrack>(this, receiver->track(),
+                                                  receiver->stream_ids()[0]);
     AddSubscriber(track.get());
-    on_track_(track);
+    on_track_(track, std::make_shared<SoraRTPReceiver>(receiver));
   }
 }
 
