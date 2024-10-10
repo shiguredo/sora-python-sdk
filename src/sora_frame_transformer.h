@@ -1,6 +1,8 @@
 #ifndef SORA_TRANSFORMER_H_
 #define SORA_TRANSFORMER_H_
 
+#include <unordered_map>
+
 // nonobind
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
@@ -26,7 +28,7 @@ class SoraTransformFrameCallback {
 class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
  public:
   SoraFrameTransformerInterface(SoraTransformFrameCallback* transformer)
-      : transformer_(transformer) {}
+      : transformer_(transformer), default_callback_(nullptr) {}
   void ReleaseTransformer() {
     // SoraFrameTransformer が先になくなっても実害が出ないようにする
     StartShortCircuiting();
@@ -42,38 +44,52 @@ class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
   // Transform で渡されたフレームを返す
   void OnTransformedFrame(
       std::unique_ptr<webrtc::TransformableFrameInterface> frame) {
-    if (callback_) {
-      callback_->OnTransformedFrame(std::move(frame));
+    uint32_t ssrc = frame->GetSsrc();
+    auto it = callbacks_.find(ssrc);
+    if (it != callbacks_.end() && it->second) {
+      it->second->OnTransformedFrame(std::move(frame));
+    } else if (default_callback_) {
+      default_callback_->OnTransformedFrame(std::move(frame));
     }
   }
   // これを呼ぶと Transform が呼び出されることなく OnTransformedFrame に転送されるようになる
   void StartShortCircuiting() {
-    if (callback_) {
-      callback_->StartShortCircuiting();
+    if (default_callback_) {
+      default_callback_->StartShortCircuiting();
+    }
+    for (const auto& pair : callbacks_) {
+      if (pair.second) {
+        pair.second->StartShortCircuiting();
+      }
     }
   }
   // webrtc::TransformedFrameCallback を渡してくる関数が Audio と Video で異なる
   // Audio はこっち
   void RegisterTransformedFrameCallback(
       rtc::scoped_refptr<webrtc::TransformedFrameCallback> callback) override {
-    callback_ = callback;
+    default_callback_ = callback;
   }
   // Video はこっち
   void RegisterTransformedFrameSinkCallback(
       rtc::scoped_refptr<webrtc::TransformedFrameCallback> callback,
       uint32_t ssrc) override {
-    callback_ = callback;
+    callbacks_[ssrc] = callback;
   }
   // Audio はこっち
-  void UnregisterTransformedFrameCallback() override { callback_ = nullptr; }
+  void UnregisterTransformedFrameCallback() override {
+    default_callback_ = nullptr;
+  }
   // Video はこっち
   void UnregisterTransformedFrameSinkCallback(uint32_t ssrc) override {
-    callback_ = nullptr;
+    callbacks_.erase(ssrc);
   }
 
  private:
   SoraTransformFrameCallback* transformer_;
-  rtc::scoped_refptr<webrtc::TransformedFrameCallback> callback_;
+  rtc::scoped_refptr<webrtc::TransformedFrameCallback> default_callback_;
+  std::unordered_map<uint32_t,
+                     rtc::scoped_refptr<webrtc::TransformedFrameCallback>>
+      callbacks_;
 };
 
 /**
