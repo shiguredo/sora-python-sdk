@@ -20,6 +20,7 @@
 
 #include "dispose_listener.h"
 #include "sora_frame_transformer.h"
+#include "sora_rtp_receiver.h"
 #include "sora_track_interface.h"
 
 namespace nb = nanobind;
@@ -80,20 +81,20 @@ class SoraConnection : public sora::SoraSignalingObserver,
    */
   void SetVideoTrack(SoraTrackInterface* video_source);
   /**
-   * 音声送信時の SoraFrameTransformer を設定する関数です。 Encoded Transform に相当します。
+   * 音声送信時の Encoded Transform を設定する関数です。
    * 
    * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
    * 
-   * @param audio_sender_frame_transformer 音声送信時の SoraFrameTransformer
+   * @param audio_sender_frame_transformer エンコードされたフレームが経由する SoraAudioFrameTransformer
    */
   void SetAudioSenderFrameTransformer(
       SoraAudioFrameTransformer* audio_sender_frame_transformer);
   /**
-   * 映像送信時の SoraFrameTransformer を設定する関数です。 Encoded Transform に相当します。
+   * 映像送信時の Encoded Transform を設定する関数です。
    * 
    * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
    * 
-   * @param video_sender_frame_transformer 映像送信時の SoraFrameTransformer
+   * @param video_sender_frame_transformer エンコードされたフレームが経由する SoraVideoFrameTransformer
    */
   void SetVideoSenderFrameTransformer(
       SoraVideoFrameTransformer* video_sender_frame_transformer);
@@ -142,7 +143,9 @@ class SoraConnection : public sora::SoraSignalingObserver,
   std::function<void(std::string)> on_push_;
   std::function<void(std::string, nb::bytes)> on_message_;
   std::function<void(std::string)> on_switched_;
-  std::function<void(std::shared_ptr<SoraMediaTrack>)> on_track_;
+  std::function<void(std::shared_ptr<SoraMediaTrack>,
+                     std::shared_ptr<SoraRTPReceiver>)>
+      on_track_;
   std::function<void(std::string)> on_data_channel_;
 
  private:

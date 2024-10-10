@@ -16,6 +16,7 @@
 #include "sora_connection.h"
 #include "sora_frame_transformer.h"
 #include "sora_log.h"
+#include "sora_rtp_receiver.h"
 #include "sora_track_interface.h"
 #include "sora_vad.h"
 #include "sora_video_sink.h"
@@ -356,20 +357,62 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_track", &SoraConnection::on_track_)
       .def_rw("on_data_channel", &SoraConnection::on_data_channel_);
 
+  nb::enum_<webrtc::TransformableFrameInterface::Direction>(
+      m, "SoraTransformableFrameDirection", nb::is_arithmetic())
+      .value("UNKNOWN",
+             webrtc::TransformableFrameInterface::Direction::kUnknown)
+      .value("RECEIVER",
+             webrtc::TransformableFrameInterface::Direction::kReceiver)
+      .value("SENDER", webrtc::TransformableFrameInterface::Direction::kSender);
+
   nb::class_<SoraTransformableFrame>(m, "SoraTransformableFrame")
       .def("get_data", &SoraTransformableFrame::GetData,
            nb::rv_policy::reference_internal)
       .def("set_data", &SoraTransformableFrame::SetData)
       .def_prop_ro("payload_type", &SoraTransformableFrame::GetPayloadType)
       .def_prop_ro("ssrc", &SoraTransformableFrame::GetSsrc)
-      .def_prop_ro("timestamp", &SoraTransformableFrame::GetTimestamp)
-      .def("set_rtp_timestamp", &SoraTransformableFrame::SetRTPTimestamp);
+      .def_prop_rw("rtp_timestamp", &SoraTransformableFrame::GetTimestamp,
+                   &SoraTransformableFrame::SetRTPTimestamp)
+      .def_prop_ro("direction", &SoraTransformableFrame::GetDirection)
+      .def_prop_ro("mine_type", &SoraTransformableFrame::GetMimeType);
+
+  nb::enum_<webrtc::TransformableAudioFrameInterface::FrameType>(
+      m, "SoraTransformableAudioFrameType", nb::is_arithmetic())
+      .value("EMPTY",
+             webrtc::TransformableAudioFrameInterface::FrameType::kEmptyFrame)
+      .value("SPEECH", webrtc::TransformableAudioFrameInterface::FrameType::
+                           kAudioFrameSpeech)
+      .value(
+          "CN",
+          webrtc::TransformableAudioFrameInterface::FrameType::kAudioFrameCN);
 
   nb::class_<SoraTransformableAudioFrame, SoraTransformableFrame>(
-      m, "SoraTransformableAudioFrame");
+      m, "SoraTransformableAudioFrame")
+      .def_prop_ro("contributing_sources",
+                   &SoraTransformableAudioFrame::GetContributingSources)
+      .def_prop_ro("sequence_number",
+                   &SoraTransformableAudioFrame::SequenceNumber)
+      .def_prop_ro("absolute_capture_timestamp",
+                   &SoraTransformableAudioFrame::AbsoluteCaptureTimestamp)
+      .def_prop_ro("type", &SoraTransformableAudioFrame::Type)
+      .def_prop_ro("audio_level", &SoraTransformableAudioFrame::AudioLevel)
+      .def_prop_ro("receive_time", &SoraTransformableAudioFrame::ReceiveTime);
+  ;
 
   nb::class_<SoraTransformableVideoFrame, SoraTransformableFrame>(
-      m, "SoraTransformableVideoFrame");
+      m, "SoraTransformableVideoFrame")
+      .def_prop_ro("is_key_frame", &SoraTransformableVideoFrame::IsKeyFrame)
+      .def_prop_ro("frame_id", &SoraTransformableVideoFrame::GetFrameId)
+      .def_prop_ro("frame_dependencies",
+                   &SoraTransformableVideoFrame::GetFrameDependencies)
+      .def_prop_ro("width", &SoraTransformableVideoFrame::GetWidth)
+      .def_prop_ro("height", &SoraTransformableVideoFrame::GetHeight)
+      .def_prop_ro("spatial_index",
+                   &SoraTransformableVideoFrame::GetSpatialIndex)
+      .def_prop_ro("temporal_index",
+                   &SoraTransformableVideoFrame::GetTemporalIndex)
+      .def_prop_ro("contributing_sources",
+                   &SoraTransformableVideoFrame::GetCsrcs);
 
   nb::class_<SoraFrameTransformer>(m, "SoraFrameTransformer")
       .def("on_transformed_frame", &SoraFrameTransformer::OnTransformedFrame)
@@ -389,6 +432,11 @@ NB_MODULE(sora_sdk_ext, m) {
       .def(nb::init<>())
       .def("__del__", &SoraVideoFrameTransformer::Del)
       .def_rw("on_transform", &SoraVideoFrameTransformer::on_transform_);
+
+  nb::class_<SoraRTPReceiver>(m, "SoraRTPReceiver")
+      .def("set_jitter_buffer_minimum_delay",
+           &SoraRTPReceiver::SetJitterBufferMinimumDelay)
+      .def("set_frame_ransformer", &SoraRTPReceiver::SetFrameTransformer);
 
   nb::class_<Sora>(m, "Sora")
       .def(nb::init<std::optional<bool>, std::optional<std::string>>(),

@@ -3,6 +3,7 @@
 
 // nonobind
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 #include <nanobind/stl/unique_ptr.h>
 
 // WebRTC
@@ -26,40 +27,64 @@ class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
  public:
   SoraFrameTransformerInterface(SoraTransformFrameCallback* transformer)
       : transformer_(transformer) {}
-  void Release() {
+  void ReleaseTransformer() {
     // SoraFrameTransformer が先になくなっても実害が出ないようにする
     StartShortCircuiting();
     transformer_ = nullptr;
   }
-
+  // エンコードされたフレームがくる
   void Transform(std::unique_ptr<webrtc::TransformableFrameInterface>
                      transformable_frame) override {
     if (transformer_) {
       transformer_->Transform(std::move(transformable_frame));
     }
   }
+  // Transform で渡されたフレームを返す
   void OnTransformedFrame(
       std::unique_ptr<webrtc::TransformableFrameInterface> frame) {
     if (callback_) {
       callback_->OnTransformedFrame(std::move(frame));
     }
   }
+  // これを呼ぶと Transform が呼び出されることなく OnTransformedFrame に転送されるようになる
   void StartShortCircuiting() {
     if (callback_) {
       callback_->StartShortCircuiting();
     }
   }
+  // webrtc::TransformedFrameCallback を渡してくる関数が Audio と Video で異なる
+  // Audio はこっち
   void RegisterTransformedFrameCallback(
       rtc::scoped_refptr<webrtc::TransformedFrameCallback> callback) override {
     callback_ = callback;
   }
+  // Video はこっち
+  void RegisterTransformedFrameSinkCallback(
+      rtc::scoped_refptr<webrtc::TransformedFrameCallback> callback,
+      uint32_t ssrc) override {
+    callback_ = callback;
+  }
+  // Audio はこっち
   void UnregisterTransformedFrameCallback() override { callback_ = nullptr; }
+  // Video はこっち
+  void UnregisterTransformedFrameSinkCallback(uint32_t ssrc) override {
+    callback_ = nullptr;
+  }
 
  private:
   SoraTransformFrameCallback* transformer_;
   rtc::scoped_refptr<webrtc::TransformedFrameCallback> callback_;
 };
 
+/**
+ * Transform で渡される webrtc::TransformableFrameInterface を格納する SoraTransformableFrame です。
+ * エンコード済みのフレームデータを格納します。
+ * 
+ * コピーすることはできません。
+ * また、　on_transformed_frame に渡した時点で所有権を失うため利用できなくなるので注意してください。
+ * 
+ * Audio, Video で共通する部分をここに実装して、それぞれで継承して利用します。
+ */
 class SoraTransformableFrame {
  public:
   SoraTransformableFrame(
@@ -67,43 +92,62 @@ class SoraTransformableFrame {
       : frame_(std::move(frame)) {}
 
   std::unique_ptr<webrtc::TransformableFrameInterface> ReleaseFrame() {
+    // ReleaseFrame() で frame_ はなくなるが、
+    // SoraTransformableFrame 自体を unique_ptr で扱っている前提のため参照時に frame_ の有無は確認しない
     return std::move(frame_);
   }
-  const nb::object GetData() const {
-    if (!frame_) {
-      return nb::none();
-    }
+
+  /**
+   * フレームデータを取得する関数です。
+   * 
+   * @return NumPy の配列 numpy.ndarray のフレームデータ
+   */
+  const nb::ndarray<nb::numpy, const uint8_t, nb::shape<-1>> GetData() const {
     auto view = frame_->GetData();
-    return nb::bytes(view.data(), view.size());
+
+    // pybind11 なら memoryview があるが、 nanobind にはなく ndarray に const をつけて ReadOnly にする
+    size_t shape[1] = {static_cast<size_t>(view.size())};
+    return nb::ndarray<nb::numpy, const uint8_t, nb::shape<-1>>(
+        view.data(), 1, shape, nb::handle());
   }
-  void SetData(nb::bytes data) {
-    if (!frame_) {
-      return;
-    }
-    frame_->SetData(rtc::ArrayView<const uint8_t>(
-        reinterpret_cast<const uint8_t*>(data.c_str()), data.size()));
+  /**
+   * フレームデータを入れ替える関数です。
+   * 
+   * @param data 入れ替える NumPy の配列 numpy.ndarray のフレームデータ
+   */
+  void SetData(
+      nb::ndarray<const uint8_t, nb::shape<-1>, nb::c_contig, nb::device::cpu>
+          data) {
+    frame_->SetData(rtc::ArrayView<const uint8_t>(data.data(), data.shape(0)));
   }
-  const nb::object GetPayloadType() const {
-    return frame_ ? nb::int_(frame_->GetPayloadType()) : nb::none();
-  }
-  const nb::object GetSsrc() const {
-    return frame_ ? nb::int_(frame_->GetSsrc()) : nb::none();
-  }
-  const nb::object GetTimestamp() const {
-    return frame_ ? nb::int_(frame_->GetTimestamp()) : nb::none();
+  const uint8_t GetPayloadType() const { return frame_->GetPayloadType(); }
+  const uint32_t GetSsrc() const { return frame_->GetSsrc(); }
+  const uint32_t GetTimestamp() const {
+    // これは RTPTimestamp なので注意
+    return frame_->GetTimestamp();
   }
   void SetRTPTimestamp(uint32_t timestamp) {
-    if (!frame_) {
-      return;
-    }
     frame_->SetRTPTimestamp(timestamp);
   }
-  // TODO(tnoho) まだある
+  std::optional<int64_t> GetCaptureTimeIdentifier() const {
+    // Audio, Video, Direction によっては実装されていないため optional
+    auto opt = frame_->GetCaptureTimeIdentifier();
+    return opt.has_value() ? std::optional<int64_t>(opt->us()) : std::nullopt;
+  }
+  webrtc::TransformableFrameInterface::Direction GetDirection() {
+    return frame_->GetDirection();
+  }
+  std::string GetMimeType() { return std::move(frame_->GetMimeType()); }
 
  protected:
   std::unique_ptr<webrtc::TransformableFrameInterface> frame_;
 };
 
+/**
+ * Encoded Transform を行う SoraFrameTransformer です。
+ * 
+ * Audio, Video で共通する部分をここに実装して、それぞれで継承して利用します。
+ */
 class SoraFrameTransformer : public SoraTransformFrameCallback {
  public:
   SoraFrameTransformer() {
@@ -111,7 +155,15 @@ class SoraFrameTransformer : public SoraTransformFrameCallback {
   }
   virtual ~SoraFrameTransformer() { Del(); }
 
-  void Del() { interface_->Release(); }
+  void Del() { interface_->ReleaseTransformer(); }
+  /**
+   * SoraTransformableFrame をストリームに戻す関数です。
+   * 
+   * この関数を呼び出すと SoraTransformableFrame の所有権がライブラリに渡るため、
+   * 以後 SoraTransformableFrame を操作することはできません。
+   * 
+   * @param frame on_transform で渡された SoraTransformableFrame
+   */
   void OnTransformedFrame(std::unique_ptr<SoraTransformableFrame> frame) {
     interface_->OnTransformedFrame(frame->ReleaseFrame());
   }
@@ -130,12 +182,48 @@ class SoraFrameTransformer : public SoraTransformFrameCallback {
   rtc::scoped_refptr<SoraFrameTransformerInterface> interface_;
 };
 
+/**
+ * エンコード済みの Audio フレームデータを格納します。
+ * 
+ * 様々なパラメータが取得できますが optional になっているのもは、
+ * Direction によっては実装されていない、
+ * もしくは RTP Extension など他の依存から None を返す場合があります。
+ */
 class SoraTransformableAudioFrame : public SoraTransformableFrame {
  public:
   SoraTransformableAudioFrame(
       std::unique_ptr<webrtc::TransformableFrameInterface> frame)
       : SoraTransformableFrame(std::move(frame)) {}
-  // TODO(tnoho) まだある
+
+  nb::ndarray<nb::numpy, const uint32_t, nb::shape<-1>> GetContributingSources()
+      const {
+    auto view = frame()->GetContributingSources();
+    size_t shape[1] = {static_cast<size_t>(view.size())};
+    return nb::ndarray<nb::numpy, const uint32_t, nb::shape<-1>>(
+        view.data(), 1, shape, nb::handle());
+  }
+  const std::optional<uint16_t> SequenceNumber() const {
+    // SENDER の時にしか入っていない
+    return frame()->SequenceNumber();
+  }
+  std::optional<uint64_t> AbsoluteCaptureTimestamp() const {
+    // SENDER の時にしか入っていない
+    return frame()->AbsoluteCaptureTimestamp();
+  }
+  webrtc::TransformableAudioFrameInterface::FrameType Type() const {
+    // RECEIVER の時には RTP Header Extension で Audio Level がないときは常に CN が返る
+    return frame()->Type();
+  }
+  std::optional<uint8_t> AudioLevel() const {
+    // RECEIVER の時には RTP Header Extension で Audio Level がないときは入っていない
+    return frame()->AudioLevel();
+  }
+  std::optional<int64_t> ReceiveTime() const {
+    // RECEIVER の時にしか入っていない
+    auto opt = frame()->ReceiveTime();
+    return opt.has_value() ? std::optional<int64_t>(opt->us()) : std::nullopt;
+  }
+
  private:
   const webrtc::TransformableAudioFrameInterface* frame() const {
     return static_cast<const webrtc::TransformableAudioFrameInterface*>(
@@ -143,8 +231,16 @@ class SoraTransformableAudioFrame : public SoraTransformableFrame {
   }
 };
 
+/**
+ * Audio の Encoded Transform を行う SoraAudioFrameTransformer です。
+ * 
+ * on_transform_ コールバックで SoraTransformableAudioFrame を渡してくるので、
+ * 必要な処理を行った上で on_transformed_frame に返してください。
+ */
 class SoraAudioFrameTransformer : public SoraFrameTransformer {
  public:
+  SoraAudioFrameTransformer() : SoraFrameTransformer() {}
+
   void Transform(std::unique_ptr<webrtc::TransformableFrameInterface>
                      transformable_frame) override {
     on_transform_(std::make_unique<SoraTransformableAudioFrame>(
@@ -154,12 +250,47 @@ class SoraAudioFrameTransformer : public SoraFrameTransformer {
       on_transform_;
 };
 
+/**
+ * エンコード済みの Video フレームデータを格納します。
+ * 
+ * 様々なパラメータが取得できますが optional になっているのもは、
+ * Direction によっては実装されていない、
+ * もしくは RTP Extension など他の依存から None を返す場合があります。
+ */
 class SoraTransformableVideoFrame : public SoraTransformableFrame {
  public:
   SoraTransformableVideoFrame(
       std::unique_ptr<webrtc::TransformableFrameInterface> frame)
       : SoraTransformableFrame(std::move(frame)) {}
-  // TODO(tnoho) まだある
+
+  bool IsKeyFrame() const { return frame()->IsKeyFrame(); }
+  // 以下は VideoFrameMetadata のメンバーだが以下の理由からメンバーで参照可能にする
+  // ・SetMetadata は javascript にない
+  // ・Audio では Metadata が切られていない
+  // ・VideoFrameMetadata でもメンバーが多すぎて削らないといけない
+  std::optional<int64_t> GetFrameId() const {
+    return frame()->Metadata().GetFrameId();
+  }
+  nb::ndarray<nb::numpy, const int64_t, nb::shape<-1>> GetFrameDependencies()
+      const {
+    auto view = frame()->Metadata().GetFrameDependencies();
+    size_t shape[1] = {static_cast<size_t>(view.size())};
+    return nb::ndarray<nb::numpy, const int64_t, nb::shape<-1>>(
+        view.data(), 1, shape, nb::handle());
+  }
+  uint16_t GetWidth() const { return frame()->Metadata().GetWidth(); }
+  uint16_t GetHeight() const { return frame()->Metadata().GetHeight(); }
+  int GetSpatialIndex() const { return frame()->Metadata().GetSpatialIndex(); }
+  int GetTemporalIndex() const {
+    return frame()->Metadata().GetTemporalIndex();
+  }
+  nb::ndarray<nb::numpy, const uint32_t, nb::shape<-1>> GetCsrcs() const {
+    auto vector = frame()->Metadata().GetCsrcs();
+    size_t shape[1] = {static_cast<size_t>(vector.size())};
+    return nb::ndarray<nb::numpy, const uint32_t, nb::shape<-1>>(
+        vector.data(), 1, shape, nb::handle());
+  };
+
  private:
   const webrtc::TransformableVideoFrameInterface* frame() const {
     return static_cast<const webrtc::TransformableVideoFrameInterface*>(
@@ -167,8 +298,16 @@ class SoraTransformableVideoFrame : public SoraTransformableFrame {
   }
 };
 
+/**
+ * Video の Encoded Transform を行う SoraAudioFrameTransformer です。
+ * 
+ * on_transform_ コールバックで SoraTransformableVideoFrame を渡してくるので、
+ * 必要な処理を行った上で on_transformed_frame に返してください。
+ */
 class SoraVideoFrameTransformer : public SoraFrameTransformer {
  public:
+  SoraVideoFrameTransformer() : SoraFrameTransformer() {}
+
   void Transform(std::unique_ptr<webrtc::TransformableFrameInterface>
                      transformable_frame) override {
     on_transform_(std::make_unique<SoraTransformableVideoFrame>(
