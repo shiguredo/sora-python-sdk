@@ -29,6 +29,8 @@
   - @melpon
 - [ADD] `on_ws_close` コールバックを追加する
   - @tnoho
+- [ADD] Encoded Transform に対応する
+  - @tnoho
 - [UPDATE] nanobind を `2.2.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
