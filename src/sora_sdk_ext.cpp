@@ -474,6 +474,8 @@ NB_MODULE(sora_sdk_ext, m) {
                    "signaling_notify_metadata: Optional[dict] = None, "
                    "audio_source: Optional[SoraTrackInterface] = None, "
                    "video_source: Optional[SoraTrackInterface] = None, "
+                   "audio_frame_transformer: Optional[SoraAudioFrameTransformer] = None, "
+                   "video_frame_transformer: Optional[SoraVideoFrameTransformer] = None, "
                    "audio: Optional[bool] = None, "
                    "video: Optional[bool] = None, "
                    "audio_codec_type: Optional[str] = None, "
