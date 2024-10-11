@@ -36,7 +36,7 @@ class SoraClient:
         role: SoraRole,
         channel_id: str,
         simulcast: Optional[bool] = None,
-        spotlight: Optional[list[str]] = None,
+        spotlight: Optional[bool] = None,
         metadata: Optional[dict[str, Any]] = None,
         audio: Optional[bool] = None,
         video: Optional[bool] = None,
@@ -270,7 +270,6 @@ class SoraClient:
     @property
     def ws_close_reason(self) -> Optional[str]:
         return self._ws_close_reason
-
 
     def _fake_audio_loop(self):
         while not self._closed.is_set():
