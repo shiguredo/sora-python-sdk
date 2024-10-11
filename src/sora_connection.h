@@ -20,7 +20,6 @@
 
 #include "dispose_listener.h"
 #include "sora_frame_transformer.h"
-#include "sora_rtp_receiver.h"
 #include "sora_track_interface.h"
 
 namespace nb = nanobind;
@@ -143,9 +142,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   std::function<void(std::string)> on_push_;
   std::function<void(std::string, nb::bytes)> on_message_;
   std::function<void(std::string)> on_switched_;
-  std::function<void(std::shared_ptr<SoraMediaTrack>,
-                     std::shared_ptr<SoraRTPReceiver>)>
-      on_track_;
+  std::function<void(std::shared_ptr<SoraMediaTrack>)> on_track_;
   std::function<void(std::string)> on_data_channel_;
 
  private:

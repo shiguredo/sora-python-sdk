@@ -16,7 +16,6 @@
 #include "sora_connection.h"
 #include "sora_frame_transformer.h"
 #include "sora_log.h"
-#include "sora_rtp_receiver.h"
 #include "sora_track_interface.h"
 #include "sora_vad.h"
 #include "sora_video_sink.h"
@@ -246,7 +245,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
 
   nb::class_<SoraMediaTrack, SoraTrackInterface>(m, "SoraMediaTrack")
-      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id);
+      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id)
+      .def("set_frame_ransformer", &SoraMediaTrack::SetFrameTransformer);
 
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
       .def("on_data",
@@ -432,11 +432,6 @@ NB_MODULE(sora_sdk_ext, m) {
       .def(nb::init<>())
       .def("__del__", &SoraVideoFrameTransformer::Del)
       .def_rw("on_transform", &SoraVideoFrameTransformer::on_transform_);
-
-  nb::class_<SoraRTPReceiver>(m, "SoraRTPReceiver")
-      .def("set_jitter_buffer_minimum_delay",
-           &SoraRTPReceiver::SetJitterBufferMinimumDelay)
-      .def("set_frame_ransformer", &SoraRTPReceiver::SetFrameTransformer);
 
   nb::class_<Sora>(m, "Sora")
       .def(nb::init<std::optional<bool>, std::optional<std::string>>(),
