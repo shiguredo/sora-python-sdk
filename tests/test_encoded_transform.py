@@ -170,7 +170,7 @@ class SendonlyEncodedTransform:
 
         # 加工したフレームデータで frame の フレームデータを入れ替える
         frame.set_data(new_data)
-        self._video_transformer.enqueue(frame)
+        self._audio_transformer.enqueue(frame)
 
     def _on_video_transform(self, frame: SoraTransformableVideoFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
