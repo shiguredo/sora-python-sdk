@@ -6,6 +6,8 @@ import uuid
 from threading import Event
 from typing import Any, Optional
 
+import numpy
+
 from sora_sdk import (
     Sora,
     SoraAudioFrameTransformer,
@@ -71,6 +73,8 @@ class SendonlyEncodedTransform:
             metadata=metadata,
             audio=True,
             video=True,
+            audio_source=self._audio_source,
+            video_source=self._video_source,
             audio_frame_transformer=self._audio_transformer,
             video_frame_transformer=self._video_transformer,
         )
@@ -79,8 +83,17 @@ class SendonlyEncodedTransform:
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
+        self._is_called_on_audio_transform = False
+        self._is_called_on_video_transform = False
+
     def connect(self):
         self._connection.connect()
+
+        self._fake_audio_thread = threading.Thread(target=self._fake_audio_loop, daemon=True)
+        self._fake_audio_thread.start()
+
+        self._fake_video_thread = threading.Thread(target=self._fake_video_loop, daemon=True)
+        self._fake_video_thread.start()
 
         # _connected が set されるまで 30 秒待つ
         assert self._connected.wait(30)
@@ -94,6 +107,28 @@ class SendonlyEncodedTransform:
         raw_stats = self._connection.get_stats()
         stats = json.loads(raw_stats)
         return stats
+
+    @property
+    def is_called_on_audio_transform(self):
+        return self._is_called_on_audio_transform
+
+    @property
+    def is_called_on_video_transform(self):
+        return self._is_called_on_video_transform
+
+    def _fake_audio_loop(self):
+        while not self._closed.is_set():
+            time.sleep(0.02)
+            if self._audio_source is not None:
+                self._audio_source.on_data(numpy.zeros((320, 1), dtype=numpy.int16))
+
+    def _fake_video_loop(self):
+        while not self._closed.is_set():
+            time.sleep(1.0 / 30)
+            if self._video_source is not None:
+                self._video_source.on_captured(
+                    numpy.zeros((self._video_height, self._video_width, 3), dtype=numpy.uint8)
+                )
 
     def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
@@ -113,8 +148,14 @@ class SendonlyEncodedTransform:
 
     def _on_disconnect(self, error_code, message):
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
-        self._closed = True
+        self._closed.set()
         self._connected.clear()
+
+        if self._fake_audio_thread is not None:
+            self._fake_audio_thread.join(timeout=10)
+
+        if self._fake_video_thread is not None:
+            self._fake_video_thread.join(timeout=10)
 
     def _on_audio_transform(self, frame: SoraTransformableAudioFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
@@ -122,6 +163,8 @@ class SendonlyEncodedTransform:
         # frame からエンコードされたフレームデータを取得する
         # 戻り値は numpy.ndarray になっている
         new_data = frame.get_data()
+
+        self._is_called_on_audio_transform = True
 
         # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
 
@@ -135,6 +178,8 @@ class SendonlyEncodedTransform:
         # frame からエンコードされたフレームデータを取得する
         # 戻り値は numpy.ndarray になっている
         new_data = frame.get_data()
+
+        self._is_called_on_video_transform = True
 
         # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
 
@@ -280,12 +325,33 @@ def test_encoded_transform(setup):
 
     sendonly.disconnect()
 
+    # on_transform が呼ばれていることを確認
+    # assert sendonly.is_called_on_audio_transform is True
+    # assert sendonly.is_called_on_video_transform is True
+
     # codec が無かったら StopIteration 例外が上がる
-    sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
+    sendonly_codec_stats = next(
+        s for s in sendonly_stats if s.get("type") == "codec" and s.get("mimeType") == "audio/opus"
+    )
     assert sendonly_codec_stats["mimeType"] == "audio/opus"
 
+    sendonly_codec_stats = next(
+        s for s in sendonly_stats if s.get("type") == "codec" and s.get("mimeType") == "video/VP9"
+    )
+    assert sendonly_codec_stats["mimeType"] == "video/VP9"
+
     # outbound-rtp が無かったら StopIteration 例外が上がる
-    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+    outbound_rtp_stats = next(
+        s for s in sendonly_stats if s.get("type") == "outbound-rtp" and s.get("kind") == "audio"
+    )
     # audio には encoderImplementation が無い
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(
+        s for s in sendonly_stats if s.get("type") == "outbound-rtp" and s.get("kind") == "video"
+    )
+    # video には encoderImplementation が無い
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
