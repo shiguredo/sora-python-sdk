@@ -415,7 +415,7 @@ NB_MODULE(sora_sdk_ext, m) {
                    &SoraTransformableVideoFrame::GetCsrcs);
 
   nb::class_<SoraFrameTransformer>(m, "SoraFrameTransformer")
-      .def("on_transformed_frame", &SoraFrameTransformer::OnTransformedFrame)
+      .def("enqueue", &SoraFrameTransformer::Enqueue)
       .def("start_short_circuiting",
            &SoraFrameTransformer::StartShortCircuiting);
 
