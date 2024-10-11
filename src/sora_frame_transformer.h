@@ -42,8 +42,7 @@ class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
     }
   }
   // Transform で渡されたフレームを返す
-  void OnTransformedFrame(
-      std::unique_ptr<webrtc::TransformableFrameInterface> frame) {
+  void Enqueue(std::unique_ptr<webrtc::TransformableFrameInterface> frame) {
     uint32_t ssrc = frame->GetSsrc();
     auto it = callbacks_.find(ssrc);
     if (it != callbacks_.end() && it->second) {
@@ -97,7 +96,7 @@ class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
  * エンコード済みのフレームデータを格納します。
  * 
  * コピーすることはできません。
- * また、　on_transformed_frame に渡した時点で所有権を失うため利用できなくなるので注意してください。
+ * enqueue に渡した時点で所有権を失うため利用できなくなるので注意してください。
  * 
  * Audio, Video で共通する部分をここに実装して、それぞれで継承して利用します。
  */
@@ -180,8 +179,8 @@ class SoraFrameTransformer : public SoraTransformFrameCallback {
    * 
    * @param frame on_transform で渡された SoraTransformableFrame
    */
-  void OnTransformedFrame(std::unique_ptr<SoraTransformableFrame> frame) {
-    interface_->OnTransformedFrame(frame->ReleaseFrame());
+  void Enqueue(std::unique_ptr<SoraTransformableFrame> frame) {
+    interface_->Enqueue(frame->ReleaseFrame());
   }
   void StartShortCircuiting() { interface_->StartShortCircuiting(); }
   /**
@@ -251,7 +250,7 @@ class SoraTransformableAudioFrame : public SoraTransformableFrame {
  * Audio の Encoded Transform を行う SoraAudioFrameTransformer です。
  * 
  * on_transform_ コールバックで SoraTransformableAudioFrame を渡してくるので、
- * 必要な処理を行った上で on_transformed_frame に返してください。
+ * 必要な処理を行った上で enqueue に返してください。
  */
 class SoraAudioFrameTransformer : public SoraFrameTransformer {
  public:
@@ -318,7 +317,7 @@ class SoraTransformableVideoFrame : public SoraTransformableFrame {
  * Video の Encoded Transform を行う SoraAudioFrameTransformer です。
  * 
  * on_transform_ コールバックで SoraTransformableVideoFrame を渡してくるので、
- * 必要な処理を行った上で on_transformed_frame に返してください。
+ * 必要な処理を行った上で enqueue に返してください。
  */
 class SoraVideoFrameTransformer : public SoraFrameTransformer {
  public:
