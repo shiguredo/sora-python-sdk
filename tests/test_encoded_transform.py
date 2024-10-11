@@ -325,10 +325,6 @@ def test_encoded_transform(setup):
 
     sendonly.disconnect()
 
-    # on_transform が呼ばれていることを確認
-    # assert sendonly.is_called_on_audio_transform is True
-    # assert sendonly.is_called_on_video_transform is True
-
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(
         s for s in sendonly_stats if s.get("type") == "codec" and s.get("mimeType") == "audio/opus"
@@ -355,3 +351,7 @@ def test_encoded_transform(setup):
     # video には encoderImplementation が無い
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
+
+    # on_transform が呼ばれていることを確認
+    assert sendonly.is_called_on_audio_transform is True
+    assert sendonly.is_called_on_video_transform is True
