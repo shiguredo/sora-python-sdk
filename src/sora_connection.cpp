@@ -236,10 +236,9 @@ void SoraConnection::OnTrack(
   if (on_track_) {
     auto receiver = transceiver->receiver();
     // shared_ptr になってないとリークする
-    auto track = std::make_shared<SoraMediaTrack>(this, receiver->track(),
-                                                  receiver->stream_ids()[0]);
+    auto track = std::make_shared<SoraMediaTrack>(this, receiver);
     AddSubscriber(track.get());
-    on_track_(track, std::make_shared<SoraRTPReceiver>(receiver));
+    on_track_(track);
   }
 }
 
