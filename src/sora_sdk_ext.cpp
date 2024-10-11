@@ -246,7 +246,7 @@ NB_MODULE(sora_sdk_ext, m) {
 
   nb::class_<SoraMediaTrack, SoraTrackInterface>(m, "SoraMediaTrack")
       .def_prop_ro("stream_id", &SoraMediaTrack::stream_id)
-      .def("set_frame_ransformer", &SoraMediaTrack::SetFrameTransformer);
+      .def("set_frame_transformer", &SoraMediaTrack::SetFrameTransformer);
 
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
       .def("on_data",
