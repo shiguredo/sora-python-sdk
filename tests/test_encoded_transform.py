@@ -164,6 +164,9 @@ class SendonlyEncodedTransform:
         # 戻り値は numpy.ndarray になっている
         new_data = frame.get_data()
 
+        # "sora" という文字列を new_data の後ろに追加
+        new_data = numpy.append(new_data, numpy.frombuffer(b"sora", dtype=numpy.uint8))
+
         self._is_called_on_audio_transform = True
 
         # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
@@ -178,6 +181,9 @@ class SendonlyEncodedTransform:
         # frame からエンコードされたフレームデータを取得する
         # 戻り値は numpy.ndarray になっている
         new_data = frame.get_data()
+
+        # "sora" という文字列を new_data の後ろに追加
+        new_data = numpy.append(new_data, numpy.frombuffer(b"sora", dtype=numpy.uint8))
 
         self._is_called_on_video_transform = True
 
@@ -293,10 +299,21 @@ class RecvonlyEncodedTransform:
         # この実装が Encoded Transform を利用する上での基本形となる
 
         # frame からエンコードされたフレームデータを取得する
-        # 戻り値は numpy.ndarray になっている
+        # 戻り値は ArrayLike になっている
         new_data = frame.get_data()
 
         # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
+
+        # ArrayLike を numpy.uint8 のバイト列に変換する
+        new_data = numpy.asarray(new_data, dtype=numpy.uint8)
+
+        # 後ろ4バイトを取得する
+        removed_data = new_data[-4:]
+
+        assert b"sora" == removed_data.tobytes()
+
+        # 後ろ4バイトを取り除く
+        new_data = new_data[:-4]
 
         self._is_called_on_audio_transform = True
 
@@ -306,12 +323,22 @@ class RecvonlyEncodedTransform:
 
     def _on_video_transform(self, frame: SoraTransformableVideoFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
-
         # frame からエンコードされたフレームデータを取得する
-        # 戻り値は numpy.ndarray になっている
+        # 戻り値は ArrayLike になっている
         new_data = frame.get_data()
 
         # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
+
+        # ArrayLike を numpy.uint8 のバイト列に変換する
+        new_data = numpy.asarray(new_data, dtype=numpy.uint8)
+
+        # 後ろ4バイトを取得する
+        removed_data = new_data[-4:]
+
+        assert b"sora" == removed_data.tobytes()
+
+        # 後ろ4バイトを取り除く
+        new_data = new_data[:-4]
 
         self._is_called_on_video_transform = True
 
@@ -375,8 +402,6 @@ def test_encoded_transform(setup):
     # video には encoderImplementation が無い
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-
-    print(recvonly_stats)
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(
