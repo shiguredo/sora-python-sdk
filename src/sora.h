@@ -9,6 +9,7 @@
 #include "sora_audio_source.h"
 #include "sora_connection.h"
 #include "sora_factory.h"
+#include "sora_frame_transformer.h"
 #include "sora_track_interface.h"
 #include "sora_video_source.h"
 
@@ -47,6 +48,8 @@ class Sora : public DisposePublisher {
    * @param signaling_notify_metadata (オプション)シグナリング通知メタデータ
    * @param audio_source (オプション)音声ソース CreateAudioSource で生成した SoraAudioSource を渡してください
    * @param video_source (オプション)映像ソース CreateVideoSource で生成した SoraVideoSource を渡してください
+   * @param audio_frame_transformer (オプション)音声送信時の Encoded Transform
+   * @param video_frame_transformer (オプション)映像送信時の Encoded Transform
    * @param audio (オプション)音声の有効無効 デフォルト: true
    * @param video (オプション)映像の有効無効 デフォルト: true
    * @param audio_codec_type (オプション)音声コーデック OPUS デフォルト: OPUS
@@ -95,6 +98,8 @@ class Sora : public DisposePublisher {
       const nb::handle& signaling_notify_metadata,
       SoraTrackInterface* audio_source,
       SoraTrackInterface* video_source,
+      SoraAudioFrameTransformer* audio_frame_transformer,
+      SoraVideoFrameTransformer* video_frame_transformer,
       std::optional<bool> audio,
       std::optional<bool> video,
       std::optional<std::string> audio_codec_type,

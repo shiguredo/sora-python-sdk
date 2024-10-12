@@ -28,7 +28,8 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
 - Windows / macOS / Linux (Ubuntu) プラットフォームに対応
-- WebRTC 統計情報の取得が可能
+- [WebRTC 統計情報](https://www.w3.org/TR/webrtc-stats/) の取得が可能
+- [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/) に対応
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
   - Intel VPL (AV1 / H.264 / H.265)
   - Apple Video Toolbox (H.264 / H.265)
@@ -66,7 +67,6 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 ```bash
 uv add sora_sdk
-uv sync
 ```
 
 ### pip
@@ -112,8 +112,6 @@ PyPI 経由ではインストールできません。
   - [アダワープジャパン株式会社](https://adawarp.com/) 様
 
 ### 優先実装が可能な機能一覧
-
-**詳細は Discord やメールなどでお気軽にお問い合わせください**
 
 - Windows 11 arm64
 - Ubuntu 24.04 arm64
