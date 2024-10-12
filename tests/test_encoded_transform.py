@@ -225,6 +225,9 @@ class RecvonlyEncodedTransform:
 
         self._connection.on_track = self._on_track
 
+        self._is_called_on_audio_transform = False
+        self._is_called_on_video_transform = False
+
     def connect(self):
         self._connection.connect()
 
@@ -240,6 +243,14 @@ class RecvonlyEncodedTransform:
         raw_stats = self._connection.get_stats()
         stats = json.loads(raw_stats)
         return stats
+
+    @property
+    def is_called_on_audio_transform(self):
+        return self._is_called_on_audio_transform
+
+    @property
+    def is_called_on_video_transform(self):
+        return self._is_called_on_video_transform
 
     def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
@@ -287,9 +298,11 @@ class RecvonlyEncodedTransform:
 
         # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
 
+        self._is_called_on_audio_transform = True
+
         # 加工したフレームデータで frame の フレームデータを入れ替える
         frame.set_data(new_data)
-        self._video_transformer.enqueue(frame)
+        self._audio_transformer.enqueue(frame)
 
     def _on_video_transform(self, frame: SoraTransformableVideoFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
@@ -299,6 +312,8 @@ class RecvonlyEncodedTransform:
         new_data = frame.get_data()
 
         # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
+
+        self._is_called_on_video_transform = True
 
         # 加工したフレームデータで frame の フレームデータを入れ替える
         frame.set_data(new_data)
@@ -319,11 +334,20 @@ def test_encoded_transform(setup):
     )
     sendonly.connect()
 
+    recvonly = RecvonlyEncodedTransform(
+        signaling_urls,
+        channel_id,
+        metadata,
+    )
+    recvonly.connect()
+
     time.sleep(5)
 
     sendonly_stats = sendonly.get_stats()
+    recvonly_stats = recvonly.get_stats()
 
     sendonly.disconnect()
+    recvonly.disconnect()
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(
@@ -352,6 +376,38 @@ def test_encoded_transform(setup):
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
+    print(recvonly_stats)
+
+    # codec が無かったら StopIteration 例外が上がる
+    recvonly_codec_stats = next(
+        s for s in recvonly_stats if s.get("type") == "codec" and s.get("mimeType") == "audio/opus"
+    )
+    assert recvonly_codec_stats["mimeType"] == "audio/opus"
+
+    recvonly_codec_stats = next(
+        s for s in recvonly_stats if s.get("type") == "codec" and s.get("mimeType") == "video/VP9"
+    )
+    assert recvonly_codec_stats["mimeType"] == "video/VP9"
+
+    # inbound-rtp が無かったら StopIteration 例外が上がる
+    inbound_rtp_stats = next(
+        s for s in recvonly_stats if s.get("type") == "inbound-rtp" and s.get("kind") == "audio"
+    )
+    # audio には encoderImplementation が無い
+    assert inbound_rtp_stats["bytesReceived"] > 0
+    assert inbound_rtp_stats["packetsReceived"] > 0
+
+    # inbound-rtp が無かったら StopIteration 例外が上がる
+    inbound_rtp_stats = next(
+        s for s in recvonly_stats if s.get("type") == "inbound-rtp" and s.get("kind") == "video"
+    )
+    # video には encoderImplementation が無い
+    assert inbound_rtp_stats["bytesReceived"] > 0
+    assert inbound_rtp_stats["packetsReceived"] > 0
+
     # on_transform が呼ばれていることを確認
     assert sendonly.is_called_on_audio_transform is True
     assert sendonly.is_called_on_video_transform is True
+
+    assert recvonly.is_called_on_audio_transform is True
+    assert recvonly.is_called_on_video_transform is True
