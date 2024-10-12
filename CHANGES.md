@@ -16,6 +16,12 @@
   - @voluntas
 - [CHANGE] `ca_cert`, `client_cert`, `client_key` の指定には `str` ではなく `bytes` を使うようにする
   - @tnoho
+- [ADD] WebRTC Encoded Transform に対応する
+  - `SoraTransformableAudioFrame` と `SoraTransformableVideoFrame` を追加
+  - `SoraAudioFrameTransformer` と `SoraVideoFrameTransformer` を追加
+  - `create_connection()` の引数に `audio_frame_transformer` と `video_frame_transformer` を追加
+  - `SoraMediaTrack` に `set_frame_transformer()` を追加
+  - @tnoho
 - [ADD] サーバー証明書チェック用の CA 証明書を指定できるようにする
   - `Sora.create_connection()` の引数に `ca_cert` を追加する
   - @voluntas
