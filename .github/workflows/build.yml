@@ -29,7 +29,7 @@ jobs:
       - run: |
           sudo apt-get -y install libva-dev libdrm-dev libx11-dev
       - uses: astral-sh/setup-uv@v3
-      - run: uv python pin 3.12
+      - run: uv python pin 3.13
       - run: uv sync
       - name: Generate pyi
         run: |
