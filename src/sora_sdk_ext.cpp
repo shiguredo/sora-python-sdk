@@ -6,6 +6,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/vector.h>
 
 #include "sora.h"
@@ -13,6 +14,7 @@
 #include "sora_audio_source.h"
 #include "sora_audio_stream_sink.h"
 #include "sora_connection.h"
+#include "sora_frame_transformer.h"
 #include "sora_log.h"
 #include "sora_track_interface.h"
 #include "sora_vad.h"
@@ -86,6 +88,44 @@ int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
 
 PyType_Slot video_sink_slots[] = {
     {Py_tp_traverse, (void*)video_sink_tp_traverse},
+    {0, nullptr}};
+
+int audio_frame_transformer_tp_traverse(PyObject* self,
+                                        visitproc visit,
+                                        void* arg) {
+  SoraAudioFrameTransformer* audio_frame_transformer =
+      nb::inst_ptr<SoraAudioFrameTransformer>(self);
+
+  if (audio_frame_transformer->on_transform_) {
+    nb::object on_transform =
+        nb::cast(audio_frame_transformer->on_transform_, nb::rv_policy::none);
+    Py_VISIT(on_transform.ptr());
+  }
+
+  return 0;
+}
+
+PyType_Slot audio_frame_transformer_slots[] = {
+    {Py_tp_traverse, (void*)audio_frame_transformer_tp_traverse},
+    {0, nullptr}};
+
+int video_frame_transformer_tp_traverse(PyObject* self,
+                                        visitproc visit,
+                                        void* arg) {
+  SoraVideoFrameTransformer* video_frame_transformer =
+      nb::inst_ptr<SoraVideoFrameTransformer>(self);
+
+  if (video_frame_transformer->on_transform_) {
+    nb::object on_transform =
+        nb::cast(video_frame_transformer->on_transform_, nb::rv_policy::none);
+    Py_VISIT(on_transform.ptr());
+  }
+
+  return 0;
+}
+
+PyType_Slot video_frame_transformer_slots[] = {
+    {Py_tp_traverse, (void*)video_frame_transformer_tp_traverse},
     {0, nullptr}};
 
 int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
@@ -205,7 +245,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
 
   nb::class_<SoraMediaTrack, SoraTrackInterface>(m, "SoraMediaTrack")
-      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id);
+      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id)
+      .def("set_frame_transformer", &SoraMediaTrack::SetFrameTransformer);
 
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
       .def("on_data",
@@ -316,6 +357,82 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_track", &SoraConnection::on_track_)
       .def_rw("on_data_channel", &SoraConnection::on_data_channel_);
 
+  nb::enum_<webrtc::TransformableFrameInterface::Direction>(
+      m, "SoraTransformableFrameDirection", nb::is_arithmetic())
+      .value("UNKNOWN",
+             webrtc::TransformableFrameInterface::Direction::kUnknown)
+      .value("RECEIVER",
+             webrtc::TransformableFrameInterface::Direction::kReceiver)
+      .value("SENDER", webrtc::TransformableFrameInterface::Direction::kSender);
+
+  nb::class_<SoraTransformableFrame>(m, "SoraTransformableFrame")
+      .def("get_data", &SoraTransformableFrame::GetData,
+           nb::rv_policy::reference_internal)
+      .def("set_data", &SoraTransformableFrame::SetData)
+      .def_prop_ro("payload_type", &SoraTransformableFrame::GetPayloadType)
+      .def_prop_ro("ssrc", &SoraTransformableFrame::GetSsrc)
+      .def_prop_rw("rtp_timestamp", &SoraTransformableFrame::GetTimestamp,
+                   &SoraTransformableFrame::SetRTPTimestamp)
+      .def_prop_ro("direction", &SoraTransformableFrame::GetDirection)
+      .def_prop_ro("mine_type", &SoraTransformableFrame::GetMimeType);
+
+  nb::enum_<webrtc::TransformableAudioFrameInterface::FrameType>(
+      m, "SoraTransformableAudioFrameType", nb::is_arithmetic())
+      .value("EMPTY",
+             webrtc::TransformableAudioFrameInterface::FrameType::kEmptyFrame)
+      .value("SPEECH", webrtc::TransformableAudioFrameInterface::FrameType::
+                           kAudioFrameSpeech)
+      .value(
+          "CN",
+          webrtc::TransformableAudioFrameInterface::FrameType::kAudioFrameCN);
+
+  nb::class_<SoraTransformableAudioFrame, SoraTransformableFrame>(
+      m, "SoraTransformableAudioFrame")
+      .def_prop_ro("contributing_sources",
+                   &SoraTransformableAudioFrame::GetContributingSources)
+      .def_prop_ro("sequence_number",
+                   &SoraTransformableAudioFrame::SequenceNumber)
+      .def_prop_ro("absolute_capture_timestamp",
+                   &SoraTransformableAudioFrame::AbsoluteCaptureTimestamp)
+      .def_prop_ro("type", &SoraTransformableAudioFrame::Type)
+      .def_prop_ro("audio_level", &SoraTransformableAudioFrame::AudioLevel)
+      .def_prop_ro("receive_time", &SoraTransformableAudioFrame::ReceiveTime);
+  ;
+
+  nb::class_<SoraTransformableVideoFrame, SoraTransformableFrame>(
+      m, "SoraTransformableVideoFrame")
+      .def_prop_ro("is_key_frame", &SoraTransformableVideoFrame::IsKeyFrame)
+      .def_prop_ro("frame_id", &SoraTransformableVideoFrame::GetFrameId)
+      .def_prop_ro("frame_dependencies",
+                   &SoraTransformableVideoFrame::GetFrameDependencies)
+      .def_prop_ro("width", &SoraTransformableVideoFrame::GetWidth)
+      .def_prop_ro("height", &SoraTransformableVideoFrame::GetHeight)
+      .def_prop_ro("spatial_index",
+                   &SoraTransformableVideoFrame::GetSpatialIndex)
+      .def_prop_ro("temporal_index",
+                   &SoraTransformableVideoFrame::GetTemporalIndex)
+      .def_prop_ro("contributing_sources",
+                   &SoraTransformableVideoFrame::GetCsrcs);
+
+  nb::class_<SoraFrameTransformer>(m, "SoraFrameTransformer")
+      .def("enqueue", &SoraFrameTransformer::Enqueue)
+      .def("start_short_circuiting",
+           &SoraFrameTransformer::StartShortCircuiting);
+
+  nb::class_<SoraAudioFrameTransformer, SoraFrameTransformer>(
+      m, "SoraAudioFrameTransformer",
+      nb::type_slots(audio_frame_transformer_slots))
+      .def(nb::init<>())
+      .def("__del__", &SoraAudioFrameTransformer::Del)
+      .def_rw("on_transform", &SoraAudioFrameTransformer::on_transform_);
+
+  nb::class_<SoraVideoFrameTransformer, SoraFrameTransformer>(
+      m, "SoraVideoFrameTransformer",
+      nb::type_slots(video_frame_transformer_slots))
+      .def(nb::init<>())
+      .def("__del__", &SoraVideoFrameTransformer::Del)
+      .def_rw("on_transform", &SoraVideoFrameTransformer::on_transform_);
+
   nb::class_<Sora>(m, "Sora")
       .def(nb::init<std::optional<bool>, std::optional<std::string>>(),
            "use_hardware_encoder"_a = nb::none(), "openh264"_a = nb::none())
@@ -324,10 +441,12 @@ NB_MODULE(sora_sdk_ext, m) {
            "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),
            "signaling_notify_metadata"_a = nb::none(),
            "audio_source"_a = nb::none(), "video_source"_a = nb::none(),
-           "audio"_a = nb::none(), "video"_a = nb::none(),
-           "audio_codec_type"_a = nb::none(), "video_codec_type"_a = nb::none(),
-           "video_bit_rate"_a = nb::none(), "audio_bit_rate"_a = nb::none(),
-           "video_vp9_params"_a = nb::none(), "video_av1_params"_a = nb::none(),
+           "audio_frame_transformer"_a = nb::none(),
+           "video_frame_transformer"_a = nb::none(), "audio"_a = nb::none(),
+           "video"_a = nb::none(), "audio_codec_type"_a = nb::none(),
+           "video_codec_type"_a = nb::none(), "video_bit_rate"_a = nb::none(),
+           "audio_bit_rate"_a = nb::none(), "video_vp9_params"_a = nb::none(),
+           "video_av1_params"_a = nb::none(),
            "video_h264_params"_a = nb::none(), "simulcast"_a = nb::none(),
            "spotlight"_a = nb::none(), "spotlight_number"_a = nb::none(),
            "simulcast_rid"_a = nb::none(), "spotlight_focus_rid"_a = nb::none(),
@@ -355,6 +474,8 @@ NB_MODULE(sora_sdk_ext, m) {
                    "signaling_notify_metadata: Optional[dict] = None, "
                    "audio_source: Optional[SoraTrackInterface] = None, "
                    "video_source: Optional[SoraTrackInterface] = None, "
+                   "audio_frame_transformer: Optional[SoraAudioFrameTransformer] = None, "
+                   "video_frame_transformer: Optional[SoraVideoFrameTransformer] = None, "
                    "audio: Optional[bool] = None, "
                    "video: Optional[bool] = None, "
                    "audio_codec_type: Optional[str] = None, "
