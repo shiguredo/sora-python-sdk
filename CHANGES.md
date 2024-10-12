@@ -67,6 +67,8 @@
   - @voluntas
 - [ADD] examples に E2E テストを追加する
   - @voluntas
+- [FIX] SoraVideoSource で RTP Timestamp を設定しないように修正
+  - @tnoho
 
 ## 2024.3.0
 
