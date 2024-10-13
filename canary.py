@@ -1,26 +1,35 @@
 import argparse
 import re
 import subprocess
+from typing import Optional
 
 
 # ファイルを読み込み、バージョンを更新
-def update_version(file_path, dry_run):
+def update_version(file_path: str, dry_run: bool) -> Optional[str]:
     with open(file_path, "r", encoding="utf-8") as f:
-        content = f.read()
+        content: str = f.read()
 
     # 現在のバージョンを取得
     current_version_match = re.search(r'version\s*=\s*"([\d\.\w]+)"', content)
     if not current_version_match:
         raise ValueError("Version not found or incorrect format in pyproject.toml")
 
-    current_version = current_version_match.group(1)
+    current_version: str = current_version_match.group(1)
 
-    # バージョンを更新
-    new_content, count = re.subn(
-        r'(version\s*=\s*")(\d+\.\d+\.\d+\.dev)(\d+)',
-        lambda m: f"{m.group(1)}{m.group(2)}{int(m.group(3)) + 1}",
-        content,
-    )
+    # バージョンが .devX を持っている場合の更新
+    if ".dev" in current_version:
+        new_content, count = re.subn(
+            r'(version\s*=\s*")(\d+\.\d+\.\d+\.dev)(\d+)',
+            lambda m: f"{m.group(1)}{m.group(2)}{int(m.group(3)) + 1}",
+            content,
+        )
+    else:
+        # .devX がない場合、次のマイナーバージョンにして .dev0 を追加
+        new_content, count = re.subn(
+            r'(version\s*=\s*")(\d+)\.(\d+)\.(\d+)',
+            lambda m: f"{m.group(1)}{m.group(2)}.{int(m.group(3)) + 1}.0.dev0",
+            content,
+        )
 
     if count == 0:
         raise ValueError("Version not found or incorrect format in pyproject.toml")
@@ -30,11 +39,11 @@ def update_version(file_path, dry_run):
     if not new_version_match:
         raise ValueError("Failed to extract the new version after the update.")
 
-    new_version = new_version_match.group(1)
+    new_version: str = new_version_match.group(1)
 
     print(f"Current version: {current_version}")
     print(f"New version: {new_version}")
-    confirmation = input("Do you want to update the version? (Y/n): ").strip().lower()
+    confirmation: str = input("Do you want to update the version? (Y/n): ").strip().lower()
 
     if confirmation != "y":
         print("Version update canceled.")
@@ -53,7 +62,7 @@ def update_version(file_path, dry_run):
 
 
 # uv sync を実行し、uv.lock を git に追加
-def run_uv_sync(dry_run):
+def run_uv_sync(dry_run: bool) -> None:
     if dry_run:
         print("Dry-run: Would run 'uv sync' and add 'uv.lock' to git")
     else:
@@ -67,7 +76,7 @@ def run_uv_sync(dry_run):
 
 
 # git コミット、タグ、プッシュを実行
-def git_operations(new_version, dry_run):
+def git_operations(new_version: str, dry_run: bool) -> None:
     if dry_run:
         print("Dry-run: Would run 'git add pyproject.toml' and 'git add uv.lock'")
         print(f"Dry-run: Would run 'git commit -m Bump version to {new_version}'")
@@ -83,7 +92,7 @@ def git_operations(new_version, dry_run):
 
 
 # メイン処理
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Update pyproject version, run uv sync, and commit changes."
     )
@@ -92,10 +101,10 @@ def main():
     )
     args = parser.parse_args()
 
-    pyproject_path = "pyproject.toml"
+    pyproject_path: str = "pyproject.toml"
 
     # バージョン更新
-    new_version = update_version(pyproject_path, args.dry_run)
+    new_version: Optional[str] = update_version(pyproject_path, args.dry_run)
 
     if not new_version:
         return  # ユーザーが確認をキャンセルした場合、処理を中断
