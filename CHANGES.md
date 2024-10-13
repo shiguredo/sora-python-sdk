@@ -68,6 +68,8 @@
 - [ADD] examples に E2E テストを追加する
   - @voluntas
 - [FIX] SoraVideoSource で RTP Timestamp を設定しないように修正
+  - この段階では値が決まらないはずの RTP Timestamp がフレームに設定されていたので修正する
+  - libwebrtc 内でもデコーダーがデコードした際に受信した RTP Timestamp を設定することに使用しており、キャプチャーでは使用されていませんでした
   - @tnoho
 
 ## 2024.3.0
