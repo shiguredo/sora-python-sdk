@@ -81,7 +81,7 @@ class SoraAudioSource : public SoraTrackInterface {
    * 
    * @param data 送信する 16bit PCM データの参照
    * @param samples_per_channel チャンネルごとのサンプル数
-   * @param timestamp Python の time.monotonic() で取得できるモノトニッククロックで表されるフレームのタイムスタンプ
+   * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
    */
   void OnData(const int16_t* data,
               size_t samples_per_channel,
@@ -99,7 +99,7 @@ class SoraAudioSource : public SoraTrackInterface {
    * Sora に送る音声データを渡します。
    * 
    * @param ndarray NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
-   * @param timestamp Python の time.monotonic() で取得できるモノトニッククロックで表されるフレームのタイムスタンプ
+   * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
    */
   void OnData(
       nb::ndarray<int16_t, nb::shape<-1, -1>, nb::c_contig, nb::device::cpu>
