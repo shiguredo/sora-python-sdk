@@ -69,6 +69,9 @@
   - @voluntas
 - [ADD] examples に E2E テストを追加する
   - @voluntas
+- [FIX] timestamp を付与するときの説明が time.time() となっていたのを time.monotonic() に修正
+  - libwebrtc 内の rtc::TimeMicros(), rtc::TimeMillis() の戻り値はエポックタイムではなくモノトニッククロックでした
+  - @tnoho
 
 ## 2024.3.0
 

@@ -58,7 +58,7 @@ class SoraVideoSource : public SoraTrackInterface {
    * 表示側で音声データの timestamp と同期を取るため遅延が発生する場合があります。
    * 
    * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
-   * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
+   * @param timestamp Python の time.monotonic() で取得できるモノトニッククロックで表されるフレームのタイムスタンプ
    */
   void OnCaptured(
       nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
@@ -73,7 +73,7 @@ class SoraVideoSource : public SoraTrackInterface {
    * 表示側で音声データの timestamp と同期を取るため遅延が発生する場合があります。
    * 
    * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
-   * @param timestamp_us マイクロ秒単位の整数で表されるフレームのタイムスタンプ
+   * @param timestamp_us マイクロ秒単位の整数で表されるフレームのモノトニッククロックにおけるタイムスタンプ
    */
   void OnCaptured(
       nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
@@ -97,7 +97,6 @@ class SoraVideoSource : public SoraTrackInterface {
                  const int height,
                  const int64_t timestamp_us);
 
-  const int kMsToRtpTimestamp = 90;
   rtc::scoped_refptr<sora::ScalableVideoTrackSource> source_;
   std::unique_ptr<std::thread> thread_;
   std::mutex queue_mtx_;
