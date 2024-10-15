@@ -17,19 +17,6 @@ wheels = [
 ]
 
 [[package]]
-name = "auditwheel"
-version = "6.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "packaging" },
-    { name = "pyelftools" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ce/12/af339761d80296e76033669e4179883108d8a7d79bb032bd58427a2b4485/auditwheel-6.1.0.tar.gz", hash = "sha256:3bdc686e774cf9e355e924b0fe5a562d55caa385d72234ffe7b81b378dba360f", size = 556250 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/87/14ef114af3495dd4d367c811b37c13b33bd1dfca410d14b0dfbcdef60c9b/auditwheel-6.1.0-py3-none-any.whl", hash = "sha256:e52f734861859e3743eb29fcac7da9c4921a1e4bea58f954b52f2926f8e9e364", size = 44057 },
-]
-
-[[package]]
 name = "build"
 version = "1.2.2.post1"
 source = { registry = "https://pypi.org/simple" }
@@ -271,15 +258,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pyelftools"
-version = "0.31"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/88/56/0f2d69ed9a0060da009f672ddec8a71c041d098a66f6b1d80264bf6bbdc0/pyelftools-0.31.tar.gz", hash = "sha256:c774416b10310156879443b81187d182d8d9ee499660380e645918b50bc88f99", size = 14108889 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f8/64/711030d9fe9ccaf6ee3ab1bcf4801c6bb3d0e585af18824a50b016b4f39c/pyelftools-0.31-py3-none-any.whl", hash = "sha256:f52de7b3c7e8c64c8abc04a79a1cf37ac5fb0b8a49809827130b858944840607", size = 180473 },
-]
-
-[[package]]
 name = "pyproject-hooks"
 version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -364,7 +342,6 @@ source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [
-    { name = "auditwheel" },
     { name = "build" },
     { name = "httpx" },
     { name = "mypy" },
@@ -382,7 +359,6 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "auditwheel", specifier = "~=6.1.0" },
     { name = "build", specifier = "~=1.2.2" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "mypy", specifier = ">=1.11" },
@@ -391,7 +367,7 @@ dev = [
     { name = "pytest", specifier = ">=8.3" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "ruff", specifier = ">=0.6" },
-    { name = "setuptools", specifier = ">=75.0" },
+    { name = "setuptools", specifier = ">=75.1" },
     { name = "typing-extensions", specifier = ">=4.12" },
     { name = "wheel", specifier = "~=0.44.0" },
 ]
