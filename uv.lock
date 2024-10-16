@@ -364,7 +364,7 @@ dev = [
     { name = "mypy" },
     { name = "nanobind", specifier = "~=2.2.0" },
     { name = "numpy", specifier = ">=2.1" },
-    { name = "pytest", specifier = ">=8.3" },
+    { name = "pytest" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "ruff" },
     { name = "setuptools", specifier = ">=75.1" },

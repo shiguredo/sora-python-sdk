@@ -52,8 +52,7 @@
   - @voluntas
 - [ADD] macos-15 を E2E テストに追加する
   - @voluntas
-- [CHANGE] ruff と mypy はバージョンを未指定にする
-  - 常に最新版で問題無い
+- [CHANGE] ruff と mypy と pytest はバージョンを未指定にして、常に最新版を利用するようにする
   - @voluntas
 - [CHANGE] 利用していなかった auditwheel を削除する
   - @voluntas
