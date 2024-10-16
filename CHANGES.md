@@ -50,6 +50,8 @@
 
 - [ADD] canary.py を追加
   - @voluntas
+- [ADD] Python 3.13 を E2E テストに追加する
+  - @voluntas
 - [ADD] macos-15 を E2E テストに追加する
   - @voluntas
 - [CHANGE] ruff と mypy と pytest はバージョンを未指定にして、常に最新版を利用するようにする
