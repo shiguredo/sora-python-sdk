@@ -6,6 +6,8 @@ import pytest
 from api import disconnect_connection_api
 from client import SoraClient, SoraRole
 
+from sora_sdk import SoraSignalingErrorCode
+
 
 @pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
 def test_websocket_signaling_only_disconnect_api(setup):
@@ -73,7 +75,7 @@ def test_websocket_datachannel_signaling_disconnect_api(setup):
     # TODO: LIFETIME-EXPIRED のテスト
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
+# @pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
 def test_datachannel_only_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -111,5 +113,9 @@ def test_datachannel_only_signaling_disconnect_api(setup):
         assert conn.close_message["type"] == "close"
         assert conn.close_message["code"] == 1000
         assert conn.close_message["reason"] == "DISCONNECTED-API"
+
+        assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
+        assert conn.disconnect_reason is not None
+        assert "DISCONNECTED-API" in conn.disconnect_reason
 
     # TODO: LIFETIME-EXPIRED のテスト

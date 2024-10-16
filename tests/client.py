@@ -136,6 +136,9 @@ class SoraClient:
         self._ws_close_reason: Optional[str] = None
         self._closed: Event = Event()
 
+        self._disconnect_error_code: Optional[int] = None
+        self._disconnect_error_message: Optional[str] = None
+
         self._default_connection_timeout_s: float = 10.0
 
         # signaling message
@@ -271,6 +274,14 @@ class SoraClient:
     def ws_close_reason(self) -> Optional[str]:
         return self._ws_close_reason
 
+    @property
+    def disconnect_code(self) -> Optional[int]:
+        return self._disconnect_code
+
+    @property
+    def disconnect_reason(self) -> Optional[str]:
+        return self._disconnect_reason
+
     def _fake_audio_loop(self):
         while not self._closed.is_set():
             time.sleep(0.02)
@@ -374,6 +385,10 @@ class SoraClient:
 
     def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
+
+        self._disconnect_code = error_code.value
+        self._disconnect_reason = message
+
         self._connected.clear()
         self._closed.set()
 
