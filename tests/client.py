@@ -4,7 +4,7 @@ import threading
 import time
 from enum import Enum
 from threading import Event
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import numpy
 
@@ -135,6 +135,8 @@ class SoraClient:
         self._ws_close_code: Optional[int] = None
         self._ws_close_reason: Optional[str] = None
         self._closed: Event = Event()
+
+        self._notify_queue: queue.Queue = queue.Queue()
 
         self._disconnect_error_code: Optional[int] = None
         self._disconnect_error_message: Optional[str] = None
@@ -359,6 +361,7 @@ class SoraClient:
 
     def _on_notify(self, raw_message: str) -> None:
         message: dict[str, Any] = json.loads(raw_message)
+        self._notify_queue.put(message)
         if (
             message["type"] == "notify"
             and message["event_type"] == "connection.created"
@@ -415,3 +418,9 @@ class SoraClient:
         if track.kind == "video":
             self._video_sink = SoraVideoSink(track)
             self._video_sink.on_frame = self._on_video_frame
+
+    def wait_notify(self, pred: Callable[[dict], bool], timeout: Optional[int] = 5):
+        while True:
+            notify = self._notify_queue.get(block=True, timeout=timeout)
+            if pred(notify):
+                return notify
