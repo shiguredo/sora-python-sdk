@@ -52,6 +52,11 @@
   - @voluntas
 - [ADD] macos-15 を E2E テストに追加する
   - @voluntas
+- [CHANGE] ruff と mypy はバージョンを未指定にする
+  - 常に最新版で問題無い
+  - @voluntas
+- [CHANGE] 利用していなかった auditwheel を削除する
+  - @voluntas
 - [CHANGE] examples を <https://github.com/shiguredo/sora-python-sdk-examples> に移動する
   - @voluntas
 - [CHANGE] rye から uv に変更する

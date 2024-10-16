@@ -61,14 +61,13 @@ dev-dependencies = [
     "setuptools>=75.1",
     "build~=1.2.2",
     "wheel~=0.44.0",
-    # "auditwheel~=6.1.0",
-    "ruff>=0.6",
     "typing-extensions>=4.12",
     "pytest>=8.3",
     "python-dotenv>=1.0",
     "numpy>=2.1",
-    "mypy>=1.11",
     "httpx>=0.27",
+    "ruff",
+    "mypy",
 ]
 
 [tool.ruff]
