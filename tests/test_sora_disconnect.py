@@ -39,10 +39,15 @@ def test_websocket_signaling_only_disconnect_api(setup):
         assert conn.ws_close_code == 1000
         assert conn.ws_close_reason == "DISCONNECTED-API"
 
+        # C++ SDK 側でこのテストが通るようなコードが必要
+        # assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
+        # assert conn.disconnect_reason is not None
+        # assert "DISCONNECTED-API" in conn.disconnect_reason
+
     # TODO: LIFETIME-EXPIRED のテスト
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
+# @pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
 def test_websocket_datachannel_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -72,10 +77,15 @@ def test_websocket_datachannel_signaling_disconnect_api(setup):
         assert conn.ws_close_code == 1000
         assert conn.ws_close_reason == "DISCONNECTED-API"
 
+        # C++ SDK 側でこのテストが通るようなコードが必要
+        # assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
+        # assert conn.disconnect_reason is not None
+        # assert "DISCONNECTED-API" in conn.disconnect_reason
+
     # TODO: LIFETIME-EXPIRED のテスト
 
 
-# @pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
+@pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
 def test_datachannel_only_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
