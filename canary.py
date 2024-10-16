@@ -85,7 +85,9 @@ def git_operations(new_version: str, dry_run: bool) -> None:
         print("Dry-run: Would run 'git push --tags'")
     else:
         subprocess.run(["git", "add", "pyproject.toml"], check=True)
-        subprocess.run(["git", "commit", "-m", f"Bump version to {new_version}"], check=True)
+        subprocess.run(
+            ["git", "commit", "-m", f"[canary] Bump version to {new_version}"], check=True
+        )
         subprocess.run(["git", "tag", new_version], check=True)
         subprocess.run(["git", "push"], check=True)
         subprocess.run(["git", "push", "--tags"], check=True)
