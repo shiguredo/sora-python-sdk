@@ -134,7 +134,7 @@ class SoraClient:
         self._ws_close: bool = False
         self._ws_close_code: Optional[int] = None
         self._ws_close_reason: Optional[str] = None
-        self._closed: Event = Event()
+        self._disconnected: Event = Event()
 
         self._notify_queue: queue.Queue = queue.Queue()
 
@@ -199,7 +199,7 @@ class SoraClient:
         print(f"send: label={label}, data={data!r}")
         # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
         if not self._is_data_channel_ready:
-            while not self._is_data_channel_ready and not self._closed.is_set():
+            while not self._is_data_channel_ready and not self._disconnected.is_set():
                 time.sleep(0.01)
 
         self._connection.send_data_channel(label, data)
@@ -285,13 +285,13 @@ class SoraClient:
         return self._disconnect_reason
 
     def _fake_audio_loop(self):
-        while not self._closed.is_set():
+        while not self._disconnected.is_set():
             time.sleep(0.02)
             if self._audio_source is not None:
                 self._audio_source.on_data(numpy.zeros((320, 1), dtype=numpy.int16))
 
     def _fake_video_loop(self):
-        while not self._closed.is_set():
+        while not self._disconnected.is_set():
             time.sleep(1.0 / 30)
             if self._video_source is not None:
                 self._video_source.on_captured(
@@ -393,7 +393,7 @@ class SoraClient:
         self._disconnect_reason = message
 
         self._connected.clear()
-        self._closed.set()
+        self._disconnected.set()
 
         if self._fake_audio_thread is not None:
             self._fake_audio_thread.join(timeout=10)
