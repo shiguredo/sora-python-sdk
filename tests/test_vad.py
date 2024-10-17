@@ -30,7 +30,7 @@ class VAD:
         # 接続した
         self._connected: Event = Event()
         # 終了
-        self._closed = Event()
+        self._disconnected = Event()
 
         self._audio_output_frequency: int = 24000
         self._audio_output_channels: int = 1
@@ -86,7 +86,7 @@ class VAD:
 
     def _on_disconnect(self, error_code, message):
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
-        self._closed = True
+        self._disconnected.set()
         self._connected.clear()
 
     def _on_frame(self, frame: SoraAudioFrame):

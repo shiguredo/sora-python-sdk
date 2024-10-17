@@ -29,7 +29,7 @@ def test_signaling_notify(setup):
 
         with SoraClient(
             signaling_urls,
-            SoraRole.SENDONLY,
+            SoraRole.SENDRECV,
             channel_id,
             audio=True,
             video=True,

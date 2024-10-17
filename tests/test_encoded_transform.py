@@ -35,7 +35,7 @@ class SendonlyEncodedTransform:
         # 接続した
         self._connected: Event = Event()
         # 終了
-        self._closed = Event()
+        self._disconnected = Event()
 
         self._audio_channels: int = 1
         self._audio_sample_rate: int = 16000
@@ -117,13 +117,13 @@ class SendonlyEncodedTransform:
         return self._is_called_on_video_transform
 
     def _fake_audio_loop(self):
-        while not self._closed.is_set():
+        while not self._disconnected.is_set():
             time.sleep(0.02)
             if self._audio_source is not None:
                 self._audio_source.on_data(numpy.zeros((320, 1), dtype=numpy.int16))
 
     def _fake_video_loop(self):
-        while not self._closed.is_set():
+        while not self._disconnected.is_set():
             time.sleep(1.0 / 30)
             if self._video_source is not None:
                 self._video_source.on_captured(
@@ -148,7 +148,7 @@ class SendonlyEncodedTransform:
 
     def _on_disconnect(self, error_code, message):
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
-        self._closed.set()
+        self._disconnected.set()
         self._connected.clear()
 
         if self._fake_audio_thread is not None:
@@ -209,7 +209,7 @@ class RecvonlyEncodedTransform:
         # 接続した
         self._connected: Event = Event()
         # 終了
-        self._closed = Event()
+        self._disconnected = Event()
 
         self._audio_output_frequency: int = 24000
         self._audio_output_channels: int = 1
@@ -276,7 +276,7 @@ class RecvonlyEncodedTransform:
 
     def _on_disconnect(self, error_code, message):
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
-        self._closed = True
+        self._disconnected.set()
         self._connected.clear()
 
     def _on_track(self, track: SoraMediaTrack) -> None:
