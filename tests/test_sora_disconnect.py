@@ -35,6 +35,8 @@ def test_websocket_signaling_only_disconnect_api(setup):
         response = disconnect_connection_api(api_url, channel_id, conn.connection_id)
         assert response.status_code == 200
 
+        time.sleep(3)
+
         assert conn.ws_close is True
         assert conn.ws_close_code == 1000
         assert conn.ws_close_reason == "DISCONNECTED-API"
@@ -72,6 +74,8 @@ def test_websocket_datachannel_signaling_disconnect_api(setup):
             raise ValueError("connection_id is None")
         response = disconnect_connection_api(api_url, channel_id, conn.connection_id)
         assert response.status_code == 200
+
+        time.sleep(3)
 
         assert conn.ws_close is True
         assert conn.ws_close_code == 1000
