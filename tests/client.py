@@ -294,9 +294,19 @@ class SoraClient:
         while not self._disconnected.is_set():
             time.sleep(1.0 / 30)
             if self._video_source is not None:
-                self._video_source.on_captured(
-                    numpy.zeros((self._video_height, self._video_width, 3), dtype=numpy.uint8)
-                )
+                # self._video_source.on_captured(
+                #     numpy.zeros((self._video_height, self._video_width, 3), dtype=numpy.uint8)
+                # )
+
+                # お試し randint
+                def generate_random_image():
+                    random_color = numpy.random.randint(0, 256, size=(3,), dtype=numpy.uint8)
+                    return numpy.full(
+                        (self._video_height, self._video_width, 3), random_color, dtype=numpy.uint8
+                    )
+
+                random_image = generate_random_image()
+                self._video_source.on_captured(random_image)
 
     def _on_signaling_message(
         self,
