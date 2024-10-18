@@ -226,7 +226,7 @@ def main():
             args.local_sora_cpp_sdk_args,
         )
 
-        configuration = "Release"
+        configuration = "Debug" if args.debug else "Release"
 
         webrtc_platform = get_webrtc_platform(platform)
         webrtc_info = get_webrtc_info(
