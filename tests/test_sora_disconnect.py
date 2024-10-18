@@ -47,7 +47,7 @@ def test_websocket_signaling_only_disconnect_api(setup):
     # TODO: LIFETIME-EXPIRED のテスト
 
 
-# @pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
+@pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
 def test_websocket_datachannel_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
