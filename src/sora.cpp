@@ -172,10 +172,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   if (proxy_agent) {
     config.proxy_agent = *proxy_agent;
   }
-  config.network_manager =
-      factory_->GetConnectionContext()->default_network_manager();
-  config.socket_factory =
-      factory_->GetConnectionContext()->default_socket_factory();
+  config.network_manager = factory_->default_network_manager();
+  config.socket_factory = factory_->default_socket_factory();
 
   config.sora_client = "Sora Python SDK";
   try {
