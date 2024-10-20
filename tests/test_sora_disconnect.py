@@ -4,7 +4,7 @@ import uuid
 
 import pytest
 from api import disconnect_connection_api
-from client import SoraClient, SoraRole
+from client import SoraClient, SoraRole, SoraSignalingMessageType
 
 from sora_sdk import SoraSignalingErrorCode
 
@@ -124,9 +124,9 @@ def test_datachannel_only_signaling_disconnect_api(setup):
         time.sleep(3)
 
         assert conn.close_message is not None
-        assert conn.close_message["type"] == "close"
-        assert conn.close_message["code"] == 1000
-        assert conn.close_message["reason"] == "DISCONNECTED-API"
+        assert conn.close_message.type == SoraSignalingMessageType.CLOSE
+        assert conn.close_message.message["code"] == 1000
+        assert conn.close_message.message["reason"] == "DISCONNECTED-API"
 
         assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
         assert conn.disconnect_reason is not None

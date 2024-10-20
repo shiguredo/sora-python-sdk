@@ -29,6 +29,42 @@ class SoraRole(Enum):
     RECVONLY = "recvonly"
 
 
+class SoraSignalingMessageType(Enum):
+    CONNECT = "connect"
+    REDIRECT = "redirect"
+    OFFER = "offer"
+    ANSWER = "answer"
+    CANDIDATE = "candidate"
+    RE_OFFER = "re-offer"
+    RE_ANSWER = "re-answer"
+    DISCONNECT = "disconnect"
+    CLOSE = "close"
+
+
+class SoraSignalingMessage:
+    def __init__(
+        self,
+        type: SoraSignalingMessageType,
+        direction: SoraSignalingDirection,
+        message: dict[str, Any],
+    ):
+        self._type = type
+        self._direction = direction
+        self._message = message
+
+    @property
+    def type(self) -> SoraSignalingMessageType:
+        return self._type
+
+    @property
+    def direction(self) -> SoraSignalingDirection:
+        return self._direction
+
+    @property
+    def message(self) -> dict[str, Any]:
+        return self._message
+
+
 class SoraClient:
     def __init__(
         self,
@@ -144,15 +180,15 @@ class SoraClient:
         self._default_connection_timeout_s: float = 10.0
 
         # signaling message
-        self._connect_message: Optional[dict[str, Any]] = None
-        self._redirect_message: Optional[dict[str, Any]] = None
-        self._offer_message: Optional[dict[str, Any]] = None
-        self._answer_message: Optional[dict[str, Any]] = None
-        self._candidate_messages: list[dict[str, Any]] = []
-        self._re_offer_messages: list[dict[str, Any]] = []
-        self._re_answer_messages: list[dict[str, Any]] = []
-        self._disconnect_message: Optional[dict[str, Any]] = None
-        self._close_message: Optional[dict[str, Any]] = None
+        self._connect_message: Optional[SoraSignalingMessage] = None
+        self._redirect_message: Optional[SoraSignalingMessage] = None
+        self._offer_message: Optional[SoraSignalingMessage] = None
+        self._answer_message: Optional[SoraSignalingMessage] = None
+        self._candidate_messages: list[SoraSignalingMessage] = []
+        self._re_offer_messages: list[SoraSignalingMessage] = []
+        self._re_answer_messages: list[SoraSignalingMessage] = []
+        self._disconnect_message: Optional[SoraSignalingMessage] = None
+        self._close_message: Optional[SoraSignalingMessage] = None
 
         # callback
         self._connection.on_signaling_message = self._on_signaling_message
@@ -217,39 +253,39 @@ class SoraClient:
         return self._connection_id
 
     @property
-    def connect_message(self) -> Optional[dict[str, Any]]:
+    def connect_message(self) -> Optional[SoraSignalingMessage]:
         return self._connect_message
 
     @property
-    def redirect_message(self) -> Optional[dict[str, Any]]:
+    def redirect_message(self) -> Optional[SoraSignalingMessage]:
         return self._redirect_message
 
     @property
-    def offer_message(self) -> Optional[dict[str, Any]]:
+    def offer_message(self) -> Optional[SoraSignalingMessage]:
         return self._offer_message
 
     @property
-    def answer_message(self) -> Optional[dict[str, Any]]:
+    def answer_message(self) -> Optional[SoraSignalingMessage]:
         return self._answer_message
 
     @property
-    def candidate_messages(self) -> list[dict[str, Any]]:
+    def candidate_messages(self) -> list[SoraSignalingMessage]:
         return self._candidate_messages
 
     @property
-    def re_offer_messages(self) -> list[dict[str, Any]]:
+    def re_offer_messages(self) -> list[SoraSignalingMessage]:
         return self._re_offer_messages
 
     @property
-    def re_answer_messages(self) -> list[dict[str, Any]]:
+    def re_answer_messages(self) -> list[SoraSignalingMessage]:
         return self._re_answer_messages
 
     @property
-    def disconnect_message(self) -> Optional[dict[str, Any]]:
+    def disconnect_message(self) -> Optional[SoraSignalingMessage]:
         return self._disconnect_message
 
     @property
-    def close_message(self) -> Optional[dict[str, Any]]:
+    def close_message(self) -> Optional[SoraSignalingMessage]:
         return self._close_message
 
     @property
@@ -316,38 +352,48 @@ class SoraClient:
     ):
         message: dict[str, Any] = json.loads(raw_message)
         match message["type"]:
-            case "connect":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._connect_message = message
-            case "redirect":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._redirect_message = message
-            case "offer":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._offer_message = message
-            case "answer":
-                assert signaling_type == SoraSignalingType.WEBSOCKET
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._answer_message = message
-            case "candidate":
-                self._candidate_messages.append(message)
-            case "re-offer":
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._re_offer_messages.append(message)
-            case "re-answer":
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._re_answer_messages.append(message)
-            case "disconnect":
-                assert signaling_direction == SoraSignalingDirection.SENT
-                self._disconnect_message = message
-            case "close":
-                print(f"type: close: {message}")
-                assert signaling_type == SoraSignalingType.DATACHANNEL
-                assert signaling_direction == SoraSignalingDirection.RECEIVED
-                self._close_message = message
+            case SoraSignalingMessageType.CONNECT.value:
+                self._connect_message = SoraSignalingMessage(
+                    SoraSignalingMessageType.CONNECT, signaling_direction, message
+                )
+            case SoraSignalingMessageType.REDIRECT.value:
+                self._redirect_message = SoraSignalingMessage(
+                    SoraSignalingMessageType.REDIRECT, signaling_direction, message
+                )
+            case SoraSignalingMessageType.OFFER.value:
+                self._offer_message = SoraSignalingMessage(
+                    SoraSignalingMessageType.OFFER, signaling_direction, message
+                )
+            case SoraSignalingMessageType.ANSWER.value:
+                self._answer_message = SoraSignalingMessage(
+                    SoraSignalingMessageType.ANSWER, signaling_direction, message
+                )
+            case SoraSignalingMessageType.CANDIDATE.value:
+                self._candidate_messages.append(
+                    SoraSignalingMessage(
+                        SoraSignalingMessageType.CANDIDATE, signaling_direction, message
+                    )
+                )
+            case SoraSignalingMessageType.RE_OFFER.value:
+                self._re_offer_messages.append(
+                    SoraSignalingMessage(
+                        SoraSignalingMessageType.RE_OFFER, signaling_direction, message
+                    )
+                )
+            case SoraSignalingMessageType.RE_ANSWER.value:
+                self._re_answer_messages.append(
+                    SoraSignalingMessage(
+                        SoraSignalingMessageType.RE_ANSWER, signaling_direction, message
+                    )
+                )
+            case SoraSignalingMessageType.DISCONNECT.value:
+                self._disconnect_message = SoraSignalingMessage(
+                    SoraSignalingMessageType.DISCONNECT, signaling_direction, message
+                )
+            case SoraSignalingMessageType.CLOSE.value:
+                self._close_message = SoraSignalingMessage(
+                    SoraSignalingMessageType.CLOSE, signaling_direction, message
+                )
             case _:
                 NotImplementedError(f"Unknown signaling message type: {message['type']}")
 

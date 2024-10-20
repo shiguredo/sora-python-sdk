@@ -38,9 +38,9 @@ def test_macos_video_hwa_sendonly(setup, video_codec_type):
     time.sleep(5)
 
     assert sendonly.connect_message is not None
-    assert sendonly.connect_message["channel_id"] == channel_id
-    assert "video" in sendonly.connect_message
-    assert sendonly.connect_message["video"]["codec_type"] == video_codec_type
+    assert sendonly.connect_message.message["channel_id"] == channel_id
+    assert "video" in sendonly.connect_message.message
+    assert sendonly.connect_message.message["video"]["codec_type"] == video_codec_type
 
     sendonly_stats = sendonly.get_stats()
 
@@ -97,8 +97,8 @@ def test_macos_simulcast(setup, video_codec_type, expected_implementation):
 
     # "type": "answer" の SDP で Simulcast があるかどうか
     assert sendonly.answer_message is not None
-    assert "sdp" in sendonly.answer_message
-    assert "a=simulcast:send r0;r1;r2" in sendonly.answer_message["sdp"]
+    assert "sdp" in sendonly.answer_message.message
+    assert "a=simulcast:send r0;r1;r2" in sendonly.answer_message.message["sdp"]
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
