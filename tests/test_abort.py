@@ -1,4 +1,5 @@
 import sys
+import time
 import uuid
 
 from api import disconnect_channel_api
@@ -12,7 +13,7 @@ def test_abort(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
-
+    api_url = setup.get("api_url")
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     conn1 = SoraClient(
@@ -33,5 +34,15 @@ def test_abort(setup):
         metadata=metadata,
     ).connect()
 
-    response = disconnect_channel_api(signaling_urls, channel_id)
+    time.sleep(3)
+
+    response = disconnect_channel_api(api_url, channel_id)
     assert response.status_code == 200, [response.text]
+
+    time.sleep(3)
+
+    assert conn1.disconnected is True
+    assert conn2.disconnected is True
+
+    # conn1.disconnect()
+    # conn2.disconnect()
