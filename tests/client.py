@@ -206,14 +206,12 @@ class SoraClient:
             self.connect()
             return self
 
-        self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
-
-        return self
+        return self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.disconnect()
 
-    def connect(self, fake_audio=False, fake_video=False) -> None:
+    def connect(self, fake_audio=False, fake_video=False) -> "SoraClient":
         self._connection.connect()
 
         if fake_audio:
@@ -227,6 +225,8 @@ class SoraClient:
         assert self._connected.wait(
             self._default_connection_timeout_s
         ), "Could not connect to Sora."
+
+        return self
 
     def disconnect(self) -> None:
         self._connection.disconnect()
@@ -319,6 +319,10 @@ class SoraClient:
     @property
     def disconnect_reason(self) -> Optional[str]:
         return self._disconnect_reason
+
+    @property
+    def disconnected(self) -> bool:
+        return self._disconnected.is_set()
 
     def _fake_audio_loop(self):
         while not self._disconnected.is_set():
