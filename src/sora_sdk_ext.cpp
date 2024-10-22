@@ -36,18 +36,24 @@ int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   // コールバックがある場合
   if (audio_sink->on_format_) {
     // コールバック変数の参照を取得して
-    nb::object on_format =
-        nb::cast(audio_sink->on_format_, nb::rv_policy::none);
+    nb::object on_format = nb::find(audio_sink->on_format_);
     // ガベージコレクタに伝える
     Py_VISIT(on_format.ptr());
   }
 
   // 上に同じ
   if (audio_sink->on_data_) {
-    nb::object on_data = nb::cast(audio_sink->on_data_, nb::rv_policy::none);
+    nb::object on_data = nb::find(audio_sink->on_data_);
     Py_VISIT(on_data.ptr());
   }
 
+  return 0;
+}
+
+int audio_sink_tp_clear(PyObject* self) {
+  SoraAudioSinkImpl* audio_sink = nb::inst_ptr<SoraAudioSinkImpl>(self);
+  audio_sink->on_format_ = nullptr;
+  audio_sink->on_data_ = nullptr;
   return 0;
 }
 
@@ -57,6 +63,7 @@ int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
  */
 PyType_Slot audio_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_sink_tp_traverse},
+    {Py_tp_clear, (void*)audio_sink_tp_clear},
     {0, nullptr}};
 
 int audio_stream_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
@@ -64,30 +71,45 @@ int audio_stream_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
       nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
 
   if (audio_sink->on_frame_) {
-    nb::object on_frame = nb::cast(audio_sink->on_frame_, nb::rv_policy::none);
+    nb::object on_frame = nb::find(audio_sink->on_frame_);
     Py_VISIT(on_frame.ptr());
   }
 
   return 0;
 }
 
+int audio_stream_sink_tp_clear(PyObject* self) {
+  SoraAudioStreamSinkImpl* audio_sink =
+      nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
+  audio_sink->on_frame_ = nullptr;
+  return 0;
+}
+
 PyType_Slot audio_stream_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_stream_sink_tp_traverse},
+    {Py_tp_clear, (void*)audio_stream_sink_tp_clear},
     {0, nullptr}};
 
 int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   SoraVideoSinkImpl* video_sink = nb::inst_ptr<SoraVideoSinkImpl>(self);
 
   if (video_sink->on_frame_) {
-    nb::object on_frame = nb::cast(video_sink->on_frame_, nb::rv_policy::none);
+    nb::object on_frame = nb::find(video_sink->on_frame_);
     Py_VISIT(on_frame.ptr());
   }
 
   return 0;
 }
 
+int video_sink_tp_clear(PyObject* self) {
+  SoraVideoSinkImpl* video_sink = nb::inst_ptr<SoraVideoSinkImpl>(self);
+  video_sink->on_frame_ = nullptr;
+  return 0;
+}
+
 PyType_Slot video_sink_slots[] = {
     {Py_tp_traverse, (void*)video_sink_tp_traverse},
+    {Py_tp_clear, (void*)video_sink_tp_clear},
     {0, nullptr}};
 
 int audio_frame_transformer_tp_traverse(PyObject* self,
@@ -97,16 +119,23 @@ int audio_frame_transformer_tp_traverse(PyObject* self,
       nb::inst_ptr<SoraAudioFrameTransformer>(self);
 
   if (audio_frame_transformer->on_transform_) {
-    nb::object on_transform =
-        nb::cast(audio_frame_transformer->on_transform_, nb::rv_policy::none);
+    nb::object on_transform = nb::find(audio_frame_transformer->on_transform_);
     Py_VISIT(on_transform.ptr());
   }
 
   return 0;
 }
 
+int audio_frame_transformer_tp_clear(PyObject* self) {
+  SoraAudioFrameTransformer* audio_frame_transformer =
+      nb::inst_ptr<SoraAudioFrameTransformer>(self);
+  audio_frame_transformer->on_transform_ = nullptr;
+  return 0;
+}
+
 PyType_Slot audio_frame_transformer_slots[] = {
     {Py_tp_traverse, (void*)audio_frame_transformer_tp_traverse},
+    {Py_tp_clear, (void*)audio_frame_transformer_tp_clear},
     {0, nullptr}};
 
 int video_frame_transformer_tp_traverse(PyObject* self,
@@ -116,80 +145,99 @@ int video_frame_transformer_tp_traverse(PyObject* self,
       nb::inst_ptr<SoraVideoFrameTransformer>(self);
 
   if (video_frame_transformer->on_transform_) {
-    nb::object on_transform =
-        nb::cast(video_frame_transformer->on_transform_, nb::rv_policy::none);
+    nb::object on_transform = nb::find(video_frame_transformer->on_transform_);
     Py_VISIT(on_transform.ptr());
   }
 
   return 0;
 }
 
+int video_frame_transformer_tp_clear(PyObject* self) {
+  SoraVideoFrameTransformer* video_frame_transformer =
+      nb::inst_ptr<SoraVideoFrameTransformer>(self);
+  video_frame_transformer->on_transform_ = nullptr;
+  return 0;
+}
+
 PyType_Slot video_frame_transformer_slots[] = {
     {Py_tp_traverse, (void*)video_frame_transformer_tp_traverse},
+    {Py_tp_clear, (void*)video_frame_transformer_tp_clear},
     {0, nullptr}};
 
 int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   SoraConnection* conn = nb::inst_ptr<SoraConnection>(self);
 
   if (conn->on_set_offer_) {
-    nb::object on_set_offer =
-        nb::cast(conn->on_set_offer_, nb::rv_policy::none);
+    nb::object on_set_offer = nb::find(conn->on_set_offer_);
     Py_VISIT(on_set_offer.ptr());
   }
 
   if (conn->on_ws_close_) {
-    nb::object on_ws_close = nb::cast(conn->on_ws_close_, nb::rv_policy::none);
+    nb::object on_ws_close = nb::find(conn->on_ws_close_);
     Py_VISIT(on_ws_close.ptr());
   }
 
   if (conn->on_disconnect_) {
-    nb::object on_disconnect =
-        nb::cast(conn->on_disconnect_, nb::rv_policy::none);
+    nb::object on_disconnect = nb::find(conn->on_disconnect_);
     Py_VISIT(on_disconnect.ptr());
   }
 
   if (conn->on_signaling_message_) {
-    nb::object on_disconnect =
-        nb::cast(conn->on_signaling_message_, nb::rv_policy::none);
+    nb::object on_disconnect = nb::find(conn->on_signaling_message_);
     Py_VISIT(on_disconnect.ptr());
   }
 
   if (conn->on_notify_) {
-    nb::object on_notify = nb::cast(conn->on_notify_, nb::rv_policy::none);
+    nb::object on_notify = nb::find(conn->on_notify_);
     Py_VISIT(on_notify.ptr());
   }
 
   if (conn->on_push_) {
-    nb::object on_push = nb::cast(conn->on_push_, nb::rv_policy::none);
+    nb::object on_push = nb::find(conn->on_push_);
     Py_VISIT(on_push.ptr());
   }
 
   if (conn->on_message_) {
-    nb::object on_message = nb::cast(conn->on_message_, nb::rv_policy::none);
+    nb::object on_message = nb::find(conn->on_message_);
     Py_VISIT(on_message.ptr());
   }
 
   if (conn->on_switched_) {
-    nb::object on_switched = nb::cast(conn->on_switched_, nb::rv_policy::none);
+    nb::object on_switched = nb::find(conn->on_switched_);
     Py_VISIT(on_switched.ptr());
   }
 
   if (conn->on_track_) {
-    nb::object on_track = nb::cast(conn->on_track_, nb::rv_policy::none);
+    nb::object on_track = nb::find(conn->on_track_);
     Py_VISIT(on_track.ptr());
   }
 
   if (conn->on_data_channel_) {
-    nb::object on_data_channel =
-        nb::cast(conn->on_data_channel_, nb::rv_policy::none);
+    nb::object on_data_channel = nb::find(conn->on_data_channel_);
     Py_VISIT(on_data_channel.ptr());
   }
 
   return 0;
 }
 
+int connection_tp_clear(PyObject* self) {
+  SoraConnection* conn = nb::inst_ptr<SoraConnection>(self);
+  conn->on_set_offer_ = nullptr;
+  conn->on_ws_close_ = nullptr;
+  conn->on_disconnect_ = nullptr;
+  conn->on_signaling_message_ = nullptr;
+  conn->on_notify_ = nullptr;
+  conn->on_push_ = nullptr;
+  conn->on_message_ = nullptr;
+  conn->on_switched_ = nullptr;
+  conn->on_track_ = nullptr;
+  conn->on_data_channel_ = nullptr;
+  return 0;
+}
+
 PyType_Slot connection_slots[] = {
     {Py_tp_traverse, (void*)connection_tp_traverse},
+    {Py_tp_clear, (void*)connection_tp_clear},
     {0, nullptr}};
 
 /**
@@ -474,8 +522,10 @@ NB_MODULE(sora_sdk_ext, m) {
                    "signaling_notify_metadata: Optional[dict] = None, "
                    "audio_source: Optional[SoraTrackInterface] = None, "
                    "video_source: Optional[SoraTrackInterface] = None, "
-                   "audio_frame_transformer: Optional[SoraAudioFrameTransformer] = None, "
-                   "video_frame_transformer: Optional[SoraVideoFrameTransformer] = None, "
+                   "audio_frame_transformer: "
+                   "Optional[SoraAudioFrameTransformer] = None, "
+                   "video_frame_transformer: "
+                   "Optional[SoraVideoFrameTransformer] = None, "
                    "audio: Optional[bool] = None, "
                    "video: Optional[bool] = None, "
                    "audio_codec_type: Optional[str] = None, "
