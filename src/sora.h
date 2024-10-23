@@ -59,6 +59,7 @@ class Sora : public DisposePublisher {
    * @param video_vp9_params (オプション)映像コーデック VP9 設定
    * @param video_av1_params (オプション)映像コーデック AV1 設定
    * @param video_h264_params (オプション)映像コーデック H264 設定
+   * @param audio_opus_params (オプション)音声コーデック OPUS 設定
    * @param simulcast (オプション)サイマルキャストの有効無効
    * @param spotlight (オプション)スポットライトの有効無効
    * @param spotlight_number (オプション)スポットライトのフォーカス数
@@ -109,6 +110,7 @@ class Sora : public DisposePublisher {
       const nb::handle& video_vp9_params,
       const nb::handle& video_av1_params,
       const nb::handle& video_h264_params,
+      const nb::handle& audio_opus_params,
       std::optional<bool> simulcast,
       std::optional<bool> spotlight,
       std::optional<int> spotlight_number,
