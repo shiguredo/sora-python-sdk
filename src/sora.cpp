@@ -35,6 +35,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const nb::handle& video_vp9_params,
     const nb::handle& video_av1_params,
     const nb::handle& video_h264_params,
+    const nb::handle& audio_opus_params,
     std::optional<bool> simulcast,
     std::optional<bool> spotlight,
     std::optional<int> spotlight_number,
@@ -101,6 +102,10 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   if (video_h264_params) {
     config.video_h264_params = ConvertJsonValue(
         video_h264_params, "Invalid JSON value in video_h264_params");
+  }
+  if (audio_opus_params) {
+    config.audio_opus_params = ConvertJsonValue(
+        audio_opus_params, "Invalid JSON value in audio_opus_params");
   }
   config.metadata =
       ConvertJsonValue(metadata, "Invalid JSON value in metadata");
