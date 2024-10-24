@@ -376,6 +376,10 @@ SoraSignalingConfig::DataChannel tag_invoke(
     data_channel.max_retransmits =
         boost::json::value_to<int32_t>(object["max_retransmits"]);
   }
+  if (!object["header"].is_null()) {
+    const auto& ar = object["header"].as_array();
+    data_channel.header.emplace(ar.begin(), ar.end());
+  }
 
   return data_channel;
 }
