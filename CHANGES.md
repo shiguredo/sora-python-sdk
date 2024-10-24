@@ -37,6 +37,8 @@
   - @tnoho
 - [ADD] `Sora.create_connection()` の引数に `audio_opus_params` を追加する
   - @melpon
+- [ADD] data_channels の要素に `header` を指定可能にする
+  - @melpon
 - [ADD] Encoded Transform に対応する
   - @tnoho
 - [UPDATE] nanobind を `2.2.0` に上げる
