@@ -44,8 +44,8 @@ def test_simulcast(setup, video_codec_type, expected_implementation):
 
     # "type": "answer" の SDP で Simulcast があるかどうか
     assert sendonly.answer_message is not None
-    assert "sdp" in sendonly.answer_message
-    assert "a=simulcast:send r0;r1;r2" in sendonly.answer_message["sdp"]
+    assert "sdp" in sendonly.answer_message.message
+    assert "a=simulcast:send r0;r1;r2" in sendonly.answer_message.message["sdp"]
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
@@ -65,4 +65,3 @@ def test_simulcast(setup, video_codec_type, expected_implementation):
         assert rtp_stat["encoderImplementation"] == expected_implementation
         assert rtp_stat["bytesSent"] > 0
         assert rtp_stat["packetsSent"] > 0
-

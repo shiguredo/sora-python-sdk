@@ -2,21 +2,20 @@ import sys
 import time
 import uuid
 
-import pytest
 from client import SoraClient, SoraRole
 
 
 def test_websocket_signaling_only_type_switched(setup):
+    """
+    - WebSocket シグナリングのみ
+    - type: switched 送られてこない
+    """
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    """
-    - WebSocket シグナリングのみ
-    - type: switched 送られてこない
-    """
     with SoraClient(
         signaling_urls,
         SoraRole.RECVONLY,
@@ -35,16 +34,16 @@ def test_websocket_signaling_only_type_switched(setup):
 
 
 def test_hybrid_signaling_type_switched(setup):
+    """
+    - WebSocket シグナリング + DataChannel シグナリング
+    - type: switched 送られてくる
+    """
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    """
-    - WebSocket シグナリング + DataChannel シグナリング
-    - type: switched 送られてくる
-    """
     with SoraClient(
         signaling_urls,
         SoraRole.RECVONLY,
@@ -63,17 +62,17 @@ def test_hybrid_signaling_type_switched(setup):
 
 
 def test_datachannel_signaling_only_type_switched(setup):
+    """
+    - DataChannel シグナリングのみ
+    - type: switched 送られてくる
+    - Python SDK は WebSocket を自分で切断する
+    """
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    """
-    - DataChannel シグナリングのみ
-    - type: switched 送られてくる
-    - Python SDK は WebSocket を自分で切断する
-    """
     with SoraClient(
         signaling_urls,
         SoraRole.RECVONLY,
@@ -91,10 +90,11 @@ def test_datachannel_signaling_only_type_switched(setup):
         assert conn.ws_close_reason == "SELF-CLOSED"
 
 
-@pytest.mark.skip(reason="Sora がまだ対応していない")
 def test_disconnect_before_switched(setup):
-    # switched 前に type: disconnect を送りつける
-    # ignore_disconnect_websocket は true
+    """
+    - switched 前に type: disconnect を送りつける
+    - ignore_disconnect_websocket は true
+    """
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -113,6 +113,7 @@ def test_disconnect_before_switched(setup):
     ) as conn:
         conn.disconnect()
 
+        # switched が false のタイミングで WebSocket が切断される場合のみテストする
         if not conn.switched:
             assert conn.ws_close_code == 1000
             assert conn.ws_close_reason == "TYPE-DISCONNECT"
