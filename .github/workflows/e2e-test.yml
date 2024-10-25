@@ -8,6 +8,7 @@ on:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
     - cron: "0 1 * * 1-5"
+  workflow_dispatch:
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
@@ -28,7 +29,8 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
-        github.event_name == 'schedule'
+        github.event_name == 'schedule' ||
+        github.event_name == 'workflow_dispatch'
       }}
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +69,8 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
-        github.event_name == 'schedule'
+        github.event_name == 'schedule' ||
+        github.event_name == 'workflow_dispatch'
       }}
     steps:
       - uses: actions/checkout@v4
@@ -97,7 +100,8 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
-        github.event_name == 'schedule'
+        github.event_name == 'schedule' ||
+        github.event_name == 'workflow_dispatch'
       }}
     steps:
       - uses: actions/checkout@v4
