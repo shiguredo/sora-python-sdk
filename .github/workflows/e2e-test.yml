@@ -1,6 +1,7 @@
 name: e2e-test
 
 on:
+  workflow_dispatch:
   push:
     paths-ignore:
       - "**.md"
@@ -28,6 +29,7 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
@@ -67,6 +69,7 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
@@ -97,6 +100,7 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
