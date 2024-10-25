@@ -141,6 +141,7 @@ std::string SoraConnection::GetStats() {
   }
   std::promise<std::string> stats;
   std::future<std::string> future = stats.get_future();
+  nb::gil_scoped_release release;
   pc->GetStats(
       sora::RTCStatsCallback::Create(
           [&](const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
