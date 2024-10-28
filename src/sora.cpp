@@ -263,12 +263,12 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
   throw nb::type_error(error_message);
 }
 
-boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+std::optional<sora::SoraSignalingConfig::ForwardingFilter>
 Sora::ConvertForwardingFilter(const nb::handle value) {
   auto forwarding_filter_value =
       ConvertJsonValue(value, "Invalid JSON value in forwarding_filter");
   if (forwarding_filter_value.is_null()) {
-    return boost::none;
+    return std::nullopt;
   }
 
   sora::SoraSignalingConfig::ForwardingFilter filter;
