@@ -19,13 +19,7 @@ def test_messaging_header(setup):
         SoraRole.SENDONLY,
         channel_id,
         data_channel_signaling=True,
-        data_channels=[
-            {
-                "label": messaging_label,
-                "direction": "sendonly",
-                "header": [{"type": "sender_connection_id"}],
-            }
-        ],
+        data_channels=[{"label": messaging_label, "direction": "sendonly"}],
         metadata=metadata,
     )
 
@@ -63,8 +57,9 @@ def test_messaging_header(setup):
 
     time.sleep(3)
 
-    assert messaging_recvonly.recv_message(messaging_label) == message1
-    assert messaging_recvonly.recv_message(messaging_label) == message2
+    # 26 は sender_connection_id の長さ
+    assert messaging_recvonly.recv_message(messaging_label)[26:] == message1
+    assert messaging_recvonly.recv_message(messaging_label)[26:] == message2
 
     messaging_sendonly_stats = messaging_sendonly.get_stats()
     messaging_recvonly_stats = messaging_recvonly.get_stats()
@@ -89,4 +84,5 @@ def test_messaging_header(setup):
     )
     assert recvonly_data_channel_stats["state"] == "open"
     assert recvonly_data_channel_stats["messagesReceived"] == 2
-    assert recvonly_data_channel_stats["bytesReceived"] == (len(message1) + len(message2))
+    # 26 は sender_connection_id の長さ x 2
+    assert recvonly_data_channel_stats["bytesReceived"] == (26 + len(message1) + 26 + len(message2))
