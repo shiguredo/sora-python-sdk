@@ -500,7 +500,8 @@ NB_MODULE(sora_sdk_ext, m) {
            "spotlight"_a = nb::none(), "spotlight_number"_a = nb::none(),
            "simulcast_rid"_a = nb::none(), "spotlight_focus_rid"_a = nb::none(),
            "spotlight_unfocus_rid"_a = nb::none(),
-           "forwarding_filter"_a = nb::none(), "data_channels"_a = nb::none(),
+           "forwarding_filter"_a = nb::none(), "forwarding_filters"_a = nb::none(),
+           "data_channels"_a = nb::none(),
            "data_channel_signaling"_a = nb::none(),
            "ignore_disconnect_websocket"_a = nb::none(),
            "data_channel_signaling_timeout"_a = nb::none(),
@@ -544,6 +545,7 @@ NB_MODULE(sora_sdk_ext, m) {
                    "spotlight_focus_rid: Optional[str] = None, "
                    "spotlight_unfocus_rid: Optional[str] = None, "
                    "forwarding_filter: Optional[dict] = None, "
+                   "forwarding_filters: Optional[list[dict]] = None, "
                    "data_channels: Optional[list[dict]] = None, "
                    "data_channel_signaling: Optional[bool] = None, "
                    "ignore_disconnect_websocket: Optional[bool] = None, "

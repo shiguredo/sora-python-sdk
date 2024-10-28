@@ -118,6 +118,7 @@ class Sora : public DisposePublisher {
       std::optional<std::string> spotlight_focus_rid,
       std::optional<std::string> spotlight_unfocus_rid,
       const nb::handle& forwarding_filter,
+      const nb::handle& forwarding_filters,
       const nb::handle& data_channels,
       std::optional<bool> data_channel_signaling,
       std::optional<bool> ignore_disconnect_websocket,
@@ -174,6 +175,9 @@ class Sora : public DisposePublisher {
   std::vector<sora::SoraSignalingConfig::DataChannel> ConvertDataChannels(
       const nb::handle value);
   std::vector<std::string> ConvertSignalingUrls(const nb::handle value);
+
+  std::optional<std::vector<sora::SoraSignalingConfig::ForwardingFilter>>
+  ConvertForwardingFilters(const nb::handle value);
 
   std::optional<sora::SoraSignalingConfig::ForwardingFilter>
   ConvertForwardingFilter(const nb::handle value);
