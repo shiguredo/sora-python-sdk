@@ -175,7 +175,7 @@ class Sora : public DisposePublisher {
       const nb::handle value);
   std::vector<std::string> ConvertSignalingUrls(const nb::handle value);
 
-  boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+  std::optional<sora::SoraSignalingConfig::ForwardingFilter>
   ConvertForwardingFilter(const nb::handle value);
 
   std::unique_ptr<SoraFactory> factory_;
