@@ -16,6 +16,10 @@
   - @voluntas
 - [CHANGE] `ca_cert`, `client_cert`, `client_key` の指定には `str` ではなく `bytes` を使うようにする
   - @tnoho
+- [ADD] `send_message()` を追加する
+  - `on_message()` と合わせる
+  - `send_data_channel()` のシンタックスシュガー
+  - @voluntas
 - [ADD] WebRTC Encoded Transform に対応する
   - `SoraTransformableAudioFrame` と `SoraTransformableVideoFrame` を追加
   - `SoraAudioFrameTransformer` と `SoraVideoFrameTransformer` を追加
