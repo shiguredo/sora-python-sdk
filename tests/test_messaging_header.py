@@ -5,7 +5,7 @@ import uuid
 from client import SoraClient, SoraRole
 
 
-def test_messaging(setup):
+def test_messaging_header(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     messaging_label = "#test"
@@ -19,7 +19,13 @@ def test_messaging(setup):
         SoraRole.SENDONLY,
         channel_id,
         data_channel_signaling=True,
-        data_channels=[{"label": messaging_label, "direction": "sendonly"}],
+        data_channels=[
+            {
+                "label": messaging_label,
+                "direction": "sendonly",
+                "header": [{"type": "sender_connection_id"}],
+            }
+        ],
         metadata=metadata,
     )
 
@@ -28,7 +34,13 @@ def test_messaging(setup):
         SoraRole.RECVONLY,
         channel_id,
         data_channel_signaling=True,
-        data_channels=[{"label": messaging_label, "direction": "recvonly"}],
+        data_channels=[
+            {
+                "label": messaging_label,
+                "direction": "recvonly",
+                "header": [{"type": "sender_connection_id"}],
+            }
+        ],
         metadata=metadata,
     )
 
@@ -50,6 +62,9 @@ def test_messaging(setup):
     messaging_sendonly.send_message(messaging_label, message2)
 
     time.sleep(3)
+
+    assert messaging_recvonly.recv_message(messaging_label) == message1
+    assert messaging_recvonly.recv_message(messaging_label) == message2
 
     messaging_sendonly_stats = messaging_sendonly.get_stats()
     messaging_recvonly_stats = messaging_recvonly.get_stats()
