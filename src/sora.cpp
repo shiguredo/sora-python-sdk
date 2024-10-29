@@ -317,7 +317,6 @@ Sora::ConvertForwardingFilters(const nb::handle value) {
   return forwarding_filters;
 }
 
-
 std::optional<sora::SoraSignalingConfig::ForwardingFilter>
 Sora::ConvertForwardingFilter(const nb::handle value) {
   auto forwarding_filter_value =
