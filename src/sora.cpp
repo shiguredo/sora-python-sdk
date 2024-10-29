@@ -43,6 +43,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<std::string> spotlight_focus_rid,
     std::optional<std::string> spotlight_unfocus_rid,
     const nb::handle& forwarding_filter,
+    const nb::handle& forwarding_filters,
     const nb::handle& data_channels,
     std::optional<bool> data_channel_signaling,
     std::optional<bool> ignore_disconnect_websocket,
@@ -131,6 +132,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     config.spotlight_unfocus_rid = *spotlight_unfocus_rid;
   }
   config.forwarding_filter = ConvertForwardingFilter(forwarding_filter);
+  config.forwarding_filters = ConvertForwardingFilters(forwarding_filters);
   config.data_channels = ConvertDataChannels(data_channels);
   if (data_channel_signaling) {
     config.data_channel_signaling.emplace(*data_channel_signaling);
@@ -263,12 +265,65 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
   throw nb::type_error(error_message);
 }
 
-boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+std::optional<std::vector<sora::SoraSignalingConfig::ForwardingFilter>>
+Sora::ConvertForwardingFilters(const nb::handle value) {
+  auto forwarding_filters_value =
+      ConvertJsonValue(value, "Invalid JSON value in forwarding_filters");
+  if (forwarding_filters_value.is_null()) {
+    return std::nullopt;
+  }
+
+  std::vector<sora::SoraSignalingConfig::ForwardingFilter> forwarding_filters;
+
+  for (auto forwarding_filter_value : forwarding_filters_value.as_array()) {
+    sora::SoraSignalingConfig::ForwardingFilter filter;
+    try {
+      auto object = forwarding_filter_value.as_object();
+      if (!object["action"].is_null()) {
+        filter.action = std::string(object["action"].as_string());
+      }
+      for (auto or_rule : object["rules"].as_array()) {
+        std::vector<sora::SoraSignalingConfig::ForwardingFilter::Rule> rules;
+        for (auto and_rule_value : or_rule.as_array()) {
+          auto and_rule = and_rule_value.as_object();
+          sora::SoraSignalingConfig::ForwardingFilter::Rule rule;
+          rule.field = and_rule["field"].as_string();
+          rule.op = and_rule["operator"].as_string();
+          for (auto value : and_rule["values"].as_array()) {
+            rule.values.push_back(value.as_string().c_str());
+          }
+          rules.push_back(rule);
+        }
+        filter.rules.push_back(rules);
+      }
+      if (!object["version"].is_null()) {
+        filter.version = std::string(object["version"].as_string());
+      }
+      if (!object["metadata"].is_null()) {
+        filter.metadata = object["metadata"];
+      }
+      if (!object["name"].is_null()) {
+        filter.name = std::string(object["name"].as_string());
+      }
+      if (!object["priority"].is_null()) {
+        filter.priority = boost::json::value_to<int>(object["priority"]);
+      }
+    } catch (std::exception&) {
+      throw nb::type_error("Invalid forwarding_filter");
+    }
+    forwarding_filters.push_back(filter);
+  }
+
+  return forwarding_filters;
+}
+
+
+std::optional<sora::SoraSignalingConfig::ForwardingFilter>
 Sora::ConvertForwardingFilter(const nb::handle value) {
   auto forwarding_filter_value =
       ConvertJsonValue(value, "Invalid JSON value in forwarding_filter");
   if (forwarding_filter_value.is_null()) {
-    return boost::none;
+    return std::nullopt;
   }
 
   sora::SoraSignalingConfig::ForwardingFilter filter;
@@ -297,6 +352,12 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
     }
     if (!object["metadata"].is_null()) {
       filter.metadata = object["metadata"];
+    }
+    if (!object["name"].is_null()) {
+      filter.name = std::string(object["name"].as_string());
+    }
+    if (!object["priority"].is_null()) {
+      filter.priority = boost::json::value_to<int>(object["priority"]);
     }
   } catch (std::exception&) {
     throw nb::type_error("Invalid forwarding_filter");
