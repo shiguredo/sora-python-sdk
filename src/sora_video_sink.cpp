@@ -1,5 +1,7 @@
 #include "sora_video_sink.h"
 
+#include <thread>
+
 // WebRTC
 #include <api/environment/environment_factory.h>
 #include <api/task_queue/task_queue_factory.h>
@@ -86,9 +88,9 @@ void SoraVideoSinkImpl::OnFrame(const webrtc::VideoFrame& frame) {
   //
   // これを解決するため、ここの OnFrame ではフレームをキューに詰めるだけにして、
   // ワーカースレッドで改めて GIL を獲得してから on_frame_ を呼び出すようにした。
-  on_frame_queue_->PostTask([on_frame = on_frame_, frame]() {
+  on_frame_queue_->PostTask([this, frame]() {
     nb::gil_scoped_acquire acq;
-    if (on_frame) {
+    if (on_frame_) {
       /**
        * 形式を問わず I420 でフレームデータを取得している。
        * 特殊なコーデックを選択しない限りはデコードされたフレームデータは I420 の形式になっているはずなので問題ないと考えた。
@@ -96,7 +98,7 @@ void SoraVideoSinkImpl::OnFrame(const webrtc::VideoFrame& frame) {
        */
       rtc::scoped_refptr<webrtc::I420BufferInterface> i420_data =
           frame.video_frame_buffer()->ToI420();
-      on_frame(std::make_shared<SoraVideoFrame>(i420_data));
+      on_frame_(std::make_shared<SoraVideoFrame>(i420_data));
     }
   });
 }
