@@ -59,6 +59,7 @@ class Sora : public DisposePublisher {
    * @param video_vp9_params (オプション)映像コーデック VP9 設定
    * @param video_av1_params (オプション)映像コーデック AV1 設定
    * @param video_h264_params (オプション)映像コーデック H264 設定
+   * @param audio_opus_params (オプション)音声コーデック OPUS 設定
    * @param simulcast (オプション)サイマルキャストの有効無効
    * @param spotlight (オプション)スポットライトの有効無効
    * @param spotlight_number (オプション)スポットライトのフォーカス数
@@ -109,6 +110,7 @@ class Sora : public DisposePublisher {
       const nb::handle& video_vp9_params,
       const nb::handle& video_av1_params,
       const nb::handle& video_h264_params,
+      const nb::handle& audio_opus_params,
       std::optional<bool> simulcast,
       std::optional<bool> spotlight,
       std::optional<int> spotlight_number,
@@ -116,6 +118,7 @@ class Sora : public DisposePublisher {
       std::optional<std::string> spotlight_focus_rid,
       std::optional<std::string> spotlight_unfocus_rid,
       const nb::handle& forwarding_filter,
+      const nb::handle& forwarding_filters,
       const nb::handle& data_channels,
       std::optional<bool> data_channel_signaling,
       std::optional<bool> ignore_disconnect_websocket,
@@ -173,7 +176,10 @@ class Sora : public DisposePublisher {
       const nb::handle value);
   std::vector<std::string> ConvertSignalingUrls(const nb::handle value);
 
-  boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+  std::optional<std::vector<sora::SoraSignalingConfig::ForwardingFilter>>
+  ConvertForwardingFilters(const nb::handle value);
+
+  std::optional<sora::SoraSignalingConfig::ForwardingFilter>
   ConvertForwardingFilter(const nb::handle value);
 
   std::unique_ptr<SoraFactory> factory_;

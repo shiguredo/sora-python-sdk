@@ -64,6 +64,7 @@ void SoraVideoSinkImpl::PublisherDisposed() {
 void SoraVideoSinkImpl::OnFrame(const webrtc::VideoFrame& frame) {
   if (frame.width() == 0 || frame.height() == 0)
     return;
+  nb::gil_scoped_acquire acq;
   if (on_frame_) {
     /**
      * 形式を問わず I420 でフレームデータを取得している。

@@ -75,12 +75,16 @@ class SoraClient:
         spotlight: Optional[bool] = None,
         metadata: Optional[dict[str, Any]] = None,
         audio: Optional[bool] = None,
+        audio_codec_type: Optional[str] = None,
+        audio_opus_params: Optional[dict[str, Any]] = None,
         video: Optional[bool] = None,
         video_codec_type: Optional[str] = None,
         video_bit_rate: Optional[int] = None,
         data_channel_signaling: Optional[bool] = None,
         ignore_disconnect_websocket: Optional[bool] = None,
         data_channels: Optional[list[dict[str, Any]]] = None,
+        forwarding_filter: Optional[dict[str, Any]] = None,
+        forwarding_filters: Optional[list[dict[str, Any]]] = None,
         openh264_path: Optional[str] = None,
         client_key: Optional[bytes] = None,
         client_cert: Optional[bytes] = None,
@@ -132,8 +136,8 @@ class SoraClient:
         self._audio_sink: Optional[SoraAudioSink] = None
         self._video_sink: Optional[SoraVideoSink] = None
 
-        self._is_data_channel_ready = False
-        self._sendable_data_channels: set[str] = set()
+        self._data_channel_ready_events: dict[str, Event] = {}
+        self._messaging_recv_queues: dict[str, queue.Queue] = {}
         self._q_out: queue.Queue = queue.Queue()
 
         self._connection: SoraConnection = self._sora.create_connection(
@@ -144,12 +148,16 @@ class SoraClient:
             spotlight=spotlight,
             metadata=metadata,
             audio=self._audio,
+            audio_codec_type=audio_codec_type,
+            audio_opus_params=audio_opus_params,
             video=self._video,
             video_codec_type=video_codec_type,
             video_bit_rate=video_bit_rate,
             data_channel_signaling=self._connect_data_channel_signaling,
             ignore_disconnect_websocket=self._connect_ignore_disconnect_websocket,
             data_channels=self._connect_data_channels,
+            forwarding_filter=forwarding_filter,
+            forwarding_filters=forwarding_filters,
             audio_source=self._audio_source,
             video_source=self._video_source,
             ca_cert=ca_cert,
@@ -231,14 +239,16 @@ class SoraClient:
     def disconnect(self) -> None:
         self._connection.disconnect()
 
-    def send(self, label: str, data: bytes):
+    def send_message(self, label: str, data: bytes, timeout: float = 5):
+        # TODO: direction が sendrecv / sendonly の時しか送れず、例外をあげるようにする
         print(f"send: label={label}, data={data!r}")
-        # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
-        if not self._is_data_channel_ready:
-            while not self._is_data_channel_ready and not self._disconnected.is_set():
-                time.sleep(0.01)
 
+        # on_data_channel() が呼ばれるまではデータチャネルの準備ができていないので待機
+        self._data_channel_ready_events[label].wait(timeout=timeout)
         self._connection.send_data_channel(label, data)
+
+    def recv_message(self, label: str, timeout: float = 5) -> bytes:
+        return self._messaging_recv_queues[label].get(block=True, timeout=timeout)
 
     def get_stats(self):
         raw_stats = self._connection.get_stats()
@@ -411,6 +421,8 @@ class SoraClient:
                 self._offer_ignore_disconnect_websocket = message["ignore_disconnect_websocket"]
             if "data_channels" in message:
                 self._offer_data_channels = message["data_channels"]
+                for data_channel in message["data_channels"]:
+                    self._data_channel_ready_events[data_channel["label"]] = Event()
 
     def _on_switched(self, raw_message: str) -> None:
         message = json.loads(raw_message)
@@ -432,19 +444,12 @@ class SoraClient:
 
     def _on_message(self, label: str, data: bytes):
         print(f"Received message: label={label}, data={data.decode('utf-8')}")
+        self._messaging_recv_queues[label].put(data)
 
     def _on_data_channel(self, label: str):
         print(f"DataChannel opened: label={label}")
-        if self._offer_data_channels:
-            for data_channel in self._offer_data_channels:
-                if data_channel["label"] != label:
-                    continue
-
-                if data_channel["direction"] in ["sendrecv", "sendonly"]:
-                    self._sendable_data_channels.add(label)
-                    # メッセージングで利用するチャネルが利用可能になったのでフラグを立てる
-                    self._is_data_channel_ready = True
-                    break
+        self._messaging_recv_queues[label] = queue.Queue()
+        self._data_channel_ready_events[label].set()
 
     def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str) -> None:
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")

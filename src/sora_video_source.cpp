@@ -23,6 +23,7 @@ void SoraVideoSource::Disposed() {
     finished_ = true;
     lock.unlock();
     queue_cond_.notify_all();
+    nb::gil_scoped_release release;
     thread_->join();
     thread_ = nullptr;
   }

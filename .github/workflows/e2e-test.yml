@@ -1,6 +1,7 @@
 name: e2e-test
 
 on:
+  workflow_dispatch:
   #push:
   #  paths-ignore:
   #    - "**.md"
@@ -18,6 +19,7 @@ env:
 jobs:
   e2e_test_ubuntu:
     strategy:
+      fail-fast: false
       matrix:
         python_version: ["3.10", "3.11", "3.12", "3.13"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
@@ -27,6 +29,7 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
@@ -55,6 +58,7 @@ jobs:
 
   e2e_test_macos:
     strategy:
+      fail-fast: false
       matrix:
         python_version: ["3.10", "3.11", "3.12", "3.13"]
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
@@ -65,6 +69,7 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
@@ -83,6 +88,7 @@ jobs:
 
   e2e_test_windows:
     strategy:
+      fail-fast: false
       matrix:
         python_version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: windows-2022
@@ -94,6 +100,7 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
