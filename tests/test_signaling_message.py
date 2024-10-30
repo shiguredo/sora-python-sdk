@@ -79,7 +79,7 @@ def test_signaling_message_type_connect_forwarding_filter(setup):
     sendonly.disconnect()
 
     assert sendonly.connect_message is not None
-    assert sendonly.connect_message["forwarding_filter"] == forwarding_filter
+    assert sendonly.connect_message.message["forwarding_filter"] == forwarding_filter
 
 
 def test_signaling_message_type_connect_forwarding_filters(setup):
@@ -132,4 +132,4 @@ def test_signaling_message_type_connect_forwarding_filters(setup):
     sendonly.disconnect()
 
     assert sendonly.connect_message is not None
-    assert sendonly.connect_message["forwarding_filters"] == forwarding_filters
+    assert sendonly.connect_message.message["forwarding_filters"] == forwarding_filters
