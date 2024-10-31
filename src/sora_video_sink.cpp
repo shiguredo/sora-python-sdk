@@ -1,7 +1,5 @@
 #include "sora_video_sink.h"
 
-#include <thread>
-
 // WebRTC
 #include <api/environment/environment_factory.h>
 #include <api/task_queue/task_queue_factory.h>
@@ -49,6 +47,15 @@ SoraVideoSinkImpl::SoraVideoSinkImpl(const webrtc::Environment& env,
 
 SoraVideoSinkImpl::~SoraVideoSinkImpl() {
   Del();
+
+  // OnFrameQueue スレッドの join 待ちでデッドロックしてしまうので、ここで GIL を解放する
+  // 具体的には、以下の順序で実行された時にデッドロックする。
+  //
+  // 1. このスレッドで、GIL を獲得した状態でデストラクタが呼ばれる
+  // 2. OnFrameQueue スレッドで、OnFrameQueue スレッドから OnFrame のタスクが上がってくる → GIL 獲得待ち
+  // 3. このスレッドで、TaskQueueBase デストラクタ呼び出しで OnFrameQueue スレッドに終了依頼を出す → OnFrameQueue の終了待ち
+  nb::gil_scoped_release release;
+  on_frame_queue_.reset();
 }
 
 void SoraVideoSinkImpl::Del() {
@@ -66,6 +73,7 @@ void SoraVideoSinkImpl::Disposed() {
     video_track->RemoveSink(this);
   }
   track_ = nullptr;
+  on_frame_ = nullptr;
 }
 
 void SoraVideoSinkImpl::PublisherDisposed() {
