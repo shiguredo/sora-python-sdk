@@ -3,7 +3,7 @@
 
 #include <Python.h>
 
-// nb::gil_scoped_acquire は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
+// nanobind::gil_scoped_acquire は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
 // 挙動を考えていないので、自前で用意する
 struct gil_scoped_acquire {
  public:
@@ -29,14 +29,14 @@ struct gil_scoped_acquire {
   PyGILState_STATE state;
 };
 
-// nb::gil_scoped_release は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
+// nanobind::gil_scoped_release は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
 // 挙動を考えていないので、自前で用意する
 struct gil_scoped_release {
  public:
   gil_scoped_release(const gil_scoped_release&) = delete;
   gil_scoped_release(gil_scoped_release&&) = delete;
 
-  gil_scoped_release() noexcept : state(PyEval_SaveThread()) {
+  gil_scoped_release() noexcept {
     if (!Py_IsInitialized()) {
       return;
     }
@@ -55,8 +55,6 @@ struct gil_scoped_release {
 
 // condition_variable_any で GIL を利用するためにアダプトしたクラス
 struct GILLock {
-  // 最初に lock() が呼ばれると危ないけど、condition_variable_any に使う分には
-  // unlock() → lock() の順番になるはず
   void lock() {
     // unlock 中に全ての処理が終わって Py_Finalize の終了処理中に起こされることがあるので、
     // その場合は PyEval_RestoreThread を呼び出さない。
