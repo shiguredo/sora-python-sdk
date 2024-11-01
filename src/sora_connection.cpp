@@ -15,6 +15,8 @@
 // nonobind
 #include <nanobind/nanobind.h>
 
+#include "gil.h"
+
 namespace nb = nanobind;
 
 SoraConnection::SoraConnection(DisposePublisher* publisher)
@@ -69,7 +71,7 @@ void SoraConnection::Disconnect() {
   if (thread_) {
     conn_->Disconnect();
     // join() 中に OnDisconnect が呼ばれるので GIL をリリースする
-    nb::gil_scoped_release release;
+    gil_scoped_release release;
     thread_->join();
     thread_ = nullptr;
   }
@@ -141,7 +143,7 @@ std::string SoraConnection::GetStats() {
   }
   std::promise<std::string> stats;
   std::future<std::string> future = stats.get_future();
-  nb::gil_scoped_release release;
+  gil_scoped_release release;
   pc->GetStats(
       sora::RTCStatsCallback::Create(
           [&](const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
@@ -152,7 +154,7 @@ std::string SoraConnection::GetStats() {
 }
 
 void SoraConnection::OnSetOffer(std::string offer) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   std::string stream_id = rtc::CreateRandomString(16);
   if (audio_source_) {
     webrtc::RTCErrorOr<rtc::scoped_refptr<webrtc::RtpSenderInterface>>
@@ -184,7 +186,7 @@ void SoraConnection::OnSetOffer(std::string offer) {
 
 void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
                                   std::string message) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   ioc_->stop();
   if (on_disconnect_) {
     on_disconnect_(ec, message);
@@ -192,7 +194,7 @@ void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
 }
 
 void SoraConnection::OnNotify(std::string text) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   if (on_notify_) {
     on_notify_(text);
   }
@@ -205,14 +207,14 @@ void SoraConnection::OnPush(std::string text) {
 }
 
 void SoraConnection::OnMessage(std::string label, std::string data) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   if (on_message_) {
     on_message_(label, nb::bytes(data.c_str(), data.size()));
   }
 }
 
 void SoraConnection::OnSwitched(std::string text) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   if (on_switched_) {
     on_switched_(text);
   }
@@ -221,14 +223,14 @@ void SoraConnection::OnSwitched(std::string text) {
 void SoraConnection::OnSignalingMessage(sora::SoraSignalingType type,
                                         sora::SoraSignalingDirection direction,
                                         std::string message) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   if (on_signaling_message_) {
     on_signaling_message_(type, direction, message);
   }
 }
 
 void SoraConnection::OnWsClose(uint16_t code, std::string message) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   if (on_ws_close_) {
     on_ws_close_(code, message);
   }
@@ -236,7 +238,7 @@ void SoraConnection::OnWsClose(uint16_t code, std::string message) {
 
 void SoraConnection::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   if (on_track_) {
     auto receiver = transceiver->receiver();
     // shared_ptr になってないとリークする
@@ -248,12 +250,12 @@ void SoraConnection::OnTrack(
 
 void SoraConnection::OnRemoveTrack(
     rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   // TODO(tnoho): 要実装
 }
 
 void SoraConnection::OnDataChannel(std::string label) {
-  nb::gil_scoped_acquire acq;
+  gil_scoped_acquire acq;
   if (on_data_channel_) {
     on_data_channel_(label);
   }

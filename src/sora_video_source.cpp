@@ -5,13 +5,7 @@
 #include <rtc_base/time_utils.h>
 #include <third_party/libyuv/include/libyuv.h>
 
-struct GILLock {
-  // 最初に lock() が呼ばれると危ないけど、condition_variable_any に使う分には
-  // unlock() → lock() の順番になるはず
-  void lock() { PyEval_RestoreThread(state_); }
-  void unlock() { state_ = PyEval_SaveThread(); }
-  PyThreadState* state_ = nullptr;
-};
+#include "gil.h"
 
 SoraVideoSource::SoraVideoSource(
     DisposePublisher* publisher,
@@ -20,7 +14,7 @@ SoraVideoSource::SoraVideoSource(
     : SoraTrackInterface(publisher, track), source_(source), finished_(false) {
   publisher_->AddSubscriber(this);
   thread_.reset(new std::thread([this]() {
-    nb::gil_scoped_acquire acq;
+    gil_scoped_acquire acq;
     while (SendFrameProcess()) {
     }
   }));
@@ -30,7 +24,7 @@ void SoraVideoSource::Disposed() {
   if (!finished_) {
     finished_ = true;
     queue_cond_.notify_all();
-    nb::gil_scoped_release release;
+    gil_scoped_release release;
     thread_->join();
     thread_ = nullptr;
   }

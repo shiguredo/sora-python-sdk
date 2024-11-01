@@ -6,6 +6,8 @@
 #include <api/video/i420_buffer.h>
 #include <third_party/libyuv/include/libyuv.h>
 
+#include "gil.h"
+
 SoraVideoFrame::SoraVideoFrame(
     rtc::scoped_refptr<webrtc::I420BufferInterface> i420_data)
     : width_(i420_data->width()), height_(i420_data->height()) {
@@ -54,7 +56,7 @@ SoraVideoSinkImpl::~SoraVideoSinkImpl() {
   // 1. このスレッドで、GIL を獲得した状態でデストラクタが呼ばれる
   // 2. OnFrameQueue スレッドで、OnFrameQueue スレッドから OnFrame のタスクが上がってくる → GIL 獲得待ち
   // 3. このスレッドで、TaskQueueBase デストラクタ呼び出しで OnFrameQueue スレッドに終了依頼を出す → OnFrameQueue の終了待ち
-  nb::gil_scoped_release release;
+  gil_scoped_release release;
   on_frame_queue_.reset();
 }
 
@@ -97,7 +99,7 @@ void SoraVideoSinkImpl::OnFrame(const webrtc::VideoFrame& frame) {
   // これを解決するため、ここの OnFrame ではフレームをキューに詰めるだけにして、
   // ワーカースレッドで改めて GIL を獲得してから on_frame_ を呼び出すようにした。
   on_frame_queue_->PostTask([this, frame]() {
-    nb::gil_scoped_acquire acq;
+    gil_scoped_acquire acq;
     if (on_frame_) {
       /**
        * 形式を問わず I420 でフレームデータを取得している。
