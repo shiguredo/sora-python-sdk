@@ -3,6 +3,32 @@
 
 #include <Python.h>
 
+// nb::gil_scoped_acquire は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
+// 挙動を考えていないので、自前で用意する
+struct gil_scoped_acquire {
+ public:
+  gil_scoped_acquire(const gil_scoped_acquire&) = delete;
+  gil_scoped_acquire(gil_scoped_acquire&&) = delete;
+
+  gil_scoped_acquire() noexcept {
+    if (!Py_IsInitialized()) {
+      return;
+    }
+    state = PyGILState_Ensure();
+    initialized = true;
+  }
+  ~gil_scoped_acquire() {
+    if (!initialized || !Py_IsInitialized()) {
+      return;
+    }
+    PyGILState_Release(state);
+  }
+
+ private:
+  bool initialized;
+  PyGILState_STATE state;
+};
+
 // nb::gil_scoped_release は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
 // 挙動を考えていないので、自前で用意する
 struct gil_scoped_release {
@@ -48,32 +74,6 @@ struct GILLock {
     state_ = PyEval_SaveThread();
   }
   PyThreadState* state_ = nullptr;
-};
-
-// nb::gil_scoped_acquire は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
-// 挙動を考えていないので、自前で用意する
-struct gil_scoped_acquire {
- public:
-  gil_scoped_acquire(const gil_scoped_acquire&) = delete;
-  gil_scoped_acquire(gil_scoped_acquire&&) = delete;
-
-  gil_scoped_acquire() noexcept {
-    if (!Py_IsInitialized()) {
-      return;
-    }
-    state = PyGILState_Ensure();
-    initialized = true;
-  }
-  ~gil_scoped_acquire() {
-    if (!initialized || !Py_IsInitialized()) {
-      return;
-    }
-    PyGILState_Release(state);
-  }
-
- private:
-  bool initialized;
-  PyGILState_STATE state;
 };
 
 #endif
