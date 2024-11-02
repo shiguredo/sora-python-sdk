@@ -233,7 +233,7 @@ jobs:
           uv sync
           uv run python run.py --debug ${{ matrix.platform.name }}
           # cache
-          mkdir ../versions
+          mkdir -p ../versions
           cp _install/${{ matrix.platform.name }}/llvm.version ../versions
       - name: E2E Test sora-python-sdk
         working-directory: sora-python-sdk
