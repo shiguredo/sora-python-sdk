@@ -84,7 +84,7 @@ jobs:
         if: steps.webrtc-build-cache.outputs.cache-hit != 'true'
         with:
           path: webrtc-build
-          repository: https://github.com/shiguredo-webrtc-build/webrtc-build.git
+          repository: shiguredo-webrtc-build/webrtc-build
           ref: ${{ steps.version.outputs.webrtc_build_version }}
       - name: Setup libwebrtc
         if: steps.webrtc-build-cache.outputs.cache-hit != 'true'
@@ -130,7 +130,7 @@ jobs:
       #   if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
       #   with:
       #     path: sora-cpp-sdk
-      #     repository: https://github.com/shiguredo/sora-cpp-sdk.git
+      #     repository: shiguredo/sora-cpp-sdk
       #     ref: ${{ steps.version.outputs.sora_cpp_sdk_version }}
       # - name: Setup sora-cpp-sdk
       #   if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
