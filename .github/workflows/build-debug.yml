@@ -238,4 +238,4 @@ jobs:
       - name: E2E Test sora-python-sdk
         working-directory: sora-python-sdk
         run: |
-          lldb-18 -o 'settings set target.process.follow-fork-mode child' -o run -o continue -o 'bt all' -o 'exit' -- uv run pytest tests -s
+          lldb-18 --batch -o 'command script import test_with_llvm.py' -o 'test'
