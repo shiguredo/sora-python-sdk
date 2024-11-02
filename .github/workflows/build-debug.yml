@@ -118,51 +118,51 @@ jobs:
           python3 run.py build --debug ${{ matrix.platform.name }}
           python3 run.py package --debug ${{ matrix.platform.name }}
 
-      # # sora-cpp-sdk
-      # - uses: actions/cache@v4
-      #   id: sora-cpp-sdk-cache
-      #   with:
-      #     path: sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/sora
-      #     key: sora-cpp-sdk-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
-      # - uses: actions/cache@v4
-      #   id: boost-cache
-      #   with:
-      #     path: sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/boost
-      #     key: boost-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
-      # - uses: actions/checkout@v4
-      #   if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
-      #   with:
-      #     path: sora-cpp-sdk
-      #     repository: shiguredo/sora-cpp-sdk
-      #     ref: ${{ steps.version.outputs.sora_cpp_sdk_version }}
-      # - name: Setup sora-cpp-sdk
-      #   if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
-      #   working-directory: sora-cpp-sdk
-      #   run: |
-      #     source VERSION
-      #     sudo apt-get update
-      #     sudo apt-get install -y software-properties-common
+      # sora-cpp-sdk
+      - uses: actions/cache@v4
+        id: sora-cpp-sdk-cache
+        with:
+          path: sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/sora
+          key: sora-cpp-sdk-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+      - uses: actions/cache@v4
+        id: boost-cache
+        with:
+          path: sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/boost
+          key: boost-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+      - uses: actions/checkout@v4
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        with:
+          path: sora-cpp-sdk
+          repository: shiguredo/sora-cpp-sdk
+          ref: ${{ steps.version.outputs.sora_cpp_sdk_version }}
+      - name: Setup sora-cpp-sdk
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        working-directory: sora-cpp-sdk
+        run: |
+          source VERSION
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
 
-      #     # X11
-      #     sudo apt-get install libx11-dev libxext-dev
+          # X11
+          sudo apt-get install libx11-dev libxext-dev
 
-      #     # CUDA
-      #     wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
-      #     sudo dpkg -i cuda-keyring_*all.deb
-      #     sudo apt-get update
-      #     DEBIAN_FRONTEND=noninteractive sudo apt-get -y install cuda=$CUDA_VERSION
+          # CUDA
+          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
+          sudo dpkg -i cuda-keyring_*all.deb
+          sudo apt-get update
+          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install cuda=$CUDA_VERSION
 
-      #     # Intel Media SDK のために libva-dev, libdrm-dev を入れる
-      #     DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libva-dev libdrm-dev
-      # - name: Copy libwebrtc to sora-cpp-sdk
-      #   if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
-      #   run: |
-      #     mkdir -p sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug
-      #     cp -r webrtc-build/_package/${{ matrix.platform.name }}/webrtc sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/webrtc
-      #     echo ${{ steps.version.outputs.webrtc_build_version }} > sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/webrtc.version
-      # - name: Build sora-cpp-sdk
-      #   if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
-      #   run: python3 run.py --debug ${{ matrix.platform.name }}
+          # Intel Media SDK のために libva-dev, libdrm-dev を入れる
+          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libva-dev libdrm-dev
+      - name: Copy libwebrtc to sora-cpp-sdk
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug
+          cp -r webrtc-build/_package/${{ matrix.platform.name }}/webrtc sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/webrtc
+          echo ${{ steps.version.outputs.webrtc_build_version }} > sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/webrtc.version
+      - name: Build sora-cpp-sdk
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        run: python3 run.py --debug ${{ matrix.platform.name }}
 
       # # sora-python-sdk
       # - name: Setup sora-python-sdk
