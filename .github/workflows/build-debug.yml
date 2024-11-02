@@ -204,7 +204,7 @@ jobs:
       - name: Copy sora-cpp-sdk to sora-python-sdk
         run: |
           mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/debug
-          cp -r sora-cpp-sdk/_package/${{ matrix.platform.name }}/sora sora-python-sdk/_install/${{ matrix.platform.name }}/debug/sora
+          cp -r sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/sora sora-python-sdk/_install/${{ matrix.platform.name }}/debug/sora
           echo ${{ steps.version.outputs.sora_cpp_sdk_version }} > sora-python-sdk/_install/${{ matrix.platform.name }}/debug/sora.version
       - name: Copy boost to sora-python-sdk
         run: |
