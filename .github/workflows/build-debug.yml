@@ -27,10 +27,10 @@ jobs:
         run: |
           set -x
           df -h
-          sudo du -h -d1 /usr/local
-          sudo du -h -d1 /usr/local/share
-          sudo du -h -d1 /usr/local/lib
-          sudo du -h -d1 /usr/share
+          # sudo du -h -d1 /usr/local
+          # sudo du -h -d1 /usr/local/share
+          # sudo du -h -d1 /usr/local/lib
+          # sudo du -h -d1 /usr/share
           RMI=`docker images -q -a`
           if [ -n "$RMI" ]; then
             docker rmi $RMI
@@ -69,7 +69,7 @@ jobs:
       - name: Get versions
         id: version
         run: |
-          source VERSION
+          source sora-python-sdk/VERSION
           echo "webrtc_build_version=${WEBRTC_BUILD_VERSION}" >> $GITHUB_OUTPUT
           echo "sora_cpp_sdk_version=${SORA_CPP_SDK_VERSION}" >> $GITHUB_OUTPUT
           echo "boost_version=${BOOST_VERSION}" >> $GITHUB_OUTPUT
