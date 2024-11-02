@@ -138,7 +138,7 @@ jobs:
       # Ubuntu 24.04 だと libtinfo5 が見つからない問題があるので、その修正
       # ref: https://qiita.com/gengen16k/items/88cf3c18a40a94205fab
       - name: Fix CUDA issues for Ubuntu 24.04
-        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true' && matrix.platform.name == ubuntu-24.04_x86_64
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true' && matrix.platform.name == 'ubuntu-24.04_x86_64'
         run: |
           sudo tee /etc/apt/sources.list.d/jammy.list << EOF
           deb http://archive.ubuntu.com/ubuntu/ jammy universe
