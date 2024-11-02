@@ -90,9 +90,9 @@ jobs:
         if: steps.webrtc-build-cache.outputs.cache-hit != 'true'
         run: |
           set -x
-          apt-get -y install tzdata
-          echo 'Asia/Tokyo' > /etc/timezone
-          dpkg-reconfigure -f noninteractive tzdata
+          sudo apt-get -y install tzdata
+          sudo echo 'Asia/Tokyo' > /etc/timezone
+          sudo dpkg-reconfigure -f noninteractive tzdata
           sudo env DEBIAN_FRONTEND=noninteractive apt-get -y install \
             binutils \
             git \
