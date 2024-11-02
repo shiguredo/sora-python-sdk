@@ -231,7 +231,7 @@ jobs:
           set -x
           # uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py --debug ${{ matrix.platform.target }}
+          uv run python run.py --debug ${{ matrix.platform.name }}
           # cache
           mkdir ../versions
           cp _install/${{ matrix.platform.name }}/debug/llvm.version ../versions
