@@ -238,4 +238,8 @@ jobs:
       - name: E2E Test sora-python-sdk
         working-directory: sora-python-sdk
         run: |
-          lldb-18 --batch -o 'command script import test_with_llvm.py' -o 'test'
+          for i in {1..10}; do
+            echo "---------------- $i 回目 ----------------"
+            sleep 10
+            lldb-18 --batch -o 'command script import test_with_llvm.py' -o 'test'
+          done
