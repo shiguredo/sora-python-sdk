@@ -20,6 +20,7 @@ def test(debugger, command, result, internal_dict):
 
         if state == lldb.eStateExited:
             exit_status = process.GetExitStatus()
+            debugger.HandleCommand(f"exit {exit_status}")
             sys.exit(exit_status)
         elif state == lldb.eStateStopped:
             thread = process.GetSelectedThread()
@@ -27,6 +28,7 @@ def test(debugger, command, result, internal_dict):
                 process.Continue()
                 continue
             debugger.HandleCommand("bt all")
+            debugger.HandleCommand("exit 1")
             sys.exit(1)
 
 
