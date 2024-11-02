@@ -209,7 +209,7 @@ jobs:
       - name: Copy boost to sora-python-sdk
         run: |
           mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/debug
-          cp -r boost/_package/${{ matrix.platform.name }}/boost boost/_install/${{ matrix.platform.name }}/debug/boost
+          cp -r sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/boost sora-python-sdk/_install/${{ matrix.platform.name }}/debug/boost
           echo ${{ steps.version.outputs.boost_version }} > sora-python-sdk/_install/${{ matrix.platform.name }}/debug/boost.version
       - uses: actions/cache@v4
         id: llvm-cache
