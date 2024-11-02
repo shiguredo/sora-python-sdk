@@ -182,6 +182,7 @@ jobs:
           echo ${{ steps.version.outputs.webrtc_build_version }} > sora-cpp-sdk/_install/${{ matrix.platform.name }}/debug/webrtc.version
       - name: Build sora-cpp-sdk
         if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        working-directory: sora-cpp-sdk
         run: python3 run.py --debug ${{ matrix.platform.name }}
 
       # # sora-python-sdk
