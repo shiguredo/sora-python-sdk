@@ -135,6 +135,24 @@ jobs:
           path: sora-cpp-sdk
           repository: shiguredo/sora-cpp-sdk
           ref: ${{ steps.version.outputs.sora_cpp_sdk_version }}
+      # Ubuntu 24.04 だと libtinfo5 が見つからない問題があるので、その修正
+      # ref: https://qiita.com/gengen16k/items/88cf3c18a40a94205fab
+      - name: Fix CUDA issues for Ubuntu 24.04
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true' && matrix.platform.name == ubuntu-24.04_x86_64
+        run: |
+          sudo tee /etc/apt/sources.list.d/jammy.list << EOF
+          deb http://archive.ubuntu.com/ubuntu/ jammy universe
+          EOF
+
+          sudo tee /etc/apt/preferences.d/pin-jammy <<EOF
+          Package: *
+          Pin: release n=jammy
+          Pin-Priority: -10
+
+          Package: libtinfo5
+          Pin: release n=jammy
+          Pin-Priority: 990
+          EOF
       - name: Setup sora-cpp-sdk
         if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
         working-directory: sora-cpp-sdk
