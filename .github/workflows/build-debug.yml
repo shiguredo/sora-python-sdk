@@ -89,25 +89,28 @@ jobs:
       - name: Setup libwebrtc
         if: steps.webrtc-build-cache.outputs.cache-hit != 'true'
         run: |
-          set -x
-          sudo apt-get -y install tzdata
-          sudo echo 'Asia/Tokyo' > /etc/timezone
-          sudo dpkg-reconfigure -f noninteractive tzdata
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get -y install \
-            binutils \
-            git \
-            locales \
-            lsb-release \
-            ninja-build \
-            pkg-config \
-            python3 \
-            python3-setuptools \
-            rsync \
-            sudo \
-            unzip \
-            vim \
-            wget \
-            xz-utils
+          sudo bash -c '
+            set -ex
+            apt-get -y install tzdata
+            echo "Asia/Tokyo" > /etc/timezone
+            dpkg-reconfigure -f noninteractive tzdata
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get -y install \
+              binutils \
+              git \
+              locales \
+              lsb-release \
+              ninja-build \
+              pkg-config \
+              python3 \
+              python3-setuptools \
+              rsync \
+              sudo \
+              unzip \
+              vim \
+              wget \
+              xz-utils
+          '
       - name: Build libwebrtc
         if: steps.webrtc-build-cache.outputs.cache-hit != 'true'
         working-directory: webrtc-build
