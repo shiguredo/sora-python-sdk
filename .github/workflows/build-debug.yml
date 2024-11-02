@@ -221,7 +221,9 @@ jobs:
         with:
           path: versions
           key: versions-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk }}
-      - run: cp versions/llvm.version sora-python-sdk/_install/${{ matrix.platform.name }}/debug/
+      - name: Copy version file
+        if: steps.version-file-cache.outputs.cache-hit == 'true'
+        run: cp versions/llvm.version sora-python-sdk/_install/${{ matrix.platform.name }}/debug/
       - uses: astral-sh/setup-uv@v3
       - name: Build sora-python-sdk
         working-directory: sora-python-sdk
