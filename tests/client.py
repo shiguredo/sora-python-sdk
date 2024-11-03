@@ -416,6 +416,8 @@ class SoraClient:
         if self._fake_video_thread is not None:
             self._fake_video_thread.join(timeout=10)
 
+        self._sora = None
+
     def _on_ws_close(self, code: int, reason: str) -> None:
         print(f"WebSocket closed: code={code} reason={reason}")
         self._ws_close = True
