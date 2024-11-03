@@ -30,6 +30,10 @@ using namespace nb::literals;
  * やっておかないと終了時にリークエラーが発生する。
  */
 int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   // インスタンスを取得する
   SoraAudioSinkImpl* audio_sink = nb::inst_ptr<SoraAudioSinkImpl>(self);
 
@@ -51,6 +55,10 @@ int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
 }
 
 int audio_sink_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraAudioSinkImpl* audio_sink = nb::inst_ptr<SoraAudioSinkImpl>(self);
   audio_sink->on_format_ = nullptr;
   audio_sink->on_data_ = nullptr;
@@ -67,6 +75,10 @@ PyType_Slot audio_sink_slots[] = {
     {0, nullptr}};
 
 int audio_stream_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraAudioStreamSinkImpl* audio_sink =
       nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
 
@@ -79,6 +91,10 @@ int audio_stream_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
 }
 
 int audio_stream_sink_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraAudioStreamSinkImpl* audio_sink =
       nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
   audio_sink->on_frame_ = nullptr;
@@ -91,6 +107,10 @@ PyType_Slot audio_stream_sink_slots[] = {
     {0, nullptr}};
 
 int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraVideoSinkImpl* video_sink = nb::inst_ptr<SoraVideoSinkImpl>(self);
 
   if (video_sink->on_frame_) {
@@ -102,6 +122,10 @@ int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
 }
 
 int video_sink_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraVideoSinkImpl* video_sink = nb::inst_ptr<SoraVideoSinkImpl>(self);
   video_sink->on_frame_ = nullptr;
   return 0;
@@ -115,6 +139,10 @@ PyType_Slot video_sink_slots[] = {
 int audio_frame_transformer_tp_traverse(PyObject* self,
                                         visitproc visit,
                                         void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraAudioFrameTransformer* audio_frame_transformer =
       nb::inst_ptr<SoraAudioFrameTransformer>(self);
 
@@ -127,6 +155,10 @@ int audio_frame_transformer_tp_traverse(PyObject* self,
 }
 
 int audio_frame_transformer_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraAudioFrameTransformer* audio_frame_transformer =
       nb::inst_ptr<SoraAudioFrameTransformer>(self);
   audio_frame_transformer->on_transform_ = nullptr;
@@ -141,6 +173,10 @@ PyType_Slot audio_frame_transformer_slots[] = {
 int video_frame_transformer_tp_traverse(PyObject* self,
                                         visitproc visit,
                                         void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraVideoFrameTransformer* video_frame_transformer =
       nb::inst_ptr<SoraVideoFrameTransformer>(self);
 
@@ -153,6 +189,10 @@ int video_frame_transformer_tp_traverse(PyObject* self,
 }
 
 int video_frame_transformer_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraVideoFrameTransformer* video_frame_transformer =
       nb::inst_ptr<SoraVideoFrameTransformer>(self);
   video_frame_transformer->on_transform_ = nullptr;
@@ -165,6 +205,10 @@ PyType_Slot video_frame_transformer_slots[] = {
     {0, nullptr}};
 
 int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraConnection* conn = nb::inst_ptr<SoraConnection>(self);
 
   if (conn->on_set_offer_) {
@@ -221,6 +265,10 @@ int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
 }
 
 int connection_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraConnection* conn = nb::inst_ptr<SoraConnection>(self);
   conn->on_set_offer_ = nullptr;
   conn->on_ws_close_ = nullptr;
