@@ -21,6 +21,11 @@ jobs:
         platform:
           - name: ubuntu-24.04_x86_64
             runs-on: ubuntu-24.04
+        python:
+          - version: "3.10"
+          - version: "3.11"
+          - version: "3.12"
+          - version: "3.13"
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
       - name: Disk Cleanup
@@ -229,7 +234,7 @@ jobs:
         working-directory: sora-python-sdk
         run: |
           set -x
-          # uv python pin ${{ matrix.python_version }}
+          uv python pin ${{ matrix.python.version }}
           uv sync
           uv run python run.py --debug ${{ matrix.platform.name }}
           # cache
