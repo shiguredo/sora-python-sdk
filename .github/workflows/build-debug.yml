@@ -31,9 +31,13 @@ jobs:
             runs-on: ubuntu-24.04
         python:
           - version: "3.10"
+            soname: sora_sdk_ext.cpython-310-x86_64-linux-gnu.so
           - version: "3.11"
+            soname: sora_sdk_ext.cpython-311-x86_64-linux-gnu.so
           - version: "3.12"
+            soname: sora_sdk_ext.cpython-312-x86_64-linux-gnu.so
           - version: "3.13"
+            soname: sora_sdk_ext.cpython-313-x86_64-linux-gnu.so
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
       - name: buildType=${{ inputs.buildTYpe }} loopCount=${{ inputs.loopCount }}
@@ -258,6 +262,11 @@ jobs:
           # cache
           mkdir -p ../versions
           cp _install/${{ matrix.platform.name }}/llvm.version ../versions
+      - name: Upload sora_sdk_ext.so
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.python.soname }}
+          path: sora-python-sdk/src/sora_sdk/${{ matrix.python.soname }}
       - name: E2E Test sora-python-sdk
         working-directory: sora-python-sdk
         run: |
