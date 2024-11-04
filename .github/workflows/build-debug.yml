@@ -37,7 +37,8 @@ jobs:
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
       - name: buildType=${{ inputs.buildTYpe }} loopCount=${{ inputs.loopCount }}
-        run: echo 'buildType=${{ inputs.buildTYpe }} loopCount=${{ inputs.loopCount }}'
+        # 1 <= loopCount <= 100
+        run: test 1 -le ${{ inputs.loopCount }} -a ${{ inputs.loopCount }} -le 100
       - name: Disk Cleanup
         run: |
           set -x
