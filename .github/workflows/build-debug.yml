@@ -3,10 +3,6 @@ name: build-debug
 on:
   workflow_dispatch:
     inputs:
-      loopCount:
-        required: true
-        type: number
-        defualt: 10
       buildType:
         required: true
         type: choice
@@ -14,6 +10,10 @@ on:
           - Debug
           - RelWithDebInfo
         default: Debug
+      loopCount:
+        required: true
+        type: number
+        defualt: 10
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
@@ -36,6 +36,8 @@ jobs:
           - version: "3.13"
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
+      - name: buildType=${{ inputs.buildTYpe }} loopCount=${{ inputs.loopCount }}
+        run: echo 'buildType=${{ inputs.buildTYpe }} loopCount=${{ inputs.loopCount }}'
       - name: Disk Cleanup
         run: |
           set -x
@@ -136,7 +138,7 @@ jobs:
         id: sora-cpp-sdk-cache
         with:
           path: sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/sora
-          key: sora-cpp-sdk-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+          key: sora-cpp-sdk-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
       - uses: actions/cache@v4
         id: boost-cache
         with:
@@ -218,29 +220,29 @@ jobs:
       - name: Copy libwebrtc to sora-python-sdk
         if: inputs.buildType == 'Debug'
         run: |
-          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
+          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
           cp -r webrtc-build/_package/${{ matrix.platform.name }}/webrtc sora-python-sdk/_install/${{ matrix.platform.name }}/webrtc
           echo ${{ steps.version.outputs.webrtc_build_version }} > sora-python-sdk/_install/${{ matrix.platform.name }}/webrtc.version
       - name: Copy sora-cpp-sdk to sora-python-sdk
         run: |
-          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
-          cp -r sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/sora sora-python-sdk/_install/${{ matrix.platform.name }}/sora
+          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
+          cp -r sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/sora sora-python-sdk/_install/${{ matrix.platform.name }}/sora
           echo ${{ steps.version.outputs.sora_cpp_sdk_version }} > sora-python-sdk/_install/${{ matrix.platform.name }}/sora.version
       - name: Copy boost to sora-python-sdk
         run: |
-          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
-          cp -r sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/boost sora-python-sdk/_install/${{ matrix.platform.name }}/boost
+          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
+          cp -r sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/boost sora-python-sdk/_install/${{ matrix.platform.name }}/boost
           echo ${{ steps.version.outputs.boost_version }} > sora-python-sdk/_install/${{ matrix.platform.name }}/boost.version
       - uses: actions/cache@v4
         id: llvm-cache
         with:
           path: sora-python-sdk/_install/${{ matrix.platform.name }}/llvm
-          key: llvm-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+          key: llvm-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
       - uses: actions/cache@v4
         id: version-file-cache
         with:
           path: versions
-          key: versions-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+          key: versions-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
       - name: Copy version file
         if: steps.version-file-cache.outputs.cache-hit == 'true'
         run: cp versions/llvm.version sora-python-sdk/_install/${{ matrix.platform.name }}/
