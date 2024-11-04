@@ -2,10 +2,11 @@ name: build-relwithdebinfo
 
 on:
   workflow_dispatch:
-  push:
-    paths-ignore:
-      - "examples/**"
-      - "**.md"
+    inputs:
+      loopCount:
+        required: true
+        type: number
+        defualt: 10
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
@@ -194,7 +195,7 @@ jobs:
       - name: E2E Test sora-python-sdk
         working-directory: sora-python-sdk
         run: |
-          for i in {1..50}; do
+          for i in {1..${{ inputs.loopCount || 10 }}}; do
             echo "---------------- $i 回目 ----------------"
             sleep 10
             lldb-18 --batch -o 'command script import test_with_llvm.py' -o 'test'
