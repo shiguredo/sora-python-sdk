@@ -221,12 +221,12 @@ jobs:
         id: llvm-cache
         with:
           path: sora-python-sdk/_install/${{ matrix.platform.name }}/llvm
-          key: llvm-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk }}
+          key: llvm-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
       - uses: actions/cache@v4
         id: version-file-cache
         with:
           path: versions
-          key: versions-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk }}
+          key: versions-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
       - name: Copy version file
         if: steps.version-file-cache.outputs.cache-hit == 'true'
         run: cp versions/llvm.version sora-python-sdk/_install/${{ matrix.platform.name }}/
