@@ -6,6 +6,8 @@
 #include <api/audio/channel_layout.h>
 #include <modules/audio_mixer/audio_frame_manipulator.h>
 
+#include "sora_call.h"
+
 SoraAudioSinkImpl::SoraAudioSinkImpl(SoraTrackInterface* track,
                                      int output_sample_rate,
                                      size_t output_channels)
@@ -111,7 +113,7 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
       sample_rate_ = sample_rate;
       number_of_channels_ = number_of_channels;
       if (on_format_) {
-        on_format_(sample_rate_, number_of_channels_);
+        call_python(on_format_, sample_rate_, number_of_channels_);
       }
     }
 
@@ -129,7 +131,7 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
     auto data = nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>(
         (void*)audio_data, 2, shape, nb::handle());
     /* まだ使ったことながない。現状 Python 側で on_frame と同じ感覚でコールバックの外に値を持ち出すと落ちるはず。 */
-    on_data_(data);
+    call_python(on_data_, data);
   }
 }
 

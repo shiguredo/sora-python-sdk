@@ -10,6 +10,8 @@
 #include <modules/audio_processing/agc2/rnn_vad/common.h>
 #include <modules/audio_processing/include/audio_frame_view.h>
 
+#include "sora_call.h"
+
 SoraAudioFrameDefaultImpl::SoraAudioFrameDefaultImpl(
     std::unique_ptr<webrtc::AudioFrame> audio_frame)
     : audio_frame_(std::move(audio_frame)) {}
@@ -208,5 +210,6 @@ void SoraAudioStreamSinkImpl::OnData(
     webrtc::RemixFrame(output_channels_, tuned_frame.get());
   }
 
-  on_frame_(std::make_shared<SoraAudioFrame>(std::move(tuned_frame)));
+  call_python(on_frame_,
+              std::make_shared<SoraAudioFrame>(std::move(tuned_frame)));
 }

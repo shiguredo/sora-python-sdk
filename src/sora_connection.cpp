@@ -16,6 +16,7 @@
 #include <nanobind/nanobind.h>
 
 #include "gil.h"
+#include "sora_call.h"
 
 namespace nb = nanobind;
 
@@ -180,7 +181,7 @@ void SoraConnection::OnSetOffer(std::string offer) {
     }
   }
   if (on_set_offer_) {
-    on_set_offer_(offer);
+    call_python(on_set_offer_, offer);
   }
 }
 
@@ -189,34 +190,34 @@ void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
   gil_scoped_acquire acq;
   ioc_->stop();
   if (on_disconnect_) {
-    on_disconnect_(ec, message);
+    call_python(on_disconnect_, ec, message);
   }
 }
 
 void SoraConnection::OnNotify(std::string text) {
   gil_scoped_acquire acq;
   if (on_notify_) {
-    on_notify_(text);
+    call_python(on_notify_, text);
   }
 }
 
 void SoraConnection::OnPush(std::string text) {
   if (on_push_) {
-    on_push_(text);
+    call_python(on_push_, text);
   }
 }
 
 void SoraConnection::OnMessage(std::string label, std::string data) {
   gil_scoped_acquire acq;
   if (on_message_) {
-    on_message_(label, nb::bytes(data.c_str(), data.size()));
+    call_python(on_message_, label, nb::bytes(data.c_str(), data.size()));
   }
 }
 
 void SoraConnection::OnSwitched(std::string text) {
   gil_scoped_acquire acq;
   if (on_switched_) {
-    on_switched_(text);
+    call_python(on_switched_, text);
   }
 }
 
@@ -225,14 +226,14 @@ void SoraConnection::OnSignalingMessage(sora::SoraSignalingType type,
                                         std::string message) {
   gil_scoped_acquire acq;
   if (on_signaling_message_) {
-    on_signaling_message_(type, direction, message);
+    call_python(on_signaling_message_, type, direction, message);
   }
 }
 
 void SoraConnection::OnWsClose(uint16_t code, std::string message) {
   gil_scoped_acquire acq;
   if (on_ws_close_) {
-    on_ws_close_(code, message);
+    call_python(on_ws_close_, code, message);
   }
 }
 
@@ -244,7 +245,7 @@ void SoraConnection::OnTrack(
     // shared_ptr になってないとリークする
     auto track = std::make_shared<SoraMediaTrack>(this, receiver);
     AddSubscriber(track.get());
-    on_track_(track);
+    call_python(on_track_, track);
   }
 }
 
@@ -257,6 +258,6 @@ void SoraConnection::OnRemoveTrack(
 void SoraConnection::OnDataChannel(std::string label) {
   gil_scoped_acquire acq;
   if (on_data_channel_) {
-    on_data_channel_(label);
+    call_python(on_data_channel_, label);
   }
 }

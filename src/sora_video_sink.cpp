@@ -7,6 +7,7 @@
 #include <third_party/libyuv/include/libyuv.h>
 
 #include "gil.h"
+#include "sora_call.h"
 
 SoraVideoFrame::SoraVideoFrame(
     rtc::scoped_refptr<webrtc::I420BufferInterface> i420_data)
@@ -108,7 +109,7 @@ void SoraVideoSinkImpl::OnFrame(const webrtc::VideoFrame& frame) {
        */
       rtc::scoped_refptr<webrtc::I420BufferInterface> i420_data =
           frame.video_frame_buffer()->ToI420();
-      on_frame_(std::make_shared<SoraVideoFrame>(i420_data));
+      call_python(on_frame_, std::make_shared<SoraVideoFrame>(i420_data));
     }
   });
 }
