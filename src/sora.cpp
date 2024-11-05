@@ -208,6 +208,14 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   if (video_frame_transformer) {
     conn->SetVideoSenderFrameTransformer(video_frame_transformer);
   }
+
+  weak_connections_.erase(
+      std::remove_if(
+          weak_connections_.begin(), weak_connections_.end(),
+          [](std::weak_ptr<SoraConnection> w) { return w.expired(); }),
+      weak_connections_.end());
+  weak_connections_.push_back(conn);
+
   return conn;
 }
 

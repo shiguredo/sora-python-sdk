@@ -159,6 +159,8 @@ class Sora : public DisposePublisher {
    */
   SoraVideoSource* CreateVideoSource();
 
+  std::vector<std::weak_ptr<SoraConnection>> weak_connections_;
+
  private:
   /**
    * Python で渡された値を boost::json::value に変換します。
