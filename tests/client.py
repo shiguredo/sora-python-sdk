@@ -186,8 +186,7 @@ class SoraClient:
         self.disconnect()
 
     def connect(self, fake_audio=False, fake_video=False) -> None:
-        self._connection.connect()
-
+        # スレッドは connect 前に起動する
         if fake_audio:
             self._fake_audio_thread = threading.Thread(target=self._fake_audio_loop, daemon=True)
             self._fake_audio_thread.start()
@@ -195,6 +194,8 @@ class SoraClient:
         if fake_video:
             self._fake_video_thread = threading.Thread(target=self._fake_video_loop, daemon=True)
             self._fake_video_thread.start()
+
+        self._connection.connect()
 
         assert self._connected.wait(
             self._default_connection_timeout_s
