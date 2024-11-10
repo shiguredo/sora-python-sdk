@@ -68,6 +68,7 @@ dev-dependencies = [
     "pytest",
     "ruff",
     "mypy",
+    "pyjwt>=2.9.0",
 ]
 
 [tool.ruff]
