@@ -29,7 +29,6 @@ def test_websocket_signaling_only_lifetime_expired(setup):
         secret,
         algorithm="HS256",
     )
-    metadata = {"access_token": access_token}
 
     with SoraClient(
         signaling_urls,
@@ -37,7 +36,7 @@ def test_websocket_signaling_only_lifetime_expired(setup):
         channel_id,
         audio=True,
         video=True,
-        metadata=metadata,
+        metadata={"access_token": access_token},
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -143,7 +142,6 @@ def test_websocket_datachannel_signaling_lifetime_expired(setup):
         secret,
         algorithm="HS256",
     )
-    metadata = {"access_token": access_token}
 
     with SoraClient(
         signaling_urls,
@@ -151,7 +149,7 @@ def test_websocket_datachannel_signaling_lifetime_expired(setup):
         channel_id,
         audio=True,
         video=True,
-        metadata=metadata,
+        metadata={"access_token": access_token},
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:

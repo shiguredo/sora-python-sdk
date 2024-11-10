@@ -29,7 +29,6 @@ def test_sendonly_authz_video_true(setup):
         secret,
         algorithm="HS256",
     )
-    metadata = {"access_token": access_token}
 
     sendonly = SoraClient(
         signaling_urls,
@@ -37,7 +36,7 @@ def test_sendonly_authz_video_true(setup):
         channel_id,
         audio=True,
         video=False,
-        metadata=metadata,
+        metadata={"access_token": access_token},
     )
     sendonly.connect(fake_video=False, fake_audio=True)
 
@@ -92,7 +91,6 @@ def test_sendonly_authz_video_codec_type(setup, video_codec_params):
         secret,
         algorithm="HS256",
     )
-    metadata = {"access_token": access_token}
 
     sendonly = SoraClient(
         signaling_urls,
@@ -100,7 +98,7 @@ def test_sendonly_authz_video_codec_type(setup, video_codec_params):
         channel_id,
         audio=False,
         video=True,
-        metadata=metadata,
+        metadata={"access_token": access_token},
     )
     sendonly.connect(fake_video=True)
 
