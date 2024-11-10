@@ -7,7 +7,6 @@ import pytest
 from client import SoraClient, SoraRole
 
 
-@pytest.mark.skipif(reason="TODO: バグ")
 @pytest.mark.parametrize(
     "video_codec_params",
     [
@@ -29,7 +28,6 @@ def test_sendonly_authz_video_codec_type(setup, video_codec_params):
     access_token = jwt.encode(
         {
             "channel_id": channel_id,
-            "audio": False,
             "video": True,
             "video_codec_type": video_codec_type,
         },
@@ -42,10 +40,8 @@ def test_sendonly_authz_video_codec_type(setup, video_codec_params):
         signaling_urls,
         SoraRole.SENDONLY,
         channel_id,
-        # audio True だけど、authz で audio False になる
-        audio=True,
-        # video False だけど、authz で video True になる
-        video=False,
+        audio=False,
+        video=True,
         metadata=metadata,
     )
     sendonly.connect(fake_video=True)
