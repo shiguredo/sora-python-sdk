@@ -51,10 +51,11 @@
 - [UPDATE] nanobind を `2.2.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
-  - WEBRTC_BUILD_VERSION を `m129.6668.1.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m129.6668.1.1` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
-  - CMAKE_VERSION を `3.30.3` に上げる
+  - CMAKE_VERSION を `3.30.5` に上げる
   - BOOST_VERSION を `1.86.0` に上げる
+  - OPENH264_VERSION を `v2.5.0` に上げる
   - @torikizi @voluntas
 
 ### misc
@@ -152,7 +153,7 @@
   - @enm10k
 - [UPDATE] nanobind を `1.9.2` に上げて固定する
   - @voluntas
-- [UPDATE] ruff の最小を ``0.3.0` に上げる
+- [UPDATE] ruff の最小を `0.3.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する
