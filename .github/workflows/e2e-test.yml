@@ -15,6 +15,7 @@ env:
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.5.0
 
 jobs:
   e2e_test_ubuntu:
@@ -46,9 +47,9 @@ jobs:
           sudo apt-get -y install libva2 libdrm2 libva-dev libdrm-dev libx11-dev portaudio19-dev
       - name: Download openh264
         run: |
-          curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-linux64.7.so.bz2
-          bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
-          mv libopenh264-2.4.1-linux64.7.so libopenh264.so
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
       - uses: astral-sh/setup-uv@v3
       - run: uv python pin ${{ matrix.python_version }}
@@ -76,9 +77,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download openh264
         run: |
-          curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-mac-arm64.dylib.bz2
-          bzip2 -d libopenh264-2.4.1-mac-arm64.dylib.bz2
-          mv libopenh264-2.4.1-mac-arm64.dylib libopenh264.dylib
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib libopenh264.dylib
           echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
       - uses: astral-sh/setup-uv@v3
       - run: uv python pin ${{ matrix.python_version }}
@@ -108,10 +109,10 @@ jobs:
       - name: Download openh264
         shell: pwsh
         run: |
-          $url = "http://ciscobinary.openh264.org/openh264-2.4.1-win64.dll.bz2"
-          Invoke-WebRequest -Uri $url -OutFile "openh264-2.4.1-win64.dll.bz2"
-          7z e openh264-2.4.1-win64.dll.bz2
-          Rename-Item -Path "openh264-2.4.1-win64.dll" -NewName "libopenh264.dll"
+          $url = "http://ciscobinary.openh264.org/openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
+          Invoke-WebRequest -Uri $url -OutFile "openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
+          7z e openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2
+          Rename-Item -Path "openh264-${{ env.OPENH264_VERSION }}-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
       - uses: astral-sh/setup-uv@v3
       - run: uv python pin ${{ matrix.python_version }}
