@@ -179,7 +179,7 @@ void SoraAudioStreamSinkImpl::OnData(
     int sample_rate,
     size_t number_of_channels,
     size_t number_of_frames,
-    absl::optional<int64_t> absolute_capture_timestamp_ms) {
+    std::optional<int64_t> absolute_capture_timestamp_ms) {
   auto tuned_frame = std::make_unique<webrtc::AudioFrame>();
   tuned_frame->UpdateFrame(
       0, static_cast<const int16_t*>(audio_data), number_of_frames, sample_rate,
