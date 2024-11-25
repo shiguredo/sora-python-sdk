@@ -51,7 +51,7 @@
 - [UPDATE] nanobind を `2.2.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
-  - WEBRTC_BUILD_VERSION を `m129.6668.1.1` に上げる
+  - WEBRTC_BUILD_VERSION を `m130.6723.2.0` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
   - CMAKE_VERSION を `3.30.5` に上げる
   - BOOST_VERSION を `1.86.0` に上げる
