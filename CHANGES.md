@@ -53,6 +53,8 @@
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
   - WEBRTC_BUILD_VERSION を `m130.6723.2.0` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
+    - Sora CPP SDK の absl::optional を std::optional に変更した仕様に追従する
+    - Sora CPP SDK の absl::nullopt を std::nullopt に変更した仕様に追従する
   - CMAKE_VERSION を `3.30.5` に上げる
   - BOOST_VERSION を `1.86.0` に上げる
   - OPENH264_VERSION を `v2.5.0` に上げる
