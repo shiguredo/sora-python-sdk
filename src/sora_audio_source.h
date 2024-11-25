@@ -32,7 +32,7 @@ class SoraAudioSourceInterface
 
   void OnData(const int16_t* data,
               size_t samples_per_channel,
-              absl::optional<int64_t> timestamp);
+              std::optional<int64_t> timestamp);
 
   // MediaSourceInterface implementation.
   webrtc::MediaSourceInterface::SourceState state() const override;
@@ -46,7 +46,7 @@ class SoraAudioSourceInterface
   void RemoveSink(webrtc::AudioTrackSinkInterface* sink) override;
 
  private:
-  void Add10MsData(const int16_t* data, absl::optional<int64_t> timestamp);
+  void Add10MsData(const int16_t* data, std::optional<int64_t> timestamp);
 
   std::list<AudioObserver*> audio_observers_;
   webrtc::Mutex sink_lock_;
