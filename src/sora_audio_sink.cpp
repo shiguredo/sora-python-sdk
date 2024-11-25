@@ -53,7 +53,7 @@ void SoraAudioSinkImpl::OnData(
     int sample_rate,
     size_t number_of_channels,
     size_t number_of_frames,
-    absl::optional<int64_t> absolute_capture_timestamp_ms) {
+    std::optional<int64_t> absolute_capture_timestamp_ms) {
   if (absolute_capture_timestamp_ms) {
     audio_frame_->set_absolute_capture_timestamp_ms(
         *absolute_capture_timestamp_ms);
