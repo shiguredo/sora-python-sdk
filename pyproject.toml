@@ -51,20 +51,20 @@ Discord = "https://discord.gg/shiguredo"
 # - https://setuptools.pypa.io/en/latest/build_meta.html
 #   - setuptools の build-system サポートについて解説されていて参考になる
 [build-system]
-requires = ["setuptools>=75.1", "wheel~=0.44.0"]
+requires = ["setuptools>=75.6", "wheel~=0.45.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
 python-preference = "only-managed"
 dev-dependencies = [
     "nanobind~=2.2.0",
-    "setuptools>=75.1",
-    "build~=1.2.2",
-    "wheel~=0.44.0",
-    "typing-extensions>=4.12",
-    "python-dotenv>=1.0",
+    "setuptools>=75.6",
+    "build~=1.2.2.post1",
+    "wheel~=0.45.1",
+    "typing-extensions",
+    "python-dotenv",
     "numpy>=2.1",
-    "httpx>=0.27",
+    "httpx",
     "pytest",
     "ruff",
     "mypy",
