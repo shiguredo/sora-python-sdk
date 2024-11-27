@@ -56,11 +56,11 @@ jobs:
             runs_on: ubuntu-22.04
             os: ubuntu
             arch: x86_64
-          - name: macos-13_arm64
+          - name: macos-15_arm64
             target: macos_arm64
-            runs_on: macos-13
+            runs_on: macos-15
             os: macos
-            python_host_platform: "macosx-13.0-arm64"
+            python_host_platform: "macosx-15.0-arm64"
             archflags: "-arch arm64"
           - name: macos-14_arm64
             target: macos_arm64
@@ -226,8 +226,8 @@ jobs:
         platform:
           # - name: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
+          - name: macos-15_arm64
           - name: macos-14_arm64
-          - name: macos-13_arm64
           - name: windows-2022
         python_version:
           - "3.10"
@@ -251,7 +251,7 @@ jobs:
           fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-14_arm64' && matrix.python_version == '3.10' }}
+        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.10' }}
 
       # テスト用
       # - name: Publish package to TestPyPI
@@ -295,6 +295,14 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.10" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.10" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.11" }
@@ -302,14 +310,6 @@ jobs:
         with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.13" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.10" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.11" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2022", "python_version": "3.10" }
       - uses: ./.github/actions/download

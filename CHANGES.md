@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] macOS Sonoma 13 のサポートを終了する
+  - @voluntas
 - [CHANGE] `client_cert` と `client_key` の指定にはパスではなく中身の文字列を指定するようにする
   - C++ SDK 側の仕様変更に追従する
   - @voluntas
@@ -62,6 +64,8 @@
 
 ### misc
 
+- [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
 - [ADD] canary.py を追加
   - @voluntas
 - [ADD] Python 3.13 を E2E テストに追加する
