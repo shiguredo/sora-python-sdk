@@ -5,6 +5,8 @@
 #include <rtc_base/time_utils.h>
 #include <third_party/libyuv/include/libyuv.h>
 
+#include "gil.h"
+
 SoraVideoSource::SoraVideoSource(
     DisposePublisher* publisher,
     rtc::scoped_refptr<sora::ScalableVideoTrackSource> source,
@@ -12,17 +14,17 @@ SoraVideoSource::SoraVideoSource(
     : SoraTrackInterface(publisher, track), source_(source), finished_(false) {
   publisher_->AddSubscriber(this);
   thread_.reset(new std::thread([this]() {
+    gil_scoped_acquire acq;
     while (SendFrameProcess()) {
     }
   }));
 }
 
 void SoraVideoSource::Disposed() {
-  std::unique_lock<std::mutex> lock(queue_mtx_);
   if (!finished_) {
     finished_ = true;
-    lock.unlock();
     queue_cond_.notify_all();
+    gil_scoped_release release;
     thread_->join();
     thread_ = nullptr;
   }
@@ -55,24 +57,19 @@ void SoraVideoSource::OnCaptured(
   std::unique_ptr<uint8_t> data(new uint8_t[width * height * 3]);
   memcpy(data.get(), ndarray.data(), width * height * 3);
 
-  {
-    std::lock_guard<std::mutex> lock(queue_mtx_);
-    if (finished_) {
-      return;
-    }
-    queue_.push(
-        std::make_unique<Frame>(std::move(data), width, height, timestamp_us));
+  if (finished_) {
+    return;
   }
+  queue_.push(
+      std::make_unique<Frame>(std::move(data), width, height, timestamp_us));
   queue_cond_.notify_all();
 }
 
 bool SoraVideoSource::SendFrameProcess() {
   std::unique_ptr<Frame> frame;
   {
-    std::unique_lock<std::mutex> lock(queue_mtx_);
-    if (queue_.empty()) {
-      queue_cond_.wait(lock, [&] { return !queue_.empty() || finished_; });
-    }
+    GILLock lock;
+    queue_cond_.wait(lock, [&] { return !queue_.empty() || finished_; });
     if (finished_) {
       return false;
     }

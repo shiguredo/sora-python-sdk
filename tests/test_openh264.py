@@ -3,7 +3,7 @@ import time
 import uuid
 
 import pytest
-from client import Recvonly, Sendonly
+from client import SoraClient, SoraRole
 
 
 @pytest.mark.skipif(sys.platform not in ["darwin", "linux"], reason="macOSとLinuxでのみ実行する")
@@ -16,8 +16,9 @@ def test_openh264_sendonly_recvonly(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         metadata=metadata,
         audio=False,
@@ -28,8 +29,9 @@ def test_openh264_sendonly_recvonly(setup):
     )
     sendonly.connect(fake_video=True)
 
-    recvonly = Recvonly(
+    recvonly = SoraClient(
         signaling_urls,
+        SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
         openh264_path=openh264_path,
@@ -82,8 +84,9 @@ def test_openh264_simulcast(setup, video_codec_type, expected_implementation):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         simulcast=True,
         audio=False,

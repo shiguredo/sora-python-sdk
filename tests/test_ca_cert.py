@@ -3,7 +3,7 @@ import time
 import uuid
 
 import pytest
-from client import Sendonly
+from client import SoraClient, SoraRole
 
 """
 このテストは、Sora の CA 証明書が有効かどうかを確認するためのものです。
@@ -73,19 +73,16 @@ def test_ca_cert(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    with SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,
         metadata=metadata,
         ca_cert=letsencrypt_org_ca_cert,
-    )
-    sendonly.connect(fake_audio=True, fake_video=True)
-
-    time.sleep(5)
-
-    sendonly.disconnect()
+    ):
+        time.sleep(5)
 
 
 @pytest.mark.xfail(reason="Invalid CA certificate")
@@ -96,12 +93,13 @@ def test_ca_cert_invalid(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    with SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,
         metadata=metadata,
         ca_cert=pki_goog_ca_cert,
-    )
-    sendonly.connect(fake_audio=True, fake_video=True)
+    ):
+        pass

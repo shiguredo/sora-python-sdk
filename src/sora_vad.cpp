@@ -26,10 +26,10 @@ float SoraVAD::Analyze(std::shared_ptr<SoraAudioFrame> frame) {
     audio_buffer_.reset(new webrtc::AudioBuffer(
         frame->sample_rate_hz(), frame->num_channels(),
         webrtc::rnn_vad::kSampleRate24kHz,  // VAD は 24kHz なので合わせる
-        1,  // VAD は 1 チャンネルなので合わせる
+        1,                                  // VAD は 1 チャンネルなので合わせる
         webrtc::rnn_vad::
             kSampleRate24kHz,  // 出力はしないが、余計なインスタンスを生成しないよう合わせる
-        1  // 出力はしないが VAD とチャネル数は合わせておく
+        1                      // 出力はしないが VAD とチャネル数は合わせておく
         ));
     vad_input_config_ =
         webrtc::StreamConfig(frame->sample_rate_hz(), frame->num_channels());

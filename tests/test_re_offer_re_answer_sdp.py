@@ -1,7 +1,7 @@
 import sys
 import uuid
 
-from client import Recvonly, Sendonly
+from client import SoraClient, SoraRole
 
 
 def test_re_offer_re_answer_sdp(setup):
@@ -11,15 +11,17 @@ def test_re_offer_re_answer_sdp(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    recvonly = Recvonly(
+    recvonly = SoraClient(
         signaling_urls,
+        SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
     )
     recvonly.connect()
 
-    sendonly1 = Sendonly(
+    sendonly1 = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,
@@ -28,8 +30,9 @@ def test_re_offer_re_answer_sdp(setup):
     sendonly1.connect(fake_audio=True, fake_video=True)
     sendonly1.disconnect()
 
-    sendonly2 = Sendonly(
+    sendonly2 = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,
@@ -37,8 +40,9 @@ def test_re_offer_re_answer_sdp(setup):
     )
     sendonly2.connect(fake_audio=True, fake_video=True)
 
-    sendonly3 = Sendonly(
+    sendonly3 = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         audio=True,
         video=True,

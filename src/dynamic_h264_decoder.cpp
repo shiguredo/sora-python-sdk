@@ -89,7 +89,7 @@ int32_t DynamicH264Decoder::Decode(const EncodedImage& input_image,
   }
 
   h264_bitstream_parser_.ParseBitstream(input_image);
-  absl::optional<int> qp = h264_bitstream_parser_.GetLastSliceQp();
+  std::optional<int> qp = h264_bitstream_parser_.GetLastSliceQp();
 
   std::array<std::uint8_t*, 3> yuv;
   SBufferInfo info = {};
@@ -127,7 +127,7 @@ int32_t DynamicH264Decoder::Decode(const EncodedImage& input_image,
     video_frame.set_color_space(*input_image.ColorSpace());
   }
 
-  callback_->Decoded(video_frame, absl::nullopt, qp);
+  callback_->Decoded(video_frame, std::nullopt, qp);
 
   return WEBRTC_VIDEO_CODEC_OK;
 }

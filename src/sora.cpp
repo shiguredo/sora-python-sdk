@@ -24,6 +24,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const nb::handle& signaling_notify_metadata,
     SoraTrackInterface* audio_source,
     SoraTrackInterface* video_source,
+    SoraAudioFrameTransformer* audio_frame_transformer,
+    SoraVideoFrameTransformer* video_frame_transformer,
     std::optional<bool> audio,
     std::optional<bool> video,
     std::optional<std::string> audio_codec_type,
@@ -33,6 +35,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     const nb::handle& video_vp9_params,
     const nb::handle& video_av1_params,
     const nb::handle& video_h264_params,
+    const nb::handle& audio_opus_params,
     std::optional<bool> simulcast,
     std::optional<bool> spotlight,
     std::optional<int> spotlight_number,
@@ -40,6 +43,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<std::string> spotlight_focus_rid,
     std::optional<std::string> spotlight_unfocus_rid,
     const nb::handle& forwarding_filter,
+    const nb::handle& forwarding_filters,
     const nb::handle& data_channels,
     std::optional<bool> data_channel_signaling,
     std::optional<bool> ignore_disconnect_websocket,
@@ -100,6 +104,10 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     config.video_h264_params = ConvertJsonValue(
         video_h264_params, "Invalid JSON value in video_h264_params");
   }
+  if (audio_opus_params) {
+    config.audio_opus_params = ConvertJsonValue(
+        audio_opus_params, "Invalid JSON value in audio_opus_params");
+  }
   config.metadata =
       ConvertJsonValue(metadata, "Invalid JSON value in metadata");
   config.signaling_notify_metadata =
@@ -124,6 +132,7 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     config.spotlight_unfocus_rid = *spotlight_unfocus_rid;
   }
   config.forwarding_filter = ConvertForwardingFilter(forwarding_filter);
+  config.forwarding_filters = ConvertForwardingFilters(forwarding_filters);
   config.data_channels = ConvertDataChannels(data_channels);
   if (data_channel_signaling) {
     config.data_channel_signaling.emplace(*data_channel_signaling);
@@ -170,10 +179,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   if (proxy_agent) {
     config.proxy_agent = *proxy_agent;
   }
-  config.network_manager =
-      factory_->GetConnectionContext()->default_network_manager();
-  config.socket_factory =
-      factory_->GetConnectionContext()->default_socket_factory();
+  config.network_manager = factory_->default_network_manager();
+  config.socket_factory = factory_->default_socket_factory();
 
   config.sora_client = "Sora Python SDK";
   try {
@@ -195,6 +202,20 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   if (video_source) {
     conn->SetVideoTrack(video_source);
   }
+  if (audio_frame_transformer) {
+    conn->SetAudioSenderFrameTransformer(audio_frame_transformer);
+  }
+  if (video_frame_transformer) {
+    conn->SetVideoSenderFrameTransformer(video_frame_transformer);
+  }
+
+  weak_connections_.erase(
+      std::remove_if(
+          weak_connections_.begin(), weak_connections_.end(),
+          [](std::weak_ptr<SoraConnection> w) { return w.expired(); }),
+      weak_connections_.end());
+  weak_connections_.push_back(conn);
+
   return conn;
 }
 
@@ -252,12 +273,64 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
   throw nb::type_error(error_message);
 }
 
-boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+std::optional<std::vector<sora::SoraSignalingConfig::ForwardingFilter>>
+Sora::ConvertForwardingFilters(const nb::handle value) {
+  auto forwarding_filters_value =
+      ConvertJsonValue(value, "Invalid JSON value in forwarding_filters");
+  if (forwarding_filters_value.is_null()) {
+    return std::nullopt;
+  }
+
+  std::vector<sora::SoraSignalingConfig::ForwardingFilter> forwarding_filters;
+
+  for (auto forwarding_filter_value : forwarding_filters_value.as_array()) {
+    sora::SoraSignalingConfig::ForwardingFilter filter;
+    try {
+      auto object = forwarding_filter_value.as_object();
+      if (!object["action"].is_null()) {
+        filter.action = std::string(object["action"].as_string());
+      }
+      for (auto or_rule : object["rules"].as_array()) {
+        std::vector<sora::SoraSignalingConfig::ForwardingFilter::Rule> rules;
+        for (auto and_rule_value : or_rule.as_array()) {
+          auto and_rule = and_rule_value.as_object();
+          sora::SoraSignalingConfig::ForwardingFilter::Rule rule;
+          rule.field = and_rule["field"].as_string();
+          rule.op = and_rule["operator"].as_string();
+          for (auto value : and_rule["values"].as_array()) {
+            rule.values.push_back(value.as_string().c_str());
+          }
+          rules.push_back(rule);
+        }
+        filter.rules.push_back(rules);
+      }
+      if (!object["version"].is_null()) {
+        filter.version = std::string(object["version"].as_string());
+      }
+      if (!object["metadata"].is_null()) {
+        filter.metadata = object["metadata"];
+      }
+      if (!object["name"].is_null()) {
+        filter.name = std::string(object["name"].as_string());
+      }
+      if (!object["priority"].is_null()) {
+        filter.priority = boost::json::value_to<int>(object["priority"]);
+      }
+    } catch (std::exception&) {
+      throw nb::type_error("Invalid forwarding_filter");
+    }
+    forwarding_filters.push_back(filter);
+  }
+
+  return forwarding_filters;
+}
+
+std::optional<sora::SoraSignalingConfig::ForwardingFilter>
 Sora::ConvertForwardingFilter(const nb::handle value) {
   auto forwarding_filter_value =
       ConvertJsonValue(value, "Invalid JSON value in forwarding_filter");
   if (forwarding_filter_value.is_null()) {
-    return boost::none;
+    return std::nullopt;
   }
 
   sora::SoraSignalingConfig::ForwardingFilter filter;
@@ -286,6 +359,12 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
     }
     if (!object["metadata"].is_null()) {
       filter.metadata = object["metadata"];
+    }
+    if (!object["name"].is_null()) {
+      filter.name = std::string(object["name"].as_string());
+    }
+    if (!object["priority"].is_null()) {
+      filter.priority = boost::json::value_to<int>(object["priority"]);
     }
   } catch (std::exception&) {
     throw nb::type_error("Invalid forwarding_filter");
@@ -364,6 +443,10 @@ SoraSignalingConfig::DataChannel tag_invoke(
   if (!object["max_retransmits"].is_null()) {
     data_channel.max_retransmits =
         boost::json::value_to<int32_t>(object["max_retransmits"]);
+  }
+  if (!object["header"].is_null()) {
+    const auto& ar = object["header"].as_array();
+    data_channel.header.emplace(ar.begin(), ar.end());
   }
 
   return data_channel;

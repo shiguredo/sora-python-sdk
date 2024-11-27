@@ -1,6 +1,7 @@
 name: e2e-test
 
 on:
+  workflow_dispatch:
   push:
     paths-ignore:
       - "**.md"
@@ -13,12 +14,15 @@ env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.5.0
 
 jobs:
   e2e_test_ubuntu:
     strategy:
+      fail-fast: false
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
         os: ["ubuntu-22.04", "ubuntu-24.04"]
     runs-on: ${{ matrix.os}}
     timeout-minutes: 15
@@ -26,21 +30,28 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
       - uses: actions/checkout@v4
+      - name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva2 libdrm2 libva-dev libdrm-dev libx11-dev portaudio19-dev
       - name: Download openh264
         run: |
-          curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-linux64.7.so.bz2
-          bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
-          mv libopenh264-2.4.1-linux64.7.so libopenh264.so
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ${{ matrix.os }}_x86_64
@@ -48,8 +59,9 @@ jobs:
 
   e2e_test_macos:
     strategy:
+      fail-fast: false
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
@@ -58,17 +70,18 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
         run: |
-          curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-mac-arm64.dylib.bz2
-          bzip2 -d libopenh264-2.4.1-mac-arm64.dylib.bz2
-          mv libopenh264-2.4.1-mac-arm64.dylib libopenh264.dylib
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib libopenh264.dylib
           echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py macos_arm64
@@ -76,8 +89,9 @@ jobs:
 
   e2e_test_windows:
     strategy:
+      fail-fast: false
       matrix:
-        python_version: ["3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: windows-2022
     timeout-minutes: 15
     env:
@@ -87,6 +101,7 @@ jobs:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
         github.event_name == 'schedule'
       }}
     steps:
@@ -94,12 +109,12 @@ jobs:
       - name: Download openh264
         shell: pwsh
         run: |
-          $url = "http://ciscobinary.openh264.org/openh264-2.4.1-win64.dll.bz2"
-          Invoke-WebRequest -Uri $url -OutFile "openh264-2.4.1-win64.dll.bz2"
-          7z e openh264-2.4.1-win64.dll.bz2
-          Rename-Item -Path "openh264-2.4.1-win64.dll" -NewName "libopenh264.dll"
+          $url = "http://ciscobinary.openh264.org/openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
+          Invoke-WebRequest -Uri $url -OutFile "openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
+          7z e openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2
+          Rename-Item -Path "openh264-${{ env.OPENH264_VERSION }}-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py windows_x86_64

@@ -12,11 +12,11 @@
 // Boost
 #include <boost/asio/signal_set.hpp>
 
-// WebRTC
-#include <rtc_base/crypto_random.h>
-
 // nonobind
 #include <nanobind/nanobind.h>
+
+#include "gil.h"
+#include "sora_call.h"
 
 namespace nb = nanobind;
 
@@ -70,9 +70,9 @@ void SoraConnection::Connect() {
 
 void SoraConnection::Disconnect() {
   if (thread_) {
-    // Disconnect の中で OnDisconnect が呼ばれるので GIL をリリースする
-    nb::gil_scoped_release release;
     conn_->Disconnect();
+    // join() 中に OnDisconnect が呼ばれるので GIL をリリースする
+    gil_scoped_release release;
     thread_->join();
     thread_ = nullptr;
   }
@@ -110,6 +110,28 @@ void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
   video_source_ = video_source;
 }
 
+void SoraConnection::SetAudioSenderFrameTransformer(
+    SoraAudioFrameTransformer* audio_sender_frame_transformer) {
+  // TODO(tnoho): audio_sender_ がないと意味がないので、エラーを返すようにするべき
+  auto interface =
+      audio_sender_frame_transformer->GetFrameTransformerInterface();
+  if (audio_sender_) {
+    audio_sender_->SetFrameTransformer(interface);
+  }
+  audio_sender_frame_transformer_ = interface;
+}
+
+void SoraConnection::SetVideoSenderFrameTransformer(
+    SoraVideoFrameTransformer* video_sender_frame_transformer) {
+  // TODO(tnoho): video_sender_ がないと意味がないので、エラーを返すようにするべき
+  auto interface =
+      video_sender_frame_transformer->GetFrameTransformerInterface();
+  if (video_sender_) {
+    video_sender_->SetFrameTransformer(interface);
+  }
+  video_sender_frame_transformer_ = interface;
+}
+
 bool SoraConnection::SendDataChannel(const std::string& label,
                                      nb::bytes& data) {
   return conn_->SendDataChannel(label, std::string(data.c_str(), data.size()));
@@ -122,7 +144,7 @@ std::string SoraConnection::GetStats() {
   }
   std::promise<std::string> stats;
   std::future<std::string> future = stats.get_future();
-  nb::gil_scoped_release release;
+  gil_scoped_release release;
   pc->GetStats(
       sora::RTCStatsCallback::Create(
           [&](const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
@@ -133,6 +155,7 @@ std::string SoraConnection::GetStats() {
 }
 
 void SoraConnection::OnSetOffer(std::string offer) {
+  gil_scoped_acquire acq;
   std::string stream_id = rtc::CreateRandomString(16);
   if (audio_source_) {
     webrtc::RTCErrorOr<rtc::scoped_refptr<webrtc::RtpSenderInterface>>
@@ -141,6 +164,9 @@ void SoraConnection::OnSetOffer(std::string offer) {
     if (audio_result.ok()) {
       // javascript でいう replaceTrack を実装するために webrtc::RtpSenderInterface の参照をとっておく
       audio_sender_ = audio_result.value();
+      if (audio_sender_frame_transformer_) {
+        audio_sender_->SetFrameTransformer(audio_sender_frame_transformer_);
+      }
     }
   }
   if (video_source_) {
@@ -149,79 +175,89 @@ void SoraConnection::OnSetOffer(std::string offer) {
             video_source_->GetTrack(), {stream_id});
     if (video_result.ok()) {
       video_sender_ = video_result.value();
+      if (video_sender_frame_transformer_) {
+        video_sender_->SetFrameTransformer(video_sender_frame_transformer_);
+      }
     }
   }
   if (on_set_offer_) {
-    on_set_offer_(offer);
+    call_python(on_set_offer_, offer);
   }
 }
 
 void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
                                   std::string message) {
+  gil_scoped_acquire acq;
   ioc_->stop();
   if (on_disconnect_) {
-    on_disconnect_(ec, message);
+    call_python(on_disconnect_, ec, message);
   }
 }
 
 void SoraConnection::OnNotify(std::string text) {
+  gil_scoped_acquire acq;
   if (on_notify_) {
-    on_notify_(text);
+    call_python(on_notify_, text);
   }
 }
 
 void SoraConnection::OnPush(std::string text) {
   if (on_push_) {
-    on_push_(text);
+    call_python(on_push_, text);
   }
 }
 
 void SoraConnection::OnMessage(std::string label, std::string data) {
+  gil_scoped_acquire acq;
   if (on_message_) {
-    nb::gil_scoped_acquire acq;
-    on_message_(label, nb::bytes(data.c_str(), data.size()));
+    call_python(on_message_, label, nb::bytes(data.c_str(), data.size()));
   }
 }
 
 void SoraConnection::OnSwitched(std::string text) {
+  gil_scoped_acquire acq;
   if (on_switched_) {
-    on_switched_(text);
+    call_python(on_switched_, text);
   }
 }
 
 void SoraConnection::OnSignalingMessage(sora::SoraSignalingType type,
                                         sora::SoraSignalingDirection direction,
                                         std::string message) {
+  gil_scoped_acquire acq;
   if (on_signaling_message_) {
-    on_signaling_message_(type, direction, message);
+    call_python(on_signaling_message_, type, direction, message);
   }
 }
 
 void SoraConnection::OnWsClose(uint16_t code, std::string message) {
+  gil_scoped_acquire acq;
   if (on_ws_close_) {
-    on_ws_close_(code, message);
+    call_python(on_ws_close_, code, message);
   }
 }
 
 void SoraConnection::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+  gil_scoped_acquire acq;
   if (on_track_) {
+    auto receiver = transceiver->receiver();
     // shared_ptr になってないとリークする
-    auto track = std::make_shared<SoraMediaTrack>(
-        this, transceiver->receiver()->track(),
-        transceiver->receiver()->stream_ids()[0]);
+    auto track = std::make_shared<SoraMediaTrack>(this, receiver);
     AddSubscriber(track.get());
-    on_track_(track);
+    call_python(on_track_, track);
   }
 }
 
 void SoraConnection::OnRemoveTrack(
     rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+  gil_scoped_acquire acq;
   // TODO(tnoho): 要実装
 }
 
 void SoraConnection::OnDataChannel(std::string label) {
+  gil_scoped_acquire acq;
   if (on_data_channel_) {
-    on_data_channel_(label);
+    call_python(on_data_channel_, label);
   }
 }

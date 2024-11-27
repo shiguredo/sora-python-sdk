@@ -9,6 +9,7 @@
 #include "sora_audio_source.h"
 #include "sora_connection.h"
 #include "sora_factory.h"
+#include "sora_frame_transformer.h"
 #include "sora_track_interface.h"
 #include "sora_video_source.h"
 
@@ -47,6 +48,8 @@ class Sora : public DisposePublisher {
    * @param signaling_notify_metadata (オプション)シグナリング通知メタデータ
    * @param audio_source (オプション)音声ソース CreateAudioSource で生成した SoraAudioSource を渡してください
    * @param video_source (オプション)映像ソース CreateVideoSource で生成した SoraVideoSource を渡してください
+   * @param audio_frame_transformer (オプション)音声送信時の Encoded Transform
+   * @param video_frame_transformer (オプション)映像送信時の Encoded Transform
    * @param audio (オプション)音声の有効無効 デフォルト: true
    * @param video (オプション)映像の有効無効 デフォルト: true
    * @param audio_codec_type (オプション)音声コーデック OPUS デフォルト: OPUS
@@ -56,6 +59,7 @@ class Sora : public DisposePublisher {
    * @param video_vp9_params (オプション)映像コーデック VP9 設定
    * @param video_av1_params (オプション)映像コーデック AV1 設定
    * @param video_h264_params (オプション)映像コーデック H264 設定
+   * @param audio_opus_params (オプション)音声コーデック OPUS 設定
    * @param simulcast (オプション)サイマルキャストの有効無効
    * @param spotlight (オプション)スポットライトの有効無効
    * @param spotlight_number (オプション)スポットライトのフォーカス数
@@ -95,6 +99,8 @@ class Sora : public DisposePublisher {
       const nb::handle& signaling_notify_metadata,
       SoraTrackInterface* audio_source,
       SoraTrackInterface* video_source,
+      SoraAudioFrameTransformer* audio_frame_transformer,
+      SoraVideoFrameTransformer* video_frame_transformer,
       std::optional<bool> audio,
       std::optional<bool> video,
       std::optional<std::string> audio_codec_type,
@@ -104,6 +110,7 @@ class Sora : public DisposePublisher {
       const nb::handle& video_vp9_params,
       const nb::handle& video_av1_params,
       const nb::handle& video_h264_params,
+      const nb::handle& audio_opus_params,
       std::optional<bool> simulcast,
       std::optional<bool> spotlight,
       std::optional<int> spotlight_number,
@@ -111,6 +118,7 @@ class Sora : public DisposePublisher {
       std::optional<std::string> spotlight_focus_rid,
       std::optional<std::string> spotlight_unfocus_rid,
       const nb::handle& forwarding_filter,
+      const nb::handle& forwarding_filters,
       const nb::handle& data_channels,
       std::optional<bool> data_channel_signaling,
       std::optional<bool> ignore_disconnect_websocket,
@@ -151,6 +159,8 @@ class Sora : public DisposePublisher {
    */
   SoraVideoSource* CreateVideoSource();
 
+  std::vector<std::weak_ptr<SoraConnection>> weak_connections_;
+
  private:
   /**
    * Python で渡された値を boost::json::value に変換します。
@@ -168,7 +178,10 @@ class Sora : public DisposePublisher {
       const nb::handle value);
   std::vector<std::string> ConvertSignalingUrls(const nb::handle value);
 
-  boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+  std::optional<std::vector<sora::SoraSignalingConfig::ForwardingFilter>>
+  ConvertForwardingFilters(const nb::handle value);
+
+  std::optional<sora::SoraSignalingConfig::ForwardingFilter>
   ConvertForwardingFilter(const nb::handle value);
 
   std::unique_ptr<SoraFactory> factory_;

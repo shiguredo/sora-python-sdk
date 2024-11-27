@@ -6,6 +6,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/vector.h>
 
 #include "sora.h"
@@ -13,6 +14,7 @@
 #include "sora_audio_source.h"
 #include "sora_audio_stream_sink.h"
 #include "sora_connection.h"
+#include "sora_frame_transformer.h"
 #include "sora_log.h"
 #include "sora_track_interface.h"
 #include "sora_vad.h"
@@ -28,24 +30,38 @@ using namespace nb::literals;
  * やっておかないと終了時にリークエラーが発生する。
  */
 int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   // インスタンスを取得する
   SoraAudioSinkImpl* audio_sink = nb::inst_ptr<SoraAudioSinkImpl>(self);
 
   // コールバックがある場合
   if (audio_sink->on_format_) {
     // コールバック変数の参照を取得して
-    nb::object on_format =
-        nb::cast(audio_sink->on_format_, nb::rv_policy::none);
+    nb::object on_format = nb::find(audio_sink->on_format_);
     // ガベージコレクタに伝える
     Py_VISIT(on_format.ptr());
   }
 
   // 上に同じ
   if (audio_sink->on_data_) {
-    nb::object on_data = nb::cast(audio_sink->on_data_, nb::rv_policy::none);
+    nb::object on_data = nb::find(audio_sink->on_data_);
     Py_VISIT(on_data.ptr());
   }
 
+  return 0;
+}
+
+int audio_sink_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  SoraAudioSinkImpl* audio_sink = nb::inst_ptr<SoraAudioSinkImpl>(self);
+  audio_sink->on_format_ = nullptr;
+  audio_sink->on_data_ = nullptr;
   return 0;
 }
 
@@ -55,102 +71,254 @@ int audio_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
  */
 PyType_Slot audio_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_sink_tp_traverse},
+    {Py_tp_clear, (void*)audio_sink_tp_clear},
     {0, nullptr}};
 
 int audio_stream_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraAudioStreamSinkImpl* audio_sink =
       nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
 
   if (audio_sink->on_frame_) {
-    nb::object on_frame = nb::cast(audio_sink->on_frame_, nb::rv_policy::none);
+    nb::object on_frame = nb::find(audio_sink->on_frame_);
     Py_VISIT(on_frame.ptr());
   }
 
+  return 0;
+}
+
+int audio_stream_sink_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  SoraAudioStreamSinkImpl* audio_sink =
+      nb::inst_ptr<SoraAudioStreamSinkImpl>(self);
+  audio_sink->on_frame_ = nullptr;
   return 0;
 }
 
 PyType_Slot audio_stream_sink_slots[] = {
     {Py_tp_traverse, (void*)audio_stream_sink_tp_traverse},
+    {Py_tp_clear, (void*)audio_stream_sink_tp_clear},
     {0, nullptr}};
 
 int video_sink_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraVideoSinkImpl* video_sink = nb::inst_ptr<SoraVideoSinkImpl>(self);
 
   if (video_sink->on_frame_) {
-    nb::object on_frame = nb::cast(video_sink->on_frame_, nb::rv_policy::none);
+    nb::object on_frame = nb::find(video_sink->on_frame_);
     Py_VISIT(on_frame.ptr());
   }
 
   return 0;
 }
 
+int video_sink_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  SoraVideoSinkImpl* video_sink = nb::inst_ptr<SoraVideoSinkImpl>(self);
+  video_sink->on_frame_ = nullptr;
+  return 0;
+}
+
 PyType_Slot video_sink_slots[] = {
     {Py_tp_traverse, (void*)video_sink_tp_traverse},
+    {Py_tp_clear, (void*)video_sink_tp_clear},
+    {0, nullptr}};
+
+int audio_frame_transformer_tp_traverse(PyObject* self,
+                                        visitproc visit,
+                                        void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  SoraAudioFrameTransformer* audio_frame_transformer =
+      nb::inst_ptr<SoraAudioFrameTransformer>(self);
+
+  if (audio_frame_transformer->on_transform_) {
+    nb::object on_transform = nb::find(audio_frame_transformer->on_transform_);
+    Py_VISIT(on_transform.ptr());
+  }
+
+  return 0;
+}
+
+int audio_frame_transformer_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  SoraAudioFrameTransformer* audio_frame_transformer =
+      nb::inst_ptr<SoraAudioFrameTransformer>(self);
+  audio_frame_transformer->on_transform_ = nullptr;
+  return 0;
+}
+
+PyType_Slot audio_frame_transformer_slots[] = {
+    {Py_tp_traverse, (void*)audio_frame_transformer_tp_traverse},
+    {Py_tp_clear, (void*)audio_frame_transformer_tp_clear},
+    {0, nullptr}};
+
+int video_frame_transformer_tp_traverse(PyObject* self,
+                                        visitproc visit,
+                                        void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  SoraVideoFrameTransformer* video_frame_transformer =
+      nb::inst_ptr<SoraVideoFrameTransformer>(self);
+
+  if (video_frame_transformer->on_transform_) {
+    nb::object on_transform = nb::find(video_frame_transformer->on_transform_);
+    Py_VISIT(on_transform.ptr());
+  }
+
+  return 0;
+}
+
+int video_frame_transformer_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  SoraVideoFrameTransformer* video_frame_transformer =
+      nb::inst_ptr<SoraVideoFrameTransformer>(self);
+  video_frame_transformer->on_transform_ = nullptr;
+  return 0;
+}
+
+PyType_Slot video_frame_transformer_slots[] = {
+    {Py_tp_traverse, (void*)video_frame_transformer_tp_traverse},
+    {Py_tp_clear, (void*)video_frame_transformer_tp_clear},
     {0, nullptr}};
 
 int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
   SoraConnection* conn = nb::inst_ptr<SoraConnection>(self);
 
   if (conn->on_set_offer_) {
-    nb::object on_set_offer =
-        nb::cast(conn->on_set_offer_, nb::rv_policy::none);
+    nb::object on_set_offer = nb::find(conn->on_set_offer_);
     Py_VISIT(on_set_offer.ptr());
   }
 
   if (conn->on_ws_close_) {
-    nb::object on_ws_close = nb::cast(conn->on_ws_close_, nb::rv_policy::none);
+    nb::object on_ws_close = nb::find(conn->on_ws_close_);
     Py_VISIT(on_ws_close.ptr());
   }
 
   if (conn->on_disconnect_) {
-    nb::object on_disconnect =
-        nb::cast(conn->on_disconnect_, nb::rv_policy::none);
+    nb::object on_disconnect = nb::find(conn->on_disconnect_);
     Py_VISIT(on_disconnect.ptr());
   }
 
   if (conn->on_signaling_message_) {
-    nb::object on_disconnect =
-        nb::cast(conn->on_signaling_message_, nb::rv_policy::none);
+    nb::object on_disconnect = nb::find(conn->on_signaling_message_);
     Py_VISIT(on_disconnect.ptr());
   }
 
   if (conn->on_notify_) {
-    nb::object on_notify = nb::cast(conn->on_notify_, nb::rv_policy::none);
+    nb::object on_notify = nb::find(conn->on_notify_);
     Py_VISIT(on_notify.ptr());
   }
 
   if (conn->on_push_) {
-    nb::object on_push = nb::cast(conn->on_push_, nb::rv_policy::none);
+    nb::object on_push = nb::find(conn->on_push_);
     Py_VISIT(on_push.ptr());
   }
 
   if (conn->on_message_) {
-    nb::object on_message = nb::cast(conn->on_message_, nb::rv_policy::none);
+    nb::object on_message = nb::find(conn->on_message_);
     Py_VISIT(on_message.ptr());
   }
 
   if (conn->on_switched_) {
-    nb::object on_switched = nb::cast(conn->on_switched_, nb::rv_policy::none);
+    nb::object on_switched = nb::find(conn->on_switched_);
     Py_VISIT(on_switched.ptr());
   }
 
   if (conn->on_track_) {
-    nb::object on_track = nb::cast(conn->on_track_, nb::rv_policy::none);
+    nb::object on_track = nb::find(conn->on_track_);
     Py_VISIT(on_track.ptr());
   }
 
   if (conn->on_data_channel_) {
-    nb::object on_data_channel =
-        nb::cast(conn->on_data_channel_, nb::rv_policy::none);
+    nb::object on_data_channel = nb::find(conn->on_data_channel_);
     Py_VISIT(on_data_channel.ptr());
   }
 
   return 0;
 }
 
+int connection_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  SoraConnection* conn = nb::inst_ptr<SoraConnection>(self);
+  conn->on_set_offer_ = nullptr;
+  conn->on_ws_close_ = nullptr;
+  conn->on_disconnect_ = nullptr;
+  conn->on_signaling_message_ = nullptr;
+  conn->on_notify_ = nullptr;
+  conn->on_push_ = nullptr;
+  conn->on_message_ = nullptr;
+  conn->on_switched_ = nullptr;
+  conn->on_track_ = nullptr;
+  conn->on_data_channel_ = nullptr;
+  return 0;
+}
+
 PyType_Slot connection_slots[] = {
     {Py_tp_traverse, (void*)connection_tp_traverse},
+    {Py_tp_clear, (void*)connection_tp_clear},
     {0, nullptr}};
+
+int sora_tp_traverse(PyObject* self, visitproc visit, void* arg) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  Sora* sora = nb::inst_ptr<Sora>(self);
+  for (auto wc : sora->weak_connections_) {
+    auto conn = wc.lock();
+    if (conn) {
+      nb::object conn_obj = nb::find(conn);
+      Py_VISIT(conn_obj.ptr());
+    }
+  }
+
+  return 0;
+}
+
+int sora_tp_clear(PyObject* self) {
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  Sora* sora = nb::inst_ptr<Sora>(self);
+  sora->weak_connections_.clear();
+
+  return 0;
+}
+
+PyType_Slot sora_slots[] = {{Py_tp_traverse, (void*)sora_tp_traverse},
+                            {Py_tp_clear, (void*)sora_tp_clear},
+                            {0, nullptr}};
 
 /**
  * Python で利用するすべてのクラスと定数は以下のように定義しなければならない
@@ -205,7 +373,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
 
   nb::class_<SoraMediaTrack, SoraTrackInterface>(m, "SoraMediaTrack")
-      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id);
+      .def_prop_ro("stream_id", &SoraMediaTrack::stream_id)
+      .def("set_frame_transformer", &SoraMediaTrack::SetFrameTransformer);
 
   nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
       .def("on_data",
@@ -316,7 +485,83 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_track", &SoraConnection::on_track_)
       .def_rw("on_data_channel", &SoraConnection::on_data_channel_);
 
-  nb::class_<Sora>(m, "Sora")
+  nb::enum_<webrtc::TransformableFrameInterface::Direction>(
+      m, "SoraTransformableFrameDirection", nb::is_arithmetic())
+      .value("UNKNOWN",
+             webrtc::TransformableFrameInterface::Direction::kUnknown)
+      .value("RECEIVER",
+             webrtc::TransformableFrameInterface::Direction::kReceiver)
+      .value("SENDER", webrtc::TransformableFrameInterface::Direction::kSender);
+
+  nb::class_<SoraTransformableFrame>(m, "SoraTransformableFrame")
+      .def("get_data", &SoraTransformableFrame::GetData,
+           nb::rv_policy::reference_internal)
+      .def("set_data", &SoraTransformableFrame::SetData)
+      .def_prop_ro("payload_type", &SoraTransformableFrame::GetPayloadType)
+      .def_prop_ro("ssrc", &SoraTransformableFrame::GetSsrc)
+      .def_prop_rw("rtp_timestamp", &SoraTransformableFrame::GetTimestamp,
+                   &SoraTransformableFrame::SetRTPTimestamp)
+      .def_prop_ro("direction", &SoraTransformableFrame::GetDirection)
+      .def_prop_ro("mine_type", &SoraTransformableFrame::GetMimeType);
+
+  nb::enum_<webrtc::TransformableAudioFrameInterface::FrameType>(
+      m, "SoraTransformableAudioFrameType", nb::is_arithmetic())
+      .value("EMPTY",
+             webrtc::TransformableAudioFrameInterface::FrameType::kEmptyFrame)
+      .value("SPEECH", webrtc::TransformableAudioFrameInterface::FrameType::
+                           kAudioFrameSpeech)
+      .value(
+          "CN",
+          webrtc::TransformableAudioFrameInterface::FrameType::kAudioFrameCN);
+
+  nb::class_<SoraTransformableAudioFrame, SoraTransformableFrame>(
+      m, "SoraTransformableAudioFrame")
+      .def_prop_ro("contributing_sources",
+                   &SoraTransformableAudioFrame::GetContributingSources)
+      .def_prop_ro("sequence_number",
+                   &SoraTransformableAudioFrame::SequenceNumber)
+      .def_prop_ro("absolute_capture_timestamp",
+                   &SoraTransformableAudioFrame::AbsoluteCaptureTimestamp)
+      .def_prop_ro("type", &SoraTransformableAudioFrame::Type)
+      .def_prop_ro("audio_level", &SoraTransformableAudioFrame::AudioLevel)
+      .def_prop_ro("receive_time", &SoraTransformableAudioFrame::ReceiveTime);
+  ;
+
+  nb::class_<SoraTransformableVideoFrame, SoraTransformableFrame>(
+      m, "SoraTransformableVideoFrame")
+      .def_prop_ro("is_key_frame", &SoraTransformableVideoFrame::IsKeyFrame)
+      .def_prop_ro("frame_id", &SoraTransformableVideoFrame::GetFrameId)
+      .def_prop_ro("frame_dependencies",
+                   &SoraTransformableVideoFrame::GetFrameDependencies)
+      .def_prop_ro("width", &SoraTransformableVideoFrame::GetWidth)
+      .def_prop_ro("height", &SoraTransformableVideoFrame::GetHeight)
+      .def_prop_ro("spatial_index",
+                   &SoraTransformableVideoFrame::GetSpatialIndex)
+      .def_prop_ro("temporal_index",
+                   &SoraTransformableVideoFrame::GetTemporalIndex)
+      .def_prop_ro("contributing_sources",
+                   &SoraTransformableVideoFrame::GetCsrcs);
+
+  nb::class_<SoraFrameTransformer>(m, "SoraFrameTransformer")
+      .def("enqueue", &SoraFrameTransformer::Enqueue)
+      .def("start_short_circuiting",
+           &SoraFrameTransformer::StartShortCircuiting);
+
+  nb::class_<SoraAudioFrameTransformer, SoraFrameTransformer>(
+      m, "SoraAudioFrameTransformer",
+      nb::type_slots(audio_frame_transformer_slots))
+      .def(nb::init<>())
+      .def("__del__", &SoraAudioFrameTransformer::Del)
+      .def_rw("on_transform", &SoraAudioFrameTransformer::on_transform_);
+
+  nb::class_<SoraVideoFrameTransformer, SoraFrameTransformer>(
+      m, "SoraVideoFrameTransformer",
+      nb::type_slots(video_frame_transformer_slots))
+      .def(nb::init<>())
+      .def("__del__", &SoraVideoFrameTransformer::Del)
+      .def_rw("on_transform", &SoraVideoFrameTransformer::on_transform_);
+
+  nb::class_<Sora>(m, "Sora", nb::type_slots(sora_slots))
       .def(nb::init<std::optional<bool>, std::optional<std::string>>(),
            "use_hardware_encoder"_a = nb::none(), "openh264"_a = nb::none())
       .def("create_connection", &Sora::CreateConnection, "signaling_urls"_a,
@@ -324,15 +569,19 @@ NB_MODULE(sora_sdk_ext, m) {
            "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),
            "signaling_notify_metadata"_a = nb::none(),
            "audio_source"_a = nb::none(), "video_source"_a = nb::none(),
-           "audio"_a = nb::none(), "video"_a = nb::none(),
-           "audio_codec_type"_a = nb::none(), "video_codec_type"_a = nb::none(),
-           "video_bit_rate"_a = nb::none(), "audio_bit_rate"_a = nb::none(),
-           "video_vp9_params"_a = nb::none(), "video_av1_params"_a = nb::none(),
-           "video_h264_params"_a = nb::none(), "simulcast"_a = nb::none(),
+           "audio_frame_transformer"_a = nb::none(),
+           "video_frame_transformer"_a = nb::none(), "audio"_a = nb::none(),
+           "video"_a = nb::none(), "audio_codec_type"_a = nb::none(),
+           "video_codec_type"_a = nb::none(), "video_bit_rate"_a = nb::none(),
+           "audio_bit_rate"_a = nb::none(), "video_vp9_params"_a = nb::none(),
+           "video_av1_params"_a = nb::none(),
+           "video_h264_params"_a = nb::none(),
+           "audio_opus_params"_a = nb::none(), "simulcast"_a = nb::none(),
            "spotlight"_a = nb::none(), "spotlight_number"_a = nb::none(),
            "simulcast_rid"_a = nb::none(), "spotlight_focus_rid"_a = nb::none(),
            "spotlight_unfocus_rid"_a = nb::none(),
-           "forwarding_filter"_a = nb::none(), "data_channels"_a = nb::none(),
+           "forwarding_filter"_a = nb::none(),
+           "forwarding_filters"_a = nb::none(), "data_channels"_a = nb::none(),
            "data_channel_signaling"_a = nb::none(),
            "ignore_disconnect_websocket"_a = nb::none(),
            "data_channel_signaling_timeout"_a = nb::none(),
@@ -355,6 +604,10 @@ NB_MODULE(sora_sdk_ext, m) {
                    "signaling_notify_metadata: Optional[dict] = None, "
                    "audio_source: Optional[SoraTrackInterface] = None, "
                    "video_source: Optional[SoraTrackInterface] = None, "
+                   "audio_frame_transformer: "
+                   "Optional[SoraAudioFrameTransformer] = None, "
+                   "video_frame_transformer: "
+                   "Optional[SoraVideoFrameTransformer] = None, "
                    "audio: Optional[bool] = None, "
                    "video: Optional[bool] = None, "
                    "audio_codec_type: Optional[str] = None, "
@@ -364,6 +617,7 @@ NB_MODULE(sora_sdk_ext, m) {
                    "video_vp9_params: Optional[dict] = None, "
                    "video_av1_params: Optional[dict] = None, "
                    "video_h264_params: Optional[dict] = None, "
+                   "audio_opus_params: Optional[dict] = None, "
                    "simulcast: Optional[bool] = None, "
                    "spotlight: Optional[bool] = None, "
                    "spotlight_number: Optional[int] = None, "
@@ -371,6 +625,7 @@ NB_MODULE(sora_sdk_ext, m) {
                    "spotlight_focus_rid: Optional[str] = None, "
                    "spotlight_unfocus_rid: Optional[str] = None, "
                    "forwarding_filter: Optional[dict] = None, "
+                   "forwarding_filters: Optional[list[dict]] = None, "
                    "data_channels: Optional[list[dict]] = None, "
                    "data_channel_signaling: Optional[bool] = None, "
                    "ignore_disconnect_websocket: Optional[bool] = None, "
