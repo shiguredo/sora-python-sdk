@@ -11,13 +11,28 @@
 
 ## develop
 
-- [CHANGE] client_cert と client_key の指定にはパスではなく中身の文字列を指定するようにする
+- [CHANGE] `client_cert` と `client_key` の指定にはパスではなく中身の文字列を指定するようにする
   - C++ SDK 側の仕様変更に追従する
   - @voluntas
-- [CHANGE] ca_cert, client_cert, client_key の指定には str ではなく bytes を使うようにする
+- [CHANGE] `ca_cert`, `client_cert`, `client_key` の指定には `str` ではなく `bytes` を使うようにする
   - @tnoho
+- [ADD] `send_message()` を追加する
+  - `on_message()` と合わせる
+  - `send_data_channel()` のシンタックスシュガー
+  - @voluntas
+- [ADD] WebRTC Encoded Transform に対応する
+  - `SoraTransformableAudioFrame` と `SoraTransformableVideoFrame` を追加
+  - `SoraAudioFrameTransformer` と `SoraVideoFrameTransformer` を追加
+  - `create_connection()` の引数に `audio_frame_transformer` と `video_frame_transformer` を追加
+  - `SoraMediaTrack` に `set_frame_transformer()` を追加
+  - @tnoho
+- [ADD] 転送フィルターを複数指定できるようにする
+  - `Sora.create_connection()` の引数に `forwarding_filter` を追加する
+  - @voluntas
 - [ADD] サーバー証明書チェック用の CA 証明書を指定できるようにする
   - `Sora.create_connection()` の引数に `ca_cert` を追加する
+  - @voluntas
+- [ADD] Python 3.13 に対応する
   - @voluntas
 - [ADD] `on_ws_close` コールバックを追加する
   - @tnoho
@@ -27,16 +42,37 @@
   - @melpon
 - [ADD] `on_ws_close` コールバックを追加する
   - @tnoho
+- [ADD] `Sora.create_connection()` の引数に `audio_opus_params` を追加する
+  - @melpon
+- [ADD] data_channels の要素に `header` を指定可能にする
+  - @melpon
+- [ADD] Encoded Transform に対応する
+  - @tnoho
+- [UPDATE] nanobind を `2.2.0` に上げる
+  - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
-  - WEBRTC_BUILD_VERSION を `m129.6668.1.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m131.6778.3.1` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
-  - CMAKE_VERSION を `3.30.3` に上げる
+    - Sora CPP SDK の absl::optional を std::optional に変更した仕様に追従する
+    - Sora CPP SDK の absl::nullopt を std::nullopt に変更した仕様に追従する
+  - CMAKE_VERSION を `3.30.5` に上げる
   - BOOST_VERSION を `1.86.0` に上げる
+  - OPENH264_VERSION を `v2.5.0` に上げる
   - @torikizi @voluntas
 
 ### misc
 
 - [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
+- [ADD] canary.py を追加
+  - @voluntas
+- [ADD] Python 3.13 を E2E テストに追加する
+  - @voluntas
+- [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
+- [CHANGE] ruff と mypy と pytest はバージョンを未指定にして、常に最新版を利用するようにする
+  - @voluntas
+- [CHANGE] 利用していなかった auditwheel を削除する
   - @voluntas
 - [CHANGE] examples を <https://github.com/shiguredo/sora-python-sdk-examples> に移動する
   - @voluntas
@@ -121,7 +157,7 @@
   - @enm10k
 - [UPDATE] nanobind を `1.9.2` に上げて固定する
   - @voluntas
-- [UPDATE] ruff の最小を ``0.3.0` に上げる
+- [UPDATE] ruff の最小を `0.3.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する

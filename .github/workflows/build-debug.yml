@@ -1,0 +1,277 @@
+name: build-debug
+
+on:
+  workflow_dispatch:
+    inputs:
+      buildType:
+        required: true
+        type: choice
+        options:
+          - Debug
+          - RelWithDebInfo
+        default: Debug
+      loopCount:
+        required: true
+        type: number
+        defualt: 10
+
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
+
+jobs:
+  build-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: ubuntu-24.04_x86_64
+            runs-on: ubuntu-24.04
+        python:
+          - version: "3.10"
+            soname: sora_sdk_ext.cpython-310-x86_64-linux-gnu.so
+          - version: "3.11"
+            soname: sora_sdk_ext.cpython-311-x86_64-linux-gnu.so
+          - version: "3.12"
+            soname: sora_sdk_ext.cpython-312-x86_64-linux-gnu.so
+          - version: "3.13"
+            soname: sora_sdk_ext.cpython-313-x86_64-linux-gnu.so
+    runs-on: ${{ matrix.platform.runs-on }}
+    steps:
+      - name: buildType=${{ inputs.buildTYpe }} loopCount=${{ inputs.loopCount }}
+        # 1 <= loopCount <= 100
+        run: test 1 -le ${{ inputs.loopCount }} -a ${{ inputs.loopCount }} -le 100
+      - name: Disk Cleanup
+        run: |
+          set -x
+          df -h
+          # sudo du -h -d1 /usr/local
+          # sudo du -h -d1 /usr/local/share
+          # sudo du -h -d1 /usr/local/lib
+          # sudo du -h -d1 /usr/share
+          RMI=`docker images -q -a`
+          if [ -n "$RMI" ]; then
+            docker rmi $RMI
+          fi
+          # 4.6G
+          sudo rm -rf /usr/local/.ghcup
+          # 1.7G
+          sudo rm -rf /usr/share/swift
+          # 1.4G
+          sudo rm -rf /usr/share/dotnet
+          # 13G
+          sudo rm -rf /usr/local/lib/android
+          df -h
+      - name: Get stats
+        run: |
+          set -x
+          cat /etc/lsb-release
+          uname -a
+          cat /proc/cpuinfo
+          cat /proc/meminfo
+      - name: Setup Git User
+        run: |
+          git config --global user.name  "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Setup common
+        run: |
+          # clang-18
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 18
+
+      - uses: actions/checkout@v4
+        with:
+          path: sora-python-sdk
+      - name: Get versions
+        id: version
+        run: |
+          source sora-python-sdk/VERSION
+          echo "webrtc_build_version=${WEBRTC_BUILD_VERSION}" >> $GITHUB_OUTPUT
+          echo "sora_cpp_sdk_version=${SORA_CPP_SDK_VERSION}" >> $GITHUB_OUTPUT
+          echo "boost_version=${BOOST_VERSION}" >> $GITHUB_OUTPUT
+
+      # libwebrtc
+      - uses: actions/cache@v4
+        id: webrtc-build-cache
+        with:
+          path: webrtc-build/_package/${{ matrix.platform.name }}/webrtc
+          key: webrtc-build-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.webrtc_build_version }}
+      - uses: actions/checkout@v4
+        if: steps.webrtc-build-cache.outputs.cache-hit != 'true' && inputs.buildType == 'Debug'
+        with:
+          path: webrtc-build
+          repository: shiguredo-webrtc-build/webrtc-build
+          ref: ${{ steps.version.outputs.webrtc_build_version }}
+      - name: Setup libwebrtc
+        if: steps.webrtc-build-cache.outputs.cache-hit != 'true' && inputs.buildType == 'Debug'
+        run: |
+          sudo bash -c '
+            set -ex
+            apt-get -y install tzdata
+            echo "Asia/Tokyo" > /etc/timezone
+            dpkg-reconfigure -f noninteractive tzdata
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get -y install \
+              binutils \
+              git \
+              locales \
+              lsb-release \
+              ninja-build \
+              pkg-config \
+              python3 \
+              python3-setuptools \
+              rsync \
+              sudo \
+              unzip \
+              vim \
+              wget \
+              xz-utils
+          '
+      - name: Build libwebrtc
+        if: steps.webrtc-build-cache.outputs.cache-hit != 'true' && inputs.buildType == 'Debug'
+        working-directory: webrtc-build
+        run: |
+          python3 run.py build ${{ inputs.buildType == 'Debug' && '--debug' }} ${{ matrix.platform.name }}
+          python3 run.py package ${{ inputs.buildType == 'Debug' && '--debug' }} ${{ matrix.platform.name }}
+
+      # sora-cpp-sdk
+      - uses: actions/cache@v4
+        id: sora-cpp-sdk-cache
+        with:
+          path: sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/sora
+          key: sora-cpp-sdk-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+      - uses: actions/cache@v4
+        id: boost-cache
+        with:
+          path: sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/boost
+          key: boost-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+      - uses: actions/checkout@v4
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        with:
+          path: sora-cpp-sdk
+          repository: shiguredo/sora-cpp-sdk
+          ref: ${{ steps.version.outputs.sora_cpp_sdk_version }}
+      # Ubuntu 24.04 だと libtinfo5 が見つからない問題があるので、その修正
+      # ref: https://qiita.com/gengen16k/items/88cf3c18a40a94205fab
+      - name: Fix CUDA issues for Ubuntu 24.04
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true' && matrix.platform.name == 'ubuntu-24.04_x86_64'
+        run: |
+          sudo tee /etc/apt/sources.list.d/jammy.list << EOF
+          deb http://archive.ubuntu.com/ubuntu/ jammy universe
+          EOF
+
+          sudo tee /etc/apt/preferences.d/pin-jammy <<EOF
+          Package: *
+          Pin: release n=jammy
+          Pin-Priority: -10
+
+          Package: libtinfo5
+          Pin: release n=jammy
+          Pin-Priority: 990
+          EOF
+      - name: Setup sora-cpp-sdk
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        working-directory: sora-cpp-sdk
+        run: |
+          source VERSION
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+
+          # X11
+          sudo apt-get install -y libx11-dev libxext-dev
+
+          # CUDA
+          wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb
+          sudo dpkg -i libssl1.1_1.1.0g-2ubuntu4_amd64.deb
+          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
+          sudo dpkg -i cuda-keyring_*all.deb
+          sudo apt-get update
+          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install cuda=$CUDA_VERSION
+
+          # Intel Media SDK のために libva-dev, libdrm-dev を入れる
+          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libva-dev libdrm-dev
+      - name: Copy libwebrtc to sora-cpp-sdk
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true' && inputs.buildType == 'Debug'
+        run: |
+          mkdir -p sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
+          cp -r webrtc-build/_package/${{ matrix.platform.name }}/webrtc sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/webrtc
+          echo ${{ steps.version.outputs.webrtc_build_version }} > sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/webrtc.version
+      - name: Build sora-cpp-sdk
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        working-directory: sora-cpp-sdk
+        run: python3 run.py ${{ inputs.buildType == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }}
+      - name: Teardown sora-cpp-sdk
+        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          # CUDA が入ってると使おうとしてエラーになるのでアンインストールしておく
+          sudo apt-get remove -y cuda
+          sudo apt-get autoremove -y
+
+      # sora-python-sdk
+      - name: Setup sora-python-sdk
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libva2 libdrm2 libva-dev libdrm-dev libx11-dev portaudio19-dev
+
+          # Download OpneH264
+          curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-linux64.7.so.bz2
+          bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
+          mv libopenh264-2.4.1-linux64.7.so libopenh264.so
+          echo "OPENH264_PATH=`pwd`/libopenh264.so" >> $GITHUB_ENV
+      - name: Copy libwebrtc to sora-python-sdk
+        if: inputs.buildType == 'Debug'
+        run: |
+          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
+          cp -r webrtc-build/_package/${{ matrix.platform.name }}/webrtc sora-python-sdk/_install/${{ matrix.platform.name }}/webrtc
+          echo ${{ steps.version.outputs.webrtc_build_version }} > sora-python-sdk/_install/${{ matrix.platform.name }}/webrtc.version
+      - name: Copy sora-cpp-sdk to sora-python-sdk
+        run: |
+          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
+          cp -r sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/sora sora-python-sdk/_install/${{ matrix.platform.name }}/sora
+          echo ${{ steps.version.outputs.sora_cpp_sdk_version }} > sora-python-sdk/_install/${{ matrix.platform.name }}/sora.version
+      - name: Copy boost to sora-python-sdk
+        run: |
+          mkdir -p sora-python-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}
+          cp -r sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/boost sora-python-sdk/_install/${{ matrix.platform.name }}/boost
+          echo ${{ steps.version.outputs.boost_version }} > sora-python-sdk/_install/${{ matrix.platform.name }}/boost.version
+      - uses: actions/cache@v4
+        id: llvm-cache
+        with:
+          path: sora-python-sdk/_install/${{ matrix.platform.name }}/llvm
+          key: llvm-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+      - uses: actions/cache@v4
+        id: version-file-cache
+        with:
+          path: versions
+          key: versions-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
+      - name: Copy version file
+        if: steps.version-file-cache.outputs.cache-hit == 'true'
+        run: cp versions/llvm.version sora-python-sdk/_install/${{ matrix.platform.name }}/
+      - uses: astral-sh/setup-uv@v4
+      - name: Build sora-python-sdk
+        working-directory: sora-python-sdk
+        run: |
+          set -x
+          uv python pin ${{ matrix.python.version }}
+          uv sync
+          uv run python run.py ${{ inputs.buildType == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }}
+          # cache
+          mkdir -p ../versions
+          cp _install/${{ matrix.platform.name }}/llvm.version ../versions
+      - name: Upload sora_sdk_ext.so
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.python.soname }}
+          path: sora-python-sdk/src/sora_sdk/${{ matrix.python.soname }}
+      - name: E2E Test sora-python-sdk
+        working-directory: sora-python-sdk
+        run: |
+          for i in {1..${{ inputs.loopCount || 10 }}}; do
+            echo "---------------- $i 回目 ----------------"
+            sleep 10
+            lldb-18 --batch -o 'command script import test_with_llvm.py' -o 'test'
+          done

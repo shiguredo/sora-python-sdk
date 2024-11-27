@@ -227,6 +227,10 @@ def main():
         )
 
         configuration = "Release"
+        if args.debug:
+            configuration = "Debug"
+        if args.relwithdebinfo:
+            configuration = "RelWithDebInfo"
 
         webrtc_platform = get_webrtc_platform(platform)
         webrtc_info = get_webrtc_info(

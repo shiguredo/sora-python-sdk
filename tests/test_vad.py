@@ -5,7 +5,7 @@ import uuid
 from threading import Event
 from typing import Any, Optional
 
-from client import Sendonly
+from client import SoraClient, SoraRole
 
 from sora_sdk import (
     Sora,
@@ -30,7 +30,7 @@ class VAD:
         # 接続した
         self._connected: Event = Event()
         # 終了
-        self._closed = Event()
+        self._disconnected = Event()
 
         self._audio_output_frequency: int = 24000
         self._audio_output_channels: int = 1
@@ -86,7 +86,7 @@ class VAD:
 
     def _on_disconnect(self, error_code, message):
         print(f"Disconnected Sora: error_code='{error_code}' message='{message}'")
-        self._closed = True
+        self._disconnected.set()
         self._connected.clear()
 
     def _on_frame(self, frame: SoraAudioFrame):
@@ -113,7 +113,14 @@ def test_vad(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(signaling_urls, channel_id, metadata=metadata)
+    sendonly = SoraClient(
+        signaling_urls,
+        SoraRole.SENDONLY,
+        channel_id,
+        audio=True,
+        video=False,
+        metadata=metadata,
+    )
     sendonly.connect(fake_audio=True)
 
     vad = VAD(signaling_urls, channel_id, metadata=metadata)

@@ -14,6 +14,7 @@ env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
 
 jobs:
   # まず pyi を生成する
@@ -21,18 +22,18 @@ jobs:
   # １箇所で pyi を生成してアーティファクトにアップロードして、
   # それを各ビルドで利用する形にする。
   build_pyi:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - run: |
           sudo apt-get -y install libva-dev libdrm-dev libx11-dev
-      - uses: astral-sh/setup-uv@v3
-      - run: uv python pin 3.12
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python pin 3.13
       - run: uv sync
       - name: Generate pyi
         run: |
-          uv run python run.py ubuntu-24.04_x86_64
+          uv run python run.py ubuntu-22.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
@@ -71,6 +72,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         include:
           - platform:
               name: ubuntu-24.04_armv8
@@ -101,11 +103,18 @@ jobs:
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
 
       # Ubuntu x86_64 向け
+      - name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' }}
       - run: |
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
@@ -156,6 +165,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -166,7 +176,7 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py windows_x86_64
@@ -223,6 +233,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         include:
           - platform:
               name: ubuntu-24.04_armv8
@@ -280,6 +291,8 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.10" }
@@ -288,17 +301,23 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
+        with: { "platform": "macos-14_arm64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.10" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-13_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
+        with: { "platform": "macos-13_arm64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
         with: { "platform": "windows-2022", "python_version": "3.10" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2022", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2022", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "windows-2022", "python_version": "3.13" }
       - name: Env to output
         run: |
           echo "package_paths<<EOF" >> $GITHUB_OUTPUT

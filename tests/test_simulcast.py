@@ -3,7 +3,7 @@ import time
 import uuid
 
 import pytest
-from client import Sendonly
+from client import SoraClient, SoraRole
 
 
 @pytest.mark.parametrize(
@@ -21,8 +21,9 @@ def test_simulcast(setup, video_codec_type, expected_implementation):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
-    sendonly = Sendonly(
+    sendonly = SoraClient(
         signaling_urls,
+        SoraRole.SENDONLY,
         channel_id,
         simulcast=True,
         audio=False,
@@ -64,3 +65,4 @@ def test_simulcast(setup, video_codec_type, expected_implementation):
         assert rtp_stat["encoderImplementation"] == expected_implementation
         assert rtp_stat["bytesSent"] > 0
         assert rtp_stat["packetsSent"] > 0
+

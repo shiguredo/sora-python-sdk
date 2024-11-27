@@ -9,8 +9,10 @@
 #include <nanobind/stl/shared_ptr.h>
 
 // WebRTC
+#include <api/environment/environment.h>
 #include <api/media_stream_interface.h>
 #include <api/scoped_refptr.h>
+#include <api/task_queue/task_queue_base.h>
 #include <api/video/video_frame.h>
 #include <api/video/video_sink_interface.h>
 
@@ -56,6 +58,7 @@ class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
    * @param track 映像を取り出す OnTrack コールバックから渡されるリモート Track
    */
   SoraVideoSinkImpl(SoraTrackInterface* track);
+  SoraVideoSinkImpl(const webrtc::Environment& env, SoraTrackInterface* track);
   ~SoraVideoSinkImpl();
 
   void Del();
@@ -85,6 +88,8 @@ class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
 
  private:
   SoraTrackInterface* track_;
+  std::unique_ptr<webrtc::TaskQueueBase, webrtc::TaskQueueDeleter>
+      on_frame_queue_;
 };
 
 #endif
