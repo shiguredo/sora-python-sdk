@@ -2,7 +2,6 @@ import sys
 import time
 import uuid
 
-import pytest
 from client import SoraClient, SoraRole
 
 
@@ -37,7 +36,6 @@ def test_websocket_signaling_only_disconnect(setup):
         )
 
 
-@pytest.mark.skip(reason="TODO: 実装")
 def test_hybrid_signaling_disconnect(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -65,7 +63,7 @@ def test_hybrid_signaling_disconnect(setup):
         conn.disconnect()
 
         assert conn.disconnect_code == 0
-        assert conn.disconnect_reason == "Succeeded to close WebSocket"
+        assert conn.disconnect_reason == "Succeeded to close Websocket (DC signaling is enabled)"
 
 
 def test_datachannel_only_type_disconnect(setup):
