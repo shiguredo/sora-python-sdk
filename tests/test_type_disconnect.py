@@ -32,7 +32,9 @@ def test_websocket_signaling_only_disconnect(setup):
 
         # error_code が 0 という意味
         assert conn.disconnect_code == 0
-        assert conn.disconnect_reason == "Succeeded to close WebSocket"
+        assert (
+            conn.disconnect_reason == "Succeeded to close WebSocket (DC signaling is not enabled)"
+        )
 
 
 @pytest.mark.skip(reason="TODO: 実装")
