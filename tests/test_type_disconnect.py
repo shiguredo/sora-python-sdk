@@ -4,6 +4,8 @@ import uuid
 
 from client import SoraClient, SoraRole
 
+from sora_sdk import SoraSignalingErrorCode
+
 
 def test_websocket_signaling_only_disconnect(setup):
     signaling_urls = setup.get("signaling_urls")
@@ -29,8 +31,10 @@ def test_websocket_signaling_only_disconnect(setup):
 
         conn.disconnect()
 
-        # error_code が 0 という意味
-        assert conn.disconnect_code == 0
+        assert conn.ws_close_code == 1000
+        assert conn.ws_close_reason == "TYPE-DISCONNECT"
+
+        assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
         assert (
             conn.disconnect_reason == "Succeeded to close WebSocket (DC signaling is not enabled)"
         )
@@ -62,7 +66,10 @@ def test_hybrid_signaling_disconnect(setup):
 
         conn.disconnect()
 
-        assert conn.disconnect_code == 0
+        assert conn.ws_close_code == 1000
+        assert conn.ws_close_reason == "TYPE-DISCONNECT"
+
+        assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
         assert conn.disconnect_reason == "Succeeded to close Websocket (DC signaling is enabled)"
 
 
@@ -94,6 +101,5 @@ def test_datachannel_only_type_disconnect(setup):
 
         conn.disconnect()
 
-        # error_code が 0 という意味
-        assert conn.disconnect_code == 0
+        assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
         assert conn.disconnect_reason == "Succeeded to close DataChannel"
