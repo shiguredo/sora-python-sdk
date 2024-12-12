@@ -72,6 +72,8 @@
   - @voluntas
 - [ADD] macos-15 を E2E テストに追加する
   - @voluntas
+- [UPDATE] ubuntu-latest を ubuntu-24.04 に変更する
+  - @voluntas
 - [CHANGE] ruff と mypy と pytest はバージョンを未指定にして、常に最新版を利用するようにする
   - @voluntas
 - [CHANGE] 利用していなかった auditwheel を削除する

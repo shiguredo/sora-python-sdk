@@ -122,7 +122,7 @@ jobs:
 
   slack_notify_succeeded:
     needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: success()
     steps:
       - name: Slack Notification
@@ -136,7 +136,7 @@ jobs:
 
   slack_notify_failed:
     needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: failure()
     steps:
       - name: Slack Notification

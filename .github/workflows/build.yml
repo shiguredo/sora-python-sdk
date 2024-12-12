@@ -190,7 +190,7 @@ jobs:
 
   slack_notify_succeeded:
     needs: [build_linux_macos, build_windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: success()
     steps:
      - name: Slack Notification
@@ -203,7 +203,7 @@ jobs:
          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   slack_notify_failed:
     needs: [build_linux_macos, build_windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: failure()
     steps:
       - name: Slack Notification
@@ -238,7 +238,7 @@ jobs:
           - platform:
               name: ubuntu-24.04_armv8
             python_version: "3.12"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/download-artifact@v4
@@ -280,7 +280,7 @@ jobs:
     needs:
       - build_linux_macos
       - build_windows
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
