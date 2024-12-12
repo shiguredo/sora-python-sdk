@@ -22,7 +22,7 @@ jobs:
   # １箇所で pyi を生成してアーティファクトにアップロードして、
   # それを各ビルドで利用する形にする。
   build_pyi:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
       - run: uv sync
       - name: Generate pyi
         run: |
-          uv run python run.py ubuntu-22.04_x86_64
+          uv run python run.py ubuntu-24.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
