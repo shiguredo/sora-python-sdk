@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
+          sudo apt-get -y install libx11-dev
       - uses: astral-sh/setup-uv@v4
       - run: uv python pin 3.13
       - run: uv sync
@@ -96,7 +96,7 @@ jobs:
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
-          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
+          sudo apt-get -y install libx11-dev
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' }}
       - run: |
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
