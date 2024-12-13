@@ -33,7 +33,7 @@ jobs:
       - run: uv sync
       - name: Generate pyi
         run: |
-          uv run python run.py ubuntu-24.04_x86_64
+          uv run python run.py ubuntu-22.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
