@@ -74,6 +74,10 @@
   - @voluntas
 - [UPDATE] ubuntu-latest を ubuntu-24.04 に変更する
   - @voluntas
+- [CHANGE] CI の Ubuntu から libva と libdrm をインストールしないようにする
+  - @voluntas
+- [CHANGE] CMakefile の依存から libva と libdrm を削除する
+  - @voluntas
 - [CHANGE] ruff と mypy と pytest はバージョンを未指定にして、常に最新版を利用するようにする
   - @voluntas
 - [CHANGE] 利用していなかった auditwheel を削除する
