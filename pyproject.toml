@@ -63,7 +63,7 @@ dev-dependencies = [
     "wheel~=0.45.1",
     "typing-extensions",
     "python-dotenv",
-    "numpy>=2.1",
+    "numpy>=2.2",
     "httpx",
     "pytest",
     "ruff",
