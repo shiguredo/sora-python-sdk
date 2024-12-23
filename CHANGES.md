@@ -50,7 +50,7 @@
   - @melpon
 - [ADD] Encoded Transform に対応する
   - @tnoho
-- [UPDATE] nanobind を `2.2.0` に上げる
+- [UPDATE] nanobind を `2.4.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
   - WEBRTC_BUILD_VERSION を `m131.6778.4.0` に上げる
