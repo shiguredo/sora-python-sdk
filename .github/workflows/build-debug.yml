@@ -251,7 +251,7 @@ jobs:
       - name: Copy version file
         if: steps.version-file-cache.outputs.cache-hit == 'true'
         run: cp versions/llvm.version sora-python-sdk/_install/${{ matrix.platform.name }}/
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v5
       - name: Build sora-python-sdk
         working-directory: sora-python-sdk
         run: |
