@@ -171,11 +171,11 @@ wheels = [
 
 [[package]]
 name = "nanobind"
-version = "2.2.0"
+version = "2.4.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c5/f2/f1e6c86edf90caf04a4c28e789b15a6a5aa87a5e037e0bf03bbfcc4937b6/nanobind-2.2.0.tar.gz", hash = "sha256:53fa7a6227bddecaa4a0710e0b8dc18fad4c8ded7a0a31d6eddcf68009ead603", size = 944277 }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/01/a28722f6626e5c8a606dee71cb40c0b2ab9f7715b96bd34a9553c79dbf42/nanobind-2.4.0.tar.gz", hash = "sha256:a0392dee5f58881085b2ac8bfe8e53f74285aa4868b1472bfaf76cfb414e1c96", size = 953467 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/52/af/7032b05a35284e741666acbf3eac3a14b5e81cd92264ac775426884ed460/nanobind-2.2.0-py3-none-any.whl", hash = "sha256:138685ec9c5de4f57dd02d715b89ffcbcabae39c4e36b8b2c40eea2f1aa2f0d7", size = 231618 },
+    { url = "https://files.pythonhosted.org/packages/7a/07/abff41fcade3613349eac71dacb166352babef515efd960a751e3175c262/nanobind-2.4.0-py3-none-any.whl", hash = "sha256:8cf27b04fbadeb9deb4a73f02bd838bf9f7e3e5a8ce44c50c93142b5728da58a", size = 232882 },
 ]
 
 [[package]]
@@ -363,7 +363,7 @@ dev = [
     { name = "build", specifier = "~=1.2.2.post1" },
     { name = "httpx" },
     { name = "mypy" },
-    { name = "nanobind", specifier = "~=2.2.0" },
+    { name = "nanobind", specifier = "~=2.4.0" },
     { name = "numpy", specifier = ">=2.1" },
     { name = "pytest" },
     { name = "python-dotenv" },
