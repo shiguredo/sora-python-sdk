@@ -100,14 +100,11 @@ bool SoraVideoSource::SendFrame(const uint8_t* argb_data,
     return false;
   }
 
-  webrtc::VideoFrame video_frame =
-      webrtc::VideoFrame::Builder()
-          .set_video_frame_buffer(i420_buffer)
-          .set_timestamp_us(timestamp_us)
-          .set_timestamp_rtp(
-              (uint32_t)(kMsToRtpTimestamp * timestamp_us / 1000))
-          .set_rotation(webrtc::kVideoRotation_0)
-          .build();
+  webrtc::VideoFrame video_frame = webrtc::VideoFrame::Builder()
+                                       .set_video_frame_buffer(i420_buffer)
+                                       .set_timestamp_us(timestamp_us)
+                                       .set_rotation(webrtc::kVideoRotation_0)
+                                       .build();
   source_->OnCapturedFrame(video_frame);
   return true;
 }

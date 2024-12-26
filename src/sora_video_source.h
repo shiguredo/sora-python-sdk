@@ -97,7 +97,6 @@ class SoraVideoSource : public SoraTrackInterface {
                  const int height,
                  const int64_t timestamp_us);
 
-  const int kMsToRtpTimestamp = 90;
   rtc::scoped_refptr<sora::ScalableVideoTrackSource> source_;
   std::unique_ptr<std::thread> thread_;
   std::condition_variable_any queue_cond_;
