@@ -99,6 +99,14 @@
   - @voluntas
 - [ADD] examples に E2E テストを追加する
   - @voluntas
+- [FIX] トランスポートワイド輻輳制御を有効時の出力に合わせてサイマルキャストの E2E テストを変更する
+  - Sora のトランスポートワイド輻輳制御を有効にしたことで、サイマルキャストの WebRTC Stats の outbound-rtp -> encoderImplementation の出力内容が変わったため、テストの期待結果を修正する
+  - Sora のトランスポートワイド輻輳制御は有効であることを前提とした修正
+  - サイマルキャストの encoderImplementation の結果を以下の通り
+    - "SimulcastEncoderAdapter (libaom, libaom, libaom)" -> "SimulcastEncoderAdapter (libaom)"
+    - "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)" -> "SimulcastEncoderAdapter (libvpx)"
+    - "SimulcastEncoderAdapter (OpenH264, OpenH264, OpenH264)" -> "SimulcastEncoderAdapter (OpenH264)"
+    - "SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)" -> "SimulcastEncoderAdapter (VideoToolbox)"
 
 ## 2024.3.0
 
