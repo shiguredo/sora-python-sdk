@@ -115,6 +115,7 @@ def test_macos_simulcast(setup, video_codec_type, expected_implementation):
 
     for i, rtp_stat in enumerate(sorted_stats):
         assert rtp_stat["rid"] == f"r{i}"
+        assert "SimulcastEncoderAdapter" in rtp_stat["encoderImplementation"]
         assert expected_implementation in rtp_stat["encoderImplementation"]
         assert rtp_stat["bytesSent"] > 0
         assert rtp_stat["packetsSent"] > 0
