@@ -99,6 +99,13 @@
   - @voluntas
 - [ADD] examples に E2E テストを追加する
   - @voluntas
+- [FIX] サイマルキャストの E2E テストについて encoderImplementation の値チェック内容を緩和する
+  - サイマルキャストの encoderImplementation のチェックを文字列一致としていたが、帯域推定機能を有効にした後、値が安定しなくなったためチェック内容を緩和した
+  - サイマルキャストの encoderImplementation の結果を以下の通り修正
+    - "SimulcastEncoderAdapter (libaom, libaom, libaom)" -> "SimulcastEncoderAdapter" と "libaom" を含む
+    - "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)" -> "SimulcastEncoderAdapter" と "libvpx" を含む
+    - "SimulcastEncoderAdapter (OpenH264, OpenH264, OpenH264)" -> "SimulcastEncoderAdapter" と "OpenH264" を含む
+    - "SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)" -> "SimulcastEncoderAdapter" と "VideoToolbox" を含む
 
 ## 2024.3.0
 
