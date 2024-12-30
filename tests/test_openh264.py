@@ -72,7 +72,7 @@ def test_openh264_sendonly_recvonly(setup):
 @pytest.mark.parametrize(
     "video_codec_type,expected_implementation",
     [
-        ("H264", "SimulcastEncoderAdapter (OpenH264)"),
+        ("H264", "SimulcastEncoderAdapter (OpenH264, OpenH264)"),
     ],
 )
 def test_openh264_simulcast(setup, video_codec_type, expected_implementation):

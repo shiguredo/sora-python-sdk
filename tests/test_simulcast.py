@@ -10,7 +10,7 @@ from client import SoraClient, SoraRole
     ("video_codec_type", "expected_implementation"),
     [
         ("VP8", "SimulcastEncoderAdapter (libvpx)"),
-        ("VP9", "SimulcastEncoderAdapter (libvpx)"),
+        ("VP9", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
         ("AV1", "SimulcastEncoderAdapter (libaom)"),
     ],
 )
@@ -65,4 +65,3 @@ def test_simulcast(setup, video_codec_type, expected_implementation):
         assert rtp_stat["encoderImplementation"] == expected_implementation
         assert rtp_stat["bytesSent"] > 0
         assert rtp_stat["packetsSent"] > 0
-
