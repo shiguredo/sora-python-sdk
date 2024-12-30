@@ -101,7 +101,7 @@ def test_openh264_simulcast(setup, video_codec_type, expected_implementation):
     )
     sendonly.connect(fake_video=True)
 
-    time.sleep(10)
+    time.sleep(5)
 
     sendonly_stats = sendonly.get_stats()
 
