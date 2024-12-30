@@ -9,9 +9,9 @@ from client import SoraClient, SoraRole
 @pytest.mark.parametrize(
     ("video_codec_type", "expected_implementation"),
     [
-        ("VP8", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
-        ("VP9", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
-        ("AV1", "SimulcastEncoderAdapter (libaom, libaom, libaom)"),
+        ("VP8", "SimulcastEncoderAdapter (libvpx)"),
+        ("VP9", "SimulcastEncoderAdapter (libvpx)"),
+        ("AV1", "SimulcastEncoderAdapter (libaom)"),
     ],
 )
 def test_simulcast(setup, video_codec_type, expected_implementation):
