@@ -194,19 +194,20 @@ jobs:
           name: windows-2022_python-${{ matrix.python_version }}
           path: dist/
 
-  slack_notify_succeeded:
-    needs: [build_linux_macos, build_windows]
-    runs-on: ubuntu-24.04
-    if: success()
-    steps:
-     - name: Slack Notification
-       uses: rtCamp/action-slack-notify@v2
-       env:
-         SLACK_CHANNEL: sora-python-sdk
-         SLACK_COLOR: good
-         SLACK_TITLE: SUCCEEDED
-         SLACK_ICON_EMOJI: ":star-struck:"
-         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  # slack_notify_succeeded:
+  #   needs: [build_linux_macos, build_windows]
+  #   runs-on: ubuntu-24.04
+  #   if: success()
+  #   steps:
+  #    - name: Slack Notification
+  #      uses: rtCamp/action-slack-notify@v2
+  #      env:
+  #        SLACK_CHANNEL: sora-python-sdk
+  #        SLACK_COLOR: good
+  #        SLACK_TITLE: SUCCEEDED
+  #        SLACK_ICON_EMOJI: ":star-struck:"
+  #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
   slack_notify_failed:
     needs: [build_linux_macos, build_windows]
     runs-on: ubuntu-24.04

@@ -126,19 +126,19 @@ jobs:
       - run: uv run python run.py windows_x86_64
       - run: uv run pytest tests -s
 
-  slack_notify_succeeded:
-    needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
-    runs-on: ubuntu-24.04
-    if: success()
-    steps:
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: sora-python-sdk
-          SLACK_COLOR: good
-          SLACK_TITLE: SUCCEEDED
-          SLACK_ICON_EMOJI: ":star-struck:"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  # slack_notify_succeeded:
+  #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+  #   runs-on: ubuntu-24.04
+  #   if: success()
+  #   steps:
+  #     - name: Slack Notification
+  #       uses: rtCamp/action-slack-notify@v2
+  #       env:
+  #         SLACK_CHANNEL: sora-python-sdk
+  #         SLACK_COLOR: good
+  #         SLACK_TITLE: SUCCEEDED
+  #         SLACK_ICON_EMOJI: ":star-struck:"
+  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
     needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
