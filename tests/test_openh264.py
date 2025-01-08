@@ -70,12 +70,14 @@ def test_openh264_sendonly_recvonly(setup):
 
 @pytest.mark.skipif(sys.platform not in ["darwin", "linux"], reason="macOSとLinuxでのみ実行する")
 @pytest.mark.parametrize(
-    "video_codec_type,expected_implementation",
+    "video_codec_type,expected_implementation,video_bit_rate,video_width,video_height",
     [
-        ("H264", "OpenH264"),
+        ("H264", "OpenH264", 2500, 1280, 720),
     ],
 )
-def test_openh264_simulcast(setup, video_codec_type, expected_implementation):
+def test_openh264_simulcast(
+    setup, video_codec_type, expected_implementation, video_bit_rate, video_width, video_height
+):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -92,11 +94,12 @@ def test_openh264_simulcast(setup, video_codec_type, expected_implementation):
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        video_bit_rate=3000,
+        video_bit_rate=video_bit_rate,
         metadata=metadata,
-        video_width=1280,
-        video_height=720,
+        video_width=video_width,
+        video_height=video_height,
         openh264_path=openh264_path,
+        # HWA を無効化
         use_hwa=False,
     )
     sendonly.connect(fake_video=True)
@@ -120,9 +123,12 @@ def test_openh264_simulcast(setup, video_codec_type, expected_implementation):
     # rid でソート
     sorted_stats = sorted(outbound_rtp_stats, key=lambda x: x.get("rid", ""))
 
-    for i, rtp_stat in enumerate(sorted_stats):
-        assert rtp_stat["rid"] == f"r{i}"
-        assert "SimulcastEncoderAdapter" in rtp_stat["encoderImplementation"]
-        assert expected_implementation in rtp_stat["encoderImplementation"]
-        assert rtp_stat["bytesSent"] > 0
-        assert rtp_stat["packetsSent"] > 0
+    for i, s in enumerate(sorted_stats):
+        assert s["rid"] == f"r{i}"
+        assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
+        assert expected_implementation in s["encoderImplementation"]
+        assert s["bytesSent"] > 0
+        assert s["packetsSent"] > 0
+        # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
+        expected_bitrate = video_bit_rate * 1000
+        assert expected_bitrate * 0.9 <= s["targetBitrate"] <= expected_bitrate
