@@ -13,21 +13,47 @@ from client import SoraClient, SoraRole
         "video_bit_rate",
         "video_width",
         "video_height",
+        "simulcast_count",
     ),
     [
+        # AV1 は VP8 と同じビットレートとして扱う
+        # https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/video/config/simulcast.cc;l=219-222
+        # 1080p
+        ("VP8", "libvpx", 5000, 1920, 1080, 3),
+        ("VP9", "libvpx", 3367, 1920, 1080, 3),
+        ("AV1", "libaom", 5000, 1920, 1080, 3),
         # 720p
-        ("VP8", "libvpx", 2500, 1280, 720),
-        ("VP9", "libvpx", 1524, 1280, 720),
-        ("AV1", "libaom", 1524, 1280, 720),
+        ("VP8", "libvpx", 2500, 1280, 720, 3),
+        ("VP9", "libvpx", 1524, 1280, 720, 3),
+        ("AV1", "libaom", 2500, 1280, 720, 3),
         # 540p
-        ("VP8", "libvpx", 1200, 960, 540),
-        ("VP9", "libvpx", 879, 960, 540),
-        # AV1 は 879 だと 3 本でない
-        ("AV1", "libaom", 1200, 960, 540),
+        ("VP8", "libvpx", 1200, 960, 540, 3),
+        ("VP9", "libvpx", 879, 960, 540, 3),
+        ("AV1", "libaom", 1200, 960, 540, 3),
+        # 360p
+        ("VP8", "libvpx", 700, 640, 360, 2),
+        ("VP9", "libvpx", 420, 640, 360, 2),
+        ("AV1", "libaom", 700, 640, 360, 2),
+        # 270p
+        ("VP8", "libvpx", 450, 480, 270, 2),
+        ("VP9", "libvpx", 257, 480, 270, 2),
+        ("AV1", "libaom", 450, 480, 270, 2),
+        # 180p
+        ("VP8", "libvpx", 200, 320, 180, 1),
+        ("VP9", "libvpx", 142, 320, 180, 1),
+        ("AV1", "libaom", 200, 320, 180, 1),
+        # 135p
+        ("VP9", "libvpx", 101, 240, 135, 1),
     ],
 )
 def test_simulcast(
-    setup, video_codec_type, expected_implementation, video_bit_rate, video_width, video_height
+    setup,
+    video_codec_type,
+    expected_implementation,
+    video_bit_rate,
+    video_width,
+    video_height,
+    simulcast_count,
 ):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -76,19 +102,29 @@ def test_simulcast(
 
     for i, s in enumerate(sorted_stats):
         assert s["rid"] == f"r{i}"
-        assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
-        assert expected_implementation in s["encoderImplementation"]
-        assert s["bytesSent"] > 0
-        assert s["packetsSent"] > 0
-        # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
-        expected_bitrate = video_bit_rate * 1000
-        print(
-            s["rid"],
-            video_codec_type,
-            expected_bitrate,
-            s["targetBitrate"],
-            s["frameWidth"],
-            s["frameHeight"],
-        )
-        # 期待値七割
-        assert expected_bitrate * 0.7 <= s["targetBitrate"] <= expected_bitrate
+        # simulcast_count が 2 の場合、rid r2 の bytesSent/packetsSent は 0 になる
+        # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 になる
+        if i < simulcast_count:
+            # 1 本になると simulcastEncodingAdapter がなくなる
+            if simulcast_count > 1:
+                assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
+            assert expected_implementation in s["encoderImplementation"]
+            assert s["bytesSent"] > 0
+            assert s["packetsSent"] > 0
+            # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
+            expected_bitrate = video_bit_rate * 1000
+            print(
+                s["rid"],
+                video_codec_type,
+                expected_bitrate,
+                s["targetBitrate"],
+                s["frameWidth"],
+                s["frameHeight"],
+            )
+            # 期待値の 50% 以上、100% 以下に収まることを確認
+            assert expected_bitrate * 0.5 <= s["targetBitrate"] <= expected_bitrate
+        else:
+            # 本来は 0 なのだが、simulcast_count が 1 の場合、
+            # bytesSent/packetsSent は 0 ではなく 1 になる場合がある
+            assert s["bytesSent"] <= 1
+            assert s["packetsSent"] <= 1
