@@ -15,6 +15,11 @@ from client import SoraClient, SoraRole
         "video_height",
     ),
     [
+        # 540p
+        ("VP8", "libvpx", 1200, 960, 540),
+        ("VP9", "libvpx", 879, 960, 540),
+        ("AV1", "libaom", 879, 960, 540),
+        # 720p
         ("VP8", "libvpx", 2500, 1280, 720),
         ("VP9", "libvpx", 1524, 1280, 720),
         ("AV1", "libaom", 1524, 1280, 720),
@@ -84,4 +89,5 @@ def test_simulcast(
             s["frameWidth"],
             s["frameHeight"],
         )
+        # 期待値七割
         assert expected_bitrate * 0.7 <= s["targetBitrate"] <= expected_bitrate
