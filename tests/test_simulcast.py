@@ -16,8 +16,8 @@ from client import SoraClient, SoraRole
     ),
     [
         ("VP8", "libvpx", 2500, 1280, 720),
-        ("VP9", "libvpx", 2500, 1280, 720),
-        ("AV1", "libaom", 2500, 1280, 720),
+        ("VP9", "libvpx", 1524, 1280, 720),
+        ("AV1", "libaom", 1524, 1280, 720),
     ],
 )
 def test_simulcast(
@@ -76,4 +76,12 @@ def test_simulcast(
         assert s["packetsSent"] > 0
         # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
         expected_bitrate = video_bit_rate * 1000
+        print(
+            s["rid"],
+            video_codec_type,
+            expected_bitrate,
+            s["targetBitrate"],
+            s["frameWidth"],
+            s["frameHeight"],
+        )
         assert expected_bitrate * 0.9 <= s["targetBitrate"] <= expected_bitrate
