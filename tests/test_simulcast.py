@@ -123,6 +123,8 @@ def test_simulcast(
                 s["targetBitrate"],
                 s["frameWidth"],
                 s["frameHeight"],
+                s["bytesSent"],
+                s["packetsSent"],
             )
             # 期待値の 50% 以上、100% 以下に収まることを確認
             assert expected_bitrate * 0.5 <= s["targetBitrate"] <= expected_bitrate
@@ -131,3 +133,8 @@ def test_simulcast(
             # byteSent/packetSent が 0 ではなく 1 や 2 になる場合がある
             assert s["bytesSent"] <= 2
             assert s["packetsSent"] <= 2
+            print(
+                s["rid"],
+                s["bytesSent"],
+                s["packetsSent"],
+            )
