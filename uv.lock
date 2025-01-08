@@ -372,7 +372,7 @@ dev = [
     { name = "pytest" },
     { name = "python-dotenv" },
     { name = "ruff" },
-    { name = "setuptools", specifier = ">=75.6" },
+    { name = "setuptools", specifier = "~=75.7" },
     { name = "typing-extensions" },
     { name = "wheel", specifier = "~=0.45.1" },
 ]
