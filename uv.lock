@@ -368,7 +368,7 @@ dev = [
     { name = "httpx" },
     { name = "mypy" },
     { name = "nanobind", specifier = "~=2.4.0" },
-    { name = "numpy", specifier = ">=2.2" },
+    { name = "numpy", specifier = ">=2.2.1" },
     { name = "pytest" },
     { name = "python-dotenv" },
     { name = "ruff" },
