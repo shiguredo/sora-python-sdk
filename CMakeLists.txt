@@ -64,10 +64,6 @@ find_package(nanobind CONFIG REQUIRED)
 if(NOT TARGET_OS STREQUAL "windows")
   find_package(Threads REQUIRED)
 endif()
-if(TARGET_OS STREQUAL "ubuntu" AND NOT CMAKE_CROSSCOMPILING)
-  find_package(Libva REQUIRED)
-  find_package(Libdrm REQUIRED)
-endif()
 
 
 nanobind_add_module(

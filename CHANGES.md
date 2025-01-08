@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] macOS Sonoma 13 のサポートを終了する
+  - @voluntas
 - [CHANGE] `client_cert` と `client_key` の指定にはパスではなく中身の文字列を指定するようにする
   - C++ SDK 側の仕様変更に追従する
   - @voluntas
@@ -48,22 +50,33 @@
   - @melpon
 - [ADD] Encoded Transform に対応する
   - @tnoho
-- [UPDATE] nanobind を `2.2.0` に上げる
+- [UPDATE] nanobind を `2.4.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
-  - WEBRTC_BUILD_VERSION を `m129.6668.1.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.1.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m132.6834.4.0` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
-  - CMAKE_VERSION を `3.30.3` に上げる
-  - BOOST_VERSION を `1.86.0` に上げる
+    - Sora CPP SDK の absl::optional を std::optional に変更した仕様に追従する
+    - Sora CPP SDK の absl::nullopt を std::nullopt に変更した仕様に追従する
+  - CMAKE_VERSION を `3.30.5` に上げる
+  - BOOST_VERSION を `1.87.0` に上げる
+  - OPENH264_VERSION を `v2.5.0` に上げる
   - @torikizi @voluntas
 
 ### misc
 
+- [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
 - [ADD] canary.py を追加
   - @voluntas
 - [ADD] Python 3.13 を E2E テストに追加する
   - @voluntas
 - [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
+- [UPDATE] ubuntu-latest を ubuntu-24.04 に変更する
+  - @voluntas
+- [CHANGE] CI の Ubuntu から libva と libdrm をインストールしないようにする
+  - @voluntas
+- [CHANGE] CMakefile の依存から libva と libdrm を削除する
   - @voluntas
 - [CHANGE] ruff と mypy と pytest はバージョンを未指定にして、常に最新版を利用するようにする
   - @voluntas
@@ -86,6 +99,13 @@
   - @voluntas
 - [ADD] examples に E2E テストを追加する
   - @voluntas
+- [FIX] サイマルキャストの E2E テストについて encoderImplementation の値チェック内容を緩和する
+  - サイマルキャストの encoderImplementation のチェックを文字列一致としていたが、帯域推定機能を有効にした後、値が安定しなくなったためチェック内容を緩和した
+  - サイマルキャストの encoderImplementation の結果を以下の通り修正
+    - "SimulcastEncoderAdapter (libaom, libaom, libaom)" -> "SimulcastEncoderAdapter" と "libaom" を含む
+    - "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)" -> "SimulcastEncoderAdapter" と "libvpx" を含む
+    - "SimulcastEncoderAdapter (OpenH264, OpenH264, OpenH264)" -> "SimulcastEncoderAdapter" と "OpenH264" を含む
+    - "SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)" -> "SimulcastEncoderAdapter" と "VideoToolbox" を含む
 
 ## 2024.3.0
 
@@ -152,7 +172,7 @@
   - @enm10k
 - [UPDATE] nanobind を `1.9.2` に上げて固定する
   - @voluntas
-- [UPDATE] ruff の最小を ``0.3.0` に上げる
+- [UPDATE] ruff の最小を `0.3.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する

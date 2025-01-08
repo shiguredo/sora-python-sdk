@@ -62,8 +62,8 @@ def test_macos_video_hwa_sendonly(setup, video_codec_type):
 @pytest.mark.parametrize(
     ("video_codec_type", "expected_implementation"),
     [
-        ("H264", "SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)"),
-        ("H265", "SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)"),
+        ("H264", "VideoToolbox"),
+        ("H265", "VideoToolbox"),
     ],
 )
 def test_macos_simulcast(setup, video_codec_type, expected_implementation):
@@ -115,7 +115,8 @@ def test_macos_simulcast(setup, video_codec_type, expected_implementation):
 
     for i, rtp_stat in enumerate(sorted_stats):
         assert rtp_stat["rid"] == f"r{i}"
-        assert rtp_stat["encoderImplementation"] == expected_implementation
+        assert "SimulcastEncoderAdapter" in rtp_stat["encoderImplementation"]
+        assert expected_implementation in rtp_stat["encoderImplementation"]
         assert rtp_stat["bytesSent"] > 0
         assert rtp_stat["packetsSent"] > 0
 

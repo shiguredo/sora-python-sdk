@@ -9,9 +9,9 @@ from client import SoraClient, SoraRole
 @pytest.mark.parametrize(
     ("video_codec_type", "expected_implementation"),
     [
-        ("VP8", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
-        ("VP9", "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)"),
-        ("AV1", "SimulcastEncoderAdapter (libaom, libaom, libaom)"),
+        ("VP8", "libvpx"),
+        ("VP9", "libvpx"),
+        ("AV1", "libaom"),
     ],
 )
 def test_simulcast(setup, video_codec_type, expected_implementation):
@@ -62,7 +62,7 @@ def test_simulcast(setup, video_codec_type, expected_implementation):
 
     for i, rtp_stat in enumerate(sorted_stats):
         assert rtp_stat["rid"] == f"r{i}"
-        assert rtp_stat["encoderImplementation"] == expected_implementation
+        assert "SimulcastEncoderAdapter" in rtp_stat["encoderImplementation"]
+        assert expected_implementation in rtp_stat["encoderImplementation"]
         assert rtp_stat["bytesSent"] > 0
         assert rtp_stat["packetsSent"] > 0
-

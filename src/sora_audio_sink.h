@@ -50,7 +50,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
               int sample_rate,
               size_t number_of_channels,
               size_t number_of_frames,
-              absl::optional<int64_t> absolute_capture_timestamp_ms) override;
+              std::optional<int64_t> absolute_capture_timestamp_ms) override;
 
   /**
    * 実装上の留意点：コールバックと Read 関数の共存はパフォーマンスや使い方の面で難しいことが判明したので、

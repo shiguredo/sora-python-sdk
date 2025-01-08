@@ -17,7 +17,7 @@ SoraAudioSourceInterface::~SoraAudioSourceInterface() {
 
 void SoraAudioSourceInterface::OnData(const int16_t* data,
                                       size_t samples_per_channel,
-                                      absl::optional<int64_t> timestamp) {
+                                      std::optional<int64_t> timestamp) {
   size_t size = samples_per_channel * channels_;
   if (buffer_used_ > 0) {
     // 先に 10 ms に満たず残したデータを新たなデータと繋げて 10 ms を超える場合は送る
@@ -116,7 +116,7 @@ void SoraAudioSourceInterface::RemoveSink(
 }
 
 void SoraAudioSourceInterface::Add10MsData(const int16_t* data,
-                                           absl::optional<int64_t> timestamp) {
+                                           std::optional<int64_t> timestamp) {
   if (timestamp) {
     last_timestamp_ = *timestamp;
   }
@@ -146,7 +146,7 @@ void SoraAudioSource::OnData(const int16_t* data,
 }
 
 void SoraAudioSource::OnData(const int16_t* data, size_t samples_per_channel) {
-  source_->OnData(data, samples_per_channel, absl::nullopt);
+  source_->OnData(data, samples_per_channel, std::nullopt);
 }
 
 void SoraAudioSource::OnData(
@@ -166,5 +166,5 @@ void SoraAudioSource::OnData(
   if (!track_) {
     return;
   }
-  source_->OnData(ndarray.data(), ndarray.shape(0), absl::nullopt);
+  source_->OnData(ndarray.data(), ndarray.shape(0), std::nullopt);
 }

@@ -93,12 +93,19 @@ PyPI 経由ではインストールできません。
 - Windows Server 2022 x86_64
 - macOS Sequoia 15 arm64
 - macOS Ventura 14 arm64
-- macOS Sonoma 13 arm64
 - Ubuntu 24.04 LTS x86_64
 - Ubuntu 24.04 LTS arm64
 - Ubuntu 22.04 LTS x86_64
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください
+
+### macOS の対応バージョン
+
+直近の 2 バージョンをサポートします。
+
+### Ubuntu の対応バージョン
+
+直近の LTS 2 バージョンをサポートします。
 
 ## 優先実装
 
@@ -114,7 +121,7 @@ PyPI 経由ではインストールできません。
 ### 優先実装が可能な機能一覧
 
 - Windows 11 arm64
-- Ubuntu 24.04 arm64
+- macOS Sonoma 13 arm64
 - Ubuntu 22.04 arm64
 - Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
 - AMD Video Core Next (VCN) 対応
