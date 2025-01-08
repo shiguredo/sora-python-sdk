@@ -22,7 +22,8 @@ from client import SoraClient, SoraRole
         # 540p
         ("VP8", "libvpx", 1200, 960, 540),
         ("VP9", "libvpx", 879, 960, 540),
-        ("AV1", "libaom", 879, 960, 540),
+        # AV1 は 879 だと 3 本でない
+        ("AV1", "libaom", 1200, 960, 540),
     ],
 )
 def test_simulcast(
