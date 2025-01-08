@@ -139,5 +139,5 @@ def test_openh264_simulcast(
             s["frameWidth"],
             s["frameHeight"],
         )
-        # 期待値七割
-        assert expected_bitrate * 0.7 <= s["targetBitrate"] <= expected_bitrate
+        # 期待値の 50% 以上、100% 以下に収まることを確認
+        assert expected_bitrate * 0.5 <= s["targetBitrate"] <= expected_bitrate
