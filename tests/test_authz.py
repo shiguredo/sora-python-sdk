@@ -7,10 +7,11 @@ import pytest
 from client import SoraClient, SoraRole
 
 
-@pytest.mark.skipif(reason="Sora C++ SDK 側の確認が必要")
+@pytest.mark.skipif(reason="Sora C++ SDK 側の対応が必要")
 def test_sendonly_authz_video_true(setup):
     """
-    認証成功時の払い出しで audio: False / video: True を払い出す
+    - type: connect で audio: true / video: false で繫ぐ
+    - 認証成功時の払い出しで audio: false / video: true を払い出す
     """
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
