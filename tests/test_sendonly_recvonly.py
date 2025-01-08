@@ -60,18 +60,15 @@ def test_sendonly_recvonly_audio(setup):
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.fixture(
-    params=[
+@pytest.mark.parametrize(
+    "video_codec_params",
+    [
         # video_codec, encoder_implementation, decoder_implementation
         ("VP8", "libvpx", "libvpx"),
         ("VP9", "libvpx", "libvpx"),
         ("AV1", "libaom", "dav1d"),
-    ]
+    ],
 )
-def video_codec_params(request):
-    return request.param
-
-
 def test_sendonly_recvonly_video(setup, video_codec_params):
     video_codec, encoder_implementation, decoder_implementation = video_codec_params
 
