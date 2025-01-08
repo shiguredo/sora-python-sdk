@@ -22,18 +22,20 @@ jobs:
   # １箇所で pyi を生成してアーティファクトにアップロードして、
   # それを各ビルドで利用する形にする。
   build_pyi:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - run: |
-          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
-      - uses: astral-sh/setup-uv@v3
+          sudo apt-get -y install libx11-dev
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
       - run: uv python pin 3.13
       - run: uv sync
       - name: Generate pyi
         run: |
-          uv run python run.py ubuntu-22.04_x86_64
+          uv run python run.py ubuntu-24.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
@@ -56,11 +58,11 @@ jobs:
             runs_on: ubuntu-22.04
             os: ubuntu
             arch: x86_64
-          - name: macos-13_arm64
+          - name: macos-15_arm64
             target: macos_arm64
-            runs_on: macos-13
+            runs_on: macos-15
             os: macos
-            python_host_platform: "macosx-13.0-arm64"
+            python_host_platform: "macosx-15.0-arm64"
             archflags: "-arch arm64"
           - name: macos-14_arm64
             target: macos_arm64
@@ -96,20 +98,22 @@ jobs:
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
-          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
+          sudo apt-get -y install libx11-dev
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' }}
       - run: |
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
 
       # Ubuntu x86_64 向け
       - name: Tailscale
-        uses: tailscale/github-action@v2
+        uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
@@ -176,7 +180,9 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py windows_x86_64
@@ -188,22 +194,23 @@ jobs:
           name: windows-2022_python-${{ matrix.python_version }}
           path: dist/
 
-  slack_notify_succeeded:
-    needs: [build_linux_macos, build_windows]
-    runs-on: ubuntu-latest
-    if: success()
-    steps:
-     - name: Slack Notification
-       uses: rtCamp/action-slack-notify@v2
-       env:
-         SLACK_CHANNEL: sora-python-sdk
-         SLACK_COLOR: good
-         SLACK_TITLE: SUCCEEDED
-         SLACK_ICON_EMOJI: ":star-struck:"
-         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  # slack_notify_succeeded:
+  #   needs: [build_linux_macos, build_windows]
+  #   runs-on: ubuntu-24.04
+  #   if: success()
+  #   steps:
+  #    - name: Slack Notification
+  #      uses: rtCamp/action-slack-notify@v2
+  #      env:
+  #        SLACK_CHANNEL: sora-python-sdk
+  #        SLACK_COLOR: good
+  #        SLACK_TITLE: SUCCEEDED
+  #        SLACK_ICON_EMOJI: ":star-struck:"
+  #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
   slack_notify_failed:
     needs: [build_linux_macos, build_windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: failure()
     steps:
       - name: Slack Notification
@@ -226,8 +233,8 @@ jobs:
         platform:
           # - name: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
+          - name: macos-15_arm64
           - name: macos-14_arm64
-          - name: macos-13_arm64
           - name: windows-2022
         python_version:
           - "3.10"
@@ -238,7 +245,7 @@ jobs:
           - platform:
               name: ubuntu-24.04_armv8
             python_version: "3.12"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/download-artifact@v4
@@ -251,7 +258,7 @@ jobs:
           fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-14_arm64' && matrix.python_version == '3.10' }}
+        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.10' }}
 
       # テスト用
       # - name: Publish package to TestPyPI
@@ -280,7 +287,7 @@ jobs:
     needs:
       - build_linux_macos
       - build_windows
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -295,6 +302,14 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.10" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.10" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.11" }
@@ -302,14 +317,6 @@ jobs:
         with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.13" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.10" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.11" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2022", "python_version": "3.10" }
       - uses: ./.github/actions/download

@@ -42,10 +42,9 @@ def test_websocket_signaling_only_disconnect_api(setup):
         assert conn.ws_close_code == 1000
         assert conn.ws_close_reason == "DISCONNECTED-API"
 
-        # C++ SDK 側でこのテストが通るようなコードが必要
-        # assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
-        # assert conn.disconnect_reason is not None
-        # assert "DISCONNECTED-API" in conn.disconnect_reason
+        assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
+        assert conn.disconnect_reason is not None
+        assert "DISCONNECTED-API" in conn.disconnect_reason
 
 
 def test_websocket_signaling_only_lifetime_expired(setup):
@@ -117,10 +116,9 @@ def test_websocket_datachannel_signaling_disconnect_api(setup):
         assert conn.ws_close_code == 1000
         assert conn.ws_close_reason == "DISCONNECTED-API"
 
-        # C++ SDK 側でこのテストが通るようなコードが必要
-        # assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
-        # assert conn.disconnect_reason is not None
-        # assert "DISCONNECTED-API" in conn.disconnect_reason
+        assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
+        assert conn.disconnect_reason is not None
+        assert "DISCONNECTED-API" in conn.disconnect_reason
 
 
 def test_websocket_datachannel_signaling_lifetime_expired(setup):
