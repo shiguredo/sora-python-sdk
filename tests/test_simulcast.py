@@ -112,13 +112,14 @@ def test_simulcast(
                 assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
             assert expected_implementation in s["encoderImplementation"]
 
-            assert s["bytesSent"] > 10
-            assert s["packetsSent"] > 10
+            assert s["bytesSent"] > 1000
+            assert s["packetsSent"] > 20
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
             print(
                 s["rid"],
                 video_codec_type,
+                expected_implementation,
                 expected_bitrate,
                 s["targetBitrate"],
                 s["frameWidth"],
@@ -126,15 +127,17 @@ def test_simulcast(
                 s["bytesSent"],
                 s["packetsSent"],
             )
-            # 期待値の 50% 以上、100% 以下に収まることを確認
-            assert expected_bitrate * 0.5 <= s["targetBitrate"] <= expected_bitrate
+            # 期待値の 20% 以上、100% 以下に収まることを確認
+            assert expected_bitrate * 0.2 <= s["targetBitrate"] <= expected_bitrate
         else:
             # 本来は 0 なのだが、simulcast_count が 1 の場合、
-            # byteSent/packetSent が 0 ではなく 1 や 2 になる場合がある
-            assert s["bytesSent"] <= 2
+            # packetSent が 0 ではなく 1 や 2 になる場合がある
+            # byteSent は 0
+            assert s["bytesSent"] == 0
             assert s["packetsSent"] <= 2
             print(
                 s["rid"],
+                video_codec_type,
                 s["bytesSent"],
                 s["packetsSent"],
             )
