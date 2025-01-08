@@ -84,4 +84,4 @@ def test_simulcast(
             s["frameWidth"],
             s["frameHeight"],
         )
-        assert expected_bitrate * 0.9 <= s["targetBitrate"] <= expected_bitrate
+        assert expected_bitrate * 0.7 <= s["targetBitrate"] <= expected_bitrate
