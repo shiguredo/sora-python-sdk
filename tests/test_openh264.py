@@ -73,6 +73,7 @@ def test_openh264_sendonly_recvonly(setup):
     "video_codec_type,expected_implementation,video_bit_rate,video_width,video_height",
     [
         ("H264", "OpenH264", 2500, 1280, 720),
+        ("H264", "OpenH264", 1200, 960, 540),
     ],
 )
 def test_openh264_simulcast(
