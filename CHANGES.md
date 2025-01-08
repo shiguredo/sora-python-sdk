@@ -64,6 +64,8 @@
 
 ### misc
 
+- [ADD] pyjwt を dev-dependencies に追加する
+  - @voluntas
 - [ADD] macos-15 を E2E テストに追加する
   - @voluntas
 - [ADD] canary.py を追加
