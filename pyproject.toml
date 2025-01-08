@@ -63,12 +63,12 @@ dev-dependencies = [
     "wheel~=0.45.1",
     "typing-extensions",
     "python-dotenv",
-    "numpy>=2.2.1",
+    "numpy",
     "httpx",
     "pytest",
     "ruff",
     "mypy",
-    "pyjwt>=2.9.0",
+    "pyjwt",
 ]
 
 [tool.ruff]
