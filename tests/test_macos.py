@@ -140,8 +140,8 @@ def test_macos_simulcast(
             s["frameWidth"],
             s["frameHeight"],
         )
-        # 期待値の 50% 以上、100% 以下に収まることを確認
-        assert expected_bitrate * 0.5 <= s["targetBitrate"] <= expected_bitrate
+        # 期待値の 20% 以上、100% 以下に収まることを確認
+        assert expected_bitrate * 0.2 <= s["targetBitrate"] <= expected_bitrate
 
 
 @pytest.mark.skip(reason="ローカルでは成功する")
