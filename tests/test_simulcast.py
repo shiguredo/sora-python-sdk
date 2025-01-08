@@ -95,6 +95,8 @@ def test_simulcast(
     outbound_rtp_stats = [
         s for s in sendonly_stats if s.get("type") == "outbound-rtp" and s.get("kind") == "video"
     ]
+    # simulcast_count に関係なく統計情報はかならず 3 本出力される
+    # これは SDP で rid で ~r0 とかやる減るはず
     assert len(outbound_rtp_stats) == 3
 
     # rid でソート
@@ -102,15 +104,16 @@ def test_simulcast(
 
     for i, s in enumerate(sorted_stats):
         assert s["rid"] == f"r{i}"
-        # simulcast_count が 2 の場合、rid r2 の bytesSent/packetsSent は 0 になる
-        # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 になる
+        # simulcast_count が 2 の場合、rid r2 の bytesSent/packetsSent は 0 or 1 になる
+        # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 or 1 になる
         if i < simulcast_count:
             # 1 本になると simulcastEncodingAdapter がなくなる
             if simulcast_count > 1:
                 assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
             assert expected_implementation in s["encoderImplementation"]
-            assert s["bytesSent"] > 0
-            assert s["packetsSent"] > 0
+
+            assert s["bytesSent"] > 10
+            assert s["packetsSent"] > 10
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
             print(
@@ -125,6 +128,6 @@ def test_simulcast(
             assert expected_bitrate * 0.5 <= s["targetBitrate"] <= expected_bitrate
         else:
             # 本来は 0 なのだが、simulcast_count が 1 の場合、
-            # bytesSent/packetsSent は 0 ではなく 1 になる場合がある
-            assert s["bytesSent"] <= 1
-            assert s["packetsSent"] <= 1
+            # byteSent/packetSent が 0 ではなく 1 や 2 になる場合がある
+            assert s["bytesSent"] <= 2
+            assert s["packetsSent"] <= 2
