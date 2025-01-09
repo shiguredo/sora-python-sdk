@@ -138,10 +138,12 @@ def test_openh264_simulcast(
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
-    # 複数のoutbound-rtp統計情報を取得
+    # 複数の outbound-rtp 統計情報を取得
     outbound_rtp_stats = [
         s for s in sendonly_stats if s.get("type") == "outbound-rtp" and s.get("kind") == "video"
     ]
+    # simulcast_count に関係なく統計情報はかならず 3 本出力される
+    # これは SDP で rid で ~r0 とかやる減るはず
     assert len(outbound_rtp_stats) == 3
 
     # rid でソート
