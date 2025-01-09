@@ -118,7 +118,8 @@ def test_simulcast_authz_scale_resolution_to(
         assert s["rid"] == f"r{i}"
         assert s["kind"] == "video"
 
-        # VP8 の場合は scaleResolutionDownTo を指定すると SimulcastEncoderAdapter になる
+        # VP8 の場合は scaleResolutionDownTo を指定すると SimulcastEncoderAdapter が無くなる
+        # TODO: 念のため他の挙動も確認すること
         if video_codec_type == "VP9":
             assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
         assert encoder_implementation in s["encoderImplementation"]
