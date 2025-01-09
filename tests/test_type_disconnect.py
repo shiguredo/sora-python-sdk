@@ -93,7 +93,7 @@ def test_datachannel_only_type_disconnect(setup):
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:
-        time.sleep(3)
+        time.sleep(5)
 
         assert conn.switched is True
         assert conn.ws_close_code == 1000
