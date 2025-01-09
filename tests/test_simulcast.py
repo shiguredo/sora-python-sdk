@@ -9,7 +9,7 @@ from client import SoraClient, SoraRole
 @pytest.mark.parametrize(
     (
         "video_codec_type",
-        "expected_implementation",
+        "encoder_implementation",
         "video_bit_rate",
         "video_width",
         "video_height",
@@ -49,7 +49,7 @@ from client import SoraClient, SoraRole
 def test_simulcast(
     setup,
     video_codec_type,
-    expected_implementation,
+    encoder_implementation,
     video_bit_rate,
     video_width,
     video_height,
@@ -110,7 +110,7 @@ def test_simulcast(
             # 1 本になると simulcastEncodingAdapter がなくなる
             if simulcast_count > 1:
                 assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
-            assert expected_implementation in s["encoderImplementation"]
+            assert encoder_implementation in s["encoderImplementation"]
 
             assert s["bytesSent"] > 1000
             assert s["packetsSent"] > 20
@@ -119,7 +119,7 @@ def test_simulcast(
             print(
                 s["rid"],
                 video_codec_type,
-                expected_implementation,
+                encoder_implementation,
                 expected_bitrate,
                 s["targetBitrate"],
                 s["frameWidth"],
