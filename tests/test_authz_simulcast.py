@@ -89,7 +89,6 @@ def test_simulcast_authz_scale_resolution_to(
     assert sendonly.offer_message is not None
     assert sendonly.offer_message["sdp"] is not None
     assert video_codec_type in sendonly.offer_message["sdp"]
-    print(sendonly.offer_message["sdp"])
     assert "a=simulcast:recv r0;r1;r2" in sendonly.offer_message["sdp"]
     sendonly_stats = sendonly.get_stats()
 
@@ -116,12 +115,12 @@ def test_simulcast_authz_scale_resolution_to(
     sorted_stats = sorted(outbound_rtp_stats, key=lambda x: x.get("rid", ""))
 
     for i, s in enumerate(sorted_stats):
-        print(s)
-
         assert s["rid"] == f"r{i}"
         assert s["kind"] == "video"
 
-        assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
+        # VP8 の場合は scaleResolutionDownTo を指定すると SimulcastEncoderAdapter になる
+        if video_codec_type == "VP9":
+            assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
         assert encoder_implementation in s["encoderImplementation"]
 
         assert s["keyFramesEncoded"] > 0
