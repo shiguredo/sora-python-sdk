@@ -91,7 +91,7 @@ def test_simulcast(
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
-    # 複数のoutbound-rtp統計情報を取得
+    # 複数の outbound-rtp 統計情報を取得
     outbound_rtp_stats = [
         s for s in sendonly_stats if s.get("type") == "outbound-rtp" and s.get("kind") == "video"
     ]
