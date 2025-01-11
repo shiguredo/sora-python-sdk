@@ -346,6 +346,13 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("WEBSOCKET", sora::SoraSignalingType::WEBSOCKET)
       .value("DATACHANNEL", sora::SoraSignalingType::DATACHANNEL);
 
+  nb::enum_<webrtc::DegradationPreference>(m, "SoraDegradationPreference",
+                                          nb::is_arithmetic())
+      .value("DISABLED", webrtc::DegradationPreference::DISABLED)
+      .value("BALANCED", webrtc::DegradationPreference::BALANCED)
+      .value("MAINTAIN_FRAMERATE", webrtc::DegradationPreference::MAINTAIN_FRAMERATE)
+      .value("MAINTAIN_RESOLUTION", webrtc::DegradationPreference::MAINTAIN_RESOLUTION);
+
   nb::enum_<sora::SoraSignalingDirection>(m, "SoraSignalingDirection",
                                           nb::is_arithmetic())
       .value("SENT", sora::SoraSignalingDirection::SENT)
