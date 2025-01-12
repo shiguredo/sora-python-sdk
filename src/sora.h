@@ -83,6 +83,7 @@ class Sora : public DisposePublisher {
    * @param proxy_username (オプション) Proxy ユーザー名
    * @param proxy_password (オプション) Proxy パスワード
    * @param proxy_agent (オプション) Proxy エージェント
+   * @param degradation_preference (オプション) デグレード設定
    * @return SoraConnection インスタンス
    */
   std::shared_ptr<SoraConnection> CreateConnection(
@@ -134,7 +135,8 @@ class Sora : public DisposePublisher {
       std::optional<std::string> proxy_url,
       std::optional<std::string> proxy_username,
       std::optional<std::string> proxy_password,
-      std::optional<std::string> proxy_agent);
+      std::optional<std::string> proxy_agent,
+      std::optional<webrtc::DegradationPreference> degradation_preference);
 
   /**
    * Sora に音声データを送る受け口である SoraAudioSource を生成します。
