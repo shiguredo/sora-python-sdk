@@ -30,7 +30,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - Windows / macOS / Linux (Ubuntu) プラットフォームに対応
 - [WebRTC 統計情報](https://www.w3.org/TR/webrtc-stats/) の取得が可能
 - [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/) に対応
-- 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする DegradationPreference に対応
+- 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする [DegradationPreference](https://w3c.github.io/mst-content-hint/#degradation-preference-when-encoding) に対応
   - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
   - Intel VPL (AV1 / H.264 / H.265)
