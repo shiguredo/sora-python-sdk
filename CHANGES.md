@@ -22,6 +22,14 @@
   - `on_message()` と合わせる
   - `send_data_channel()` のシンタックスシュガー
   - @voluntas
+- [ADD] エンコード時の劣化の優先順位を指定できるようにする
+  - `Sora.create_connection()` の引数に `degradation_preference` を追加する
+  - `SoraDegradationPreference` を追加
+    - `MAINTAIN_RESOLUTION` は解像度を優先
+    - `MAINTAIN_FRAMERATE` はフレームレートを優先
+    - `BALANCED` はバランスを優先
+    - `DISABLED` は無効
+  - @voluntas
 - [ADD] WebRTC Encoded Transform に対応する
   - `SoraTransformableAudioFrame` と `SoraTransformableVideoFrame` を追加
   - `SoraAudioFrameTransformer` と `SoraVideoFrameTransformer` を追加
