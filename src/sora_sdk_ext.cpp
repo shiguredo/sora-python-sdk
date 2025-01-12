@@ -346,6 +346,13 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("WEBSOCKET", sora::SoraSignalingType::WEBSOCKET)
       .value("DATACHANNEL", sora::SoraSignalingType::DATACHANNEL);
 
+  nb::enum_<webrtc::DegradationPreference>(m, "SoraDegradationPreference",
+                                           nb::is_arithmetic())
+      .value("DISABLED", webrtc::DegradationPreference::DISABLED)
+      .value("BALANCED", webrtc::DegradationPreference::BALANCED)
+      .value("MAINTAIN_FRAMERATE", webrtc::DegradationPreference::MAINTAIN_FRAMERATE)
+      .value("MAINTAIN_RESOLUTION", webrtc::DegradationPreference::MAINTAIN_RESOLUTION);
+
   nb::enum_<sora::SoraSignalingDirection>(m, "SoraSignalingDirection",
                                           nb::is_arithmetic())
       .value("SENT", sora::SoraSignalingDirection::SENT)
@@ -593,6 +600,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "client_key"_a = nb::none(), "ca_cert"_a = nb::none(),
            "proxy_url"_a = nb::none(), "proxy_username"_a = nb::none(),
            "proxy_password"_a = nb::none(), "proxy_agent"_a = nb::none(),
+           "degradation_preference"_a = nb::none(),
            nb::sig("def create_connection("
                    "self, "
                    "signaling_urls: list[str], "
@@ -641,7 +649,8 @@ NB_MODULE(sora_sdk_ext, m) {
                    "proxy_url: Optional[str] = None, "
                    "proxy_username: Optional[str] = None, "
                    "proxy_password: Optional[str] = None, "
-                   "proxy_agent: Optional[str] = None"
+                   "proxy_agent: Optional[str] = None, "
+                   "degradation_preference: Optional[SoraDegradationPreference] = None"
                    ") -> SoraConnection"))
       .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
            "sample_rate"_a)

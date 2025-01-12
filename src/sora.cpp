@@ -59,7 +59,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<std::string> proxy_url,
     std::optional<std::string> proxy_username,
     std::optional<std::string> proxy_password,
-    std::optional<std::string> proxy_agent) {
+    std::optional<std::string> proxy_agent,
+    std::optional<webrtc::DegradationPreference> degradation_preference) {
   std::shared_ptr<SoraConnection> conn = std::make_shared<SoraConnection>(this);
   sora::SoraSignalingConfig config;
   config.pc_factory = factory_->GetPeerConnectionFactory();
@@ -178,6 +179,9 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   }
   if (proxy_agent) {
     config.proxy_agent = *proxy_agent;
+  }
+  if (degradation_preference) {
+    config.degradation_preference = *degradation_preference;
   }
   config.network_manager = factory_->default_network_manager();
   config.socket_factory = factory_->default_socket_factory();
