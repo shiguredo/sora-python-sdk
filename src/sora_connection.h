@@ -24,6 +24,7 @@
 
 namespace nb = nanobind;
 
+class SoraFactory;
 /**
  * Sora との接続ごとに生成する SoraConnection です。
  * 
@@ -36,7 +37,8 @@ class SoraConnection : public sora::SoraSignalingObserver,
   /**
    * コンストラクタではインスタンスの生成のみで実際の生成処理は Init 関数で行います。
    */
-  SoraConnection(DisposePublisher* publisher);
+  SoraConnection(DisposePublisher* publisher,
+                 std::shared_ptr<SoraFactory> factory);
   ~SoraConnection();
 
   void Disposed() override;
@@ -146,6 +148,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
   std::function<void(std::string)> on_data_channel_;
 
  private:
+  std::shared_ptr<SoraFactory> factory_;
   DisposePublisher* publisher_;
   std::unique_ptr<boost::asio::io_context> ioc_;
   std::shared_ptr<sora::SoraSignaling> conn_;

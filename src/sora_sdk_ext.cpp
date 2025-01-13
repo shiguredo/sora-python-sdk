@@ -288,38 +288,6 @@ PyType_Slot connection_slots[] = {
     {Py_tp_clear, (void*)connection_tp_clear},
     {0, nullptr}};
 
-int sora_tp_traverse(PyObject* self, visitproc visit, void* arg) {
-  if (!nb::inst_ready(self)) {
-    return 0;
-  }
-
-  Sora* sora = nb::inst_ptr<Sora>(self);
-  for (auto wc : sora->weak_connections_) {
-    auto conn = wc.lock();
-    if (conn) {
-      nb::object conn_obj = nb::find(conn);
-      Py_VISIT(conn_obj.ptr());
-    }
-  }
-
-  return 0;
-}
-
-int sora_tp_clear(PyObject* self) {
-  if (!nb::inst_ready(self)) {
-    return 0;
-  }
-
-  Sora* sora = nb::inst_ptr<Sora>(self);
-  sora->weak_connections_.clear();
-
-  return 0;
-}
-
-PyType_Slot sora_slots[] = {{Py_tp_traverse, (void*)sora_tp_traverse},
-                            {Py_tp_clear, (void*)sora_tp_clear},
-                            {0, nullptr}};
-
 /**
  * Python で利用するすべてのクラスと定数は以下のように定義しなければならない
  */
@@ -561,7 +529,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("__del__", &SoraVideoFrameTransformer::Del)
       .def_rw("on_transform", &SoraVideoFrameTransformer::on_transform_);
 
-  nb::class_<Sora>(m, "Sora", nb::type_slots(sora_slots))
+  nb::class_<Sora>(m, "Sora")
       .def(nb::init<std::optional<bool>, std::optional<std::string>>(),
            "use_hardware_encoder"_a = nb::none(), "openh264"_a = nb::none())
       .def("create_connection", &Sora::CreateConnection, "signaling_urls"_a,

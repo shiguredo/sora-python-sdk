@@ -20,8 +20,9 @@
 
 namespace nb = nanobind;
 
-SoraConnection::SoraConnection(DisposePublisher* publisher)
-    : publisher_(publisher) {
+SoraConnection::SoraConnection(DisposePublisher* publisher,
+                               std::shared_ptr<SoraFactory> factory)
+    : publisher_(publisher), factory_(factory) {
   publisher_->AddSubscriber(this);
 }
 
@@ -30,6 +31,8 @@ SoraConnection::~SoraConnection() {
     publisher_->RemoveSubscriber(this);
   }
   Disposed();
+  conn_ = nullptr;
+  factory_ = nullptr;
 }
 
 void SoraConnection::Disposed() {
