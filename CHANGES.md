@@ -22,6 +22,14 @@
   - `on_message()` と合わせる
   - `send_data_channel()` のシンタックスシュガー
   - @voluntas
+- [ADD] エンコード時の劣化の優先順位を指定できるようにする
+  - `Sora.create_connection()` の引数に `degradation_preference` を追加する
+  - `SoraDegradationPreference` を追加
+    - `MAINTAIN_RESOLUTION` は解像度を優先
+    - `MAINTAIN_FRAMERATE` はフレームレートを優先
+    - `BALANCED` はバランスを優先
+    - `DISABLED` は無効
+  - @voluntas
 - [ADD] WebRTC Encoded Transform に対応する
   - `SoraTransformableAudioFrame` と `SoraTransformableVideoFrame` を追加
   - `SoraAudioFrameTransformer` と `SoraVideoFrameTransformer` を追加
@@ -52,7 +60,7 @@
   - @tnoho
 - [UPDATE] nanobind を `2.4.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2024.8.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.1.0` に上げる
   - WEBRTC_BUILD_VERSION を `m132.6834.4.0` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
     - Sora CPP SDK の absl::optional を std::optional に変更した仕様に追従する
@@ -64,13 +72,15 @@
 
 ### misc
 
-- [ADD] macos-15 を E2E テストに追加する
+- [UPDATE] Boost のダウンロード URL を変更する
   - @voluntas
-- [ADD] canary.py を追加
-  - @voluntas
-- [ADD] Python 3.13 を E2E テストに追加する
-  - @voluntas
-- [ADD] macos-15 を E2E テストに追加する
+- [UPDATE] サイマルキャストの E2E テストについて encoderImplementation の値チェック内容を緩和する
+  - サイマルキャストの encoderImplementation のチェックを文字列一致としていたが、帯域推定機能を有効にした後、値が安定しなくなったためチェック内容を緩和した
+  - サイマルキャストの encoderImplementation の結果を以下の通り修正
+    - `SimulcastEncoderAdapter (libaom, libaom, libaom)` -> `SimulcastEncoderAdapter` と `libaom` を含む
+    - `SimulcastEncoderAdapter (libvpx, libvpx, libvpx)` -> `SimulcastEncoderAdapter` と `libvpx` を含む
+    - `SimulcastEncoderAdapter (OpenH264, OpenH264, OpenH264)` -> `SimulcastEncoderAdapter` と `OpenH264` を含む
+    - `SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)` -> `SimulcastEncoderAdapter` と `VideoToolbox` を含む
   - @voluntas
 - [UPDATE] ubuntu-latest を ubuntu-24.04 に変更する
   - @voluntas
@@ -90,22 +100,25 @@
   - @voluntas
 - [CHANGE] サンプルアプリの E2E テストを一旦削除する
   - @voluntas
+- [ADD] pyjwt を dev-dependencies に追加する
+  - @voluntas
+- [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
+- [ADD] canary.py を追加
+  - @voluntas
+- [ADD] Python 3.13 を E2E テストに追加する
+  - @voluntas
+- [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
 - [ADD] tests/ に E2E テストを追加する
+  - @voluntas
+- [ADD] examples に E2E テストを追加する
   - @voluntas
 - [FIX] run.py で local_sora_cpp_sdk_dir を設定した際に boost が引けなくなってしまっている問題を修正する
   - @tnoho
 - [FIX] examples の設定に virtual = true を指定するようにする
   - これを指定しないとエラーになる
   - @voluntas
-- [ADD] examples に E2E テストを追加する
-  - @voluntas
-- [FIX] サイマルキャストの E2E テストについて encoderImplementation の値チェック内容を緩和する
-  - サイマルキャストの encoderImplementation のチェックを文字列一致としていたが、帯域推定機能を有効にした後、値が安定しなくなったためチェック内容を緩和した
-  - サイマルキャストの encoderImplementation の結果を以下の通り修正
-    - "SimulcastEncoderAdapter (libaom, libaom, libaom)" -> "SimulcastEncoderAdapter" と "libaom" を含む
-    - "SimulcastEncoderAdapter (libvpx, libvpx, libvpx)" -> "SimulcastEncoderAdapter" と "libvpx" を含む
-    - "SimulcastEncoderAdapter (OpenH264, OpenH264, OpenH264)" -> "SimulcastEncoderAdapter" と "OpenH264" を含む
-    - "SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)" -> "SimulcastEncoderAdapter" と "VideoToolbox" を含む
 
 ## 2024.3.0
 

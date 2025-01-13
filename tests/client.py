@@ -13,6 +13,7 @@ from sora_sdk import (
     SoraAudioSink,
     SoraAudioSource,
     SoraConnection,
+    SoraDegradationPreference,
     SoraMediaTrack,
     SoraSignalingDirection,
     SoraSignalingErrorCode,
@@ -53,6 +54,7 @@ class SoraClient:
         client_key: Optional[bytes] = None,
         client_cert: Optional[bytes] = None,
         ca_cert: Optional[bytes] = None,
+        degradation_preference: Optional[SoraDegradationPreference] = None,
         use_hwa: bool = False,
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
@@ -67,6 +69,7 @@ class SoraClient:
 
         self._audio = audio
         self._video = video
+        self._degradation_preference = degradation_preference
 
         # "type": "connect" のパラメータ
         self._connect_data_channel_signaling = data_channel_signaling
@@ -125,6 +128,7 @@ class SoraClient:
             audio_source=self._audio_source,
             video_source=self._video_source,
             ca_cert=ca_cert,
+            degradation_preference=self._degradation_preference,
         )
 
         # "type": "offer" のパラメータ
@@ -197,9 +201,9 @@ class SoraClient:
 
         self._connection.connect()
 
-        assert self._connected.wait(
-            self._default_connection_timeout_s
-        ), "Could not connect to Sora."
+        assert self._connected.wait(self._default_connection_timeout_s), (
+            "Could not connect to Sora."
+        )
 
     def disconnect(self) -> None:
         self._connection.disconnect()

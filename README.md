@@ -30,6 +30,8 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - Windows / macOS / Linux (Ubuntu) プラットフォームに対応
 - [WebRTC 統計情報](https://www.w3.org/TR/webrtc-stats/) の取得が可能
 - [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/) に対応
+- 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする [DegradationPreference](https://w3c.github.io/mst-content-hint/#degradation-preference-when-encoding) に対応
+  - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
   - Intel VPL (AV1 / H.264 / H.265)
   - Apple Video Toolbox (H.264 / H.265)
@@ -84,7 +86,7 @@ PyPI 経由ではインストールできません。
 
 ## システム条件
 
-- WebRTC SFU Sora 2023.2.0 以降
+- WebRTC SFU Sora 2024.1.0 以降
 - Python 3.10 以上
 
 ## 対応プラットフォーム
@@ -149,9 +151,9 @@ Discord へお願いします。
 Apache License 2.0
 
 ```text
-Copyright 2023-2024, tnoho (Original Author)
-Copyright 2023-2024, Wandbox LLC (Original Author)
-Copyright 2023-2024, Shiguredo Inc.
+Copyright 2023-2025, tnoho (Original Author)
+Copyright 2023-2025, Wandbox LLC (Original Author)
+Copyright 2023-2025, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
