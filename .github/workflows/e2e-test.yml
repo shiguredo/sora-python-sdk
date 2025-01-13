@@ -6,7 +6,7 @@ on:
     paths-ignore:
       - "**.md"
     branches:
-      - feature/fix-memoryleak2
+      - feature/fix-memoryleak3
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
