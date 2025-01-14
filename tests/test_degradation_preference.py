@@ -4,6 +4,11 @@ import uuid
 
 from client import SoraClient, SoraDegradationPreference, SoraRole
 
+VIDEO_CODEC_TYPE = "VP8"
+VIDEO_BIT_RATE = 100
+VIDEO_WIDTH = 960
+VIDEO_HEIGHT = 540
+
 
 def test_degradation_preference_maintain_framerate(setup):
     signaling_urls = setup.get("signaling_urls")
@@ -18,11 +23,11 @@ def test_degradation_preference_maintain_framerate(setup):
         channel_id,
         audio=False,
         video=True,
-        video_codec_type="VP8",
-        video_bit_rate=100,
+        video_codec_type=VIDEO_CODEC_TYPE,
+        video_bit_rate=VIDEO_BIT_RATE,
         metadata=metadata,
-        video_width=1280,
-        video_height=720,
+        video_width=VIDEO_WIDTH,
+        video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.MAINTAIN_FRAMERATE,
     )
     sendonly.connect(fake_video=True)
@@ -72,11 +77,11 @@ def test_degradation_preference_maintain_resolution(setup):
         channel_id,
         audio=False,
         video=True,
-        video_codec_type="VP8",
-        video_bit_rate=100,
+        video_codec_type=VIDEO_CODEC_TYPE,
+        video_bit_rate=VIDEO_BIT_RATE,
         metadata=metadata,
-        video_width=1280,
-        video_height=720,
+        video_width=VIDEO_WIDTH,
+        video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.MAINTAIN_RESOLUTION,
     )
     sendonly.connect(fake_video=True)
@@ -89,15 +94,15 @@ def test_degradation_preference_maintain_resolution(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    assert sendonly_codec_stats["mimeType"] == "video/VP8"
+    assert sendonly_codec_stats["mimeType"] == f"video/{VIDEO_CODEC_TYPE}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
     # 解像度が維持されてる
-    assert outbound_rtp_stats["frameWidth"] == 1280
-    assert outbound_rtp_stats["frameHeight"] == 720
+    assert outbound_rtp_stats["frameWidth"] == VIDEO_WIDTH
+    assert outbound_rtp_stats["frameHeight"] == VIDEO_HEIGHT
     # ビットレートが 100 kbps 以下
     assert outbound_rtp_stats["targetBitrate"] < 100_000
 
@@ -125,11 +130,11 @@ def test_degradation_preference_balanced(setup):
         channel_id,
         audio=False,
         video=True,
-        video_codec_type="VP8",
-        video_bit_rate=100,
+        video_codec_type=VIDEO_CODEC_TYPE,
+        video_bit_rate=VIDEO_BIT_RATE,
         metadata=metadata,
-        video_width=1280,
-        video_height=720,
+        video_width=VIDEO_WIDTH,
+        video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.BALANCED,
     )
     sendonly.connect(fake_video=True)
@@ -142,7 +147,7 @@ def test_degradation_preference_balanced(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    assert sendonly_codec_stats["mimeType"] == "video/VP8"
+    assert sendonly_codec_stats["mimeType"] == f"video/{VIDEO_CODEC_TYPE}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
@@ -179,11 +184,11 @@ def test_degradation_preference_disabled(setup):
         channel_id,
         audio=False,
         video=True,
-        video_codec_type="VP8",
-        video_bit_rate=100,
+        video_codec_type=VIDEO_CODEC_TYPE,
+        video_bit_rate=VIDEO_BIT_RATE,
         metadata=metadata,
-        video_width=1280,
-        video_height=720,
+        video_width=VIDEO_WIDTH,
+        video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.DISABLED,
     )
     sendonly.connect(fake_video=True)
@@ -196,14 +201,14 @@ def test_degradation_preference_disabled(setup):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    assert sendonly_codec_stats["mimeType"] == "video/VP8"
+    assert sendonly_codec_stats["mimeType"] == f"video/{VIDEO_CODEC_TYPE}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-    assert outbound_rtp_stats["frameWidth"] == 1280
-    assert outbound_rtp_stats["frameHeight"] == 720
+    assert outbound_rtp_stats["frameWidth"] == VIDEO_WIDTH
+    assert outbound_rtp_stats["frameHeight"] == VIDEO_HEIGHT
     # ビットレートが 100 kbps 以下
     assert outbound_rtp_stats["targetBitrate"] < 100_000
     # フレームレートが 20 以上
