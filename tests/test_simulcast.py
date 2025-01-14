@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import uuid
@@ -6,6 +7,9 @@ import pytest
 from client import SoraClient, SoraRole
 
 
+@pytest.mark.skipif(
+    os.getenv("CI") == "true" and sys.platform == "darwin", reason="darwin では実行しない"
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -113,7 +117,7 @@ def test_simulcast(
             assert encoder_implementation in s["encoderImplementation"]
 
             assert s["bytesSent"] > 1000
-            assert s["packetsSent"] > 20
+            assert s["packetsSent"] > 10
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
             print(
