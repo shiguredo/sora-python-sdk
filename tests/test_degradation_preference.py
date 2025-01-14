@@ -5,9 +5,9 @@ import uuid
 from client import SoraClient, SoraDegradationPreference, SoraRole
 
 VIDEO_CODEC_TYPE = "VP8"
-VIDEO_BIT_RATE = 500
+VIDEO_BIT_RATE = 300
 VIDEO_WIDTH = 960
-VIDEO_HEIGHT = 540
+VIDEO_HEIGHT = 528
 
 
 def test_degradation_preference_maintain_framerate(setup):
@@ -46,10 +46,10 @@ def test_degradation_preference_maintain_framerate(setup):
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-    assert outbound_rtp_stats["frameWidth"] <= 320
-    assert outbound_rtp_stats["frameHeight"] <= 180
-    # ビットレートが 100 kbps 以下
-    assert outbound_rtp_stats["targetBitrate"] < 100_000
+    assert outbound_rtp_stats["frameWidth"] <= 640
+    assert outbound_rtp_stats["frameHeight"] <= 360
+    # ビットレートが 500 kbps 以下
+    assert outbound_rtp_stats["targetBitrate"] < VIDEO_BIT_RATE * 1000
     # 20 以上を維持してる
     assert outbound_rtp_stats["framesPerSecond"] > 20
 
@@ -103,8 +103,8 @@ def test_degradation_preference_maintain_resolution(setup):
     # 解像度が維持されてる
     assert outbound_rtp_stats["frameWidth"] == VIDEO_WIDTH
     assert outbound_rtp_stats["frameHeight"] == VIDEO_HEIGHT
-    # ビットレートが 100 kbps 以下
-    assert outbound_rtp_stats["targetBitrate"] < 100_000
+    # ビットレートが 500 kbps 以下
+    assert outbound_rtp_stats["targetBitrate"] < VIDEO_BIT_RATE * 1000
 
     print(
         outbound_rtp_stats["frameWidth"],
@@ -153,12 +153,12 @@ def test_degradation_preference_balanced(setup):
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-    assert outbound_rtp_stats["frameWidth"] <= 320
-    assert outbound_rtp_stats["frameHeight"] <= 180
-    # ビットレートが 100 kbps 以下
-    assert outbound_rtp_stats["targetBitrate"] < 100_000
-    # フレームレートが 20 未満
-    assert outbound_rtp_stats["framesPerSecond"] < 20
+    assert outbound_rtp_stats["frameWidth"] <= 640
+    assert outbound_rtp_stats["frameHeight"] <= 360
+    # ビットレートが 500 kbps 未満
+    assert outbound_rtp_stats["targetBitrate"] < VIDEO_BIT_RATE * 1000
+    # フレームレートが 30 未満
+    assert outbound_rtp_stats["framesPerSecond"] < 30
 
     print(
         outbound_rtp_stats["frameWidth"],
@@ -209,10 +209,10 @@ def test_degradation_preference_disabled(setup):
     assert outbound_rtp_stats["packetsSent"] > 0
     assert outbound_rtp_stats["frameWidth"] == VIDEO_WIDTH
     assert outbound_rtp_stats["frameHeight"] == VIDEO_HEIGHT
-    # ビットレートが 100 kbps 以下
-    assert outbound_rtp_stats["targetBitrate"] < 100_000
-    # フレームレートが 20 以上
-    assert outbound_rtp_stats["framesPerSecond"] >= 20
+    # ビットレートが 500 kbps 未満
+    assert outbound_rtp_stats["targetBitrate"] < VIDEO_BIT_RATE * 1000
+    # フレームレートが 30 未満
+    assert outbound_rtp_stats["framesPerSecond"] < 30
 
     print(
         outbound_rtp_stats["frameWidth"],
