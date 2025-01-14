@@ -123,12 +123,10 @@ PyPI 経由ではインストールできません。
 ### 優先実装が可能な機能一覧
 
 - Windows 11 arm64
-- macOS Sonoma 13 arm64
 - Ubuntu 22.04 arm64
 - Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
 - AMD Video Core Next (VCN) 対応
   - VP9 / AV1 / H.264 / H.265
-- Python 3.9 以前への対応
 
 ## サポートについて
 
