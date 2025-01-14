@@ -5,7 +5,7 @@ import uuid
 from client import SoraClient, SoraDegradationPreference, SoraRole
 
 VIDEO_CODEC_TYPE = "VP8"
-VIDEO_BIT_RATE = 100
+VIDEO_BIT_RATE = 500
 VIDEO_WIDTH = 960
 VIDEO_HEIGHT = 540
 
