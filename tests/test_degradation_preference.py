@@ -2,6 +2,7 @@ import sys
 import time
 import uuid
 
+import pytest
 from client import SoraClient, SoraDegradationPreference, SoraRole
 
 VIDEO_CODEC_TYPE = "VP8"
@@ -10,6 +11,7 @@ VIDEO_WIDTH = 960
 VIDEO_HEIGHT = 528
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="macOS では性能がでないためスキップする")
 def test_degradation_preference_maintain_framerate(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -61,6 +63,7 @@ def test_degradation_preference_maintain_framerate(setup):
     )
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="macOS では性能がでないためスキップする")
 def test_degradation_preference_maintain_resolution(setup):
     """
     フレームレートがあまり変わらない
@@ -114,6 +117,7 @@ def test_degradation_preference_maintain_resolution(setup):
     )
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="macOS では性能がでないためスキップする")
 def test_degradation_preference_balanced(setup):
     """
     バランス思った以上に両方悪くなる
@@ -168,6 +172,7 @@ def test_degradation_preference_balanced(setup):
     )
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="macOS では性能がでないためスキップする")
 def test_degradation_preference_disabled(setup):
     """
     無効にする
