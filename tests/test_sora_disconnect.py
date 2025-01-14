@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import uuid
@@ -10,7 +11,10 @@ from client import SoraClient, SoraRole
 from sora_sdk import SoraSignalingErrorCode
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
+@pytest.mark.skipif(
+    os.getenv("CI") == "true" and sys.platform != "linux",
+    reason="CI では linux でのみ実行する",
+)
 def test_websocket_signaling_only_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -84,7 +88,9 @@ def test_websocket_signaling_only_lifetime_expired(setup):
         assert conn.ws_close_reason == "LIFETIME-EXPIRED"
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
+@pytest.mark.skipif(
+    os.getenv("CI") == "true" and sys.platform != "linux", reason="linux でのみ実行する"
+)
 def test_websocket_datachannel_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -158,7 +164,9 @@ def test_websocket_datachannel_signaling_lifetime_expired(setup):
         assert conn.ws_close_reason == "LIFETIME-EXPIRED"
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="linux でのみ実行する")
+@pytest.mark.skipif(
+    os.getenv("CI") == "true" and sys.platform != "linux", reason="linux でのみ実行する"
+)
 def test_datachannel_only_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
