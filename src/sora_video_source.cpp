@@ -20,6 +20,10 @@ SoraVideoSource::SoraVideoSource(
   }));
 }
 
+SoraVideoSource::~SoraVideoSource() {
+  Disposed();
+}
+
 void SoraVideoSource::Disposed() {
   if (!finished_) {
     finished_ = true;

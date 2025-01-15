@@ -35,6 +35,7 @@ class SoraVideoSource : public SoraTrackInterface {
   SoraVideoSource(DisposePublisher* publisher,
                   rtc::scoped_refptr<sora::ScalableVideoTrackSource> source,
                   rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track);
+  ~SoraVideoSource();
 
   void Disposed() override;
   void PublisherDisposed() override;
