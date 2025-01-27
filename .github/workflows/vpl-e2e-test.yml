@@ -19,14 +19,10 @@ env:
 
 jobs:
   vpl_e2e_test:
-    runs-on: [self-hosted, linux, x64, intel]
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
-      - run: |
-          sudo apt-get update
-          sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
