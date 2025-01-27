@@ -59,6 +59,48 @@ jobs:
       - run: uv run python run.py ${{ matrix.os }}_x86_64
       - run: uv run pytest tests -s
 
+  e2e_test_ubuntu_arm64:
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.12"]
+        os: ["ubuntu-24.04-arm"]
+    runs-on: ${{ matrix.os}}
+    timeout-minutes: 15
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'schedule'
+      }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
+      - run: |
+          sudo apt-get update
+          sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
+      - name: Download openh264
+        run: |
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux-arm64.7.so.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-linux-arm64.7.so.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-linux-arm64.7.so libopenh264.so
+          echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: uv python pin ${{ matrix.python_version }}
+      - run: uv sync
+      - run: uv run python run.py ${{ matrix.os }}_arm64
+      - run: uv run pytest tests -s
+
+
   e2e_test_macos:
     strategy:
       fail-fast: false
