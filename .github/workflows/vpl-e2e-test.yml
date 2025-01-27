@@ -1,0 +1,64 @@
+name: vpl-e2e-test
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - "**.md"
+  schedule:
+    # UTC の 01:00 は JST だと 10:00 。
+    # 1-5 で 月曜日から金曜日
+    - cron: "0 1 * * 1-5"
+
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  INTEL_VPL: true
+
+jobs:
+  vpl_e2e_test:
+    runs-on: [self-hosted, linux, x64, intel-n150]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
+      - run: |
+          sudo apt-get update
+          sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: uv python pin 3.13
+      - run: uv sync
+      - run: uv run python run.py ubuntu-24.04_x86_64
+      - run: uv run pytest tests/test_vpl.py -s
+
+  # slack_notify_succeeded:
+  #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+  #   runs-on: ubuntu-24.04
+  #   if: success()
+  #   steps:
+  #     - name: Slack Notification
+  #       uses: rtCamp/action-slack-notify@v2
+  #       env:
+  #         SLACK_CHANNEL: sora-python-sdk
+  #         SLACK_COLOR: good
+  #         SLACK_TITLE: SUCCEEDED
+  #         SLACK_ICON_EMOJI: ":star-struck:"
+  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+  slack_notify_failed:
+    needs: [vpl_e2e_test]
+    runs-on: ubuntu-24.04
+    if: failure()
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: "FAILED"
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}  
