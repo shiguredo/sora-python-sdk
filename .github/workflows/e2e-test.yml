@@ -97,7 +97,7 @@ jobs:
           enable-cache: false
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
-      - run: uv run python run.py ${{ matrix.os }}_arm64
+      - run: uv run python run.py ${{ matrix.os }}64v8
       - run: uv run pytest tests -s
 
 
