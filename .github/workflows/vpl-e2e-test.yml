@@ -19,7 +19,7 @@ env:
 
 jobs:
   vpl_e2e_test:
-    runs-on: [self-hosted, linux, x64, intel, n150]
+    runs-on: [self-hosted, linux, x64, intel]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
