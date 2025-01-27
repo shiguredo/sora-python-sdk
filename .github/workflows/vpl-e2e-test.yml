@@ -14,10 +14,12 @@ env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
   INTEL_VPL: true
 
 jobs:
   vpl_e2e_test:
+    # self-hosted で apt install build-essential libx11-dev されていること
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     steps:
