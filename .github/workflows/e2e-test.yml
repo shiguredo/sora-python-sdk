@@ -85,7 +85,7 @@ jobs:
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
-          sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
+          sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev multistrap binutils-aarch64-linux-gnu
       - name: Download openh264
         run: |
           curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux-arm64.7.so.bz2
