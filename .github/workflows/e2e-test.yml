@@ -34,7 +34,7 @@ jobs:
             openh264_arch: "linux64"
           - target: "ubuntu-24.04_armv8"
             runs-on: "ubuntu-24.04-arm"
-            arch: "arm64"
+            arch: "armv8"
             openh264_arch: "linux-arm64"
     runs-on: ${{ matrix.platform.runs-on}}
     timeout-minutes: 15
