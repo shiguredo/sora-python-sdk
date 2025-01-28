@@ -262,8 +262,10 @@ def main():
             # クロスコンパイルの設定。
             # 本来は toolchain ファイルに書く内容
             cmake_args += [
-                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
-                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+                # f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
+                # f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+                "-DCMAKE_C_COMPILER=clang-18",
+                "-DCMAKE_CXX_COMPILER=clang++-18",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
             ]
             if platform.target.arch == "armv8":
