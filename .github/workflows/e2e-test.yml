@@ -86,6 +86,8 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev multistrap binutils-aarch64-linux-gnu
+          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
+          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
       - name: Download openh264
         run: |
           curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux-arm64.7.so.bz2
