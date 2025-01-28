@@ -261,13 +261,22 @@ def main():
         if platform.target.os == "ubuntu":
             # クロスコンパイルの設定。
             # 本来は toolchain ファイルに書く内容
+
+            if platform.build.arch == "armv8":
+                # ビルド環境が armv8 の場合は libwebrtc のバイナリが使えないのでローカルの clang を利用する
+                cmake_args += [
+                    "-DCMAKE_C_COMPILER=clang-18",
+                    "-DCMAKE_CXX_COMPILER=clang++-18",
+                ]
+            else:
+                cmake_args += [
+                    f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
+                    f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+                ]
             cmake_args += [
-                # f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
-                # f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
-                "-DCMAKE_C_COMPILER=clang-18",
-                "-DCMAKE_CXX_COMPILER=clang++-18",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
             ]
+
             if platform.target.arch == "armv8":
                 sysroot = os.path.join(install_dir, "rootfs")
                 nb_cmake_dir = cmdcap(["uv", "run", "python", "-m", "nanobind", "--cmake_dir"])
