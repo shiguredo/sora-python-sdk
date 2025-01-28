@@ -58,7 +58,7 @@ jobs:
           sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
       - if: matrix.platform.arch == 'armv8'
         run: |
-          sudo apt-get -y multistrap binutils-aarch64-linux-gnu
+          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
           # clang-18
