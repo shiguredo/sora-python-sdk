@@ -24,14 +24,14 @@ jobs:
       matrix:
         python_version: ["3.10", "3.11", "3.12", "3.13"]
         platform:
-          # - target: "ubuntu-22.04_x86_64"
-          #   runs-on: "ubuntu-22.04"
-          #   arch: "x86_64"
-          #   openh264_arch: "linux64"
-          # - target: "ubuntu-24.04_x86_64"
-          #   runs-on: "ubuntu-24.04"
-          #   arch: "x86_64"
-          #   openh264_arch: "linux64"
+          - target: "ubuntu-22.04_x86_64"
+            runs-on: "ubuntu-22.04"
+            arch: "x86_64"
+            openh264_arch: "linux64"
+          - target: "ubuntu-24.04_x86_64"
+            runs-on: "ubuntu-24.04"
+            arch: "x86_64"
+            openh264_arch: "linux64"
           - target: "ubuntu-24.04_armv8"
             runs-on: "ubuntu-24.04-arm"
             arch: "armv8"
@@ -79,97 +79,97 @@ jobs:
       - run: uv run python run.py ${{ matrix.platform.target }}
       - run: uv run pytest tests -s
 
-  # e2e_test_macos:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       python_version: ["3.10", "3.11", "3.12", "3.13"]
-  #       # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
-  #       os: ["macos-14", "macos-15"]
-  #   runs-on: ${{ matrix.os }}
-  #   timeout-minutes: 15
-  #   if: >-
-  #     ${{
-  #       contains(github.event.head_commit.message, '[e2e]') ||
-  #       contains(github.ref, 'feature/e2e-test') ||
-  #       github.event_name == 'workflow_dispatch' ||
-  #       github.event_name == 'schedule'
-  #     }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Download openh264
-  #       run: |
-  #         curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
-  #         bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
-  #         mv libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib libopenh264.dylib
-  #         echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
-  #     - uses: astral-sh/setup-uv@v5
-  #       with:
-  #         enable-cache: false
-  #     - run: uv python pin ${{ matrix.python_version }}
-  #     - run: uv sync
-  #     - run: uv run python run.py macos_arm64
-  #     - run: uv run pytest tests -s
+  e2e_test_macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
+        # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
+        os: ["macos-14", "macos-15"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'schedule'
+      }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download openh264
+        run: |
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib libopenh264.dylib
+          echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: uv python pin ${{ matrix.python_version }}
+      - run: uv sync
+      - run: uv run python run.py macos_arm64
+      - run: uv run pytest tests -s
 
-  # e2e_test_windows:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       python_version: ["3.10", "3.11", "3.12", "3.13"]
-  #   runs-on: windows-2022
-  #   timeout-minutes: 15
-  #   env:
-  #     # Python を強制的に UTF-8 で利用するおまじない
-  #     PYTHONUTF8: 1
-  #   if: >-
-  #     ${{
-  #       contains(github.event.head_commit.message, '[e2e]') ||
-  #       contains(github.ref, 'feature/e2e-test') ||
-  #       github.event_name == 'workflow_dispatch' ||
-  #       github.event_name == 'schedule'
-  #     }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Download openh264
-  #       shell: pwsh
-  #       run: |
-  #         $url = "http://ciscobinary.openh264.org/openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
-  #         Invoke-WebRequest -Uri $url -OutFile "openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
-  #         7z e openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2
-  #         Rename-Item -Path "openh264-${{ env.OPENH264_VERSION }}-win64.dll" -NewName "libopenh264.dll"
-  #         echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
-  #     - uses: astral-sh/setup-uv@v5
-  #       with:
-  #         enable-cache: false
-  #     - run: uv python pin ${{ matrix.python_version }}
-  #     - run: uv sync
-  #     - run: uv run python run.py windows_x86_64
-  #     - run: uv run pytest tests -s
+  e2e_test_windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
+    runs-on: windows-2022
+    timeout-minutes: 15
+    env:
+      # Python を強制的に UTF-8 で利用するおまじない
+      PYTHONUTF8: 1
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'schedule'
+      }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download openh264
+        shell: pwsh
+        run: |
+          $url = "http://ciscobinary.openh264.org/openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
+          Invoke-WebRequest -Uri $url -OutFile "openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
+          7z e openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2
+          Rename-Item -Path "openh264-${{ env.OPENH264_VERSION }}-win64.dll" -NewName "libopenh264.dll"
+          echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: uv python pin ${{ matrix.python_version }}
+      - run: uv sync
+      - run: uv run python run.py windows_x86_64
+      - run: uv run pytest tests -s
 
-  # # slack_notify_succeeded:
-  # #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
-  # #   runs-on: ubuntu-24.04
-  # #   if: success()
-  # #   steps:
-  # #     - name: Slack Notification
-  # #       uses: rtCamp/action-slack-notify@v2
-  # #       env:
-  # #         SLACK_CHANNEL: sora-python-sdk
-  # #         SLACK_COLOR: good
-  # #         SLACK_TITLE: SUCCEEDED
-  # #         SLACK_ICON_EMOJI: ":star-struck:"
-  # #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-
-  # slack_notify_failed:
+  # slack_notify_succeeded:
   #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
   #   runs-on: ubuntu-24.04
-  #   if: failure()
+  #   if: success()
   #   steps:
   #     - name: Slack Notification
   #       uses: rtCamp/action-slack-notify@v2
   #       env:
   #         SLACK_CHANNEL: sora-python-sdk
-  #         SLACK_COLOR: danger
-  #         SLACK_TITLE: "FAILED"
-  #         SLACK_ICON_EMOJI: ":japanese_ogre:"
-  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}  
+  #         SLACK_COLOR: good
+  #         SLACK_TITLE: SUCCEEDED
+  #         SLACK_ICON_EMOJI: ":star-struck:"
+  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+  slack_notify_failed:
+    needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+    runs-on: ubuntu-24.04
+    if: failure()
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: "FAILED"
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}  
