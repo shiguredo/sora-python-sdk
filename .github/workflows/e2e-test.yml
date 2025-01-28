@@ -88,6 +88,10 @@ jobs:
           sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+          # clang-18
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 18
       - name: Download openh264
         run: |
           curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux-arm64.7.so.bz2
@@ -100,9 +104,6 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ubuntu-24.04_armv8
-      - name: Debug
-        if: ${{ always() }}
-        uses: mxschmitt/action-tmate@v3
       - run: uv run pytest tests -s
 
 
