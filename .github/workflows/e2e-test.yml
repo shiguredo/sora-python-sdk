@@ -2,13 +2,13 @@ name: e2e-test
 
 on:
   workflow_dispatch:
-  push:
-    paths-ignore:
-      - "**.md"
-  schedule:
-    # UTC の 01:00 は JST だと 10:00 。
-    # 1-5 で 月曜日から金曜日
-    - cron: "0 1 * * 1-5"
+  # push:
+  #   paths-ignore:
+  #     - "**.md"
+  # schedule:
+  #   # UTC の 01:00 は JST だと 10:00 。
+  #   # 1-5 で 月曜日から金曜日
+  #   - cron: "0 1 * * 1-5"
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}

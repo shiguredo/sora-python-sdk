@@ -1,4 +1,4 @@
-name: vpl-e2e-test
+name: e2e-test-vpl
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ env:
   INTEL_VPL: true
 
 jobs:
-  vpl_e2e_test:
+  e2e_test_vpl:
     # self-hosted で apt install build-essential libx11-dev されていること
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
@@ -47,7 +47,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [vpl_e2e_test]
+    needs: [e2e_test_vpl]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
