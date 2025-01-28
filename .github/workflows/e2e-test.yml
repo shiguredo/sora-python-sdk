@@ -27,15 +27,15 @@ jobs:
           - target: "ubuntu-22.04_x86_64"
             runs-on: "ubuntu-22.04"
             arch: "x86_64"
-            soname: "libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so"
+            openh264_arch: "linux64"
           - target: "ubuntu-24.04_x86_64"
             runs-on: "ubuntu-24.04"
             arch: "x86_64"
-            soname: "libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so"
+            openh264_arch: "linux64"
           - target: "ubuntu-24.04_armv8"
             runs-on: "ubuntu-24.04-arm"
             arch: "arm64"
-            soname: "libopenh264-${{ env.OPENH264_VERSION }}-linux-arm64.7.so"
+            openh264_arch: "linux-arm64"
     runs-on: ${{ matrix.platform.runs-on}}
     timeout-minutes: 15
     if: >-
@@ -67,9 +67,9 @@ jobs:
           sudo ./llvm.sh 18
       - name: Download openh264
         run: |
-          curl -LO http://ciscobinary.openh264.org/${{ matrix.platform.soname }}.bz2
-          bzip2 -d ${{ matrix.platform.soname }}.bz2
-          mv ${{ matrix.platform.soname }} libopenh264.so
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.7.so.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.7.so.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
       - uses: astral-sh/setup-uv@v5
         with:
