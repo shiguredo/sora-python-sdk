@@ -15,8 +15,8 @@ from client import SoraClient, SoraRole
     ),
     [
         # encoder_implementation は適当です
-        ("H264", "VPL"),
-        ("H265", "VPL"),
+        ("H264", "libvpl"),
+        ("H265", "libvpl"),
     ],
 )
 def test_intel_vpl_video_hwa_sendonly(setup, video_codec_type, encoder_implementation):
