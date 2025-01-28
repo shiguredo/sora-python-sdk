@@ -127,7 +127,7 @@ def install_deps(
         install_cmake_args["platform"] = "macos-universal"
     elif platform.build.os == "ubuntu" and platform.build.arch == "x86_64":
         install_cmake_args["platform"] = "linux-x86_64"
-    elif platform.build.os == "ubuntu" and platform.build.arch == "arm64":
+    elif platform.build.os == "ubuntu" and platform.build.arch == "armv8":
         install_cmake_args["platform"] = "linux-aarch64"
     else:
         raise Exception("Failed to install CMake")
