@@ -64,9 +64,9 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.12"]
-        os: ["ubuntu-24.04-arm"]
+        os: ["ubuntu-24.04"]
     runs-on: ${{ matrix.os}}
-    timeout-minutes: 15
+    # timeout-minutes: 15
     # if: >-
     #   ${{
     #     contains(github.event.head_commit.message, '[e2e]') ||
