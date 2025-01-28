@@ -1701,7 +1701,10 @@ def get_build_platform() -> PlatformTarget:
     if arch in ("AMD64", "x86_64"):
         arch = "x86_64"
     elif arch in ("aarch64", "arm64"):
-        arch = "arm64"
+        if os == "ubuntu":
+            arch = "armv8"
+        else:
+            arch = "arm64"
     else:
         raise Exception(f"Arch {arch} not supported")
 
@@ -1771,7 +1774,7 @@ class Platform(object):
         elif p.os in ("ios", "android"):
             self._check(p.arch is None)
         elif p.os == "ubuntu":
-            self._check(p.arch in ("x86_64", "armv8", "arm64"))
+            self._check(p.arch in ("x86_64", "armv8"))
         else:
             self._check(p.arch in ("x86_64", "arm64", "hololens2"))
 
@@ -1800,8 +1803,8 @@ class Platform(object):
                 self._check(build.arch in ("x86_64", "arm64"))
         if target.os == "ubuntu":
             self._check(build.os == "ubuntu")
-            self._check(build.arch == "x86_64")
-            if target.arch == "x86_64":
+            self._check(build.arch in ("x86_64", "armv8"))
+            if build.arch == target.arch:
                 self._check(build.osver == target.osver)
         if target.os == "raspberry-pi-os":
             self._check(build.os == "ubuntu")
