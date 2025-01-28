@@ -277,7 +277,7 @@ def main():
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
             ]
 
-            if platform.target.arch == "armv8":
+            if platform.build.arch != platform.target.arch:
                 sysroot = os.path.join(install_dir, "rootfs")
                 nb_cmake_dir = cmdcap(["uv", "run", "python", "-m", "nanobind", "--cmake_dir"])
                 cmake_args += [
@@ -290,7 +290,6 @@ def main():
                     "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH",
                     "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH",
                     "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
-                    f"-DCMAKE_SYSROOT={sysroot}",
                     f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.12'))}",
                     f"-DCMAKE_SYSROOT={sysroot}",
                     f"-DNB_CMAKE_DIR={nb_cmake_dir}",
