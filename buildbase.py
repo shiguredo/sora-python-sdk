@@ -1771,7 +1771,7 @@ class Platform(object):
         elif p.os in ("ios", "android"):
             self._check(p.arch is None)
         elif p.os == "ubuntu":
-            self._check(p.arch in ("x86_64", "armv8"))
+            self._check(p.arch in ("x86_64", "armv8", "arm64"))
         else:
             self._check(p.arch in ("x86_64", "arm64", "hololens2"))
 
