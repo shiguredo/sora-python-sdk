@@ -147,7 +147,7 @@ jobs:
       - run: uv run pytest tests -s
 
   # slack_notify_succeeded:
-  #   needs: [e2e_test_ubuntu, e2e_test_ubuntu_arm, e2e_test_macos, e2e_test_windows]
+  #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
   #   runs-on: ubuntu-24.04
   #   if: success()
   #   steps:
@@ -161,7 +161,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_test_ubuntu, e2e_test_ubuntu_arm, e2e_test_macos, e2e_test_windows]
+    needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
