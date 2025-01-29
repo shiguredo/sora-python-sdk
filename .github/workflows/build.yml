@@ -55,23 +55,23 @@ jobs:
           #   target: ubuntu-24.04_x86_64
           #   runs_on: ubuntu-24.04
           #   os: ubuntu
-          - name: ubuntu-22.04_x86_64
-            target: ubuntu-22.04_x86_64
-            runs_on: ubuntu-22.04
-            os: ubuntu
-            arch: x86_64
-          - name: macos-15_arm64
-            target: macos_arm64
-            runs_on: macos-15
-            os: macos
-            python_host_platform: "macosx-15.0-arm64"
-            archflags: "-arch arm64"
-          - name: macos-14_arm64
-            target: macos_arm64
-            runs_on: macos-14
-            os: macos
-            python_host_platform: "macosx-14.0-arm64"
-            archflags: "-arch arm64"
+          # - name: ubuntu-22.04_x86_64
+          #   target: ubuntu-22.04_x86_64
+          #   runs_on: ubuntu-22.04
+          #   os: ubuntu
+          #   arch: x86_64
+          # - name: macos-15_arm64
+          #   target: macos_arm64
+          #   runs_on: macos-15
+          #   os: macos
+          #   python_host_platform: "macosx-15.0-arm64"
+          #   archflags: "-arch arm64"
+          # - name: macos-14_arm64
+          #   target: macos_arm64
+          #   runs_on: macos-14
+          #   os: macos
+          #   python_host_platform: "macosx-14.0-arm64"
+          #   archflags: "-arch arm64"
         python_version:
           - "3.10"
           - "3.11"
@@ -82,6 +82,7 @@ jobs:
           - platform:
               name: ubuntu-24.04_armv8
               target: ubuntu-24.04_armv8
+              # x86_64 でビルド
               runs_on: ubuntu-24.04
               os: ubuntu
               arch: armv8
@@ -89,6 +90,7 @@ jobs:
           - platform:
               name: ubuntu-24.04_armv8
               target: ubuntu-24.04_armv8
+              # arm64 でビルド
               runs_on: ubuntu-24.04-arm
               os: ubuntu
               arch: armv8
@@ -118,7 +120,12 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
           sudo ./llvm.sh 18
-        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' && matrix.platform.runs_on == 'ubuntu-24.04-arm' }}
+      - run: |
+          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
+          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
+          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' && matrix.platform.runs_on == 'ubuntu-24.04' }}
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
