@@ -12,14 +12,14 @@ from client import SoraClient, SoraRole
 @pytest.mark.parametrize(
     (
         "video_codec_type",
-        "encoder_implementation",
+        "expected_implementation",
     ),
     [
         ("H264", "libvpl"),
         ("H265", "libvpl"),
     ],
 )
-def test_intel_vpl_sendonly(setup, video_codec_type, encoder_implementation):
+def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -67,7 +67,7 @@ def test_intel_vpl_sendonly(setup, video_codec_type, encoder_implementation):
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    # assert outbound_rtp_stats["encoderImplementation"] == encoder_implementation
+    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
@@ -82,6 +82,7 @@ def test_intel_vpl_sendonly(setup, video_codec_type, encoder_implementation):
         "video_height",
         "simulcast_count",
     ),
+    # FIXME: H.265 の場合本数が 2 本/1 本の場合エラーになるのでコメントアウトしている
     [
         # 1080p
         ("H264", "libvpl", 5000, 1920, 1080, 3),
@@ -208,14 +209,14 @@ def test_intel_vpl_simulcast(
 @pytest.mark.parametrize(
     (
         "video_codec_type",
-        "encoder_implementation",
+        "expected_implementation",
     ),
     [
         ("H264", "libvpl"),
         ("H265", "libvpl"),
     ],
 )
-def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, encoder_implementation):
+def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implementation):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -268,7 +269,7 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, encoder_implementa
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    assert outbound_rtp_stats["encoderImplementation"] == encoder_implementation
+    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
@@ -279,6 +280,6 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, encoder_implementa
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
-    assert inbound_rtp_stats["decoderImplementation"] == encoder_implementation
+    assert inbound_rtp_stats["decoderImplementation"] == expected_implementation
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
