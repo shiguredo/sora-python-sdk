@@ -16,6 +16,8 @@ env:
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
   INTEL_VPL: true
+  # libva のログ出力が邪魔なので 0 にしているがデバッグ時は 2 などにする
+  LIBVA_MESSAGING_LEVEL: 0
 
 jobs:
   e2e_test_vpl:
