@@ -91,15 +91,15 @@ PyPI 経由ではインストールできません。
 
 ## 対応プラットフォーム
 
-- Windows 11 x86_64
-- Windows Server 2022 x86_64
-- macOS Sequoia 15 arm64
-- macOS Ventura 14 arm64
 - Ubuntu 24.04 LTS x86_64
 - Ubuntu 24.04 LTS arm64
 - Ubuntu 22.04 LTS x86_64
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください
+- macOS Sequoia 15 arm64
+- macOS Ventura 14 arm64
+- Windows 11 x86_64
+- Windows Server 2022 x86_64
 
 ### macOS の対応バージョン
 
@@ -124,6 +124,7 @@ PyPI 経由ではインストールできません。
 
 - Windows 11 arm64
 - Ubuntu 22.04 arm64
+- Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6.1)
 - Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
 - AMD Video Core Next (VCN) 対応
   - VP9 / AV1 / H.264 / H.265
