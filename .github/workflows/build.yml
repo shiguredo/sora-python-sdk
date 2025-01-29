@@ -78,10 +78,18 @@ jobs:
           - "3.12"
           - "3.13"
         include:
+          # armv8 向けのビルドは x86_64 と arm64 両方で実行できるので両方確認する
           - platform:
               name: ubuntu-24.04_armv8
               target: ubuntu-24.04_armv8
               runs_on: ubuntu-24.04
+              os: ubuntu
+              arch: armv8
+            python_version: "3.12"
+          - platform:
+              name: ubuntu-24.04_armv8
+              target: ubuntu-24.04_armv8
+              runs_on: ubuntu-24.04-arm
               os: ubuntu
               arch: armv8
             python_version: "3.12"
@@ -106,6 +114,10 @@ jobs:
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+          # clang-18
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 18
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
       - uses: astral-sh/setup-uv@v5
         with:
