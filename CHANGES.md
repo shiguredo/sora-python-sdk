@@ -114,6 +114,8 @@
   - @voluntas
 - [ADD] examples に E2E テストを追加する
   - @voluntas
+- [ADD] Intel VPL の E2E テストを追加する
+  - @voluntas
 - [FIX] run.py で local_sora_cpp_sdk_dir を設定した際に boost が引けなくなってしまっている問題を修正する
   - @tnoho
 - [FIX] examples の設定に virtual = true を指定するようにする
