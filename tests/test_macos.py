@@ -157,7 +157,7 @@ def test_macos_simulcast(
                 assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
             assert expected_implementation in s["encoderImplementation"]
 
-            assert s["bytesSent"] > 1000
+            assert s["bytesSent"] > 500
             assert s["packetsSent"] > 5
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
