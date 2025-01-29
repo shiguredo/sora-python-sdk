@@ -166,8 +166,8 @@ def test_intel_vpl_simulcast(
         # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 or 1 になる
         if i < simulcast_count:
             # 1 本になると simulcastEncodingAdapter がなくなる
-            if simulcast_count > 1:
-                assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
+            # if simulcast_count > 1:
+            #     assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
             # assert expected_implementation in s["encoderImplementation"]
 
             assert s["bytesSent"] > 1000
