@@ -48,6 +48,8 @@
   - @tnoho
 - [ADD] `on_signaling_message` コールバックを追加する
   - @tnoho
+- [ADD] Ubuntu 24.04 armv8 のビルドを arm64 上でできるようにする
+  - @melpon
 - [ADD] Ubuntu 24.04 armv8 に対応する
   - @melpon
 - [ADD] `on_ws_close` コールバックを追加する
@@ -99,6 +101,8 @@
 - [CHANGE] サンプルアプリの src ディレクトリ構成を変更する
   - @voluntas
 - [CHANGE] サンプルアプリの E2E テストを一旦削除する
+  - @voluntas
+- [ADD] Ubuntu 24.04 armv8 向けの E2E テストを追加する
   - @voluntas
 - [ADD] pyjwt を dev-dependencies に追加する
   - @voluntas
