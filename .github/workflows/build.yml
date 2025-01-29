@@ -60,12 +60,12 @@ jobs:
           #   runs_on: ubuntu-22.04
           #   os: ubuntu
           #   arch: x86_64
-          # - name: macos-15_arm64
-          #   target: macos_arm64
-          #   runs_on: macos-15
-          #   os: macos
-          #   python_host_platform: "macosx-15.0-arm64"
-          #   archflags: "-arch arm64"
+          - name: macos-15_arm64
+            target: macos_arm64
+            runs_on: macos-15
+            os: macos
+            python_host_platform: "macosx-15.0-arm64"
+            archflags: "-arch arm64"
           # - name: macos-14_arm64
           #   target: macos_arm64
           #   runs_on: macos-14
