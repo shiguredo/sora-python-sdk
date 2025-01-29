@@ -112,20 +112,17 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libx11-dev
         if: ${{ matrix.platform.os == 'ubuntu'}}
-      - run: |
+      - fun: |
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
+      - run: |
           # clang-18
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
           sudo ./llvm.sh 18
         if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' && matrix.platform.runs_on == 'ubuntu-24.04-arm' }}
-      - run: |
-          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
-        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' && matrix.platform.runs_on == 'ubuntu-24.04' }}
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
@@ -178,6 +175,8 @@ jobs:
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
+        # ubuntu-24.04-arm のバイナリはアップロードしない
+        if: ${{ matrix.platform.runs_on != 'ubuntu-24.04-arm' }}
 
   build_windows:
     needs: [build_pyi] 
