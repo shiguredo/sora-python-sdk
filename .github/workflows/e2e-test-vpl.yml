@@ -19,10 +19,7 @@ env:
 
 jobs:
   e2e_test_vpl:
-    # テストを実行しない
-    if: false
-    # self-hosted で apt install build-essential libx11-dev されていること
-    runs-on: [self-hosted, linux, x64]
+    runs-on: [self-hosted, linux, x64, Intel-VPL]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
