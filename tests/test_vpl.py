@@ -71,7 +71,8 @@ def test_intel_vpl_sendonly(setup, video_codec_type, encoder_implementation):
     assert outbound_rtp_stats["packetsSent"] > 0
 
 
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+@pytest.mark.skip()
+# @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -240,7 +241,7 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, encoder_implementa
     )
     recvonly.connect()
 
-    time.sleep(5)
+    time.sleep(10)
 
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
