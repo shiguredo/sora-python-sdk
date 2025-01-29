@@ -99,26 +99,10 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: uv python pin ${{ matrix.python_version }}
-      - run: uv sync
-
-      # Ubuntu x86_64 向け
-      - if: ${{ matrix.platform.arch == 'x86_64' }}
-        name: Tailscale
-        uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-        
-      - if: ${{ matrix.platform.arch == 'x86_64' }}
-        run: |
-          uv run python run.py ${{ matrix.platform.target }}
-          uv run python -m build
-
-      # Ubuntu 24.04 armv8 向けクロスビルド
-      - if: ${{ matrix.platform.arch == 'armv8' }}
-        run: |
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+      - run: |
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
         env:
@@ -172,8 +156,9 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: uv python pin ${{ matrix.python_version }}
-      - run: uv sync
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
       - run: |
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
