@@ -165,14 +165,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        - platform:
-            name: ubuntu-24.04_armv8
+        platform:
+          - name: ubuntu-24.04_armv8
             target: ubuntu-24.04_armv8
             # arm64 でビルド
             runs_on: ubuntu-24.04-arm
             os: ubuntu
             arch: armv8
-          python_version: "3.12"
+        python_version:
+          - "3.12"
     needs: [build_pyi] 
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
