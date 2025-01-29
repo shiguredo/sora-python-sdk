@@ -127,7 +127,7 @@ def install_deps(
         install_cmake_args["platform"] = "macos-universal"
     elif platform.build.os == "ubuntu" and platform.build.arch == "x86_64":
         install_cmake_args["platform"] = "linux-x86_64"
-    elif platform.build.os == "ubuntu" and platform.build.arch == "arm64":
+    elif platform.build.os == "ubuntu" and platform.build.arch == "armv8":
         install_cmake_args["platform"] = "linux-aarch64"
     else:
         raise Exception("Failed to install CMake")
@@ -261,12 +261,23 @@ def main():
         if platform.target.os == "ubuntu":
             # クロスコンパイルの設定。
             # 本来は toolchain ファイルに書く内容
+
+            if platform.build.arch == "armv8":
+                # ビルド環境が armv8 の場合は libwebrtc のバイナリが使えないのでローカルの clang を利用する
+                cmake_args += [
+                    "-DCMAKE_C_COMPILER=clang-18",
+                    "-DCMAKE_CXX_COMPILER=clang++-18",
+                ]
+            else:
+                cmake_args += [
+                    f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
+                    f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+                ]
             cmake_args += [
-                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
-                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
             ]
-            if platform.target.arch == "armv8":
+
+            if platform.build.arch != platform.target.arch:
                 sysroot = os.path.join(install_dir, "rootfs")
                 nb_cmake_dir = cmdcap(["uv", "run", "python", "-m", "nanobind", "--cmake_dir"])
                 cmake_args += [
@@ -279,7 +290,6 @@ def main():
                     "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH",
                     "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH",
                     "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
-                    f"-DCMAKE_SYSROOT={sysroot}",
                     f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.12'))}",
                     f"-DCMAKE_SYSROOT={sysroot}",
                     f"-DNB_CMAKE_DIR={nb_cmake_dir}",

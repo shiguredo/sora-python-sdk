@@ -23,8 +23,20 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.10", "3.11", "3.12", "3.13"]
-        os: ["ubuntu-22.04", "ubuntu-24.04"]
-    runs-on: ${{ matrix.os}}
+        platform:
+          - target: "ubuntu-22.04_x86_64"
+            runs-on: "ubuntu-22.04"
+            arch: "x86_64"
+            openh264_arch: "linux64"
+          - target: "ubuntu-24.04_x86_64"
+            runs-on: "ubuntu-24.04"
+            arch: "x86_64"
+            openh264_arch: "linux64"
+          - target: "ubuntu-24.04_armv8"
+            runs-on: "ubuntu-24.04-arm"
+            arch: "armv8"
+            openh264_arch: "linux-arm64"
+    runs-on: ${{ matrix.platform.runs-on}}
     timeout-minutes: 15
     if: >-
       ${{
@@ -41,22 +53,30 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
+      - if: matrix.platform.arch == 'armv8'
+        run: |
+          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
+          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
+          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+          # clang-18
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 18
       - name: Download openh264
         run: |
-          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so.bz2
-          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so.bz2
-          mv libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so libopenh264.so
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.7.so.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.7.so.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
-      - run: uv run python run.py ${{ matrix.os }}_x86_64
+      - run: uv run python run.py ${{ matrix.platform.target }}
       - run: uv run pytest tests -s
 
   e2e_test_macos:
