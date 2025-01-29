@@ -111,7 +111,7 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev
-        if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' }}
+        if: ${{ matrix.platform.os == 'ubuntu'}}
       - run: |
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
