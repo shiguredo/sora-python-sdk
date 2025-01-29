@@ -46,6 +46,7 @@ jobs:
         with:
           name: sora_sdk
           path: sora_sdk/
+
   build_linux_macos:
     strategy:
       fail-fast: false
@@ -102,7 +103,7 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libx11-dev
         if: ${{ matrix.platform.os == 'ubuntu'}}
-      - fun: |
+      - run: |
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
@@ -188,7 +189,7 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev
-      - fun: |
+      - run: |
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
