@@ -15,6 +15,7 @@ from client import SoraClient, SoraRole
         "expected_implementation",
     ),
     [
+        ("AV1", "libvpl"),
         ("H264", "libvpl"),
         ("H265", "libvpl"),
     ],
@@ -85,12 +86,15 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
     # FIXME: H.265 の場合本数が 2 本/1 本の場合エラーになるのでコメントアウトしている
     [
         # 1080p
+        ("AV1", "libvpl", 5000, 1920, 1080, 3),
         ("H264", "libvpl", 5000, 1920, 1080, 3),
         ("H265", "libvpl", 5000, 1920, 1080, 3),
         # 720p
+        ("AV1", "libvpl", 2500, 1280, 720, 3),
         ("H264", "libvpl", 2500, 1280, 720, 3),
         ("H265", "libvpl", 2500, 1280, 720, 3),
         # 540p
+        ("AV1", "libvpl", 1200, 960, 540, 3),
         ("H264", "libvpl", 1200, 960, 540, 3),
         ("H265", "libvpl", 1200, 960, 540, 3),
         # 360p
@@ -212,6 +216,7 @@ def test_intel_vpl_simulcast(
         "expected_implementation",
     ),
     [
+        ("AV1", "libvpl"),
         ("H264", "libvpl"),
         ("H265", "libvpl"),
     ],
