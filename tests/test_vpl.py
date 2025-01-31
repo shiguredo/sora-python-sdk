@@ -97,7 +97,7 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
         ("H264", "libvpl", 1200, 960, 540, 3),
         ("H265", "libvpl", 1200, 960, 540, 3),
         # 360p
-        # ("AV1", "libvpl", 700, 640, 360, 2),
+        ("AV1", "libvpl", 700, 640, 360, 2),
         ("H264", "libvpl", 700, 640, 360, 2),
         # ("H265", "libvpl", 700, 640, 360, 2),
         # 270p
@@ -349,6 +349,85 @@ def test_intel_vpl_vp9_sendonly(setup, video_codec_type, expected_implementation
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+    # ここで libvpx になって失敗する
+    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
+
+
+@pytest.mark.xfail(reason="AV1 は解像度が 120x90 以下の場合に正常に処理ができない問題がある")
+@pytest.mark.parametrize(
+    (
+        "video_codec_type",
+        "expected_implementation",
+        "video_bit_rate",
+        "video_width",
+        "video_height",
+    ),
+    [
+        # 数値は 4:3 または 16:9 の比率にして
+        # ("AV1", "libvpl", 700, 128, 96),
+        # ("AV1", "libvpl", 700, 124, 93),
+        # ここで失敗する
+        ("AV1", "libvpl", 700, 120, 90),
+    ],
+)
+def test_intel_vpl_av1_mini_resolution(
+    setup, video_codec_type, expected_implementation, video_bit_rate, video_width, video_height
+):
+    signaling_urls = setup.get("signaling_urls")
+    channel_id_prefix = setup.get("channel_id_prefix")
+    metadata = setup.get("metadata")
+
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+
+    sendonly = SoraClient(
+        signaling_urls,
+        SoraRole.SENDONLY,
+        channel_id,
+        audio=False,
+        video=True,
+        video_codec_type=video_codec_type,
+        video_bit_rate=video_bit_rate,
+        video_width=video_width,
+        video_height=video_height,
+        metadata=metadata,
+        use_hwa=True,
+    )
+    sendonly.connect(fake_video=True)
+
+    time.sleep(5)
+
+    assert sendonly.connect_message is not None
+    assert sendonly.connect_message["channel_id"] == channel_id
+    assert "video" in sendonly.connect_message
+    assert sendonly.connect_message["video"]["codec_type"] == video_codec_type
+
+    # offer の sdp に video_codec_type が含まれているかどうかを確認している
+    assert sendonly.offer_message is not None
+    assert "sdp" in sendonly.offer_message
+    assert video_codec_type in sendonly.offer_message["sdp"]
+
+    # answer の sdp に video_codec_type が含まれているかどうかを確認している
+    assert sendonly.answer_message is not None
+    assert "sdp" in sendonly.answer_message
+    assert video_codec_type in sendonly.answer_message["sdp"]
+
+    sendonly_stats = sendonly.get_stats()
+
+    sendonly.disconnect()
+
+    # codec が無かったら StopIteration 例外が上がる
+    codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
+    # VP9 が採用されているかどうか確認する
+    assert codec_stats["mimeType"] == f"video/{video_codec_type}"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+
+    assert "frameWidth" in outbound_rtp_stats
+    assert "frameHeight" in outbound_rtp_stats
+
     # ここで libvpx になって失敗する
     assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
