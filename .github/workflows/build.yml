@@ -5,6 +5,7 @@ on:
   push:
     paths-ignore:
       - "**.md"
+      - "tests/**"
     branches-ignore:
       - "feature/e2e-test*"
   schedule:
