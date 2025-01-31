@@ -293,7 +293,9 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.mark.xfail(reason="VP9 は C++ SDK の Intel VPL で対応できていないのでテストが失敗する")
+@pytest.mark.xfail(
+    strict=True, reason="VP9 は C++ SDK の Intel VPL で対応できていないのでテストが失敗する"
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -356,7 +358,9 @@ def test_intel_vpl_vp9_sendonly(setup, video_codec_type, expected_implementation
     assert outbound_rtp_stats["packetsSent"] > 0
 
 
-@pytest.mark.xfail(reason="AV1 は解像度が 120x90 以下の場合に正常に処理ができない問題がある")
+@pytest.mark.xfail(
+    strict=True, reason="AV1 は解像度が 120x90 以下の場合に正常に処理ができない問題がある"
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
