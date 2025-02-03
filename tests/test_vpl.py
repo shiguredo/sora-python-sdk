@@ -6,6 +6,8 @@ import uuid
 import pytest
 from client import SoraClient, SoraRole
 
+from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, SoraVideoCodecType
+
 
 # @pytest.mark.skip()
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
@@ -35,7 +37,22 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
         video=True,
         video_codec_type=video_codec_type,
         metadata=metadata,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H265,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -140,7 +157,22 @@ def test_intel_vpl_simulcast(
         metadata=metadata,
         video_width=video_width,
         video_height=video_height,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H265,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -239,7 +271,22 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
         video=True,
         video_codec_type=video_codec_type,
         metadata=metadata,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H265,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -248,7 +295,22 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
         SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H265,
+                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
     )
     recvonly.connect()
 
@@ -320,7 +382,14 @@ def test_intel_vpl_vp9_sendonly(setup, video_codec_type, expected_implementation
         video=True,
         video_codec_type=video_codec_type,
         metadata=metadata,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.VP9,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -397,7 +466,14 @@ def test_intel_vpl_av1_mini_resolution(
         video_width=video_width,
         video_height=video_height,
         metadata=metadata,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
