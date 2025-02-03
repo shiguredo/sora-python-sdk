@@ -123,7 +123,21 @@
     "source_location": "cpp",
     "__memory": "cpp",
     "compare": "cpp",
-    "concepts": "cpp"
+    "concepts": "cpp",
+    "expected": "cpp",
+    "format": "cpp",
+    "barrier": "cpp",
+    "latch": "cpp",
+    "numbers": "cpp",
+    "ranges": "cpp",
+    "semaphore": "cpp",
+    "stdfloat": "cpp",
+    "stop_token": "cpp",
+    "syncstream": "cpp",
+    "cuchar": "cpp",
+    "netfwd": "cpp",
+    "spanstream": "cpp",
+    "stacktrace": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
   // nanobind 周りでエラーが消えないので全部消す
