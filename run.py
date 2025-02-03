@@ -275,6 +275,7 @@ def main():
                 ]
             cmake_args += [
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
+                f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
             ]
 
             if platform.build.arch != platform.target.arch:
