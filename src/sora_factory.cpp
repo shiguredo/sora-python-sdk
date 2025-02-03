@@ -29,47 +29,6 @@
 #include <exception>
 #include <iostream>
 
-struct Hoge {
-  Hoge() { throw std::exception(); }
-  int x;
-};
-void f() {
-  auto p = new char[sizeof(Hoge)];
-  new (p) Hoge();
-}
-
-void translator(const std::exception_ptr& p) {
-  try {
-    std::rethrow_exception(p);
-  } catch (const std::bad_alloc& e) {
-    std::cout << "TRAP: " << __LINE__ << std::endl;
-  } catch (const std::domain_error& e) {
-    std::cout << "TRAP: " << __LINE__ << std::endl;
-  } catch (const std::invalid_argument& e) {
-    std::cout << "TRAP: " << __LINE__ << std::endl;
-  } catch (const std::length_error& e) {
-    std::cout << "TRAP: " << __LINE__ << std::endl;
-  } catch (const std::out_of_range& e) {
-    std::cout << "TRAP: " << __LINE__ << std::endl;
-  } catch (const std::range_error& e) {
-    std::cout << "TRAP: " << __LINE__ << std::endl;
-  } catch (const std::overflow_error& e) {
-    std::cout << "TRAP: " << __LINE__ << std::endl;
-  } catch (const std::exception& e) {
-    std::cout << "TRAP: " << __LINE__ << std::endl;
-  }
-}
-void trap() noexcept {
-  std::exception_ptr e = std::current_exception();
-
-  try {
-    translator(e);
-    return;
-  } catch (...) {
-    e = std::current_exception();
-    std::cout << "TRAP1" << std::endl;
-  }
-}
 SoraFactory::SoraFactory(
     std::optional<std::string> openh264,
     std::optional<sora::VideoCodecPreference> video_codec_preference) {
@@ -94,11 +53,6 @@ SoraFactory::SoraFactory(
       };
   context_ = sora::SoraClientContext::Create(context_config);
   if (context_ == nullptr) {
-    try {
-      f();
-    } catch (...) {
-      trap();
-    }
     throw std::exception();
   }
 }
