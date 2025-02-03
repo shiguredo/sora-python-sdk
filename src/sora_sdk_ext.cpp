@@ -631,7 +631,8 @@ NB_MODULE(sora_sdk_ext, m) {
 
   auto video_codec_preference =
       nb::class_<sora::VideoCodecPreference>(m, "SoraVideoCodecPreference")
-          .def(nb::init<>())
+          .def(nb::init<std::vector<sora::VideoCodecPreference::Codec>>(),
+               "codecs"_a = std::vector<sora::VideoCodecPreference::Codec>())
           .def_rw("codecs", &sora::VideoCodecPreference::codecs)
           .def("to_json",
                [](const sora::VideoCodecPreference& capability) {
@@ -662,6 +663,12 @@ NB_MODULE(sora_sdk_ext, m) {
       .def(nb::init<>());
   nb::class_<sora::VideoCodecPreference::Codec>(video_codec_preference, "Codec")
       .def(nb::init<>())
+      .def(nb::init<webrtc::VideoCodecType,
+                    std::optional<sora::VideoCodecImplementation>,
+                    std::optional<sora::VideoCodecImplementation>,
+                    sora::VideoCodecPreference::Parameters>(),
+           "type"_a, "encoder"_a = nb::none(), "decoder"_a = nb::none(),
+           "parameters"_a = sora::VideoCodecPreference::Parameters())
       .def_rw("type", &sora::VideoCodecPreference::Codec::type)
       .def_rw("encoder", &sora::VideoCodecPreference::Codec::encoder)
       .def_rw("decoder", &sora::VideoCodecPreference::Codec::decoder)
