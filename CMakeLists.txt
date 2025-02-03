@@ -105,11 +105,23 @@ elseif(TARGET_OS STREQUAL "ubuntu")
       "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
   )
+  target_compile_options(nanobind-static
+    PRIVATE
+      "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXXABI_INCLUDE_DIR}>"
+  )
 elseif(TARGET_OS STREQUAL "jetson")
   target_compile_options(sora_sdk_ext
     PRIVATE
       "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+  )
+  target_compile_options(nanobind-static
+    PRIVATE
+      "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXXABI_INCLUDE_DIR}>"
   )
   target_link_directories(sora_sdk_ext
     PRIVATE
@@ -143,6 +155,7 @@ if (NOT TARGET_OS STREQUAL "windows")
 endif()
 
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
+target_link_libraries(nanobind-static PRIVATE Sora::sora)
 
 install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)
 if (SORA_GEN_PYI)

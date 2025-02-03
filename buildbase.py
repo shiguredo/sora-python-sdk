@@ -520,6 +520,7 @@ class WebrtcInfo(NamedTuple):
     webrtc_library_dir: str
     clang_dir: str
     libcxx_dir: str
+    libcxxabi_dir: str
 
 
 def get_webrtc_info(
@@ -536,6 +537,9 @@ def get_webrtc_info(
             webrtc_library_dir=os.path.join(webrtc_install_dir, "lib"),
             clang_dir=os.path.join(install_dir, "llvm", "clang"),
             libcxx_dir=os.path.join(install_dir, "llvm", "libcxx"),
+            libcxxabi_dir=os.path.join(
+                webrtc_install_dir, "include", "third_party", "libc++abi", "src"
+            ),
         )
     else:
         webrtc_build_source_dir = os.path.join(
@@ -556,6 +560,9 @@ def get_webrtc_info(
                 webrtc_build_source_dir, "src", "third_party", "llvm-build", "Release+Asserts"
             ),
             libcxx_dir=os.path.join(webrtc_build_source_dir, "src", "third_party", "libc++", "src"),
+            libcxxabi_dir=os.path.join(
+                webrtc_build_source_dir, "src", "third_party", "libc++abi", "src"
+            ),
         )
 
 
