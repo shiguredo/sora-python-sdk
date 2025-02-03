@@ -9,6 +9,9 @@
 #include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/vector.h>
 
+// Sora C++ SDK
+#include <sora/sora_video_codec.h>
+
 #include "sora.h"
 #include "sora_audio_sink.h"
 #include "sora_audio_source.h"
@@ -350,8 +353,10 @@ NB_MODULE(sora_sdk_ext, m) {
                                            nb::is_arithmetic())
       .value("DISABLED", webrtc::DegradationPreference::DISABLED)
       .value("BALANCED", webrtc::DegradationPreference::BALANCED)
-      .value("MAINTAIN_FRAMERATE", webrtc::DegradationPreference::MAINTAIN_FRAMERATE)
-      .value("MAINTAIN_RESOLUTION", webrtc::DegradationPreference::MAINTAIN_RESOLUTION);
+      .value("MAINTAIN_FRAMERATE",
+             webrtc::DegradationPreference::MAINTAIN_FRAMERATE)
+      .value("MAINTAIN_RESOLUTION",
+             webrtc::DegradationPreference::MAINTAIN_RESOLUTION);
 
   nb::enum_<sora::SoraSignalingDirection>(m, "SoraSignalingDirection",
                                           nb::is_arithmetic())
@@ -568,9 +573,107 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("__del__", &SoraVideoFrameTransformer::Del)
       .def_rw("on_transform", &SoraVideoFrameTransformer::on_transform_);
 
+  nb::enum_<sora::VideoCodecImplementation>(m, "SoraVideoCodecImplementation",
+                                            nb::is_arithmetic())
+      .value("INTERNAL", sora::VideoCodecImplementation::kInternal)
+      .value("CISCO_OPENH264", sora::VideoCodecImplementation::kCiscoOpenH264)
+      .value("INTEL_VPL", sora::VideoCodecImplementation::kIntelVpl)
+      .value("NVIDIA_VIDEO_CODEC_SDK",
+             sora::VideoCodecImplementation::kNvidiaVideoCodecSdk);
+
+  nb::enum_<webrtc::VideoCodecType>(m, "SoraVideoCodecType",
+                                    nb::is_arithmetic())
+      .value("VP8", webrtc::kVideoCodecVP8)
+      .value("VP9", webrtc::kVideoCodecVP9)
+      .value("H264", webrtc::kVideoCodecH264)
+      .value("H265", webrtc::kVideoCodecH265)
+      .value("AV1", webrtc::kVideoCodecAV1);
+
+  auto video_codec_capability =
+      nb::class_<sora::VideoCodecCapability>(m, "SoraVideoCodecCapability")
+          .def_ro("engines", &sora::VideoCodecCapability::engines)
+          .def("to_json", [](const sora::VideoCodecCapability& capability) {
+            auto str =
+                boost::json::serialize(boost::json::value_from(capability));
+            return nb::module_::import_("json").attr("loads")(str);
+          });
+  nb::class_<sora::VideoCodecCapability::Parameters>(video_codec_capability,
+                                                     "Parameters")
+      .def_ro("version", &sora::VideoCodecCapability::Parameters::version)
+      .def_ro("openh264_path",
+              &sora::VideoCodecCapability::Parameters::openh264_path)
+      .def_ro("vpl_impl", &sora::VideoCodecCapability::Parameters::vpl_impl)
+      .def_ro("vpl_impl_value",
+              &sora::VideoCodecCapability::Parameters::vpl_impl_value)
+      .def_ro("nvcodec_gpu_device_name",
+              &sora::VideoCodecCapability::Parameters::nvcodec_gpu_device_name);
+  nb::class_<sora::VideoCodecCapability::Codec>(video_codec_capability, "Codec")
+      .def_ro("type", &sora::VideoCodecCapability::Codec::type)
+      .def_ro("encoder", &sora::VideoCodecCapability::Codec::encoder)
+      .def_ro("decoder", &sora::VideoCodecCapability::Codec::decoder)
+      .def_ro("parameters", &sora::VideoCodecCapability::Codec::parameters);
+  nb::class_<sora::VideoCodecCapability::Engine>(video_codec_capability,
+                                                 "Engine")
+      .def_ro("name", &sora::VideoCodecCapability::Engine::name)
+      .def_ro("codecs", &sora::VideoCodecCapability::Engine::codecs)
+      .def_ro("parameters", &sora::VideoCodecCapability::Engine::parameters);
+
+  m.def(
+      "get_video_codec_capability",
+      [](std::optional<std::string> openh264) -> sora::VideoCodecCapability {
+        sora::VideoCodecCapabilityConfig config;
+        config.openh264_path = openh264;
+        config.vpl_session = sora::VplSession::Create();
+        config.cuda_context = sora::CudaContext::Create();
+        return sora::GetVideoCodecCapability(config);
+      },
+      "openh264"_a = nb::none());
+
+  auto video_codec_preference =
+      nb::class_<sora::VideoCodecPreference>(m, "SoraVideoCodecPreference")
+          .def(nb::init<>())
+          .def_rw("codecs", &sora::VideoCodecPreference::codecs)
+          .def("to_json",
+               [](const sora::VideoCodecPreference& capability) {
+                 auto str = boost::json::serialize(
+                     boost::json::value_from(capability));
+                 return nb::module_::import_("json").attr("loads")(str);
+               })
+          .def("find",
+               [](const sora::VideoCodecPreference& capability,
+                  webrtc::VideoCodecType type) -> std::optional<int> {
+                 auto* codec = capability.Find(type);
+                 if (codec == nullptr) {
+                   return std::nullopt;
+                 }
+                 return codec - &*capability.codecs.begin();
+               })
+          .def("get_or_add",
+               [](sora::VideoCodecPreference& capability,
+                  webrtc::VideoCodecType type) -> int {
+                 auto& codec = capability.GetOrAdd(type);
+                 return &codec - &*capability.codecs.begin();
+               })
+          .def("has_implementation",
+               &sora::VideoCodecPreference::HasImplementation)
+          .def("merge", &sora::VideoCodecPreference::Merge);
+  nb::class_<sora::VideoCodecPreference::Parameters>(video_codec_preference,
+                                                     "Parameters")
+      .def(nb::init<>());
+  nb::class_<sora::VideoCodecPreference::Codec>(video_codec_preference, "Codec")
+      .def(nb::init<>())
+      .def_rw("type", &sora::VideoCodecPreference::Codec::type)
+      .def_rw("encoder", &sora::VideoCodecPreference::Codec::encoder)
+      .def_rw("decoder", &sora::VideoCodecPreference::Codec::decoder)
+      .def_rw("parameters", &sora::VideoCodecPreference::Codec::parameters);
+
+  m.def("create_video_codec_preference_from_implementation",
+        &sora::CreateVideoCodecPreferenceFromImplementation);
+
   nb::class_<Sora>(m, "Sora", nb::type_slots(sora_slots))
-      .def(nb::init<std::optional<bool>, std::optional<std::string>>(),
-           "use_hardware_encoder"_a = nb::none(), "openh264"_a = nb::none())
+      .def(nb::init<std::optional<std::string>,
+                    std::optional<sora::VideoCodecPreference>>(),
+           "openh264"_a = nb::none(), "video_codec_preference"_a = nb::none())
       .def("create_connection", &Sora::CreateConnection, "signaling_urls"_a,
            "role"_a, "channel_id"_a, "client_id"_a = nb::none(),
            "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),
@@ -650,7 +753,8 @@ NB_MODULE(sora_sdk_ext, m) {
                    "proxy_username: Optional[str] = None, "
                    "proxy_password: Optional[str] = None, "
                    "proxy_agent: Optional[str] = None, "
-                   "degradation_preference: Optional[SoraDegradationPreference] = None"
+                   "degradation_preference: "
+                   "Optional[SoraDegradationPreference] = None"
                    ") -> SoraConnection"))
       .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
            "sample_rate"_a)
