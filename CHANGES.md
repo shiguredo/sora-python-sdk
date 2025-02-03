@@ -71,6 +71,8 @@
   - BOOST_VERSION を `1.87.0` に上げる
   - OPENH264_VERSION を `v2.5.0` に上げる
   - @torikizi @voluntas
+- [FIX] nanobind が libstdc++ を使ってしまっていたのを libc++ を使うように修正する
+  - @melpon
 
 ### misc
 
