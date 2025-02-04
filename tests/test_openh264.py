@@ -5,6 +5,12 @@ import uuid
 import pytest
 from client import SoraClient, SoraRole
 
+from sora_sdk import (
+    SoraVideoCodecImplementation,
+    SoraVideoCodecPreference,
+    SoraVideoCodecType,
+)
+
 
 @pytest.mark.skipif(sys.platform not in ["darwin", "linux"], reason="macOSとLinuxでのみ実行する")
 def test_openh264_sendonly_recvonly(setup):
@@ -25,7 +31,14 @@ def test_openh264_sendonly_recvonly(setup):
         video=True,
         video_codec_type="H264",
         openh264_path=openh264_path,
-        use_hwa=False,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    encoder=SoraVideoCodecImplementation.CISCO_OPENH264,
+                )
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -35,7 +48,14 @@ def test_openh264_sendonly_recvonly(setup):
         channel_id,
         metadata=metadata,
         openh264_path=openh264_path,
-        use_hwa=False,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    decoder=SoraVideoCodecImplementation.CISCO_OPENH264,
+                )
+            ]
+        ),
     )
     recvonly.connect()
 
@@ -123,8 +143,14 @@ def test_openh264_simulcast(
         video_width=video_width,
         video_height=video_height,
         openh264_path=openh264_path,
-        # HWA を無効化
-        use_hwa=False,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    encoder=SoraVideoCodecImplementation.CISCO_OPENH264,
+                )
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 

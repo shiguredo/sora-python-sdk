@@ -1,3 +1,5 @@
+# 以下のコマンドで LLVM 付きでテストを実行できる
+# lldb-18 --batch -o 'command script import pytest_with_llvm.py' -o 'test'
 import sys
 import time
 
@@ -8,9 +10,7 @@ def test(debugger, command, result, internal_dict):
     debugger.HandleCommand("settings set target.process.follow-fork-mode child")
 
     target = debugger.CreateTargetWithFileAndArch("uv", lldb.LLDB_ARCH_DEFAULT)
-    process = target.LaunchSimple(
-        ["run", "pytest", "tests/test_sora_disconnect.py", "-s"], None, None
-    )
+    process = target.LaunchSimple(["run", "pytest", "tests/test_capability.py", "-s"], None, None)
 
     if not process:
         print("Error: could not launch process")
@@ -38,4 +38,4 @@ def test(debugger, command, result, internal_dict):
 
 # LLDBにスクリプトを初期化してコマンドを追加
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand("command script add -f test_with_llvm.test test")
+    debugger.HandleCommand("command script add -f pytest_with_llvm.test test")

@@ -31,7 +31,6 @@ def test_macos_video_hwa_sendonly(setup, video_codec_type):
         video=True,
         video_codec_type=video_codec_type,
         metadata=metadata,
-        use_hwa=True,
     )
     sendonly.connect(fake_video=True)
 
@@ -117,7 +116,6 @@ def test_macos_simulcast(
         metadata=metadata,
         video_width=video_width,
         video_height=video_height,
-        use_hwa=True,
     )
     sendonly.connect(fake_video=True)
 
@@ -204,7 +202,6 @@ def test_macos_h264_sendonly_recvonly(setup):
         video=True,
         video_codec_type="H264",
         metadata=metadata,
-        use_hwa=True,
     )
     sendonly.connect()
 
@@ -213,7 +210,6 @@ def test_macos_h264_sendonly_recvonly(setup):
         SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
-        use_hwa=True,
     )
     recvonly.connect()
 
@@ -264,7 +260,6 @@ def test_macos_h265_sendonly_recvonly(setup):
         video=True,
         video_codec_type="H265",
         metadata=metadata,
-        use_hwa=True,
     )
     sendonly.connect()
 
@@ -273,7 +268,6 @@ def test_macos_h265_sendonly_recvonly(setup):
         SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
-        use_hwa=True,
     )
     recvonly.connect()
 
