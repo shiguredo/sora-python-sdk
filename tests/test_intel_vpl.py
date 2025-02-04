@@ -210,24 +210,30 @@ def test_intel_vpl_simulcast(
             # 1 本になると simulcastEncodingAdapter がなくなる
             # if simulcast_count > 1:
             #     assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
-            # assert expected_implementation in s["encoderImplementation"]
 
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
+
+            # パケットが一切送られてこない場合は frame_width/frame_height が含まれないので None になる
+            frame_width = s.get("frameWidth")
+            frame_height = s.get("frameHeight")
+            encoder_implementation = s.get("encoderImplementation")
+
             print(
                 s["rid"],
                 video_codec_type,
-                expected_implementation,
                 expected_bitrate,
                 s["targetBitrate"],
-                s["frameWidth"],
-                s["frameHeight"],
+                expected_implementation,
+                encoder_implementation,
+                frame_width,
+                frame_height,
                 s["bytesSent"],
                 s["packetsSent"],
             )
-            # 期待値の 20% 以上、100% 以下に収まることを確認
             assert s["bytesSent"] > 1000
             assert s["packetsSent"] > 5
+            # 期待値の 20% 以上、100% 以下に収まることを確認
             assert expected_bitrate * 0.2 <= s["targetBitrate"] <= expected_bitrate
         else:
             # 本来は 0 なのだが、simulcast_count が 1 の場合、
