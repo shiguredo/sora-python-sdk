@@ -8,6 +8,8 @@ on:
       - "tests/**"
     branches-ignore:
       - "feature/e2e-test*"
+    tags:
+      - "*"
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
