@@ -251,7 +251,7 @@ jobs:
           path: dist/
 
   # slack_notify_succeeded:
-  #   needs: [build_linux_macos, build_windows]
+  #   needs: [build_linux_macos, build_ubuntu_arm, build_windows]
   #   runs-on: ubuntu-24.04
   #   if: success()
   #   steps:
