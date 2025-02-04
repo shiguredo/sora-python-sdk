@@ -26,11 +26,11 @@ class Sora : public DisposePublisher {
   /**
    * このタイミングで SoraFactory の生成まで行うため SoraFactory の生成にあたって必要な引数はここで設定します。
    * 
-   * @param use_hardware_encoder (オプション)ハードウェアエンコーダーの有効無効 デフォルト: true
    * @param openh264 (オプション) OpenH264 ライブラリへのパス
+   * @param video_codec_preference (オプション) 利用するエンコーダ/デコーダの実装の設定
    */
-  Sora(std::optional<bool> use_hardware_encoder,
-       std::optional<std::string> openh264);
+  Sora(std::optional<std::string> openh264,
+       std::optional<sora::VideoCodecPreference> video_codec_preference);
   ~Sora();
 
   /**

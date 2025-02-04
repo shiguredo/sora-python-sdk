@@ -6,18 +6,23 @@ import uuid
 import pytest
 from client import SoraClient, SoraRole
 
+from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, SoraVideoCodecType
+
 
 # @pytest.mark.skip()
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+@pytest.mark.skipif(
+    os.environ.get("NVIDIA_VIDEO_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
         "expected_implementation",
     ),
     [
-        ("AV1", "libvpl"),
-        ("H264", "libvpl"),
-        ("H265", "libvpl"),
+        ("VP9", "NVIDIA Video Codec SDK"),
+        ("AV1", "NVIDIA Video Codec SDK"),
+        ("H264", "NVIDIA Video Codec SDK"),
+        ("H265", "NVIDIA Video Codec SDK"),
     ],
 )
 def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
@@ -35,7 +40,22 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
         video=True,
         video_codec_type=video_codec_type,
         metadata=metadata,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H265,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -72,7 +92,9 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
     assert outbound_rtp_stats["packetsSent"] > 0
 
 
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+@pytest.mark.skipif(
+    os.environ.get("NVIDIA_VIDEO_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -86,31 +108,31 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
     # FIXME: AV1 では、解像度が一定数より低くなる場合、エラーになるのでコメントアウトしている
     [
         # 1080p
-        ("AV1", "libvpl", 5000, 1920, 1080, 3),
-        ("H264", "libvpl", 5000, 1920, 1080, 3),
-        ("H265", "libvpl", 5000, 1920, 1080, 3),
+        ("VP9", "NVIDIA Video Codec SDK", 5000, 1920, 1080, 3),
+        ("H264", "NVIDIA Video Codec SDK", 5000, 1920, 1080, 3),
+        ("H265", "NVIDIA Video Codec SDK", 5000, 1920, 1080, 3),
         # 720p
-        ("AV1", "libvpl", 2500, 1280, 720, 3),
-        ("H264", "libvpl", 2500, 1280, 720, 3),
-        ("H265", "libvpl", 2500, 1280, 720, 3),
+        ("VP9", "NVIDIA Video Codec SDK", 2500, 1280, 720, 3),
+        ("H264", "NVIDIA Video Codec SDK", 2500, 1280, 720, 3),
+        ("H265", "NVIDIA Video Codec SDK", 2500, 1280, 720, 3),
         # 540p
-        ("AV1", "libvpl", 1200, 960, 540, 3),
-        ("H264", "libvpl", 1200, 960, 540, 3),
-        ("H265", "libvpl", 1200, 960, 540, 3),
+        ("VP9", "NVIDIA Video Codec SDK", 1200, 960, 540, 3),
+        ("H264", "NVIDIA Video Codec SDK", 1200, 960, 540, 3),
+        ("H265", "NVIDIA Video Codec SDK", 1200, 960, 540, 3),
         # 360p
-        # ("AV1", "libvpl", 700, 640, 360, 2),
-        ("H264", "libvpl", 700, 640, 360, 2),
-        # ("H265", "libvpl", 700, 640, 360, 2),
+        ("VP9", "NVIDIA Video Codec SDK", 700, 640, 360, 2),
+        ("H264", "NVIDIA Video Codec SDK", 700, 640, 360, 2),
+        ("H265", "NVIDIA Video Codec SDK", 700, 640, 360, 2),
         # 270p
-        # ("AV1", "libvpl", 450, 480, 270, 2),
-        ("H264", "libvpl", 450, 480, 270, 2),
-        # ("H265", "libvpl", 257, 480, 270, 2),
+        ("VP9", "NVIDIA Video Codec SDK", 450, 480, 270, 2),
+        ("H264", "NVIDIA Video Codec SDK", 450, 480, 270, 2),
+        ("H265", "NVIDIA Video Codec SDK", 450, 480, 270, 2),
         # 180p
-        # ("AV1", "libvpl", 200, 320, 180, 1),
-        ("H264", "libvpl", 200, 320, 180, 1),
-        # ("H265", "libvpl", 142, 320, 180, 1),
+        ("VP9", "NVIDIA Video Codec SDK", 200, 320, 180, 1),
+        ("H264", "NVIDIA Video Codec SDK", 200, 320, 180, 1),
+        ("H265", "NVIDIA Video Codec SDK", 142, 320, 180, 1),
         # 135p
-        # ("H265", "libvpl", 101, 240, 135, 1),
+        ("H265", "NVIDIA Video Codec SDK", 101, 240, 135, 1),
     ],
 )
 def test_intel_vpl_simulcast(
@@ -140,7 +162,22 @@ def test_intel_vpl_simulcast(
         metadata=metadata,
         video_width=video_width,
         video_height=video_height,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H265,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -212,16 +249,18 @@ def test_intel_vpl_simulcast(
 
 
 # @pytest.mark.skip()
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+@pytest.mark.skipif(
+    os.environ.get("NVIDIA_VIDEO_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
         "expected_implementation",
     ),
     [
-        ("AV1", "libvpl"),
-        ("H264", "libvpl"),
-        ("H265", "libvpl"),
+        ("VP9", "NVIDIA Video Codec SDK"),
+        ("H264", "NVIDIA Video Codec SDK"),
+        ("H265", "NVIDIA Video Codec SDK"),
     ],
 )
 def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implementation):
@@ -239,7 +278,22 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
         video=True,
         video_codec_type=video_codec_type,
         metadata=metadata,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H265,
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -248,7 +302,22 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
         SoraRole.RECVONLY,
         channel_id,
         metadata=metadata,
-        use_hwa=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    decoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    decoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H265,
+                    decoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+            ]
+        ),
     )
     recvonly.connect()
 
@@ -291,149 +360,3 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
     assert inbound_rtp_stats["decoderImplementation"] == expected_implementation
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-
-@pytest.mark.xfail(
-    strict=True, reason="VP9 は C++ SDK の Intel VPL で対応できていないのでテストが失敗する"
-)
-@pytest.mark.parametrize(
-    (
-        "video_codec_type",
-        "expected_implementation",
-    ),
-    [
-        ("VP9", "libvpl"),
-    ],
-)
-def test_intel_vpl_vp9_sendonly(setup, video_codec_type, expected_implementation):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
-    sendonly = SoraClient(
-        signaling_urls,
-        SoraRole.SENDONLY,
-        channel_id,
-        audio=False,
-        video=True,
-        video_codec_type=video_codec_type,
-        metadata=metadata,
-        use_hwa=True,
-    )
-    sendonly.connect(fake_video=True)
-
-    time.sleep(5)
-
-    assert sendonly.connect_message is not None
-    assert sendonly.connect_message["channel_id"] == channel_id
-    assert "video" in sendonly.connect_message
-    assert sendonly.connect_message["video"]["codec_type"] == video_codec_type
-
-    # offer の sdp に video_codec_type が含まれているかどうかを確認している
-    assert sendonly.offer_message is not None
-    assert "sdp" in sendonly.offer_message
-    assert video_codec_type in sendonly.offer_message["sdp"]
-
-    # answer の sdp に video_codec_type が含まれているかどうかを確認している
-    assert sendonly.answer_message is not None
-    assert "sdp" in sendonly.answer_message
-    assert video_codec_type in sendonly.answer_message["sdp"]
-
-    sendonly_stats = sendonly.get_stats()
-
-    sendonly.disconnect()
-
-    # codec が無かったら StopIteration 例外が上がる
-    codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    # VP9 が採用されているかどうか確認する
-    assert codec_stats["mimeType"] == f"video/{video_codec_type}"
-
-    # outbound-rtp が無かったら StopIteration 例外が上がる
-    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    # ここで libvpx になって失敗する
-    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
-    assert outbound_rtp_stats["bytesSent"] > 0
-    assert outbound_rtp_stats["packetsSent"] > 0
-
-
-@pytest.mark.xfail(
-    strict=True, reason="AV1 は解像度が 120x90 以下の場合に正常に処理ができない問題がある"
-)
-@pytest.mark.parametrize(
-    (
-        "video_codec_type",
-        "expected_implementation",
-        "video_bit_rate",
-        "video_width",
-        "video_height",
-    ),
-    [
-        # 数値は 4:3 または 16:9 の比率にして
-        # ("AV1", "libvpl", 700, 128, 96),
-        # ("AV1", "libvpl", 700, 124, 93),
-        # ここで失敗する
-        ("AV1", "libvpl", 700, 120, 90),
-    ],
-)
-def test_intel_vpl_av1_mini_resolution(
-    setup, video_codec_type, expected_implementation, video_bit_rate, video_width, video_height
-):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
-    sendonly = SoraClient(
-        signaling_urls,
-        SoraRole.SENDONLY,
-        channel_id,
-        audio=False,
-        video=True,
-        video_codec_type=video_codec_type,
-        video_bit_rate=video_bit_rate,
-        video_width=video_width,
-        video_height=video_height,
-        metadata=metadata,
-        use_hwa=True,
-    )
-    sendonly.connect(fake_video=True)
-
-    time.sleep(5)
-
-    assert sendonly.connect_message is not None
-    assert sendonly.connect_message["channel_id"] == channel_id
-    assert "video" in sendonly.connect_message
-    assert sendonly.connect_message["video"]["codec_type"] == video_codec_type
-
-    # offer の sdp に video_codec_type が含まれているかどうかを確認している
-    assert sendonly.offer_message is not None
-    assert "sdp" in sendonly.offer_message
-    assert video_codec_type in sendonly.offer_message["sdp"]
-
-    # answer の sdp に video_codec_type が含まれているかどうかを確認している
-    assert sendonly.answer_message is not None
-    assert "sdp" in sendonly.answer_message
-    assert video_codec_type in sendonly.answer_message["sdp"]
-
-    sendonly_stats = sendonly.get_stats()
-
-    sendonly.disconnect()
-
-    # codec が無かったら StopIteration 例外が上がる
-    codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    # VP9 が採用されているかどうか確認する
-    assert codec_stats["mimeType"] == f"video/{video_codec_type}"
-
-    # outbound-rtp が無かったら StopIteration 例外が上がる
-    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-
-    assert "frameWidth" in outbound_rtp_stats
-    assert "frameHeight" in outbound_rtp_stats
-
-    # ここで libvpx になって失敗する
-    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
-    assert outbound_rtp_stats["bytesSent"] > 0
-    assert outbound_rtp_stats["packetsSent"] > 0

@@ -18,6 +18,7 @@ from sora_sdk import (
     SoraSignalingDirection,
     SoraSignalingErrorCode,
     SoraSignalingType,
+    SoraVideoCodecPreference,
     SoraVideoFrame,
     SoraVideoSink,
     SoraVideoSource,
@@ -55,7 +56,7 @@ class SoraClient:
         client_cert: Optional[bytes] = None,
         ca_cert: Optional[bytes] = None,
         degradation_preference: Optional[SoraDegradationPreference] = None,
-        use_hwa: bool = False,
+        video_codec_preference: Optional[SoraVideoCodecPreference] = None,
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
         audio_output_channels: int = 1,
@@ -85,7 +86,9 @@ class SoraClient:
         self._video_width: int = video_width
         self._video_height: int = video_height
 
-        self._sora: Sora = Sora(openh264=openh264_path, use_hardware_encoder=use_hwa)
+        self._sora: Sora = Sora(
+            openh264=openh264_path, video_codec_preference=video_codec_preference
+        )
 
         self._fake_audio_thread: Optional[threading.Thread] = None
         self._fake_video_thread: Optional[threading.Thread] = None
@@ -201,9 +204,9 @@ class SoraClient:
 
         self._connection.connect()
 
-        assert self._connected.wait(self._default_connection_timeout_s), (
-            "Could not connect to Sora."
-        )
+        assert self._connected.wait(
+            self._default_connection_timeout_s
+        ), "Could not connect to Sora."
 
     def disconnect(self) -> None:
         self._connection.disconnect()
