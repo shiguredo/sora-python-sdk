@@ -7,11 +7,9 @@ import pytest
 from client import SoraClient, SoraRole
 
 from sora_sdk import (
-    SoraLoggingSeverity,
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
     SoraVideoCodecType,
-    enable_libwebrtc_log,
 )
 
 
@@ -145,7 +143,6 @@ def test_intel_vpl_simulcast(
     video_height,
     simulcast_count,
 ):
-    enable_libwebrtc_log(SoraLoggingSeverity.INFO)
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
