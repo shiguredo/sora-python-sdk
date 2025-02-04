@@ -529,12 +529,14 @@ def test_intel_vpl_av1_mini_resolution(
             SoraVideoCodecType.AV1,
             "libvpl",
             SoraVideoCodecImplementation.INTEL_VPL,
-            "libaom",
+            # AV1 のソフトウェアデコーダーは dav1d
+            "dav1d",
             SoraVideoCodecImplementation.INTERNAL,
         ),
         (
             "AV1",
             SoraVideoCodecType.AV1,
+            # AV1 のソフトウェアエンコーダーは libaom
             "libaom",
             SoraVideoCodecImplementation.INTERNAL,
             "libvpl",
