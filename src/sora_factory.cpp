@@ -35,8 +35,6 @@ SoraFactory::SoraFactory(
   sora::SoraClientContextConfig context_config;
   context_config.video_codec_factory_config.capability_config.openh264_path =
       openh264;
-  context_config.video_codec_factory_config.capability_config.vpl_session =
-      sora::VplSession::Create();
   context_config.video_codec_factory_config.capability_config.cuda_context =
       sora::CudaContext::Create();
   context_config.video_codec_factory_config.preference = video_codec_preference;
