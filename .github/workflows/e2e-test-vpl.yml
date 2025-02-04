@@ -42,7 +42,7 @@ jobs:
       - run: uv python pin 3.13
       - run: uv sync
       - run: uv run python run.py ubuntu-24.04_x86_64
-      - run: uv run pytest tests/test_intel_vpl.py::test_intel_vpl_simulcast[AV1-libvpl-5000-1920-1080-3] -s
+      - run: uv run pytest tests/test_intel_vpl.py -s
 
   # slack_notify_succeeded:
   #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
