@@ -6,12 +6,10 @@ import pytest
 from client import SoraClient, SoraRole
 
 from sora_sdk import (
-    SoraLoggingSeverity,
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
     SoraVideoCodecType,
     create_video_codec_preference_from_implementation,
-    enable_libwebrtc_log,
     get_video_codec_capability,
 )
 
@@ -39,7 +37,6 @@ def test_preference(setup):
 
 
 def test_preference_invalid(setup):
-    enable_libwebrtc_log(SoraLoggingSeverity.INFO)
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
