@@ -18,6 +18,10 @@
   - @voluntas
 - [CHANGE] `ca_cert`, `client_cert`, `client_key` の指定には `str` ではなく `bytes` を使うようにする
   - @tnoho
+- [CHANGE] `Sora()` の引数から `use_hardware_encoder` を削除
+  - デフォルトでは常に libwebrtc 実装のエンコーダ/デコーダを利用します
+  - ハードウェアエンコーダ/デコーダを利用するには `video_codec_preference` を利用して下さい
+  - @melpon
 - [ADD] `send_message()` を追加する
   - `on_message()` と合わせる
   - `send_data_channel()` のシンタックスシュガー
@@ -60,6 +64,15 @@
   - @melpon
 - [ADD] Encoded Transform に対応する
   - @tnoho
+- [ADD] `Sora()` の引数に `video_codec_preference` を追加
+  - @melpon
+- [ADD] video_codec_preference を構築するために必要な以下のクラス、関数、enum を追加
+  - `SoraVideoCodecCapability`
+  - `SoraVideoCodecPreference`
+  - `get_video_codec_capability()`
+  - `create_video_codec_preference_from_implementation()`
+  - `SoraVideoCodecType`
+  - @melpon
 - [UPDATE] nanobind を `2.4.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.1.0` に上げる
