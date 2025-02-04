@@ -14,15 +14,23 @@ from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, Sor
 @pytest.mark.parametrize(
     (
         "video_codec_type",
+        "preference_codec_type",
         "expected_implementation",
+        "preference_codec_implementation",
     ),
     [
-        ("AV1", "libvpl"),
-        ("H264", "libvpl"),
-        ("H265", "libvpl"),
+        ("AV1", SoraVideoCodecType.AV1, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
+        ("H264", SoraVideoCodecType.H264, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
+        ("H265", SoraVideoCodecType.H265, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
     ],
 )
-def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
+def test_intel_vpl_sendonly(
+    setup,
+    video_codec_type,
+    preference_codec_type,
+    expected_codec_implementation,
+    preference_codec_implementation,
+):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -40,16 +48,8 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                    type=preference_codec_type,
+                    encoder=preference_codec_implementation,
                 ),
             ]
         ),
@@ -84,7 +84,7 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
+    assert outbound_rtp_stats["encoderImplementation"] == expected_codec_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
@@ -254,15 +254,23 @@ def test_intel_vpl_simulcast(
 @pytest.mark.parametrize(
     (
         "video_codec_type",
-        "expected_implementation",
+        "preference_codec_type",
+        "expected_codec_implementation",
+        "preference_codec_implementation",
     ),
     [
-        ("AV1", "libvpl"),
-        ("H264", "libvpl"),
-        ("H265", "libvpl"),
+        ("AV1", SoraVideoCodecType.AV1, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
+        ("H264", SoraVideoCodecType.H264, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
+        ("H265", SoraVideoCodecType.H265, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
     ],
 )
-def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implementation):
+def test_intel_vpl_sendonly_recvonly(
+    setup,
+    video_codec_type,
+    preference_codec_type,
+    expected_codec_implementation,
+    preference_codec_implementation,
+):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -280,16 +288,8 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                    type=preference_codec_type,
+                    encoder=preference_codec_implementation,
                 ),
             ]
         ),
@@ -304,16 +304,8 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
-                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
+                    type=preference_codec_type,
+                    decoder=preference_codec_implementation,
                 ),
             ]
         ),
@@ -345,7 +337,7 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
+    assert outbound_rtp_stats["encoderImplementation"] == expected_codec_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
@@ -356,7 +348,7 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implement
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
-    assert inbound_rtp_stats["decoderImplementation"] == expected_implementation
+    assert inbound_rtp_stats["decoderImplementation"] == expected_codec_implementation
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
 
@@ -519,3 +511,127 @@ def test_intel_vpl_av1_mini_resolution(
     assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
+
+
+@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+@pytest.mark.parametrize(
+    (
+        "video_codec_type",
+        "preference_codec_type",
+        "expected_encoder_implementation",
+        "preference_encoder_implementation",
+        "expected_decoder_implementation",
+        "preference_decoder_implementation",
+    ),
+    [
+        (
+            "AV1",
+            SoraVideoCodecType.AV1,
+            "libvpl",
+            SoraVideoCodecImplementation.INTEL_VPL,
+            "libaom",
+            SoraVideoCodecImplementation.INTERNAL,
+        ),
+        (
+            "AV1",
+            SoraVideoCodecType.AV1,
+            "libaom",
+            SoraVideoCodecImplementation.INTERNAL,
+            "libvpl",
+            SoraVideoCodecImplementation.INTEL_VPL,
+        ),
+    ],
+)
+def test_intel_vpl_sendonly_recvonly_sw_hw(
+    setup,
+    video_codec_type,
+    preference_codec_type,
+    expected_encoder_implementation,
+    preference_encoder_implementation,
+    expected_decoder_implementation,
+    preference_decoder_implementation,
+):
+    """
+    - 送信はソフトウェアだけど、受信はハードウェアでやる
+    - 送信はハードウェアだけど、受信はソフトウェアでやる
+    """
+    signaling_urls = setup.get("signaling_urls")
+    channel_id_prefix = setup.get("channel_id_prefix")
+    metadata = setup.get("metadata")
+
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+
+    sendonly = SoraClient(
+        signaling_urls,
+        SoraRole.SENDONLY,
+        channel_id,
+        audio=False,
+        video=True,
+        video_codec_type=video_codec_type,
+        metadata=metadata,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=preference_codec_type,
+                    encoder=preference_encoder_implementation,
+                ),
+            ]
+        ),
+    )
+    sendonly.connect(fake_video=True)
+
+    recvonly = SoraClient(
+        signaling_urls,
+        SoraRole.RECVONLY,
+        channel_id,
+        metadata=metadata,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=preference_codec_type,
+                    decoder=preference_decoder_implementation,
+                ),
+            ]
+        ),
+    )
+    recvonly.connect()
+
+    time.sleep(5)
+
+    sendonly_stats = sendonly.get_stats()
+    recvonly_stats = recvonly.get_stats()
+
+    sendonly.disconnect()
+    recvonly.disconnect()
+
+    # offer の sdp に video_codec_type が含まれているかどうかを確認している
+    assert sendonly.offer_message is not None
+    assert "sdp" in sendonly.offer_message
+    assert video_codec_type in sendonly.offer_message["sdp"]
+
+    # answer の sdp に video_codec_type が含まれているかどうかを確認している
+    assert sendonly.answer_message is not None
+    assert "sdp" in sendonly.answer_message
+    assert video_codec_type in sendonly.answer_message["sdp"]
+
+    # codec が無かったら StopIteration 例外が上がる
+    sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
+    # H.264/H.265 が採用されているかどうか確認する
+    assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+    assert outbound_rtp_stats["encoderImplementation"] == expected_encoder_implementation
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
+
+    # codec が無かったら StopIteration 例外が上がる
+    recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
+    # H.264/H.265 が採用されているかどうか確認する
+    assert recvonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
+
+    # inbound-rtp が無かったら StopIteration 例外が上がる
+    inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
+    assert inbound_rtp_stats["decoderImplementation"] == expected_decoder_implementation
+    assert inbound_rtp_stats["bytesReceived"] > 0
+    assert inbound_rtp_stats["packetsReceived"] > 0
