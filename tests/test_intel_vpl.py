@@ -15,7 +15,7 @@ from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, Sor
     (
         "video_codec_type",
         "preference_codec_type",
-        "expected_implementation",
+        "expected_codec_implementation",
         "preference_codec_implementation",
     ),
     [
