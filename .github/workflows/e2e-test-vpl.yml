@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - ".github/workflows/e2e-test-vpl.yml"
-      - "tests/test_vpl.py"
+      - "tests/test_intel_vpl.py"
     # paths-ignore:
     #   - "**.md"
   schedule:
