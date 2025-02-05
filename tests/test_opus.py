@@ -8,7 +8,10 @@ from client import SoraClient, SoraRole
 # opus params のテストは test_signaling.py にある
 
 
-@pytest.mark.skip(reason="Opus の mono/16khz は SDP で指定すると正常に libwebrtc が動作しない")
+# 失敗する前提のテスト、成功したらエラーになる
+@pytest.mark.xfail(
+    reason="Opus の mono/16khz は SDP で指定すると正常に libwebrtc が動作しない", strict=True
+)
 def test_sendonly_audio_opus_params_16khz_mono(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -37,7 +40,7 @@ def test_sendonly_audio_opus_params_16khz_mono(setup):
         assert "audio" in sendonly.connect_message
         assert "opus_params" in sendonly.connect_message["audio"]
 
-        print(sendonly.connect_message["audio"])
+        print(sendonly.connect_message)
 
         assert sendonly.offer_message is not None
         assert "sdp" in sendonly.offer_message
