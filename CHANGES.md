@@ -141,6 +141,8 @@
   - @voluntas
 - [ADD] Intel VPL の E2E テストに AV1 を追加する
   - @voluntas
+- [ADD] Opus 16khz / mono のテストを追加する
+  - @voluntas
 - [FIX] run.py で local_sora_cpp_sdk_dir を設定した際に boost が引けなくなってしまっている問題を修正する
   - @tnoho
 - [FIX] examples の設定に virtual = true を指定するようにする
