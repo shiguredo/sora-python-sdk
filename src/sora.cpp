@@ -74,7 +74,6 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
   if (bundle_id) {
     config.bundle_id = *bundle_id;
   }
-  config.multistream = true;
   if (video) {
     config.video = *video;
   }
