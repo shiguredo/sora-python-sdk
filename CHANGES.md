@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] シグナリング接続時の ``"type": "connect"`` 時に ``multistream`` 項目を送らないようにする
+  - Sora 2022.1.0 以前には接続できなくなる
+  - TODO: legacy_multistream という項目を追加して multistream: true を遅れるようにするかどうか検討する
+  - @voluntas
 - [CHANGE] macOS Sonoma 13 のサポートを終了する
   - @voluntas
 - [CHANGE] `client_cert` と `client_key` の指定にはパスではなく中身の文字列を指定するようにする
