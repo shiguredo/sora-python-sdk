@@ -39,13 +39,20 @@ def test_sendonly_audio_opus_params_16khz_mono(setup):
         assert sendonly.connect_message is not None
         assert "audio" in sendonly.connect_message
         assert "opus_params" in sendonly.connect_message["audio"]
-
-        print(sendonly.connect_message)
+        assert sendonly.connect_message["audio"]["opus_params"]["channels"] == 1
+        assert sendonly.connect_message["audio"]["opus_params"]["stereo"] is False
+        assert sendonly.connect_message["audio"]["opus_params"]["maxplaybackrate"] == 16000
+        assert sendonly.connect_message["audio"]["opus_params"]["sprop_stereo"] is False
 
         assert sendonly.offer_message is not None
         assert "sdp" in sendonly.offer_message
-        ## usedtx=1 がない事を確認する
-        assert "usedtx=1" not in sendonly.offer_message["sdp"]
+
+        # これがそもそも 48000/1 では WebRTC にはどうなのか
+        assert "opus/48000/1" in sendonly.offer_message["sdp"]
+
+        assert "maxplaybackrate=16000" in sendonly.offer_message["sdp"]
+        assert "stereo=0" in sendonly.offer_message["sdp"]
+        assert "sprop-stereo=0" in sendonly.offer_message["sdp"]
 
         sendonly_stats = sendonly.get_stats()
 
