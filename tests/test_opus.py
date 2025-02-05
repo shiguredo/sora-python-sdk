@@ -2,17 +2,17 @@ import sys
 import time
 import uuid
 
-import pytest
 from client import SoraClient, SoraRole
 
 # opus params のテストは test_signaling.py にある
 
+# https://tex2e.github.io/rfc-translater/html/rfc7587.html
 
-# 失敗する前提のテスト、成功したらエラーになる
-@pytest.mark.xfail(
-    reason="Opus の mono/16khz は SDP で指定すると正常に libwebrtc が動作しない", strict=True
-)
+
 def test_sendonly_audio_opus_params_16khz_mono(setup):
+    """
+    SDP では 48000/2 だが、Opus の設定で 16000/1 を配信してみる
+    """
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -26,9 +26,11 @@ def test_sendonly_audio_opus_params_16khz_mono(setup):
         audio=True,
         audio_codec_type="OPUS",
         audio_opus_params={
-            "channels": 1,
-            "stereo": False,
+            #
             "maxplaybackrate": 16000,
+            # 受信のみに有効
+            "stereo": False,
+            # 送信のみに有効
             "sprop_stereo": False,
         },
         video=False,
@@ -39,7 +41,6 @@ def test_sendonly_audio_opus_params_16khz_mono(setup):
         assert sendonly.connect_message is not None
         assert "audio" in sendonly.connect_message
         assert "opus_params" in sendonly.connect_message["audio"]
-        assert sendonly.connect_message["audio"]["opus_params"]["channels"] == 1
         assert sendonly.connect_message["audio"]["opus_params"]["stereo"] is False
         assert sendonly.connect_message["audio"]["opus_params"]["maxplaybackrate"] == 16000
         assert sendonly.connect_message["audio"]["opus_params"]["sprop_stereo"] is False
@@ -47,8 +48,7 @@ def test_sendonly_audio_opus_params_16khz_mono(setup):
         assert sendonly.offer_message is not None
         assert "sdp" in sendonly.offer_message
 
-        # これがそもそも 48000/1 では WebRTC にはどうなのか
-        assert "opus/48000/1" in sendonly.offer_message["sdp"]
+        assert "opus/48000/2" in sendonly.offer_message["sdp"]
 
         assert "maxplaybackrate=16000" in sendonly.offer_message["sdp"]
         assert "stereo=0" in sendonly.offer_message["sdp"]
