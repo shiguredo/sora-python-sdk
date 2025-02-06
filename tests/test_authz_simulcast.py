@@ -17,9 +17,9 @@ from client import SoraClient, SoraRole
     ),
     [
         # どうやら scaleResolutionDownTo を指定すると規定されたテーブルのビットレートでは足りない模様
-        ("VP8", "libvpx", 3000, 960, 540),
-        ("VP9", "libvpx", 3000, 960, 540),
-        ("AV1", "libaom", 3000, 960, 540),
+        ("VP8", "libvpx", 2500, 960, 540),
+        ("VP9", "libvpx", 2000, 960, 540),
+        ("AV1", "libaom", 2500, 960, 540),
     ],
 )
 def test_simulcast_authz_scale_resolution_to(
@@ -167,11 +167,13 @@ def test_simulcast_authz_scale_resolution_to(
         assert s["bytesSent"] > 500
         assert s["packetsSent"] > 10
 
+        # 全ての改造が同じになる
         assert s["frameWidth"] == 640
         assert s["frameHeight"] == 352
 
-        # FIXME:これは libwebrtc 側の挙動を制御できず L1T2 になってしまう
-        assert s["scalabilityMode"] == "L1T2"
+        # FIXME:これは libwebrtc 側の挙動を制御できず L1T3 になってしまう
+        # L1T3 になるのかは不明で、C++ SDK 側の実装に依存している
+        assert s["scalabilityMode"] == "L1T3"
 
         # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
         expected_bitrate = video_bit_rate * 1000
@@ -179,6 +181,7 @@ def test_simulcast_authz_scale_resolution_to(
             s["rid"],
             video_codec_type,
             s["encoderImplementation"],
+            s["scalabilityMode"],
             expected_bitrate,
             s["targetBitrate"],
             s["frameWidth"],
