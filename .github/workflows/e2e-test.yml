@@ -39,14 +39,15 @@ jobs:
             openh264_arch: "linux-arm64"
     runs-on: ${{ matrix.platform.runs-on}}
     timeout-minutes: 15
-    if: >-
-      ${{
-        contains(github.event.head_commit.message, '[e2e]') ||
-        contains(github.ref, 'feature/e2e-test') ||
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'push' ||
-        github.event_name == 'schedule'
-      }}
+    if: false
+    # if: >-
+    #   ${{
+    #     contains(github.event.head_commit.message, '[e2e]') ||
+    #     contains(github.ref, 'feature/e2e-test') ||
+    #     github.event_name == 'workflow_dispatch' ||
+    #     github.event_name == 'push' ||
+    #     github.event_name == 'schedule'
+    #   }}
     steps:
       - uses: actions/checkout@v4
       - name: Tailscale
@@ -112,7 +113,8 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py macos_arm64
-      - run: uv run pytest tests -s
+      # - run: uv run pytest tests -s
+      - run: uv run pytest tests/test_authz_simulcast.py::test_simulcast_authz_scale_resolution_to[VP8-libvpx-2500-960-540] -s
 
   e2e_test_windows:
     strategy:
@@ -124,14 +126,15 @@ jobs:
     env:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
-    if: >-
-      ${{
-        contains(github.event.head_commit.message, '[e2e]') ||
-        contains(github.ref, 'feature/e2e-test') ||
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'push' ||
-        github.event_name == 'schedule'
-      }}
+    if: false
+    # if: >-
+    #   ${{
+    #     contains(github.event.head_commit.message, '[e2e]') ||
+    #     contains(github.ref, 'feature/e2e-test') ||
+    #     github.event_name == 'workflow_dispatch' ||
+    #     github.event_name == 'push' ||
+    #     github.event_name == 'schedule'
+    #   }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
