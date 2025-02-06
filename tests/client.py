@@ -8,7 +8,6 @@ from typing import Any, Callable, Optional
 
 import numpy
 
-import sora_sdk
 from sora_sdk import (
     Sora,
     SoraAudioSink,
@@ -87,7 +86,7 @@ class SoraClient:
         self._video_width: int = video_width
         self._video_height: int = video_height
 
-        sora_sdk.enable_libwebrtc_log(sora_sdk.SoraLoggingSeverity.VERBOSE)
+        # sora_sdk.enable_libwebrtc_log(sora_sdk.SoraLoggingSeverity.VERBOSE)
 
         self._sora: Sora = Sora(
             openh264=openh264_path, video_codec_preference=video_codec_preference
