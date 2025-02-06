@@ -171,9 +171,9 @@ def test_simulcast_authz_scale_resolution_to(
         assert s["frameWidth"] == 640
         assert s["frameHeight"] == 352
 
-        # FIXME:これは libwebrtc 側の挙動を制御できず L1T3 になってしまう
-        # L1T3 になるのかは不明で、C++ SDK 側の実装に依存している
-        assert s["scalabilityMode"] == "L1T3"
+        # FIXME: これは libwebrtc 側の挙動を制御できず L1T2 になってしまう
+        # FIXME: さらに macOS では L1T3 になってしまう
+        assert s["scalabilityMode"] == "L1T2"
 
         # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
         expected_bitrate = video_bit_rate * 1000
