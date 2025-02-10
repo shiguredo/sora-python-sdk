@@ -41,13 +41,6 @@ def test_get_codec_capability(setup):
 
     codecs = []
     for e in capability.engines:
-        if e.name == SoraVideoCodecImplementation.INTEL_VPL:
-            intel_vpl_available = True
-        if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
-            cisco_openh264_available = True
-        if e.name == SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK:
-            nvidia_video_codec_sdk_available = True
-
         if sys.platform == "linux":
             # Intel VPL があったら Open H.264 は採用しない
             if intel_vpl_available and e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
