@@ -10,7 +10,46 @@ from sora_sdk import (
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
     SoraVideoCodecType,
+    get_video_codec_capability,
 )
+
+
+@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+def test_intel_vpl_available(setup):
+    capability = get_video_codec_capability()
+
+    intel_vpl_available = False
+    for e in capability.engines:
+        if e.name == SoraVideoCodecImplementation.INTEL_VPL:
+            intel_vpl_available = True
+
+    assert intel_vpl_available is True
+
+    for e in capability.engines:
+        if e.name == SoraVideoCodecImplementation.INTEL_VPL:
+            
+            # 対応コーデックは 5 種類
+            assert len(e.codecs) == 5
+
+            for c in e.codecs:
+                match c.type:
+                    case SoraVideoCodecType.VP8:
+                        assert c.decoder is False
+                        assert c.encoder is False
+                    case SoraVideoCodecType.VP9:
+                        assert c.decoder is False
+                        assert c.encoder is False
+                    case SoraVideoCodecType.AV1:
+                        assert c.decoder is True
+                        assert c.encoder is True
+                    case SoraVideoCodecType.H264:
+                        assert c.decoder is True
+                        assert c.encoder is True
+                    case SoraVideoCodecType.H265:
+                        assert c.decoder is True
+                        assert c.encoder is True
+                    case _:
+                        pytest.fail(f"未実装の codec_type: {c.type}")
 
 
 # @pytest.mark.skip()
