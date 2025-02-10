@@ -38,7 +38,7 @@ def test_get_codec_capability(setup):
         case "win32":
             # SDK 的には Windows は非対応だが GitHub Actions の E2E テストの OpenH264 のパスは指定してある
             assert openh264_path is not None
-            assert cisco_openh264_available is False
+            assert cisco_openh264_available is True
 
     codecs = []
     for e in capability.engines:

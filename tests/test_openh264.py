@@ -12,7 +12,9 @@ from sora_sdk import (
 )
 
 
-@pytest.mark.skipif(sys.platform not in ["darwin", "linux"], reason="macOSとLinuxでのみ実行する")
+@pytest.mark.skipif(
+    sys.platform not in ["darwin", "linux", "win32"], reason="macOSとLinuxでのみ実行する"
+)
 def test_openh264_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
