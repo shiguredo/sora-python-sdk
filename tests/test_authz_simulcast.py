@@ -178,6 +178,7 @@ def test_simulcast_authz_scale_resolution_to(
             s["rid"],
             video_codec_type,
             s["encoderImplementation"],
+            s["scalabilityMode"],
             expected_bitrate,
             s["targetBitrate"],
             s["frameWidth"],
