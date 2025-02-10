@@ -9,8 +9,9 @@ from sora_sdk import (
 )
 
 
-# この実装では NVIDIA Video Codec SDK を優先する
-# この実装では OpenH264 を最優先にする
+# このテストでは Linux では NVIDIA Video Codec SDK > Intel VPL > OpenH264 の順で優先される
+# このテストでは Windows では NVIDIA Video Codec SDK > Intel VPL の順で優先される
+# このテストでは macOS では Video Toolbox >OpenH264 の順で優先される
 def test_get_codec_capability(setup):
     openh264_path = setup.get("openh264_path")
     capability = get_video_codec_capability(openh264_path)
@@ -27,10 +28,19 @@ def test_get_codec_capability(setup):
         if e.name == SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK:
             nvidia_video_codec_sdk_available = True
 
+    match sys.platform:
+        case "linux":
+            assert openh264_path is not None
+            assert cisco_openh264_available is True
+        case "darwin":
+            assert openh264_path is not None
+            assert cisco_openh264_available is True
+        case "win32":
+            assert openh264_path is None
+            assert cisco_openh264_available is False
+
     codecs = []
     for e in capability.engines:
-        print(e.name)
-
         if e.name == SoraVideoCodecImplementation.INTEL_VPL:
             intel_vpl_available = True
         if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
@@ -57,18 +67,15 @@ def test_get_codec_capability(setup):
             ):
                 continue
 
-        # macOS では INTERNAL で Video Toolbox が利用されるので OpenH264 は採用しないようにする
+        # macOS では INTERNAL の Video Toolbox が利用されるので OpenH264 は採用しないようにする
         if sys.platform == "darwin":
             if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
                 continue
 
         for c in e.codecs:
             if c.decoder or c.encoder:
-                print(c.type)
-                print(c.decoder)
-                print(c.encoder)
-                # encoder/decoder が True の場合採用する
-                if c.decoder and c.encoder:
+                # encoder/decoder どちらかが true であれば採用する
+                if c.decoder or c.encoder:
                     codecs.append(
                         SoraVideoCodecPreference.Codec(
                             type=c.type,
@@ -82,8 +89,6 @@ def test_get_codec_capability(setup):
         # print(e.parameters.version)
         # print(e.parameters.vpl_impl)
         # print(e.parameters.vpl_impl_value)
-
-    print(codecs)
 
     Sora(
         video_codec_preference=SoraVideoCodecPreference(
