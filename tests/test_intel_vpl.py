@@ -469,6 +469,94 @@ def test_intel_vpl_vp9_sendonly(setup, video_codec_type, expected_implementation
     assert outbound_rtp_stats["packetsSent"] > 0
 
 
+@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+def test_intel_vpl_vp9_sendonly_recvonly(setup):
+    """
+    VPL VP9 はデコーダーは利用できるので、そのテスト
+    """
+    signaling_urls = setup.get("signaling_urls")
+    channel_id_prefix = setup.get("channel_id_prefix")
+    metadata = setup.get("metadata")
+
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+
+    sendonly = SoraClient(
+        signaling_urls,
+        SoraRole.SENDONLY,
+        channel_id,
+        audio=False,
+        video=True,
+        video_codec_type="VP9",
+        metadata=metadata,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.VP9,
+                    # VPL で VP9 Encoder は正常に動作しないので無効化しているので INTERNAL を指定
+                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                ),
+            ]
+        ),
+    )
+    sendonly.connect(fake_video=True)
+
+    recvonly = SoraClient(
+        signaling_urls,
+        SoraRole.RECVONLY,
+        channel_id,
+        metadata=metadata,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.VP9,
+                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
+    )
+    recvonly.connect()
+
+    time.sleep(5)
+
+    sendonly_stats = sendonly.get_stats()
+    recvonly_stats = recvonly.get_stats()
+
+    sendonly.disconnect()
+    recvonly.disconnect()
+
+    # offer の sdp に video_codec_type が含まれているかどうかを確認している
+    assert sendonly.offer_message is not None
+    assert "sdp" in sendonly.offer_message
+    assert "VP9" in sendonly.offer_message["sdp"]
+
+    # answer の sdp に video_codec_type が含まれているかどうかを確認している
+    assert sendonly.answer_message is not None
+    assert "sdp" in sendonly.answer_message
+    assert "VP9" in sendonly.answer_message["sdp"]
+
+    # codec が無かったら StopIteration 例外が上がる
+    sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
+    # VP9 が採用されているかどうか確認する
+    assert sendonly_codec_stats["mimeType"] == "video/VP9"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+    assert outbound_rtp_stats["encoderImplementation"] == "libvpx"
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
+
+    # codec が無かったら StopIteration 例外が上がる
+    recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
+    # VP9 が採用されているかどうか確認する
+    assert recvonly_codec_stats["mimeType"] == "video/VP9"
+
+    # inbound-rtp が無かったら StopIteration 例外が上がる
+    inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
+    assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
+    assert inbound_rtp_stats["bytesReceived"] > 0
+    assert inbound_rtp_stats["packetsReceived"] > 0
+
+
 @pytest.mark.xfail(
     strict=True, reason="AV1 は解像度が 120x90 以下の場合に正常に処理ができない問題がある"
 )
