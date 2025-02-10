@@ -19,6 +19,7 @@ from client import SoraClient, SoraRole
         # どうやら scaleResolutionDownTo を指定すると規定されたテーブルのビットレートでは足りない模様
         ("VP8", "libvpx", 2500, 960, 540),
         ("VP9", "libvpx", 2000, 960, 540),
+        ("AV1", "libaom", 2500, 960, 540),
     ],
 )
 def test_simulcast_authz_scale_resolution_to(
@@ -91,6 +92,43 @@ def test_simulcast_authz_scale_resolution_to(
     assert video_codec_type in sendonly.offer_message["sdp"]
     assert "a=simulcast:recv r0;r1;r2" in sendonly.offer_message["sdp"]
     sendonly_stats = sendonly.get_stats()
+
+    assert "encodings" in sendonly.offer_message
+    assert len(sendonly.offer_message["encodings"]) == 3
+
+    assert sendonly.offer_message["encodings"][0]["rid"] == simulcast_encodings[0]["rid"]
+    assert sendonly.offer_message["encodings"][1]["rid"] == simulcast_encodings[1]["rid"]
+    assert sendonly.offer_message["encodings"][2]["rid"] == simulcast_encodings[2]["rid"]
+
+    assert sendonly.offer_message["encodings"][0]["active"] == simulcast_encodings[0]["active"]
+    assert sendonly.offer_message["encodings"][1]["active"] == simulcast_encodings[1]["active"]
+    assert sendonly.offer_message["encodings"][2]["active"] == simulcast_encodings[2]["active"]
+
+    assert (
+        sendonly.offer_message["encodings"][0]["scaleResolutionDownTo"]["maxWidth"]
+        == simulcast_encodings[0]["scaleResolutionDownTo"]["maxWidth"]
+    )
+    assert (
+        sendonly.offer_message["encodings"][1]["scaleResolutionDownTo"]["maxWidth"]
+        == simulcast_encodings[1]["scaleResolutionDownTo"]["maxWidth"]
+    )
+    assert (
+        sendonly.offer_message["encodings"][2]["scaleResolutionDownTo"]["maxWidth"]
+        == simulcast_encodings[2]["scaleResolutionDownTo"]["maxWidth"]
+    )
+
+    assert (
+        sendonly.offer_message["encodings"][0]["scalabilityMode"]
+        == simulcast_encodings[0]["scalabilityMode"]
+    )
+    assert (
+        sendonly.offer_message["encodings"][1]["scalabilityMode"]
+        == simulcast_encodings[1]["scalabilityMode"]
+    )
+    assert (
+        sendonly.offer_message["encodings"][2]["scalabilityMode"]
+        == simulcast_encodings[2]["scalabilityMode"]
+    )
 
     sendonly.disconnect()
 
