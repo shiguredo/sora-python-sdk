@@ -26,6 +26,8 @@
   - デフォルトでは常に libwebrtc 実装のエンコーダ/デコーダを利用します
   - ハードウェアエンコーダ/デコーダを利用するには `video_codec_preference` を利用して下さい
   - @melpon
+- [ADD] Windows で OpenH264 が利用できるようにする
+  - @melpon
 - [ADD] `send_message()` を追加する
   - `on_message()` と合わせる
   - `send_data_channel()` のシンタックスシュガー
