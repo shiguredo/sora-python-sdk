@@ -15,24 +15,24 @@ import pytest
 # )
 
 
-@pytest.mark.skipif(os.environ.get("AMD_VCN") is None, reason="AMD VCN でのみ実行する")
-def test_amd_vcn_check(setup):
+@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
+def test_amd_amf_check(setup):
     pass
 
 
-# @pytest.mark.skipif(os.environ.get("AMD_VCN") is None, reason="AMD VCN でのみ実行する")
+# @pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 # def test_amd_vcn_available(setup):
 #     capability = get_video_codec_capability()
 #
 #     intel_vpl_available = False
 #     for e in capability.engines:
-#         if e.name == SoraVideoCodecImplementation.AMD_VCN:
+#         if e.name == SoraVideoCodecImplementation.AMD_AMF:
 #             intel_vpl_available = True
 #
 #     assert intel_vpl_available is True
 #
 #     for e in capability.engines:
-#         if e.name == SoraVideoCodecImplementation.AMD_VCN:
+#         if e.name == SoraVideoCodecImplementation.AMD_AMF:
 #             # 対応コーデックは 5 種類
 #             assert len(e.codecs) == 5
 #
@@ -57,7 +57,7 @@ def test_amd_vcn_check(setup):
 #                         pytest.fail(f"未実装の codec_type: {c.type}")
 #
 #
-# @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+# @pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 # @pytest.mark.parametrize(
 #     (
 #         "video_codec_type",
@@ -66,10 +66,10 @@ def test_amd_vcn_check(setup):
 #         "preference_codec_implementation",
 #     ),
 #     [
-#         ("VP9", SoraVideoCodecType.VP9, "amd_vcn", SoraVideoCodecImplementation.AMD_VCN),
-#         ("AV1", SoraVideoCodecType.AV1, "amd_vcn", SoraVideoCodecImplementation.AMD_VCN),
-#         ("H264", SoraVideoCodecType.H264, "amd_vcn", SoraVideoCodecImplementation.AMD_VCN),
-#         ("H265", SoraVideoCodecType.H265, "amd_vcn", SoraVideoCodecImplementation.AMD_VCN),
+#         ("VP9", SoraVideoCodecType.VP9, "amd_amf", SoraVideoCodecImplementation.AMD_AMF),
+#         ("AV1", SoraVideoCodecType.AV1, "amd_amf", SoraVideoCodecImplementation.AMD_AMF),
+#         ("H264", SoraVideoCodecType.H264, "amd_amf", SoraVideoCodecImplementation.AMD_AMF),
+#         ("H265", SoraVideoCodecType.H265, "amd_amf", SoraVideoCodecImplementation.AMD_AMF),
 #     ],
 # )
 # def test_intel_vpl_sendonly(
