@@ -34,12 +34,15 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
   - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
   - Intel VPL (AV1 / H.264 / H.265)
+    - Ubuntu x86_64 / Windows x86_64 で利用できる
   - Apple Video Toolbox (H.264 / H.265)
+    - macOS arm64 で利用できる
   - NVIDIA Video Codec SDK (VP9 / H.264 / H.265)
+    - Ubuntu x86_64 / Windows x86_64 で利用できる
   - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
   - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
-  - Ubuntu / Windows / macOS で利用できる
+  - Ubuntu x86_64 / Ubuntu arm64 / Windows x86_64 / macOS arm64 で利用できる
 - 音声デバイス処理に [sounddevice](https://pypi.org/project/sounddevice/) などが利用できる
 - 映像デバイス処理に [opencv-python](https://pypi.org/project/opencv-python/) などが利用できる
 - 音声認識などの入力に受信した音声を利用できる
