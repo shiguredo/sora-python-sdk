@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - ".github/workflows/e2e-test-vcn.yml"
-      - "tests/test_intel_vcn.py"
+      - "tests/test_amd_vcn.py"
     # paths-ignore:
     #   - "**.md"
   schedule:
@@ -18,23 +18,20 @@ env:
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
-  INTEL_VPL: true
-  # libva のログ出力が邪魔なので 0 にしているがデバッグ時は 2 などにする
-  LIBVA_MESSAGING_LEVEL: 0
+  AMD_VCN: true
 
 jobs:
   e2e_test_vcn:
-    if: false
     runs-on: [self-hosted, linux, x64, AMD-VCN]
     timeout-minutes: 15
-    # if: >-
-    #   ${{
-    #     contains(github.event.head_commit.message, '[e2e]') ||
-    #     contains(github.ref, 'feature/e2e-test') ||
-    #     github.event_name == 'workflow_dispatch' ||
-    #     github.event_name == 'push' ||
-    #     github.event_name == 'schedule'
-    #   }}
+    if: >-
+      ${{
+        contains(github.event.head_commit.message, '[e2e]') ||
+        contains(github.ref, 'feature/e2e-test') ||
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'push' ||
+        github.event_name == 'schedule'
+      }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
