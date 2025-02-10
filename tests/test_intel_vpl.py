@@ -35,10 +35,11 @@ def test_intel_vpl_available(setup):
                     case SoraVideoCodecType.VP8:
                         assert c.decoder is False
                         assert c.encoder is False
-                    # VPL 的に VP9 は利用できるが、 Sora Python SDK では VPL VP9 は利用できない
                     case SoraVideoCodecType.VP9:
                         assert c.decoder is True
-                        assert c.encoder is True
+                        # VPL 的に VP9 は利用できるが、
+                        # Sora Python SDK では VPL VP9 Encoder が正常に動作しないため無効
+                        assert c.encoder is False
                     case SoraVideoCodecType.AV1:
                         assert c.decoder is True
                         assert c.encoder is True
@@ -52,7 +53,6 @@ def test_intel_vpl_available(setup):
                         pytest.fail(f"未実装の codec_type: {c.type}")
 
 
-# @pytest.mark.skip()
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
     (
@@ -62,7 +62,8 @@ def test_intel_vpl_available(setup):
         "preference_codec_implementation",
     ),
     [
-        ("VP9", SoraVideoCodecType.VP9, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
+        # VPL では VP9 が正常に動作しない
+        # ("VP9", SoraVideoCodecType.VP9, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
         ("AV1", SoraVideoCodecType.AV1, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
         ("H264", SoraVideoCodecType.H264, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
         ("H265", SoraVideoCodecType.H265, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
@@ -293,7 +294,6 @@ def test_intel_vpl_simulcast(
             assert s["packetsSent"] <= 2
 
 
-# @pytest.mark.skip()
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
     (
