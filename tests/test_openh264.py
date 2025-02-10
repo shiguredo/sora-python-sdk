@@ -12,9 +12,6 @@ from sora_sdk import (
 )
 
 
-@pytest.mark.skipif(
-    sys.platform not in ["darwin", "linux", "win32"], reason="macOSとLinuxでのみ実行する"
-)
 def test_openh264_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -90,7 +87,6 @@ def test_openh264_sendonly_recvonly(setup):
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.mark.skipif(sys.platform not in ["darwin", "linux"], reason="macOSとLinuxでのみ実行する")
 @pytest.mark.parametrize(
     (
         "video_codec_type",
