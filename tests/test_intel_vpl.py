@@ -27,7 +27,6 @@ def test_intel_vpl_available(setup):
 
     for e in capability.engines:
         if e.name == SoraVideoCodecImplementation.INTEL_VPL:
-            
             # 対応コーデックは 5 種類
             assert len(e.codecs) == 5
 
@@ -37,8 +36,8 @@ def test_intel_vpl_available(setup):
                         assert c.decoder is False
                         assert c.encoder is False
                     case SoraVideoCodecType.VP9:
-                        assert c.decoder is False
-                        assert c.encoder is False
+                        assert c.decoder is True
+                        assert c.encoder is True
                     case SoraVideoCodecType.AV1:
                         assert c.decoder is True
                         assert c.encoder is True
@@ -62,6 +61,7 @@ def test_intel_vpl_available(setup):
         "preference_codec_implementation",
     ),
     [
+        ("VP9", SoraVideoCodecType.VP9, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
         ("AV1", SoraVideoCodecType.AV1, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
         ("H264", SoraVideoCodecType.H264, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
         ("H265", SoraVideoCodecType.H265, "libvpl", SoraVideoCodecImplementation.INTEL_VPL),
