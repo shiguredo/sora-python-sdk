@@ -20,6 +20,7 @@ env:
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.5.0
 
 jobs:
   # まず pyi を生成する
@@ -143,9 +144,9 @@ jobs:
       - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.10' }}
         name: Download openh264
         run: |
-          curl -LO http://ciscobinary.openh264.org/libopenh264-2.4.1-linux64.7.so.bz2
-          bzip2 -d libopenh264-2.4.1-linux64.7.so.bz2
-          mv libopenh264-2.4.1-linux64.7.so libopenh264.so
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-linux64.7.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
       - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.10' }}
         run: uv run pytest tests -s
