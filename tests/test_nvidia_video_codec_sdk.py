@@ -19,10 +19,10 @@ from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, Sor
         "expected_implementation",
     ),
     [
-        ("VP9", "NVIDIA Video Codec SDK"),
-        ("AV1", "NVIDIA Video Codec SDK"),
-        ("H264", "NVIDIA Video Codec SDK"),
-        ("H265", "NVIDIA Video Codec SDK"),
+        ("VP9", "NvCodec"),
+        ("AV1", "NvCodec"),
+        ("H264", "NvCodec"),
+        ("H265", "NvCodec"),
     ],
 )
 def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
@@ -108,31 +108,31 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
     # FIXME: AV1 では、解像度が一定数より低くなる場合、エラーになるのでコメントアウトしている
     [
         # 1080p
-        ("VP9", "NVIDIA Video Codec SDK", 5000, 1920, 1080, 3),
-        ("H264", "NVIDIA Video Codec SDK", 5000, 1920, 1080, 3),
-        ("H265", "NVIDIA Video Codec SDK", 5000, 1920, 1080, 3),
+        ("VP9", "NvCodec", 5000, 1920, 1080, 3),
+        ("H264", "NvCodec", 5000, 1920, 1080, 3),
+        ("H265", "NvCodec", 5000, 1920, 1080, 3),
         # 720p
-        ("VP9", "NVIDIA Video Codec SDK", 2500, 1280, 720, 3),
-        ("H264", "NVIDIA Video Codec SDK", 2500, 1280, 720, 3),
-        ("H265", "NVIDIA Video Codec SDK", 2500, 1280, 720, 3),
+        ("VP9", "NvCodec", 2500, 1280, 720, 3),
+        ("H264", "NvCodec", 2500, 1280, 720, 3),
+        ("H265", "NvCodec", 2500, 1280, 720, 3),
         # 540p
-        ("VP9", "NVIDIA Video Codec SDK", 1200, 960, 540, 3),
-        ("H264", "NVIDIA Video Codec SDK", 1200, 960, 540, 3),
-        ("H265", "NVIDIA Video Codec SDK", 1200, 960, 540, 3),
+        ("VP9", "NvCodec", 1200, 960, 540, 3),
+        ("H264", "NvCodec", 1200, 960, 540, 3),
+        ("H265", "NvCodec", 1200, 960, 540, 3),
         # 360p
-        ("VP9", "NVIDIA Video Codec SDK", 700, 640, 360, 2),
-        ("H264", "NVIDIA Video Codec SDK", 700, 640, 360, 2),
-        ("H265", "NVIDIA Video Codec SDK", 700, 640, 360, 2),
+        ("VP9", "NvCodec", 700, 640, 360, 2),
+        ("H264", "NvCodec", 700, 640, 360, 2),
+        ("H265", "NvCodec", 700, 640, 360, 2),
         # 270p
-        ("VP9", "NVIDIA Video Codec SDK", 450, 480, 270, 2),
-        ("H264", "NVIDIA Video Codec SDK", 450, 480, 270, 2),
-        ("H265", "NVIDIA Video Codec SDK", 450, 480, 270, 2),
+        ("VP9", "NvCodec", 450, 480, 270, 2),
+        ("H264", "NvCodec", 450, 480, 270, 2),
+        ("H265", "NvCodec", 450, 480, 270, 2),
         # 180p
-        ("VP9", "NVIDIA Video Codec SDK", 200, 320, 180, 1),
-        ("H264", "NVIDIA Video Codec SDK", 200, 320, 180, 1),
-        ("H265", "NVIDIA Video Codec SDK", 142, 320, 180, 1),
+        ("VP9", "NvCodec", 200, 320, 180, 1),
+        ("H264", "NvCodec", 200, 320, 180, 1),
+        ("H265", "NvCodec", 142, 320, 180, 1),
         # 135p
-        ("H265", "NVIDIA Video Codec SDK", 101, 240, 135, 1),
+        ("H265", "NvCodec", 101, 240, 135, 1),
     ],
 )
 def test_intel_vpl_simulcast(
@@ -258,9 +258,10 @@ def test_intel_vpl_simulcast(
         "expected_implementation",
     ),
     [
-        ("VP9", "NVIDIA Video Codec SDK"),
-        ("H264", "NVIDIA Video Codec SDK"),
-        ("H265", "NVIDIA Video Codec SDK"),
+        ("VP9", "NvCodec"),
+        ("AV1", "NvCodec"),
+        ("H264", "NvCodec"),
+        ("H265", "NvCodec"),
     ],
 )
 def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implementation):
