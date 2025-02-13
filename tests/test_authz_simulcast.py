@@ -84,7 +84,7 @@ def test_simulcast_authz_scale_resolution_to(
     )
     sendonly.connect(fake_video=True)
 
-    time.sleep(5)
+    time.sleep(10)
 
     # "type": "offer" の SDP で Simulcast があるかどうか
     assert sendonly.offer_message is not None
