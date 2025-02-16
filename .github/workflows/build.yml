@@ -78,7 +78,6 @@ jobs:
             python_host_platform: "macosx-14.0-arm64"
             archflags: "-arch arm64"
         python_version:
-          - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
@@ -140,15 +139,15 @@ jobs:
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
-      # Ubuntu 向けに Python 3.10 では E2E テストを実行する
-      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.10' }}
+      # Ubuntu 向けに Python 3.11 では E2E テストを実行する
+      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.11' }}
         name: Download openh264
         run: |
           curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux64.8.so.bz2
           bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-linux64.8.so.bz2
           mv libopenh264-${{ env.OPENH264_VERSION }}-linux64.8.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.10' }}
+      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.11' }}
         run: uv run pytest tests -s
 
 
@@ -225,7 +224,6 @@ jobs:
       fail-fast: false
       matrix:
         python_version:
-          - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
@@ -296,7 +294,6 @@ jobs:
           - name: macos-14_arm64
           - name: windows-2022
         python_version:
-          - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
@@ -317,7 +314,7 @@ jobs:
           fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.10' }}
+        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.11' }}
 
       # テスト用
       # - name: Publish package to TestPyPI
@@ -351,8 +348,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.10" }
-      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
@@ -361,23 +356,17 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-15_arm64", "python_version": "3.10" }
-      - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.10" }
-      - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.13" }
-      - uses: ./.github/actions/download
-        with: { "platform": "windows-2022", "python_version": "3.10" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2022", "python_version": "3.11" }
       - uses: ./.github/actions/download
