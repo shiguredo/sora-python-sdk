@@ -24,6 +24,10 @@ env:
 
 jobs:
   e2e_test_vpl:
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.11", "3.12", "3.13"]
     runs-on: [self-hosted, linux, x64, Intel-VPL]
     timeout-minutes: 15
     if: >-
@@ -39,7 +43,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: uv python pin 3.13
+      - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ubuntu-24.04_x86_64
       - run: uv run pytest tests/test_intel_vpl.py -s
