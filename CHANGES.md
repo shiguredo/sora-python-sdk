@@ -82,7 +82,7 @@
   - `create_video_codec_preference_from_implementation()`
   - `SoraVideoCodecType`
   - @melpon
-- [UPDATE] nanobind を `2.4.0` に上げる
+- [UPDATE] nanobind を `2.5.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.2.0` に上げる
   - WEBRTC_BUILD_VERSION を `m132.6834.5.8` に上げる
