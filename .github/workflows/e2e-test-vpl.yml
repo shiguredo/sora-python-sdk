@@ -6,6 +6,8 @@ on:
     paths:
       - ".github/workflows/e2e-test-vpl.yml"
       - "tests/test_intel_vpl.py"
+      # C++ SDK のアップデートしたときテストするため
+      - "VERSION"
     tags-ignore:
       - "*"
   schedule:
