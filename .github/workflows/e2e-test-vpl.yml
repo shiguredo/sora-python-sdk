@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - "**intel_vpl**"
       - ".github/workflows/e2e-test-vpl.yml"
       - "tests/test_intel_vpl.py"
       # C++ SDK のアップデートしたときテストするため
