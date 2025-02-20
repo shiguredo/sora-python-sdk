@@ -5,7 +5,7 @@ on:
   push:
     paths-ignore:
       - "**.md"
-      - "tests/test_intel_vpl.py"
+      - "**intel_vpl**"
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
@@ -39,14 +39,6 @@ jobs:
             openh264_arch: "linux-arm64"
     runs-on: ${{ matrix.platform.runs-on}}
     timeout-minutes: 15
-    if: >-
-      ${{
-        contains(github.event.head_commit.message, '[e2e]') ||
-        contains(github.ref, 'feature/e2e-test') ||
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'push' ||
-        github.event_name == 'schedule'
-      }}
     steps:
       - uses: actions/checkout@v4
       - name: Tailscale
@@ -90,14 +82,6 @@ jobs:
         os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
-    if: >-
-      ${{
-        contains(github.event.head_commit.message, '[e2e]') ||
-        contains(github.ref, 'feature/e2e-test') ||
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'push' ||
-        github.event_name == 'schedule'
-      }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
@@ -124,14 +108,6 @@ jobs:
     env:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
-    if: >-
-      ${{
-        contains(github.event.head_commit.message, '[e2e]') ||
-        contains(github.ref, 'feature/e2e-test') ||
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'push' ||
-        github.event_name == 'schedule'
-      }}
     steps:
       - uses: actions/checkout@v4
       - name: Download openh264
