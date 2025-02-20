@@ -14,14 +14,30 @@ from sora_sdk import (
 )
 
 
+def codec_type_to_string(codec_type: SoraVideoCodecType) -> str:
+    match codec_type:
+        case SoraVideoCodecType.VP8:
+            return "VP8"
+        case SoraVideoCodecType.VP9:
+            return "VP9"
+        case SoraVideoCodecType.AV1:
+            return "AV1"
+        case SoraVideoCodecType.H264:
+            return "H264"
+        case SoraVideoCodecType.H265:
+            return "H265"
+        case _:
+            raise ValueError(f"Unknown codec_type: {codec_type}")
+
+
 # テストしている Intel のチップが指定したコーデックに対応しているかどうかを確認する関数
 # decoder / encoder の両方が対応している場合のみ True を返す
-def is_codec_supported(codec_type):
+def is_codec_supported(codec_type: str) -> bool:
     capability = get_video_codec_capability()
     for e in capability.engines:
         if e.name == SoraVideoCodecImplementation.INTEL_VPL:
             for c in e.codecs:
-                if c.type == codec_type:
+                if codec_type_to_string(c.type) == codec_type:
                     if c.decoder is True and c.encoder is True:
                         return True
     return False
