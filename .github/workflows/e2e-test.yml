@@ -7,7 +7,7 @@ on:
       - "**.md"
       - "tests/test_intel_vpl.py"
     tags-ignore:
-      - "*"
+      - "*.*.*"
     # https://qiita.com/x-color/items/08492d15dec768f8b439
     branches:
       - "*"
