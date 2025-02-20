@@ -14,18 +14,18 @@ from sora_sdk import (
 )
 
 
-def codec_type_to_string(codec_type: SoraVideoCodecType) -> str:
+def codec_type_string_to_codec_type(codec_type: str) -> SoraVideoCodecType:
     match codec_type:
-        case SoraVideoCodecType.VP8:
-            return "VP8"
-        case SoraVideoCodecType.VP9:
-            return "VP9"
-        case SoraVideoCodecType.AV1:
-            return "AV1"
-        case SoraVideoCodecType.H264:
-            return "H264"
-        case SoraVideoCodecType.H265:
-            return "H265"
+        case "VP8":
+            return SoraVideoCodecType.VP8
+        case "VP9":
+            return SoraVideoCodecType.VP9
+        case "AV1":
+            return SoraVideoCodecType.AV1
+        case "H264":
+            return SoraVideoCodecType.H264
+        case "H265":
+            return SoraVideoCodecType.H265
         case _:
             raise ValueError(f"Unknown codec_type: {codec_type}")
 
@@ -37,7 +37,7 @@ def is_codec_supported(codec_type: str) -> bool:
     for e in capability.engines:
         if e.name == SoraVideoCodecImplementation.INTEL_VPL:
             for c in e.codecs:
-                if codec_type_to_string(c.type) == codec_type:
+                if c.type == codec_type_string_to_codec_type(codec_type):
                     if c.decoder is True and c.encoder is True:
                         return True
     return False
@@ -242,15 +242,7 @@ def test_intel_vpl_simulcast(
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     encoder=SoraVideoCodecImplementation.INTEL_VPL,
                 ),
             ]
