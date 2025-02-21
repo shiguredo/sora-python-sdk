@@ -4,7 +4,11 @@ import time
 import uuid
 
 import pytest
-from client import SoraClient, SoraRole
+from client import (
+    SoraClient,
+    SoraRole,
+    is_codec_supported,
+)
 
 from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, SoraVideoCodecType
 
@@ -25,7 +29,10 @@ from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, Sor
         ("H265", "NvCodec"),
     ],
 )
-def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
+def test_nvidia_codec_sdk_sendonly(setup, video_codec_type, expected_implementation):
+    if not is_codec_supported(video_codec_type):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -135,7 +142,7 @@ def test_intel_vpl_sendonly(setup, video_codec_type, expected_implementation):
         ("H265", "NvCodec", 101, 240, 135, 1),
     ],
 )
-def test_intel_vpl_simulcast(
+def test_nvidia_codec_sdk_simulcast(
     setup,
     video_codec_type,
     expected_implementation,
@@ -144,6 +151,9 @@ def test_intel_vpl_simulcast(
     video_height,
     simulcast_count,
 ):
+    if not is_codec_supported(video_codec_type):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -264,7 +274,10 @@ def test_intel_vpl_simulcast(
         ("H265", "NvCodec"),
     ],
 )
-def test_intel_vpl_sendonly_recvonly(setup, video_codec_type, expected_implementation):
+def test_nvidia_codec_sdk_sendonly_recvonly(setup, video_codec_type, expected_implementation):
+    if not is_codec_supported(video_codec_type):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")

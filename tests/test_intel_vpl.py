@@ -4,7 +4,12 @@ import time
 import uuid
 
 import pytest
-from client import SoraClient, SoraRole
+from client import (
+    SoraClient,
+    SoraRole,
+    codec_type_string_to_codec_type,
+    is_codec_supported,
+)
 
 from sora_sdk import (
     SoraVideoCodecImplementation,
@@ -12,35 +17,6 @@ from sora_sdk import (
     SoraVideoCodecType,
     get_video_codec_capability,
 )
-
-
-def codec_type_string_to_codec_type(codec_type: str) -> SoraVideoCodecType:
-    match codec_type:
-        case "VP8":
-            return SoraVideoCodecType.VP8
-        case "VP9":
-            return SoraVideoCodecType.VP9
-        case "AV1":
-            return SoraVideoCodecType.AV1
-        case "H264":
-            return SoraVideoCodecType.H264
-        case "H265":
-            return SoraVideoCodecType.H265
-        case _:
-            raise ValueError(f"Unknown codec_type: {codec_type}")
-
-
-# テストしている Intel のチップが指定したコーデックに対応しているかどうかを確認する関数
-# decoder / encoder の両方が対応している場合のみ True を返す
-def is_codec_supported(codec_type: str) -> bool:
-    capability = get_video_codec_capability()
-    for e in capability.engines:
-        if e.name == SoraVideoCodecImplementation.INTEL_VPL:
-            for c in e.codecs:
-                if c.type == codec_type_string_to_codec_type(codec_type):
-                    if c.decoder is True and c.encoder is True:
-                        return True
-    return False
 
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
