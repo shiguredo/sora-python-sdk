@@ -61,6 +61,7 @@ class Sora : public DisposePublisher {
    * @param video_h264_params (オプション)映像コーデック H264 設定
    * @param audio_opus_params (オプション)音声コーデック OPUS 設定
    * @param simulcast (オプション)サイマルキャストの有効無効
+   * @param simulcast_multicodec (オプション)サイマルキャストマルチコーデックの有効無効
    * @param spotlight (オプション)スポットライトの有効無効
    * @param spotlight_number (オプション)スポットライトのフォーカス数
    * @param simulcast_rid (オプション)サイマルキャストで受信したい RID
@@ -113,6 +114,7 @@ class Sora : public DisposePublisher {
       const nb::handle& video_h264_params,
       const nb::handle& audio_opus_params,
       std::optional<bool> simulcast,
+      std::optional<bool> simulcast_multicodec,
       std::optional<bool> spotlight,
       std::optional<int> spotlight_number,
       std::optional<std::string> simulcast_rid,
