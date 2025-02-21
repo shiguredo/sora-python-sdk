@@ -7,6 +7,7 @@ import pytest
 from client import (
     SoraClient,
     SoraRole,
+    codec_type_string_to_codec_type,
     is_codec_supported,
 )
 
@@ -52,15 +53,7 @@ def test_nvidia_codec_sdk_sendonly(setup, video_codec_type, expected_implementat
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
                 ),
             ]
@@ -179,15 +172,7 @@ def test_nvidia_codec_sdk_simulcast(
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
                 ),
             ]
@@ -301,15 +286,7 @@ def test_nvidia_codec_sdk_sendonly_recvonly(setup, video_codec_type, expected_im
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
                 ),
             ]
@@ -325,15 +302,7 @@ def test_nvidia_codec_sdk_sendonly_recvonly(setup, video_codec_type, expected_im
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    decoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    decoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     decoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
                 ),
             ]
