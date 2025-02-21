@@ -470,10 +470,10 @@ def codec_type_string_to_codec_type(codec_type: str) -> SoraVideoCodecType:
 
 # テストしている Intel のチップが指定したコーデックに対応しているかどうかを確認する関数
 # decoder / encoder の両方が対応している場合のみ True を返す
-def is_codec_supported(codec_type: str) -> bool:
+def is_codec_supported(codec_type: str, codec_implementation: SoraVideoCodecImplementation) -> bool:
     capability = get_video_codec_capability()
     for e in capability.engines:
-        if e.name == SoraVideoCodecImplementation.INTEL_VPL:
+        if e.name == codec_implementation:
             for c in e.codecs:
                 if c.type == codec_type_string_to_codec_type(codec_type):
                     if c.decoder is True and c.encoder is True:

@@ -30,7 +30,9 @@ from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, Sor
     ],
 )
 def test_nvidia_codec_sdk_sendonly(setup, video_codec_type, expected_implementation):
-    if not is_codec_supported(video_codec_type):
+    if not is_codec_supported(
+        video_codec_type, SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK
+    ):
         pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
 
     signaling_urls = setup.get("signaling_urls")
@@ -151,7 +153,9 @@ def test_nvidia_codec_sdk_simulcast(
     video_height,
     simulcast_count,
 ):
-    if not is_codec_supported(video_codec_type):
+    if not is_codec_supported(
+        video_codec_type, SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK
+    ):
         pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
 
     signaling_urls = setup.get("signaling_urls")
@@ -275,7 +279,9 @@ def test_nvidia_codec_sdk_simulcast(
     ],
 )
 def test_nvidia_codec_sdk_sendonly_recvonly(setup, video_codec_type, expected_implementation):
-    if not is_codec_supported(video_codec_type):
+    if not is_codec_supported(
+        video_codec_type, SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK
+    ):
         pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
 
     signaling_urls = setup.get("signaling_urls")
