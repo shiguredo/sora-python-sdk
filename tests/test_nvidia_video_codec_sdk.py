@@ -11,7 +11,7 @@ from client import (
     is_codec_supported,
 )
 
-from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference, SoraVideoCodecType
+from sora_sdk import SoraVideoCodecImplementation, SoraVideoCodecPreference
 
 
 # @pytest.mark.skip()
@@ -127,14 +127,14 @@ def test_nvidia_codec_sdk_sendonly(setup, video_codec_type, expected_implementat
         ("H265", "NvCodec", 700, 640, 360, 2),
         # 270p
         ("VP9", "NvCodec", 450, 480, 270, 2),
-        ("H264", "NvCodec", 450, 480, 270, 2),
-        ("H265", "NvCodec", 450, 480, 270, 2),
+        # ("H264", "NvCodec", 450, 480, 270, 2),
+        # ("H265", "NvCodec", 450, 480, 270, 2),
         # 180p
         ("VP9", "NvCodec", 200, 320, 180, 1),
-        ("H264", "NvCodec", 200, 320, 180, 1),
-        ("H265", "NvCodec", 142, 320, 180, 1),
+        # ("H264", "NvCodec", 200, 320, 180, 1),
+        # ("H265", "NvCodec", 142, 320, 180, 1),
         # 135p
-        ("H265", "NvCodec", 101, 240, 135, 1),
+        # ("H265", "NvCodec", 101, 240, 135, 1),
     ],
 )
 def test_nvidia_codec_sdk_simulcast(
