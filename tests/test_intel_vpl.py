@@ -14,6 +14,35 @@ from sora_sdk import (
 )
 
 
+def codec_type_string_to_codec_type(codec_type: str) -> SoraVideoCodecType:
+    match codec_type:
+        case "VP8":
+            return SoraVideoCodecType.VP8
+        case "VP9":
+            return SoraVideoCodecType.VP9
+        case "AV1":
+            return SoraVideoCodecType.AV1
+        case "H264":
+            return SoraVideoCodecType.H264
+        case "H265":
+            return SoraVideoCodecType.H265
+        case _:
+            raise ValueError(f"Unknown codec_type: {codec_type}")
+
+
+# テストしている Intel のチップが指定したコーデックに対応しているかどうかを確認する関数
+# decoder / encoder の両方が対応している場合のみ True を返す
+def is_codec_supported(codec_type: str) -> bool:
+    capability = get_video_codec_capability()
+    for e in capability.engines:
+        if e.name == SoraVideoCodecImplementation.INTEL_VPL:
+            for c in e.codecs:
+                if c.type == codec_type_string_to_codec_type(codec_type):
+                    if c.decoder is True and c.encoder is True:
+                        return True
+    return False
+
+
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 def test_intel_vpl_available(setup):
     capability = get_video_codec_capability()
@@ -41,8 +70,10 @@ def test_intel_vpl_available(setup):
                         # Sora Python SDK では VPL VP9 Encoder が正常に動作しないため無効
                         assert c.encoder is False
                     case SoraVideoCodecType.AV1:
-                        assert c.decoder is True
-                        assert c.encoder is True
+                        # チップによって対応指定ないものがあるので判断しない
+                        # assert c.decoder is True
+                        # assert c.encoder is True
+                        pass
                     case SoraVideoCodecType.H264:
                         assert c.decoder is True
                         assert c.encoder is True
@@ -76,6 +107,9 @@ def test_intel_vpl_sendonly(
     expected_codec_implementation,
     preference_codec_implementation,
 ):
+    if not is_codec_supported(video_codec_type):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -184,6 +218,9 @@ def test_intel_vpl_simulcast(
     video_height,
     simulcast_count,
 ):
+    if not is_codec_supported(video_codec_type):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -205,15 +242,7 @@ def test_intel_vpl_simulcast(
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     encoder=SoraVideoCodecImplementation.INTEL_VPL,
                 ),
             ]
@@ -315,6 +344,9 @@ def test_intel_vpl_sendonly_recvonly(
     expected_codec_implementation,
     preference_codec_implementation,
 ):
+    if not is_codec_supported(video_codec_type):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -579,6 +611,9 @@ def test_intel_vpl_vp9_sendonly_recvonly(setup):
 def test_intel_vpl_av1_mini_resolution(
     setup, video_codec_type, expected_implementation, video_bit_rate, video_width, video_height
 ):
+    if not is_codec_supported(video_codec_type):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -689,6 +724,10 @@ def test_intel_vpl_sendonly_recvonly_sw_hw(
     - 送信はソフトウェアだけど、受信はハードウェアでやる
     - 送信はハードウェアだけど、受信はソフトウェアでやる
     """
+
+    if not is_codec_supported(video_codec_type):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
