@@ -113,15 +113,19 @@ def test_nvidia_codec_sdk_sendonly(setup, video_codec_type, expected_implementat
     # FIXME: AV1 では、解像度が一定数より低くなる場合、エラーになるのでコメントアウトしている
     [
         # 1080p
+        ("AV1", "NvCodec", 5000, 1920, 1080, 3),
         ("H264", "NvCodec", 5000, 1920, 1080, 3),
         ("H265", "NvCodec", 5000, 1920, 1080, 3),
         # 720p
+        ("AV1", "NvCodec", 2500, 1280, 720, 3),
         ("H264", "NvCodec", 2500, 1280, 720, 3),
         ("H265", "NvCodec", 2500, 1280, 720, 3),
         # 540p
+        ("AV1", "NvCodec", 1200, 960, 540, 3),
         ("H264", "NvCodec", 1200, 960, 540, 3),
         ("H265", "NvCodec", 1200, 960, 540, 3),
         # 360p
+        ("AV1", "NvCodec", 700, 640, 360, 2),
         ("H264", "NvCodec", 700, 640, 360, 2),
         ("H265", "NvCodec", 700, 640, 360, 2),
         # 270p
@@ -350,7 +354,7 @@ def test_nvidia_codec_sdk_sendonly_recvonly(setup, video_codec_type, expected_im
 @pytest.mark.skipif(
     os.environ.get("NVIDIA_VIDEO_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
 )
-def test_nvidia_codec_sdk_vp9_sendonly_recvonly(setup):
+def test_nvidia_codec_sdk_vp9_hwa_decoder(setup):
     """
     NVIDIA Video Codec SDK VP9 はデコーダーは利用できるので、そのテスト
     """
