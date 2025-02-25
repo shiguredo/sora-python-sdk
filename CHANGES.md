@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] 対応 Python バージョンの 3.10 のサポートを終了する
+  - [SPEC 0 — Minimum Supported Dependencies](https://scientific-python.org/specs/spec-0000/) を参考に直近 3 バージョンのサポートに変更する
+  - @voluntas
 - [CHANGE] シグナリング接続時の ``"type": "connect"`` 時に ``multistream`` 項目を送らないようにする
   - Sora 2022.1.0 以前には接続できなくなる
   - TODO: legacy_multistream という項目を追加して multistream: true を遅れるようにするかどうか検討する
@@ -79,16 +82,16 @@
   - `create_video_codec_preference_from_implementation()`
   - `SoraVideoCodecType`
   - @melpon
-- [UPDATE] nanobind を `2.4.0` に上げる
+- [UPDATE] nanobind を `2.5.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2025.1.0` に上げる
-  - WEBRTC_BUILD_VERSION を `m132.6834.5.2` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.2.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m132.6834.5.8` に上げる
     - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
     - Sora CPP SDK の absl::optional を std::optional に変更した仕様に追従する
     - Sora CPP SDK の absl::nullopt を std::nullopt に変更した仕様に追従する
-  - CMAKE_VERSION を `3.30.5` に上げる
+  - CMAKE_VERSION を `3.31.4` に上げる
   - BOOST_VERSION を `1.87.0` に上げる
-  - OPENH264_VERSION を `v2.5.0` に上げる
+  - OPENH264_VERSION を `v2.6.0` に上げる
   - @torikizi @voluntas
 - [FIX] nanobind が libstdc++ を使ってしまっていたのを libc++ を使うように修正する
   - @melpon

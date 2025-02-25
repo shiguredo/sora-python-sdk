@@ -18,10 +18,13 @@ from sora_sdk import (
     SoraSignalingDirection,
     SoraSignalingErrorCode,
     SoraSignalingType,
+    SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
+    SoraVideoCodecType,
     SoraVideoFrame,
     SoraVideoSink,
     SoraVideoSource,
+    get_video_codec_capability,
 )
 
 
@@ -204,9 +207,9 @@ class SoraClient:
 
         self._connection.connect()
 
-        assert self._connected.wait(
-            self._default_connection_timeout_s
-        ), "Could not connect to Sora."
+        assert self._connected.wait(self._default_connection_timeout_s), (
+            "Could not connect to Sora."
+        )
 
     def disconnect(self) -> None:
         self._connection.disconnect()
@@ -447,3 +450,32 @@ class SoraClient:
             notify = self._notify_queue.get(block=True, timeout=timeout)
             if pred(notify):
                 return notify
+
+
+def codec_type_string_to_codec_type(codec_type: str) -> SoraVideoCodecType:
+    match codec_type:
+        case "VP8":
+            return SoraVideoCodecType.VP8
+        case "VP9":
+            return SoraVideoCodecType.VP9
+        case "AV1":
+            return SoraVideoCodecType.AV1
+        case "H264":
+            return SoraVideoCodecType.H264
+        case "H265":
+            return SoraVideoCodecType.H265
+        case _:
+            raise ValueError(f"Unknown codec_type: {codec_type}")
+
+
+# テストしている Intel のチップが指定したコーデックに対応しているかどうかを確認する関数
+# decoder / encoder の両方が対応している場合のみ True を返す
+def is_codec_supported(codec_type: str, codec_implementation: SoraVideoCodecImplementation) -> bool:
+    capability = get_video_codec_capability()
+    for e in capability.engines:
+        if e.name == codec_implementation:
+            for c in e.codecs:
+                if c.type == codec_type_string_to_codec_type(codec_type):
+                    if c.decoder is True and c.encoder is True:
+                        return True
+    return False
