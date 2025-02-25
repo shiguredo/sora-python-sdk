@@ -1,11 +1,11 @@
-name: e2e-test-vpl
+name: e2e-test-amf
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - ".github/workflows/e2e-test-vpl.yml"
-      - "tests/test_intel_vpl.py"
+      - ".github/workflows/e2e-test-amf.yml"
+      - "tests/test_amd_amf.py"
     # paths-ignore:
     #   - "**.md"
   schedule:
@@ -18,15 +18,15 @@ env:
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
-  INTEL_VPL: true
-  # libva のログ出力が邪魔なので 0 にしているがデバッグ時は 2 などにする
-  LIBVA_MESSAGING_LEVEL: 0
+  AMD_AMF: true
 
 jobs:
-  e2e_test_vpl:
-    runs-on: [self-hosted, linux, x64, Intel-VPL]
+  e2e_test_amf:
+    runs-on:
+      group: Self
+      labels: [self-hosted, linux, x64, AMD-AMF]
     timeout-minutes: 15
-    if: >-
+    if:
       ${{
         contains(github.event.head_commit.message, '[e2e]') ||
         contains(github.ref, 'feature/e2e-test') ||
@@ -42,7 +42,7 @@ jobs:
       - run: uv python pin 3.13
       - run: uv sync
       - run: uv run python run.py ubuntu-24.04_x86_64
-      - run: uv run pytest tests/test_intel_vpl.py -s
+      - run: uv run pytest tests/test_amd_amf.py -s
 
   # slack_notify_succeeded:
   #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
@@ -59,7 +59,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_test_vpl]
+    needs: [e2e_test_amf]
     runs-on: ubuntu-24.04
     if: failure()
     steps:

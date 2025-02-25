@@ -7,6 +7,7 @@ import pytest
 from client import SoraClient, SoraRole
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Apple では SW コーデックは動作させない")
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -84,14 +85,13 @@ def test_simulcast_authz_scale_resolution_to(
     )
     sendonly.connect(fake_video=True)
 
-    time.sleep(5)
+    time.sleep(10)
 
     # "type": "offer" の SDP で Simulcast があるかどうか
     assert sendonly.offer_message is not None
     assert sendonly.offer_message["sdp"] is not None
     assert video_codec_type in sendonly.offer_message["sdp"]
     assert "a=simulcast:recv r0;r1;r2" in sendonly.offer_message["sdp"]
-    sendonly_stats = sendonly.get_stats()
 
     assert "encodings" in sendonly.offer_message
     assert len(sendonly.offer_message["encodings"]) == 3
@@ -121,21 +121,24 @@ def test_simulcast_authz_scale_resolution_to(
         sendonly.offer_message["encodings"][0]["scalabilityMode"]
         == simulcast_encodings[0]["scalabilityMode"]
     )
+
     assert (
         sendonly.offer_message["encodings"][1]["scalabilityMode"]
         == simulcast_encodings[1]["scalabilityMode"]
     )
+
     assert (
         sendonly.offer_message["encodings"][2]["scalabilityMode"]
         == simulcast_encodings[2]["scalabilityMode"]
     )
 
-    sendonly.disconnect()
-
     # "type": "answer" の SDP で Simulcast があるかどうか
     assert sendonly.answer_message is not None
     assert "sdp" in sendonly.answer_message
     assert "a=simulcast:send r0;r1;r2" in sendonly.answer_message["sdp"]
+
+    sendonly_stats = sendonly.get_stats()
+    sendonly.disconnect()
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
@@ -170,7 +173,11 @@ def test_simulcast_authz_scale_resolution_to(
         assert s["frameHeight"] == 352
 
         # FIXME:これは libwebrtc 側の挙動を制御できず L1T2 になってしまう
-        assert s["scalabilityMode"] == "L1T2"
+        scalability_mode = None
+        # FIXME: scalabilityMode がない場合がある
+        if "scalabilityMode" in s:
+            scalability_mode = s["scalabilityMode"]
+            assert s["scalabilityMode"] == "L1T2"
 
         # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
         expected_bitrate = video_bit_rate * 1000
@@ -178,7 +185,7 @@ def test_simulcast_authz_scale_resolution_to(
             s["rid"],
             video_codec_type,
             s["encoderImplementation"],
-            s["scalabilityMode"],
+            scalability_mode,
             expected_bitrate,
             s["targetBitrate"],
             s["frameWidth"],

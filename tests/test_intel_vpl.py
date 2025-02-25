@@ -4,7 +4,12 @@ import time
 import uuid
 
 import pytest
-from client import SoraClient, SoraRole
+from client import (
+    SoraClient,
+    SoraRole,
+    codec_type_string_to_codec_type,
+    is_codec_supported,
+)
 
 from sora_sdk import (
     SoraVideoCodecImplementation,
@@ -41,8 +46,10 @@ def test_intel_vpl_available(setup):
                         # Sora Python SDK では VPL VP9 Encoder が正常に動作しないため無効
                         assert c.encoder is False
                     case SoraVideoCodecType.AV1:
-                        assert c.decoder is True
-                        assert c.encoder is True
+                        # チップによって対応指定ないものがあるので判断しない
+                        # assert c.decoder is True
+                        # assert c.encoder is True
+                        pass
                     case SoraVideoCodecType.H264:
                         assert c.decoder is True
                         assert c.encoder is True
@@ -76,6 +83,9 @@ def test_intel_vpl_sendonly(
     expected_codec_implementation,
     preference_codec_implementation,
 ):
+    if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.INTEL_VPL):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -184,6 +194,9 @@ def test_intel_vpl_simulcast(
     video_height,
     simulcast_count,
 ):
+    if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.INTEL_VPL):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -205,15 +218,7 @@ def test_intel_vpl_simulcast(
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.AV1,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H264,
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-                SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.H265,
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     encoder=SoraVideoCodecImplementation.INTEL_VPL,
                 ),
             ]
@@ -315,6 +320,9 @@ def test_intel_vpl_sendonly_recvonly(
     expected_codec_implementation,
     preference_codec_implementation,
 ):
+    if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.INTEL_VPL):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -579,6 +587,9 @@ def test_intel_vpl_vp9_sendonly_recvonly(setup):
 def test_intel_vpl_av1_mini_resolution(
     setup, video_codec_type, expected_implementation, video_bit_rate, video_width, video_height
 ):
+    if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.INTEL_VPL):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -689,6 +700,10 @@ def test_intel_vpl_sendonly_recvonly_sw_hw(
     - 送信はソフトウェアだけど、受信はハードウェアでやる
     - 送信はハードウェアだけど、受信はソフトウェアでやる
     """
+
+    if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.INTEL_VPL):
+        pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
+
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
