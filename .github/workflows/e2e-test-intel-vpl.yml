@@ -1,10 +1,10 @@
-name: e2e-test-vpl
+name: e2e-test-intel-vpl
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - ".github/workflows/e2e-test-vpl.yml"
+      - ".github/workflows/e2e-test-intel-vpl.yml"
       - "tests/test_intel_vpl.py"
       # C++ SDK のアップデートしたときテストするため
       - "VERSION"
@@ -23,7 +23,7 @@ env:
   LIBVA_MESSAGING_LEVEL: 0
 
 jobs:
-  e2e_test_vpl:
+  e2e_test_intel_vpl:
     strategy:
       fail-fast: true
       matrix:
@@ -33,6 +33,9 @@ jobs:
           # - "3.12"
           - "3.13"
     runs-on: [self-hosted, linux, x64, Intel-VPL]
+    # runs-on:
+    #   group: Self
+    #   labels: [self-hosted, linux, x64, Intel-VPL]
     timeout-minutes: 15
     if: >-
       ${{
@@ -53,7 +56,7 @@ jobs:
       - run: uv run pytest tests/test_intel_vpl.py -v
 
   # slack_notify_succeeded:
-  #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+  #   needs: [e2e_test_intel_vpl]
   #   runs-on: ubuntu-24.04
   #   if: success()
   #   steps:
@@ -67,7 +70,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_test_vpl]
+    needs: [e2e_test_intel_vpl]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
