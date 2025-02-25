@@ -1,13 +1,13 @@
-name: e2e-test-amf
+name: e2e-test-amd-amf
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - ".github/workflows/e2e-test-amf.yml"
+      - ".github/workflows/e2e-test-amd-amf.yml"
       - "tests/test_amd_amf.py"
-    # paths-ignore:
-    #   - "**.md"
+      # C++ SDK のアップデートしたときテストするため
+      - "VERSION"
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
@@ -22,6 +22,14 @@ env:
 
 jobs:
   e2e_test_amf:
+    strategy:
+      fail-fast: true
+      matrix:
+        python_version:
+          # TODO: push 時には 3.13 でテストする、schedule 時には全部でテストする
+          # - "3.11"
+          # - "3.12"
+          - "3.13"
     runs-on:
       group: Self
       labels: [self-hosted, linux, x64, AMD-AMF]
@@ -39,7 +47,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: uv python pin 3.13
+      - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ubuntu-24.04_x86_64
       - run: uv run pytest tests/test_amd_amf.py -s
