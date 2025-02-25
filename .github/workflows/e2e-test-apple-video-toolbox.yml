@@ -1,11 +1,11 @@
-name: e2e-test-vpl
+name: e2e-test-apple-video-toolbox
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - ".github/workflows/e2e-test-vpl.yml"
-      - "tests/test_intel_vpl.py"
+      - ".github/workflows/e2e-test-apple-video-toolbox.yml"
+      - "tests/test_apple_video_toolbox.py"
       # C++ SDK のアップデートしたときテストするため
       - "VERSION"
   schedule:
@@ -18,12 +18,10 @@ env:
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
-  INTEL_VPL: true
-  # libva のログ出力が邪魔なので 0 にしているがデバッグ時は 2 などにする
-  LIBVA_MESSAGING_LEVEL: 0
+  APPLE_VIDEO_TOOLBOX: true
 
 jobs:
-  e2e_test_vpl:
+  e2e_test_apple_video_toolbox:
     strategy:
       fail-fast: true
       matrix:
@@ -32,7 +30,9 @@ jobs:
           # - "3.11"
           # - "3.12"
           - "3.13"
-    runs-on: [self-hosted, linux, x64, Intel-VPL]
+    runs-on:
+      group: Self
+      labels: [self-hosted, self-hosted, macOS, ARM64, M2Pro]
     timeout-minutes: 15
     if: >-
       ${{
@@ -49,8 +49,8 @@ jobs:
           enable-cache: false
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
-      - run: uv run python run.py ubuntu-24.04_x86_64
-      - run: uv run pytest tests/test_intel_vpl.py -v
+      - run: uv run python run.py macos_arm64
+      - run: uv run pytest tests/test_apple_video_toolbox.py -v
 
   # slack_notify_succeeded:
   #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
@@ -67,7 +67,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_test_vpl]
+    needs: [e2e_test_apple_video_toolbox]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
