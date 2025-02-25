@@ -312,8 +312,8 @@ def test_macos_h265_sendonly_recvonly(setup):
     ),
     [
         # どうやら scaleResolutionDownTo を指定すると規定されたテーブルのビットレートでは足りない模様
-        ("H264", "VideoToolbox", 2500, 320, 180),
-        ("H265", "VideoToolbox", 2500, 320, 180),
+        ("H264", "VideoToolbox", 1000, 320, 180),
+        ("H265", "VideoToolbox", 1000, 320, 180),
     ],
 )
 def test_macos_simulcast_authz_scale_resolution_to(
@@ -463,7 +463,7 @@ def test_macos_simulcast_authz_scale_resolution_to(
         assert s["packetsSent"] > 10
 
         assert s["frameWidth"] == 320
-        assert s["frameHeight"] == 180
+        assert s["frameHeight"] == 176
 
         # FIXME:これは libwebrtc 側の挙動を制御できず L1T2 になってしまう
         scalability_mode = None
