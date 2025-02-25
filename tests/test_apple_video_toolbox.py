@@ -312,8 +312,8 @@ def test_macos_h265_sendonly_recvonly(setup):
     ),
     [
         # どうやら scaleResolutionDownTo を指定すると規定されたテーブルのビットレートでは足りない模様
-        ("H264", "VideoToolbox", 2500, 960, 540),
-        ("H265", "VideoToolbox", 2500, 960, 540),
+        ("H264", "VideoToolbox", 2500, 320, 180),
+        ("H265", "VideoToolbox", 2500, 320, 180),
     ],
 )
 def test_macos_simulcast_authz_scale_resolution_to(
@@ -334,19 +334,19 @@ def test_macos_simulcast_authz_scale_resolution_to(
         {
             "rid": "r0",
             "active": True,
-            "scaleResolutionDownTo": {"maxWidth": 640, "maxHeight": 360},
+            "scaleResolutionDownTo": {"maxWidth": 320, "maxHeight": 180},
             "scalabilityMode": "L1T1",
         },
         {
             "rid": "r1",
             "active": True,
-            "scaleResolutionDownTo": {"maxWidth": 640, "maxHeight": 360},
+            "scaleResolutionDownTo": {"maxWidth": 320, "maxHeight": 180},
             "scalabilityMode": "L1T1",
         },
         {
             "rid": "r2",
             "active": True,
-            "scaleResolutionDownTo": {"maxWidth": 640, "maxHeight": 360},
+            "scaleResolutionDownTo": {"maxWidth": 320, "maxHeight": 180},
             "scalabilityMode": "L1T1",
         },
     ]
@@ -462,8 +462,8 @@ def test_macos_simulcast_authz_scale_resolution_to(
         assert s["bytesSent"] > 500
         assert s["packetsSent"] > 10
 
-        assert s["frameWidth"] == 640
-        assert s["frameHeight"] == 352
+        assert s["frameWidth"] == 320
+        assert s["frameHeight"] == 180
 
         # FIXME:これは libwebrtc 側の挙動を制御できず L1T2 になってしまう
         scalability_mode = None
