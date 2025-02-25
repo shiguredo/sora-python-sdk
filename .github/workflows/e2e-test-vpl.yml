@@ -25,11 +25,12 @@ env:
 jobs:
   e2e_test_vpl:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         python_version:
-          - "3.11"
-          - "3.12"
+          # TODO: push 時には 3.13 でテストする、schedule 時には全部でテストする
+          # - "3.11"
+          # - "3.12"
           - "3.13"
     runs-on: [self-hosted, linux, x64, Intel-VPL]
     timeout-minutes: 15
