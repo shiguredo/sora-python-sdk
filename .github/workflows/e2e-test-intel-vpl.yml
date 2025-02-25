@@ -32,10 +32,9 @@ jobs:
           # - "3.11"
           # - "3.12"
           - "3.13"
-    runs-on: [self-hosted, linux, x64, Intel-VPL]
-    # runs-on:
-    #   group: Self
-    #   labels: [self-hosted, linux, x64, Intel-VPL]
+    runs-on:
+      group: Self
+      labels: [self-hosted, linux, x64, Intel-VPL]
     timeout-minutes: 15
     if: >-
       ${{
