@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import uuid
@@ -6,13 +7,10 @@ import jwt
 import pytest
 from client import SoraClient, SoraRole
 
-"""
-GitHub Actions で Video Toolbox を送受信で利用しようとするとエラーになるので、
-テストを sendonly のみに絞っている
-"""
 
-
-@pytest.mark.skipif(sys.platform != "darwin", reason="macOS でのみ実行する")
+@pytest.mark.skipif(
+    os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
+)
 @pytest.mark.parametrize(
     "video_codec_type",
     ["H264", "H265"],
@@ -58,7 +56,9 @@ def test_macos_video_hwa_sendonly(setup, video_codec_type):
     assert outbound_rtp_stats["packetsSent"] > 0
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="macOS でのみ実行する")
+@pytest.mark.skipif(
+    os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -187,7 +187,9 @@ def test_macos_simulcast(
             )
 
 
-@pytest.mark.skip(reason="ローカルでは成功する")
+@pytest.mark.skipif(
+    os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
+)
 def test_macos_h264_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -245,7 +247,9 @@ def test_macos_h264_sendonly_recvonly(setup):
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.mark.skip(reason="ローカルでは成功する")
+@pytest.mark.skipif(
+    os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
+)
 def test_macos_h265_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -301,7 +305,9 @@ def test_macos_h265_sendonly_recvonly(setup):
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="macOS でのみ実行する")
+@pytest.mark.skipif(
+    os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
