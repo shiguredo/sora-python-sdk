@@ -7,6 +7,7 @@ import pytest
 from client import SoraClient, SoraRole
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Apple では SW コーデックは動作させない")
 @pytest.mark.parametrize(
     (
         "video_codec_type",
