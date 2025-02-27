@@ -119,8 +119,8 @@ def test_intel_vpl_change_resolution(setup):
     assert outbound_rtp_stats["encoderImplementation"] == "libaom"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-    assert outbound_rtp_stats["frameWidth"] == 1280
-    assert outbound_rtp_stats["frameHeight"] == 720
+    assert outbound_rtp_stats["frameWidth"] == 720
+    assert outbound_rtp_stats["frameHeight"] == 1280
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
@@ -132,8 +132,8 @@ def test_intel_vpl_change_resolution(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-    assert inbound_rtp_stats["frameWidth"] == 1280
-    assert inbound_rtp_stats["frameHeight"] == 720
+    assert inbound_rtp_stats["frameWidth"] == 720
+    assert inbound_rtp_stats["frameHeight"] == 1280
 
     sendonly.disconnect()
     recvonly.disconnect()
