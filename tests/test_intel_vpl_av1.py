@@ -17,7 +17,7 @@ from sora_sdk import (
 
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
-def test_intel_vpl_change_resolution(setup):
+def test_intel_vpl_av1_decoder_dynamic_resolution(setup):
     """
     - 解像度が変わっても正常に動作するかを確認する
     """
@@ -134,6 +134,99 @@ def test_intel_vpl_change_resolution(setup):
     assert inbound_rtp_stats["packetsReceived"] > 0
     assert inbound_rtp_stats["frameWidth"] == 720
     assert inbound_rtp_stats["frameHeight"] == 1280
+
+    sendonly.disconnect()
+    recvonly.disconnect()
+
+
+@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+def test_intel_vpl_av1_decoder_large_resolution(setup):
+    """
+    - 大きめの解像度でも正常に動作するかを確認する
+    """
+
+    signaling_urls = setup.get("signaling_urls")
+    channel_id_prefix = setup.get("channel_id_prefix")
+    metadata = setup.get("metadata")
+
+    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+
+    sendonly = SoraClient(
+        signaling_urls,
+        SoraRole.SENDONLY,
+        channel_id,
+        audio=False,
+        video=True,
+        video_codec_type="AV1",
+        video_bit_rate=10000,
+        metadata=metadata,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                ),
+            ]
+        ),
+        video_width=3840,
+        video_height=2160,
+    )
+    sendonly.connect(fake_video=True)
+
+    recvonly = SoraClient(
+        signaling_urls,
+        SoraRole.RECVONLY,
+        channel_id,
+        metadata=metadata,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
+    )
+    recvonly.connect()
+
+    time.sleep(10)
+
+    # offer の sdp に video_codec_type が含まれているかどうかを確認している
+    assert sendonly.offer_message is not None
+    assert "sdp" in sendonly.offer_message
+    assert "AV1" in sendonly.offer_message["sdp"]
+
+    # answer の sdp に video_codec_type が含まれているかどうかを確認している
+    assert sendonly.answer_message is not None
+    assert "sdp" in sendonly.answer_message
+    assert "AV1" in sendonly.answer_message["sdp"]
+
+    sendonly_stats = sendonly.get_stats()
+    recvonly_stats = recvonly.get_stats()
+
+    # codec が無かったら StopIteration 例外が上がる
+    sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
+    assert sendonly_codec_stats["mimeType"] == "video/AV1"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+    assert outbound_rtp_stats["encoderImplementation"] == "libaom"
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0
+    assert outbound_rtp_stats["frameWidth"] == 3840
+    assert outbound_rtp_stats["frameHeight"] == 2160
+
+    # codec が無かったら StopIteration 例外が上がる
+    recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
+    assert recvonly_codec_stats["mimeType"] == "video/AV1"
+
+    # inbound-rtp が無かったら StopIteration 例外が上がる
+    inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
+    assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
+    assert inbound_rtp_stats["bytesReceived"] > 0
+    assert inbound_rtp_stats["packetsReceived"] > 0
+    assert inbound_rtp_stats["frameWidth"] == 3840
+    assert inbound_rtp_stats["frameHeight"] == 2160
 
     sendonly.disconnect()
     recvonly.disconnect()
