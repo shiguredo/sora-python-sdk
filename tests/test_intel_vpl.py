@@ -765,7 +765,6 @@ def test_intel_vpl_sendonly_recvonly_sw_hw(
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    # H.264/H.265 が採用されているかどうか確認する
     assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
@@ -776,7 +775,6 @@ def test_intel_vpl_sendonly_recvonly_sw_hw(
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
-    # H.264/H.265 が採用されているかどうか確認する
     assert recvonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # inbound-rtp が無かったら StopIteration 例外が上がる

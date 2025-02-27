@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - ".github/workflows/e2e-test-intel-vpl.yml"
-      - "tests/test_intel_vpl.py"
+      - "tests/test_intel_vpl**"
       # C++ SDK のアップデートしたときテストするため
       - "VERSION"
   schedule:
@@ -52,7 +52,7 @@ jobs:
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - run: uv run python run.py ubuntu-24.04_x86_64
-      - run: uv run pytest tests/test_intel_vpl.py -v
+      - run: uv run pytest tests/test_intel_vpl* -v
 
   # slack_notify_succeeded:
   #   needs: [e2e_test_intel_vpl]
