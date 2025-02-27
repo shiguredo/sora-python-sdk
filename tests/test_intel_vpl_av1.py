@@ -19,7 +19,7 @@ from sora_sdk import (
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 def test_intel_vpl_av1_decoder_dynamic_resolution(setup):
     """
-    - 解像度が変わっても正常に動作するかを確認する
+    - AV1 の映像の解像度が変わっても正常に動作するかを確認する
     """
 
     signaling_urls = setup.get("signaling_urls")
@@ -28,6 +28,7 @@ def test_intel_vpl_av1_decoder_dynamic_resolution(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
+    # 送信側は libaom を利用してソフトウェアエンコードを利用する
     sendonly = SoraClient(
         signaling_urls,
         SoraRole.SENDONLY,
@@ -50,6 +51,7 @@ def test_intel_vpl_av1_decoder_dynamic_resolution(setup):
     )
     sendonly.connect(fake_video=True)
 
+    # 受信側は libvpl を利用してハードウェアデコードを利用する
     recvonly = SoraClient(
         signaling_urls,
         SoraRole.RECVONLY,
@@ -119,6 +121,7 @@ def test_intel_vpl_av1_decoder_dynamic_resolution(setup):
     assert outbound_rtp_stats["encoderImplementation"] == "libaom"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
+    # 送信側の解像度が回転していることを確認する
     assert outbound_rtp_stats["frameWidth"] == 720
     assert outbound_rtp_stats["frameHeight"] == 1280
 
@@ -131,6 +134,7 @@ def test_intel_vpl_av1_decoder_dynamic_resolution(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
+    # 受信側の解像度が回転していることを確認する
     assert inbound_rtp_stats["frameWidth"] == 720
     assert inbound_rtp_stats["frameHeight"] == 1280
 
@@ -150,6 +154,7 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
+    # 送信側は libaom を利用してソフトウェアエンコードを利用する
     sendonly = SoraClient(
         signaling_urls,
         SoraRole.SENDONLY,
@@ -172,6 +177,7 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
     )
     sendonly.connect(fake_video=True)
 
+    # 受信側は libvpl を利用してハードウェアデコードを利用する
     recvonly = SoraClient(
         signaling_urls,
         SoraRole.RECVONLY,
