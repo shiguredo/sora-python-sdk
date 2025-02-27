@@ -143,9 +143,9 @@ def test_intel_vpl_av1_decoder_dynamic_resolution(setup):
 
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
-def test_intel_vpl_av1_decoder_large_resolution(setup):
+def test_intel_vpl_av1_decoder_8k_resolution(setup):
     """
-    - 大きめの解像度でも正常に動作するかを確認する
+    - 8K でも正常に動作するかを確認する
     """
 
     signaling_urls = setup.get("signaling_urls")
@@ -162,7 +162,7 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
         audio=False,
         video=True,
         video_codec_type="AV1",
-        video_bit_rate=10000,
+        video_bit_rate=15000,
         metadata=metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
@@ -172,8 +172,8 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
                 ),
             ]
         ),
-        video_width=8000,
-        video_height=4000,
+        video_width=7680,
+        video_height=4320,
     )
     sendonly.connect(fake_video=True)
 
@@ -218,8 +218,8 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
     assert outbound_rtp_stats["encoderImplementation"] == "libaom"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-    assert outbound_rtp_stats["frameWidth"] == 8000
-    assert outbound_rtp_stats["frameHeight"] == 4000
+    assert outbound_rtp_stats["frameWidth"] == 7680
+    assert outbound_rtp_stats["frameHeight"] == 4320
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
@@ -230,8 +230,8 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-    assert inbound_rtp_stats["frameWidth"] == 8000
-    assert inbound_rtp_stats["frameHeight"] == 4000
+    assert inbound_rtp_stats["frameWidth"] == 7680
+    assert inbound_rtp_stats["frameHeight"] == 4320
 
     sendonly.disconnect()
     recvonly.disconnect()
