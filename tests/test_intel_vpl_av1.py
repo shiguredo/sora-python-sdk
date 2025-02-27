@@ -172,8 +172,8 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
                 ),
             ]
         ),
-        video_width=3840,
-        video_height=2160,
+        video_width=8000,
+        video_height=4000,
     )
     sendonly.connect(fake_video=True)
 
@@ -218,8 +218,8 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
     assert outbound_rtp_stats["encoderImplementation"] == "libaom"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-    assert outbound_rtp_stats["frameWidth"] == 3840
-    assert outbound_rtp_stats["frameHeight"] == 2160
+    assert outbound_rtp_stats["frameWidth"] == 8000
+    assert outbound_rtp_stats["frameHeight"] == 4000
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
@@ -230,8 +230,8 @@ def test_intel_vpl_av1_decoder_large_resolution(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-    assert inbound_rtp_stats["frameWidth"] == 3840
-    assert inbound_rtp_stats["frameHeight"] == 2160
+    assert inbound_rtp_stats["frameWidth"] == 8000
+    assert inbound_rtp_stats["frameHeight"] == 4000
 
     sendonly.disconnect()
     recvonly.disconnect()
