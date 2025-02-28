@@ -311,6 +311,11 @@ class SoraClient:
             if self._audio_source is not None:
                 self._audio_source.on_data(numpy.zeros((320, 1), dtype=numpy.int16))
 
+    # video の解像度を変更する
+    def set_video_resolution(self, width: int, height: int):
+        self._video_width = width
+        self._video_height = height
+
     def _fake_video_loop(self):
         while not self._disconnected.is_set():
             time.sleep(1.0 / 30)
