@@ -142,7 +142,14 @@ def test_intel_vpl_av1_decoder_dynamic_resolution(setup):
 
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
-def test_intel_vpl_av1_decoder_8k_resolution(setup):
+@pytest.mark.parametrize(
+    "video_bit_rate,video_width, video_height",
+    [
+        (7500, 2160, 3840),
+        (500, 320, 240),
+    ],
+)
+def test_intel_vpl_av1_decoder(setup, video_bit_rate, video_width, video_height):
     """
     - 8K でも正常に動作するかを確認する
     """
@@ -161,7 +168,7 @@ def test_intel_vpl_av1_decoder_8k_resolution(setup):
         audio=False,
         video=True,
         video_codec_type="AV1",
-        video_bit_rate=15000,
+        video_bit_rate=video_bit_rate,
         metadata=metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
@@ -171,8 +178,8 @@ def test_intel_vpl_av1_decoder_8k_resolution(setup):
                 ),
             ]
         ),
-        video_width=7680,
-        video_height=4320,
+        video_width=video_width,
+        video_height=video_height,
     )
     sendonly.connect(fake_video=True)
 
@@ -217,8 +224,8 @@ def test_intel_vpl_av1_decoder_8k_resolution(setup):
     assert outbound_rtp_stats["encoderImplementation"] == "libaom"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
-    assert outbound_rtp_stats["frameWidth"] == 7680
-    assert outbound_rtp_stats["frameHeight"] == 4320
+    assert outbound_rtp_stats["frameWidth"] == video_width
+    assert outbound_rtp_stats["frameHeight"] == video_height
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
@@ -229,8 +236,8 @@ def test_intel_vpl_av1_decoder_8k_resolution(setup):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-    assert inbound_rtp_stats["frameWidth"] == 7680
-    assert inbound_rtp_stats["frameHeight"] == 4320
+    assert inbound_rtp_stats["frameWidth"] == video_width
+    assert inbound_rtp_stats["frameHeight"] == video_height
 
     sendonly.disconnect()
     recvonly.disconnect()
