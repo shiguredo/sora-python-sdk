@@ -36,7 +36,6 @@ def test_nvidia_video_codec_sdk_available(setup):
             # 対応コーデックは 5 種類
             assert len(e.codecs) == 5
 
-            print(e.codecs)
             for c in e.codecs:
                 match c.type:
                     case SoraVideoCodecType.VP8:
