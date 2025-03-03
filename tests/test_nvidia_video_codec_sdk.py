@@ -14,7 +14,6 @@ from client import (
 from sora_sdk import (
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
-    SoraVideoCodecType,
 )
 
 
@@ -351,12 +350,21 @@ def test_nvidia_codec_sdk_sendonly_recvonly(setup, video_codec_type, expected_im
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
+# VP8 / VP9 は HWA Decoder のみ搭載している
+# https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new
 @pytest.mark.skipif(
     os.environ.get("NVIDIA_VIDEO_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
 )
-def test_nvidia_codec_sdk_vp9_hwa_decoder(setup):
+@pytest.mark.parametrize(
+    ("video_codec_type", "expected_implementation"),
+    [
+        ("VP8", "NvCodec"),
+        ("VP9", "NvCodec"),
+    ],
+)
+def test_nvidia_codec_sdk_decoding_only(setup, video_codec_type, expected_implementation):
     """
-    NVIDIA Video Codec SDK VP9 はデコーダーは利用できるので、そのテスト
+    NVIDIA Video Codec SDK VP8/VP9 はデコーダーは利用できるので、そのテスト
     """
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -370,13 +378,12 @@ def test_nvidia_codec_sdk_vp9_hwa_decoder(setup):
         channel_id,
         audio=False,
         video=True,
-        video_codec_type="VP9",
+        video_codec_type=video_codec_type,
         metadata=metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.VP9,
-                    # NVIDIA Video Codec SDK で VP9 Encoder は搭載していないので INTERNAL を指定
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     encoder=SoraVideoCodecImplementation.INTERNAL,
                 ),
             ]
@@ -392,8 +399,7 @@ def test_nvidia_codec_sdk_vp9_hwa_decoder(setup):
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
-                    type=SoraVideoCodecType.VP9,
-                    # NVIDIA Video Codec SDK で VP9 Decoder は搭載しているので NVIDIA_VIDEO_CODEC_SDK を指定
+                    type=codec_type_string_to_codec_type(video_codec_type),
                     decoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
                 ),
             ]
@@ -412,17 +418,17 @@ def test_nvidia_codec_sdk_vp9_hwa_decoder(setup):
     # offer の sdp に video_codec_type が含まれているかどうかを確認している
     assert sendonly.offer_message is not None
     assert "sdp" in sendonly.offer_message
-    assert "VP9" in sendonly.offer_message["sdp"]
+    assert video_codec_type in sendonly.offer_message["sdp"]
 
     # answer の sdp に video_codec_type が含まれているかどうかを確認している
     assert sendonly.answer_message is not None
     assert "sdp" in sendonly.answer_message
-    assert "VP9" in sendonly.answer_message["sdp"]
+    assert video_codec_type in sendonly.answer_message["sdp"]
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     # VP9 が採用されているかどうか確認する
-    assert sendonly_codec_stats["mimeType"] == "video/VP9"
+    assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
@@ -433,10 +439,10 @@ def test_nvidia_codec_sdk_vp9_hwa_decoder(setup):
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
     # VP9 が採用されているかどうか確認する
-    assert recvonly_codec_stats["mimeType"] == "video/VP9"
+    assert recvonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
-    assert inbound_rtp_stats["decoderImplementation"] == "NvCodec"
+    assert inbound_rtp_stats["decoderImplementation"] == expected_implementation
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
