@@ -322,7 +322,7 @@ def test_nvidia_video_codec_sdk_simulcast(
         ("VP9", "NvCodec"),
     ],
 )
-def test_nvidia_codec_sdk_decoding_only(setup, video_codec_type, expected_implementation):
+def test_nvidia_video_codec_sdk_decoding_only(setup, video_codec_type, expected_implementation):
     """
     NVIDIA Video Codec SDK VP8/VP9 はデコーダーは利用できるので、そのテスト
     """
