@@ -7,8 +7,10 @@ on:
       - "**.md"
       - ".github/workflows/e2e-test-intel-vpl.yml"
       - ".github/workflows/e2e-test-apple-video-toolbox.yml"
+      - ".github/workflows/e2e-test-nvidia-video-codec-sdk.yml"
       - "tests/test_intel_vpl.py"
       - "tests/test_apple_video_toolbox.py"
+      - "tests/test_nvidia_video_codec_sdk.py"
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
