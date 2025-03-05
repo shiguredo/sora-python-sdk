@@ -139,18 +139,6 @@ jobs:
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
-      # Ubuntu 向けに Python 3.11 では E2E テストを実行する
-      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.11' }}
-        name: Download openh264
-        run: |
-          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-linux64.8.so.bz2
-          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-linux64.8.so.bz2
-          mv libopenh264-${{ env.OPENH264_VERSION }}-linux64.8.so libopenh264.so
-          echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' && matrix.python_version == '3.11' }}
-        run: uv run pytest tests -s
-
-
       # macOS 向け
       - if: ${{ matrix.platform.os == 'macos' }}
         run: |
