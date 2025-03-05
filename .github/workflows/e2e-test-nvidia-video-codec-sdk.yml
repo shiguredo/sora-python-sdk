@@ -47,10 +47,11 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: uv python pin ${{ matrix.python_version }}
-      - run: uv sync
-      - run: uv run python run.py ubuntu-24.04_x86_64
-      - run: uv run pytest tests/test_nvidia_video_codec_sdk.py -v
+      - run: >-
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+          uv run python run.py ubuntu-24.04_x86_64
+          uv run pytest tests/test_nvidia_video_codec_sdk.py -v
 
   # slack_notify_succeeded:
   #   needs: [e2e_test_intel_vpl]
