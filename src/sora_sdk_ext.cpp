@@ -631,8 +631,8 @@ NB_MODULE(sora_sdk_ext, m) {
         if (sora::CudaContext::CanCreate()) {
           config.cuda_context = sora::CudaContext::Create();
         }
-        if (sora::AmfContext::CanCreate()) {
-          config.amf_context = sora::AmfContext::Create();
+        if (sora::AMFContext::CanCreate()) {
+          config.amf_context = sora::AMFContext::Create();
         }
         return sora::GetVideoCodecCapability(config);
       },
