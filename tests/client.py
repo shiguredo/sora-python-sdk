@@ -1,4 +1,5 @@
 import json
+import os
 import queue
 import threading
 import time
@@ -8,12 +9,14 @@ from typing import Any, Callable, Optional
 
 import numpy
 
+import sora_sdk
 from sora_sdk import (
     Sora,
     SoraAudioSink,
     SoraAudioSource,
     SoraConnection,
     SoraDegradationPreference,
+    SoraLoggingSeverity,
     SoraMediaTrack,
     SoraSignalingDirection,
     SoraSignalingErrorCode,
@@ -88,6 +91,21 @@ class SoraClient:
 
         self._video_width: int = video_width
         self._video_height: int = video_height
+
+        if webrtc_log := os.environ.get("TEST_LIBWEBRTC_LOG"):
+            match webrtc_log:
+                case "none":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.NONE)
+                case "verbose":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.VERBOSE)
+                case "info":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.INFO)
+                case "warning":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.WARNING)
+                case "error":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.ERROR)
+                case _:
+                    pass
 
         self._sora: Sora = Sora(
             openh264=openh264_path, video_codec_preference=video_codec_preference
