@@ -47,7 +47,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: >-
+      - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
           uv run python run.py ubuntu-24.04_x86_64
