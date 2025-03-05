@@ -23,12 +23,12 @@ from sora_sdk import (
 def test_amd_amf_available(setup):
     capability = get_video_codec_capability()
 
-    intel_vpl_available = False
+    amd_amf_available = False
     for e in capability.engines:
         if e.name == SoraVideoCodecImplementation.AMD_AMF:
-            intel_vpl_available = True
+            amd_amf_available = True
 
-    assert intel_vpl_available is True
+    assert amd_amf_available is True
 
     for e in capability.engines:
         if e.name == SoraVideoCodecImplementation.AMD_AMF:
