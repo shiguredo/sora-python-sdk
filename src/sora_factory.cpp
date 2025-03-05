@@ -40,7 +40,7 @@ SoraFactory::SoraFactory(
         sora::CudaContext::Create();
   }
   if (sora::AmfContext::CanCreate()) {
-    context_config.video_codec_factory_config.preference =
+    context_config.video_codec_factory_config.capability_config.amf_context =
         sora::AmfContext::Create();
   }
 
