@@ -2,21 +2,17 @@ name: e2e-test
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["build"]
-    types:
-      - completed
-  # push:
-  #   paths-ignore:
-  #     - "**.md"
-  #     - ".github/workflows/e2e-test-intel-vpl.yml"
-  #     - ".github/workflows/e2e-test-amd-amf.yml"
-  #     - ".github/workflows/e2e-test-apple-video-toolbox.yml"
-  #     - ".github/workflows/e2e-test-nvidia-video-codec-sdk.yml"
-  #     - "tests/test_intel_vpl.py"
-  #     - "tests/test_amd_amf.py"
-  #     - "tests/test_apple_video_toolbox.py"
-  #     - "tests/test_nvidia_video_codec_sdk.py"
+  push:
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/e2e-test-intel-vpl.yml"
+      - ".github/workflows/e2e-test-amd-amf.yml"
+      - ".github/workflows/e2e-test-apple-video-toolbox.yml"
+      - ".github/workflows/e2e-test-nvidia-video-codec-sdk.yml"
+      - "tests/test_intel_vpl.py"
+      - "tests/test_amd_amf.py"
+      - "tests/test_apple_video_toolbox.py"
+      - "tests/test_nvidia_video_codec_sdk.py"
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
@@ -30,7 +26,7 @@ env:
   OPENH264_VERSION: 2.6.0
 
 jobs:
-  # workflow_run 経由で実行される最小限の E2E テスト
+  # push 経由で実行される最小限の E2E テスト
   e2e_test_minimal:
     strategy:
       fail-fast: false
@@ -43,7 +39,7 @@ jobs:
             openh264_arch: "linux64"
     runs-on: ${{ matrix.platform.runs-on}}
     timeout-minutes: 15
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'push' }}
     steps:
       - uses: actions/checkout@v4
       - uses: tailscale/github-action@v3
