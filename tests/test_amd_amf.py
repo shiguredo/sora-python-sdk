@@ -20,12 +20,7 @@ from sora_sdk import (
 
 
 @pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
-def test_amd_amf_check(setup):
-    pass
-
-
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
-def test_amd_vcn_available(setup):
+def test_amd_amf_available(setup):
     capability = get_video_codec_capability()
 
     intel_vpl_available = False
