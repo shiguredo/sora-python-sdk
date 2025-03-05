@@ -31,6 +31,8 @@
   - @melpon
 - [ADD] Windows で OpenH264 が利用できるようにする
   - @melpon
+- [ADD] AMD AMF に対応する
+  - @melpon
 - [ADD] `send_message()` を追加する
   - `on_message()` と合わせる
   - `send_data_channel()` のシンタックスシュガー
@@ -141,6 +143,8 @@
 - [ADD] tests/ に E2E テストを追加する
   - @voluntas
 - [ADD] examples に E2E テストを追加する
+  - @voluntas
+- [ADD] AMD AMF の E2E テストを追加する
   - @voluntas
 - [ADD] Intel VPL の E2E テストを追加する
   - @voluntas
