@@ -1,11 +1,11 @@
-name: e2e-test-apple-video-toolbox
+name: e2e-test-nvidia-video-codec-sdk
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - ".github/workflows/e2e-test-apple-video-toolbox.yml"
-      - "tests/test_apple_video_toolbox.py"
+      - ".github/workflows/e2e-test-nvidia-video-codec-sdk.yml"
+      - "tests/test_nvidia_video_codec_sdk.py"
       # C++ SDK のアップデートしたときテストするため
       - "VERSION"
   schedule:
@@ -18,10 +18,10 @@ env:
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
-  APPLE_VIDEO_TOOLBOX: true
+  NVIDIA_VIDEO_CODEC_SDK: true
 
 jobs:
-  e2e_test_apple_video_toolbox:
+  e2e_test_nvidia_video_codec_sdk:
     strategy:
       fail-fast: true
       matrix:
@@ -32,7 +32,7 @@ jobs:
           - "3.13"
     runs-on:
       group: Self
-      labels: [self-hosted, self-hosted, macOS, ARM64, Apple-M2-Pro]
+      labels: [self-hosted, linux, x64, NVIDIA-Video-Codec-SDK]
     timeout-minutes: 15
     if: >-
       ${{
@@ -49,11 +49,11 @@ jobs:
           enable-cache: false
       - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
-      - run: uv run python run.py macos_arm64
-      - run: uv run pytest tests/test_apple_video_toolbox.py -v
+      - run: uv run python run.py ubuntu-24.04_x86_64
+      - run: uv run pytest tests/test_nvidia_video_codec_sdk.py -v
 
   # slack_notify_succeeded:
-  #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+  #   needs: [e2e_test_intel_vpl]
   #   runs-on: ubuntu-24.04
   #   if: success()
   #   steps:
@@ -67,7 +67,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_test_apple_video_toolbox]
+    needs: [e2e_test_nvidia_video_codec_sdk]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
