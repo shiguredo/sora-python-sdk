@@ -579,7 +579,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("CISCO_OPENH264", sora::VideoCodecImplementation::kCiscoOpenH264)
       .value("INTEL_VPL", sora::VideoCodecImplementation::kIntelVpl)
       .value("NVIDIA_VIDEO_CODEC_SDK",
-             sora::VideoCodecImplementation::kNvidiaVideoCodecSdk);
+             sora::VideoCodecImplementation::kNvidiaVideoCodecSdk)
+      .value("AMD_AMF", sora::VideoCodecImplementation::kAmdAmf);
 
   nb::enum_<webrtc::VideoCodecType>(m, "SoraVideoCodecType",
                                     nb::is_arithmetic())
@@ -606,7 +607,11 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_ro("vpl_impl_value",
               &sora::VideoCodecCapability::Parameters::vpl_impl_value)
       .def_ro("nvcodec_gpu_device_name",
-              &sora::VideoCodecCapability::Parameters::nvcodec_gpu_device_name);
+              &sora::VideoCodecCapability::Parameters::nvcodec_gpu_device_name)
+      .def_ro("amf_runtime_version",
+              &sora::VideoCodecCapability::Parameters::amf_runtime_version)
+      .def_ro("amf_embedded_version",
+              &sora::VideoCodecCapability::Parameters::amf_embedded_version);
   nb::class_<sora::VideoCodecCapability::Codec>(video_codec_capability, "Codec")
       .def_ro("type", &sora::VideoCodecCapability::Codec::type)
       .def_ro("encoder", &sora::VideoCodecCapability::Codec::encoder)
@@ -623,7 +628,12 @@ NB_MODULE(sora_sdk_ext, m) {
       [](std::optional<std::string> openh264) -> sora::VideoCodecCapability {
         sora::VideoCodecCapabilityConfig config;
         config.openh264_path = openh264;
-        config.cuda_context = sora::CudaContext::Create();
+        if (sora::CudaContext::CanCreate()) {
+          config.cuda_context = sora::CudaContext::Create();
+        }
+        if (sora::AMFContext::CanCreate()) {
+          config.amf_context = sora::AMFContext::Create();
+        }
         return sora::GetVideoCodecCapability(config);
       },
       "openh264"_a = nb::none());
