@@ -142,7 +142,7 @@ def test_amd_amf_sendonly_recvonly(setup, video_codec_type):
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    assert outbound_rtp_stats["encoderImplementation"] == "amd_amf"
+    assert outbound_rtp_stats["encoderImplementation"] == "AMF"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
@@ -153,6 +153,6 @@ def test_amd_amf_sendonly_recvonly(setup, video_codec_type):
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
-    assert inbound_rtp_stats["decoderImplementation"] == "amd_amf"
+    assert inbound_rtp_stats["decoderImplementation"] == "AMF"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
