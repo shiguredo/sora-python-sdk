@@ -628,7 +628,12 @@ NB_MODULE(sora_sdk_ext, m) {
       [](std::optional<std::string> openh264) -> sora::VideoCodecCapability {
         sora::VideoCodecCapabilityConfig config;
         config.openh264_path = openh264;
-        config.cuda_context = sora::CudaContext::Create();
+        if (sora::CudaContext::CanCreate()) {
+          config.cuda_context = sora::CudaContext::Create();
+        }
+        if (sora::AmfContext::CanCreate()) {
+          config.amf_context = sora::AmfContext::Create();
+        }
         return sora::GetVideoCodecCapability(config);
       },
       "openh264"_a = nb::none());
