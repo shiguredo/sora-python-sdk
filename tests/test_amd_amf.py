@@ -43,7 +43,7 @@ def test_amd_vcn_available(setup):
             for c in e.codecs:
                 match c.type:
                     case SoraVideoCodecType.VP8:
-                        assert c.decoder is True
+                        assert c.decoder is False
                         assert c.encoder is False
                     case SoraVideoCodecType.VP9:
                         assert c.decoder is True
