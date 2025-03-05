@@ -39,9 +39,9 @@ SoraFactory::SoraFactory(
     context_config.video_codec_factory_config.capability_config.cuda_context =
         sora::CudaContext::Create();
   }
-  if (sora::AmfContext::CanCreate()) {
+  if (sora::AMFContext::CanCreate()) {
     context_config.video_codec_factory_config.capability_config.amf_context =
-        sora::AmfContext::Create();
+        sora::AMFContext::Create();
   }
 
   // Audio デバイスは使わない、 use_audio_device を true にしただけでデバイスを掴んでしまうので常に false
