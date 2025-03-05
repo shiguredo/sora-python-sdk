@@ -51,7 +51,7 @@ jobs:
           name: sora_sdk
           path: sora_sdk/
 
-  build_linux_macos:
+  build_ubuntu:
     strategy:
       fail-fast: false
       matrix:
@@ -65,18 +65,6 @@ jobs:
             runs_on: ubuntu-22.04
             os: ubuntu
             arch: x86_64
-          - name: macos-15_arm64
-            target: macos_arm64
-            runs_on: macos-15
-            os: macos
-            python_host_platform: "macosx-15.0-arm64"
-            archflags: "-arch arm64"
-          - name: macos-14_arm64
-            target: macos_arm64
-            runs_on: macos-14
-            os: macos
-            python_host_platform: "macosx-14.0-arm64"
-            archflags: "-arch arm64"
         python_version:
           - "3.11"
           - "3.12"
@@ -102,11 +90,10 @@ jobs:
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
       # libx11-dev は Ubuntu 24.04 の時に必要になる
-      - if: ${{ matrix.platform.os == 'ubuntu'}}
-        run: |
+      - run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev
-      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
+      - if: ${{ matrix.platform.arch == 'armv8' }}
         run: |
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
@@ -114,11 +101,12 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: uv python pin ${{ matrix.python_version }}
-      - run: uv sync
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
 
       # Ubuntu x86_64 向け
-      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' }}
+      - if: ${{ matrix.platform.arch == 'x86_64' }}
         name: Tailscale
         uses: tailscale/github-action@v3
         with:
@@ -126,27 +114,18 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
         
-      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'x86_64' }}
+      - if: ${{ matrix.platform.arch == 'x86_64' }}
         run: |
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
 
       # Ubuntu armv8 向け
-      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
+      - if: ${{ matrix.platform.arch == 'armv8' }}
         run: |
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
-
-      # macOS 向け
-      - if: ${{ matrix.platform.os == 'macos' }}
-        run: |
-          uv run python run.py ${{ matrix.platform.target }}
-          uv run python -m build
-        env:
-          _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
-          ARCHFLAGS: ${{ matrix.platform.archflags }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -196,13 +175,64 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: uv python pin ${{ matrix.python_version }}
-      - run: uv sync
       - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
           uv run python run.py ${{ matrix.platform.target }}
           uv run python -m build
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
+
+  build_macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: macos-15_arm64
+            target: macos_arm64
+            runs_on: macos-15
+            os: macos
+            python_host_platform: "macosx-15.0-arm64"
+            archflags: "-arch arm64"
+          - name: macos-14_arm64
+            target: macos_arm64
+            runs_on: macos-14
+            os: macos
+            python_host_platform: "macosx-14.0-arm64"
+            archflags: "-arch arm64"
+        python_version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+    needs: [build_pyi] 
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sora_sdk
+          path: sora_sdk/
+      - run: |
+          cp sora_sdk/py.typed src/sora_sdk/py.typed
+          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+          uv run python run.py ${{ matrix.platform.target }}
+          uv run python -m build
+        env:
+          _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
+          ARCHFLAGS: ${{ matrix.platform.archflags }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+          path: "dist/"
 
   build_windows:
     needs: [build_pyi] 
@@ -228,10 +258,11 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
-      - run: uv python pin ${{ matrix.python_version }}
-      - run: uv sync
-      - run: uv run python run.py windows_x86_64
-      - run: uv run python -m build
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+          uv run python run.py windows_x86_64
+          uv run python -m build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -240,7 +271,7 @@ jobs:
           path: dist/
 
   # slack_notify_succeeded:
-  #   needs: [build_linux_macos, build_ubuntu_arm, build_windows]
+  #   needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
   #   runs-on: ubuntu-24.04
   #   if: success()
   #   steps:
@@ -254,7 +285,7 @@ jobs:
   #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [build_linux_macos, build_ubuntu_arm, build_windows]
+    needs: [build_ubuntu, build_ubuntu_arm, build_macos,build_windows]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
@@ -270,7 +301,8 @@ jobs:
   publish_wheel:
     if: contains(github.ref, 'tags/202')
     needs:
-      - build_linux_macos
+      - build_ubuntu
+      - build_macos
       - build_windows
     strategy:
       fail-fast: false
@@ -329,7 +361,8 @@ jobs:
   create-release:
     if: contains(github.ref, 'tags/202')
     needs:
-      - build_linux_macos
+      - build_ubuntu
+      - build_macos
       - build_windows
     runs-on: ubuntu-24.04
     timeout-minutes: 60
