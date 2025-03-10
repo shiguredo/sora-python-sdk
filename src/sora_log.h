@@ -4,5 +4,6 @@
 #include "sora.h"
 
 void EnableLibwebrtcLog(rtc::LoggingSeverity severity);
+void RtcLog(rtc::LoggingSeverity severity, const std::string& message);
 
 #endif
