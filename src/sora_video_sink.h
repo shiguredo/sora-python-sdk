@@ -57,8 +57,9 @@ class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   /**
    * @param track 映像を取り出す OnTrack コールバックから渡されるリモート Track
    */
-  SoraVideoSinkImpl(SoraTrackInterface* track);
-  SoraVideoSinkImpl(const webrtc::Environment& env, SoraTrackInterface* track);
+  SoraVideoSinkImpl(nb::ref<SoraTrackInterface> track);
+  SoraVideoSinkImpl(const webrtc::Environment& env,
+                    nb::ref<SoraTrackInterface> track);
   ~SoraVideoSinkImpl();
 
   void Del();
@@ -87,7 +88,7 @@ class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   std::function<void(std::shared_ptr<SoraVideoFrame>)> on_frame_;
 
  private:
-  SoraTrackInterface* track_;
+  nb::ref<SoraTrackInterface> track_;
   std::unique_ptr<webrtc::TaskQueueBase, webrtc::TaskQueueDeleter>
       on_frame_queue_;
 };

@@ -15,7 +15,7 @@
  * webrtc::MediaStreamTrackInterface は rtc::scoped_refptr なので、
  * nanobind で直接のハンドリングが難しいので用意しました。
  */
-class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
+class SoraTrackInterface : public CountedPublisher, public DisposeSubscriber {
  public:
   SoraTrackInterface(
       DisposePublisher* publisher,

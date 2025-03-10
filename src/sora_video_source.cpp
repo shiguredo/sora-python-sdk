@@ -20,7 +20,7 @@ SoraVideoSource::SoraVideoSource(
   }));
 }
 
-void SoraVideoSource::Disposed() {
+SoraVideoSource::~SoraVideoSource() {
   if (!finished_) {
     finished_ = true;
     queue_cond_.notify_all();
@@ -28,11 +28,6 @@ void SoraVideoSource::Disposed() {
     thread_->join();
     thread_ = nullptr;
   }
-  SoraTrackInterface::Disposed();
-}
-
-void SoraVideoSource::PublisherDisposed() {
-  Disposed();
 }
 
 void SoraVideoSource::OnCaptured(

@@ -5,6 +5,12 @@
 #include <optional>
 #include <vector>
 
+// nonobind
+// clang-format off
+#include <nanobind/nanobind.h>
+// clang-format on
+#include <nanobind/intrusive/ref.h>
+
 #include "dispose_listener.h"
 #include "sora_audio_source.h"
 #include "sora_connection.h"
@@ -21,7 +27,7 @@
  * 同じ Sora インスタンス内でしか Connection や AudioSource、VideoSource を共有できないので、
  * 複数の Sora インスタンスを生成することは不具合の原因になります。
  */
-class Sora : public DisposePublisher {
+class Sora : public CountedPublisher {
  public:
   /**
    * このタイミングで SoraFactory の生成まで行うため SoraFactory の生成にあたって必要な引数はここで設定します。
@@ -86,7 +92,7 @@ class Sora : public DisposePublisher {
    * @param degradation_preference (オプション) デグレード設定
    * @return SoraConnection インスタンス
    */
-  std::shared_ptr<SoraConnection> CreateConnection(
+  nb::ref<SoraConnection> CreateConnection(
       // 必須パラメータ
       const nb::handle& signaling_urls,
       const std::string& role,
@@ -98,8 +104,8 @@ class Sora : public DisposePublisher {
       std::optional<std::string> bundle_id,
       const nb::handle& metadata,
       const nb::handle& signaling_notify_metadata,
-      SoraTrackInterface* audio_source,
-      SoraTrackInterface* video_source,
+      nb::ref<SoraTrackInterface> audio_source,
+      nb::ref<SoraTrackInterface> video_source,
       SoraAudioFrameTransformer* audio_frame_transformer,
       SoraVideoFrameTransformer* video_frame_transformer,
       std::optional<bool> audio,
@@ -149,7 +155,7 @@ class Sora : public DisposePublisher {
    * @param sample_rate AudioSource に入力する音声データのサンプリングレート
    * @return SoraAudioSource インスタンス
    */
-  SoraAudioSource* CreateAudioSource(size_t channels, int sample_rate);
+  nb::ref<SoraAudioSource> CreateAudioSource(size_t channels, int sample_rate);
   /**
    * Sora に映像データを送る受け口である SoraVideoSource を生成します。
    * 
@@ -159,9 +165,7 @@ class Sora : public DisposePublisher {
    * 
    * @return SoraVideoSource インスタンス
    */
-  SoraVideoSource* CreateVideoSource();
-
-  std::vector<std::weak_ptr<SoraConnection>> weak_connections_;
+  nb::ref<SoraVideoSource> CreateVideoSource();
 
  private:
   /**
@@ -187,5 +191,7 @@ class Sora : public DisposePublisher {
   ConvertForwardingFilter(const nb::handle value);
 
   std::unique_ptr<SoraFactory> factory_;
+  std::unique_ptr<boost::asio::io_context> ioc_;
+  std::unique_ptr<std::thread> thread_;
 };
 #endif

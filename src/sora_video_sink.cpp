@@ -32,11 +32,11 @@ nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>> SoraVideoFrame::Data() {
       argb_data_.get(), 3, shape, nb::handle());
 }
 
-SoraVideoSinkImpl::SoraVideoSinkImpl(SoraTrackInterface* track)
+SoraVideoSinkImpl::SoraVideoSinkImpl(nb::ref<SoraTrackInterface> track)
     : SoraVideoSinkImpl(webrtc::CreateEnvironment(), track) {}
 
 SoraVideoSinkImpl::SoraVideoSinkImpl(const webrtc::Environment& env,
-                                     SoraTrackInterface* track)
+                                     nb::ref<SoraTrackInterface> track)
     : track_(track) {
   on_frame_queue_ = env.task_queue_factory().CreateTaskQueue(
       "OnFrameQueue", webrtc::TaskQueueFactory::Priority::NORMAL);

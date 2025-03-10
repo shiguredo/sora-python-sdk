@@ -3,6 +3,15 @@
 
 #include <vector>
 
+// nonobind
+// clang-format off
+#include <nanobind/nanobind.h>
+// clang-format on
+#include <nanobind/intrusive/counter.h>
+#include <nanobind/intrusive/ref.h>
+
+namespace nb = nanobind;
+
 /**
  * 実装上の留意点：Sora Python SDK は Sora, AudioSource, VideoSource, Connection, Track など、
  * それぞれを Python で別々で扱うことができるようになっているが実態としては親を破棄すると子が止まる関係性が存在する。
@@ -37,7 +46,7 @@ class DisposePublisher {
    * 
    * @param subscriber Subscribe する DisposeSubscriber
    */
-  void AddSubscriber(DisposeSubscriber* subscriber) {
+  virtual void AddSubscriber(DisposeSubscriber* subscriber) {
     subscribers_.push_back(subscriber);
   }
   /**
@@ -45,7 +54,7 @@ class DisposePublisher {
    * 
    * @param subscriber Subscribe を解除する DisposeSubscriber
    */
-  void RemoveSubscriber(DisposeSubscriber* subscriber) {
+  virtual void RemoveSubscriber(DisposeSubscriber* subscriber) {
     subscribers_.erase(
         std::remove_if(subscribers_.begin(), subscribers_.end(),
                        [subscriber](const DisposeSubscriber* item) {
@@ -66,6 +75,18 @@ class DisposePublisher {
 
  private:
   std::vector<DisposeSubscriber*> subscribers_;
+};
+
+class CountedPublisher : public DisposePublisher, public nb::intrusive_base {
+ public:
+  void AddSubscriber(DisposeSubscriber* subscriber) override {
+    inc_ref();
+    DisposePublisher::AddSubscriber(subscriber);
+  }
+  void RemoveSubscriber(DisposeSubscriber* subscriber) override {
+    DisposePublisher::RemoveSubscriber(subscriber);
+    dec_ref();
+  }
 };
 
 #endif

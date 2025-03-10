@@ -20,12 +20,20 @@
 
 namespace nb = nanobind;
 
-SoraConnection::SoraConnection(DisposePublisher* publisher)
-    : publisher_(publisher) {
+SoraConnection::SoraConnection(CountedPublisher* publisher,
+                               boost::asio::io_context* ioc,
+                               std::shared_ptr<SoraSignalingObserver> observer)
+    : publisher_(publisher),
+      ioc_(ioc),
+      observer_(observer),
+      audio_source_(nullptr),
+      video_source_(nullptr) {
   publisher_->AddSubscriber(this);
 }
 
 SoraConnection::~SoraConnection() {
+  Disconnect();
+  Disposed();
   if (publisher_) {
     publisher_->RemoveSubscriber(this);
   }
@@ -34,25 +42,25 @@ SoraConnection::~SoraConnection() {
 
 void SoraConnection::Disposed() {
   DisposePublisher::Disposed();
-  Disconnect();
-  publisher_ = nullptr;
+  if (video_source_) {
+    video_source_->RemoveSubscriber(this);
+    video_source_ = nullptr;
+  }
+  if (audio_source_) {
+    audio_source_->RemoveSubscriber(this);
+    audio_source_ = nullptr;
+  }
 }
 
-void SoraConnection::PublisherDisposed() {
-  Disposed();
-}
+void SoraConnection::PublisherDisposed() {}
 
 void SoraConnection::Init(sora::SoraSignalingConfig& config) {
   // TODO(tnoho): 複数回の呼び出しは禁止なので、ちゃんと throw する
-  ioc_.reset(new boost::asio::io_context(1));
-  config.io_context = ioc_.get();
+  config.io_context = ioc_;
   conn_ = sora::SoraSignaling::Create(config);
 }
 
 void SoraConnection::Connect() {
-  if (thread_ != nullptr) {
-    throw std::runtime_error("Already connected");
-  }
   if (conn_ == nullptr) {
     throw std::runtime_error(
         "Already disconnected. Please create another Sora instance to "
@@ -60,51 +68,46 @@ void SoraConnection::Connect() {
   }
 
   conn_->Connect();
-
-  // ioc_->run(); は別スレッドで呼ばなければ、この関数は切断されるまで返らなくなってしまう
-  thread_.reset(new std::thread([this]() {
-    auto guard = boost::asio::make_work_guard(*ioc_);
-    ioc_->run();
-  }));
 }
 
 void SoraConnection::Disconnect() {
-  if (thread_) {
+  if (conn_) {
+    Disposed();
     conn_->Disconnect();
-    // join() 中に OnDisconnect が呼ばれるので GIL をリリースする
-    gil_scoped_release release;
-    thread_->join();
-    thread_ = nullptr;
+    // OnDisconnect が来るまで待つ
+    {
+      GILLock lock;
+      on_disconnect_cv_.wait(lock,
+                             [this]() -> bool { return on_disconnected_; });
+    }
+    // Connection から生成したものは、ここで消す
+    audio_sender_ = nullptr;
+    video_sender_ = nullptr;
+    conn_ = nullptr;
   }
-  // Connection から生成したものは、ここで消す
-  audio_sender_ = nullptr;
-  video_sender_ = nullptr;
-  conn_ = nullptr;
-
-  // ここで nullptr を設定しておかないと、シグナリング URL に不正な値を指定した場合に、
-  // 切断後に何故か SIGSEGV が発生する（macOS 以外の OS で発生するかどうかは不明）
-  ioc_ = nullptr;
 }
 
-void SoraConnection::SetAudioTrack(SoraTrackInterface* audio_source) {
+void SoraConnection::SetAudioTrack(nb::ref<SoraTrackInterface> audio_source) {
   // TODO(tnoho): audio_sender_ がないと意味がないので、エラーを返すようにするべき
   if (audio_sender_) {
     audio_sender_->SetTrack(audio_source->GetTrack().get());
   }
   if (audio_source_) {
     audio_source_->RemoveSubscriber(this);
+    audio_source_ = nullptr;
   }
   audio_source->AddSubscriber(this);
   audio_source_ = audio_source;
 }
 
-void SoraConnection::SetVideoTrack(SoraTrackInterface* video_source) {
+void SoraConnection::SetVideoTrack(nb::ref<SoraTrackInterface> video_source) {
   // TODO(tnoho): video_sender_ がないと意味がないので、エラーを返すようにするべき
   if (video_sender_) {
     video_sender_->SetTrack(video_source->GetTrack().get());
   }
   if (video_source_) {
     video_source_->RemoveSubscriber(this);
+    video_source_ = nullptr;
   }
   video_source->AddSubscriber(this);
   video_source_ = video_source;
@@ -188,10 +191,11 @@ void SoraConnection::OnSetOffer(std::string offer) {
 void SoraConnection::OnDisconnect(sora::SoraSignalingErrorCode ec,
                                   std::string message) {
   gil_scoped_acquire acq;
-  ioc_->stop();
   if (on_disconnect_) {
     call_python(on_disconnect_, ec, message);
   }
+  on_disconnected_ = true;
+  on_disconnect_cv_.notify_all();
 }
 
 void SoraConnection::OnNotify(std::string text) {
@@ -242,9 +246,7 @@ void SoraConnection::OnTrack(
   gil_scoped_acquire acq;
   if (on_track_) {
     auto receiver = transceiver->receiver();
-    // shared_ptr になってないとリークする
-    auto track = std::make_shared<SoraMediaTrack>(this, receiver);
-    AddSubscriber(track.get());
+    nb::ref<SoraMediaTrack> track = new SoraMediaTrack(this, receiver);
     call_python(on_track_, track);
   }
 }
