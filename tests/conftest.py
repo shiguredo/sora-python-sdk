@@ -1,7 +1,17 @@
+import importlib.metadata
 import os
 
 import pytest
 from dotenv import load_dotenv
+
+
+def pytest_report_header(config):
+    """pytest の実行時に特定のライブラリのバージョンを追加表示"""
+    try:
+        version = importlib.metadata.version("sora_sdk")
+        return f"sora_sdk: {version}"
+    except importlib.metadata.PackageNotFoundError:
+        return "sora_sdk: Not installed"
 
 
 @pytest.fixture
