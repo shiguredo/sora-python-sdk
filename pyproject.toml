@@ -38,6 +38,7 @@ dev-dependencies = [
     "ruff",
     "mypy",
     "pyjwt",
+    "pytest-repeat",
 ]
 
 [tool.ruff]

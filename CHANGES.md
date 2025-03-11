@@ -127,6 +127,8 @@
   - @voluntas
 - [CHANGE] サンプルアプリの E2E テストを一旦削除する
   - @voluntas
+- [ADD] dev-dependencies に pytest-repeat を追加する
+  - @voluntas
 - [ADD] .env.template に TEST_LIBWEBRTC_LOG を追加する
   - none, verbose, error, warning, info, のいずれかを指定可能
   - @voluntas
