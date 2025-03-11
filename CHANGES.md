@@ -127,6 +127,8 @@
   - @voluntas
 - [CHANGE] サンプルアプリの E2E テストを一旦削除する
   - @voluntas
+- [ADD] pytest 実行時に sora_sdk のバージョンを表示する
+  - @voluntas
 - [ADD] dev-dependencies に pytest-repeat を追加する
   - <https://github.com/pytest-dev/pytest-repeat>
   - @voluntas
