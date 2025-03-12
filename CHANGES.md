@@ -28,9 +28,9 @@
   - デフォルトでは常に libwebrtc 実装のエンコーダ/デコーダを利用します
   - ハードウェアエンコーダ/デコーダを利用するには `video_codec_preference` を利用して下さい
   - @melpon
-- [ADD] Windows で OpenH264 が利用できるようにする
+- [ADD] OpenH264 を Windows x86_64 に対応する
   - @melpon
-- [ADD] AMD AMF に対応する
+- [ADD] AMD AMF を Ubuntu x86_64 と Windows x86_64 に対応する
   - @melpon
 - [ADD] エンコード時の劣化の優先順位を指定できるようにする
   - `Sora.create_connection()` の引数に `degradation_preference` を追加する
