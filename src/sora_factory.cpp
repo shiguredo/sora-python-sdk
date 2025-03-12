@@ -51,7 +51,10 @@ SoraFactory::SoraFactory(
       [openh264](webrtc::PeerConnectionFactoryDependencies& dependencies) {
         // 通常の AudioMixer を使うと use_audio_device が false のとき、音声のループは全て止まってしまうので自前の AudioMixer を使う
         dependencies.audio_mixer =
-            DummyAudioMixer::Create(dependencies.task_queue_factory.get());
+            dependencies.worker_thread->BlockingCall([&]() {
+              return DummyAudioMixer::Create(
+                  dependencies.task_queue_factory.get());
+            });
         // アンチエコーやゲインコントロール、ノイズサプレッションが必要になる用途は想定していないため nullptr
         dependencies.audio_processing = nullptr;
       };

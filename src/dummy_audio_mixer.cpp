@@ -1,5 +1,7 @@
 #include "dummy_audio_mixer.h"
 
+#include <future>
+
 struct DummyAudioMixer::SourceStatus {
   SourceStatus(Source* audio_source) : audio_source(audio_source) {}
   Source* audio_source = nullptr;
@@ -63,7 +65,13 @@ DummyAudioMixer::DummyAudioMixer(webrtc::TaskQueueFactory* task_queue_factory)
 }
 
 DummyAudioMixer::~DummyAudioMixer() {
-  handle_.Stop();
+  std::promise<void> promise;
+  std::future<void> future = promise.get_future();
+  task_queue_->PostTask([&]() {
+    handle_.Stop();
+    promise.set_value();
+  });
+  future.wait();
 }
 
 void DummyAudioMixer::ProcessAudio() {
