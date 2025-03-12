@@ -55,11 +55,15 @@ DummyAudioMixer::DummyAudioMixer(webrtc::TaskQueueFactory* task_queue_factory)
   task_queue_ = task_queue_factory_->CreateTaskQueue(
       "TestAudioDeviceModuleImpl", webrtc::TaskQueueFactory::Priority::NORMAL);
 
-  webrtc::RepeatingTaskHandle::Start(task_queue_.get(), [this]() {
+  handle_ = webrtc::RepeatingTaskHandle::Start(task_queue_.get(), [this]() {
     ProcessAudio();
     // オーディオフレームは 10 ms ごとに処理するため 10000 us を指定する
     return webrtc::TimeDelta::Micros(10000);
   });
+}
+
+DummyAudioMixer::~DummyAudioMixer() {
+  handle_.Stop();
 }
 
 void DummyAudioMixer::ProcessAudio() {
