@@ -28,6 +28,8 @@
   - デフォルトでは常に libwebrtc 実装のエンコーダ/デコーダを利用します
   - ハードウェアエンコーダ/デコーダを利用するには `video_codec_preference` を利用して下さい
   - @melpon
+- [UPDATE] GitHub Actions の Windows ビルドで Windows 2025 を利用する
+  - @voluntas
 - [ADD] Windows で OpenH264 が利用できるようにする
   - @melpon
 - [ADD] AMD AMF に対応する
