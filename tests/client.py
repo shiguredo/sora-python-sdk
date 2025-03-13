@@ -203,17 +203,14 @@ class SoraClient:
 
     def __enter__(self) -> "SoraClient":
         if self._role == SoraRole.RECVONLY:
-            self.connect()
-            return self
+            return self.connect()
 
-        self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
-
-        return self
+        return self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.disconnect()
 
-    def connect(self, fake_audio=False, fake_video=False) -> None:
+    def connect(self, fake_audio=False, fake_video=False) -> "SoraClient":
         # スレッドは connect 前に起動する
         if fake_audio:
             self._fake_audio_thread = threading.Thread(target=self._fake_audio_loop, daemon=True)
@@ -228,6 +225,8 @@ class SoraClient:
         assert self._connected.wait(self._default_connection_timeout_s), (
             "Could not connect to Sora."
         )
+
+        return self
 
     def disconnect(self) -> None:
         self._connection.disconnect()
