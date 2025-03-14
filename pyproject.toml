@@ -39,6 +39,7 @@ dev-dependencies = [
     "mypy",
     "pyjwt",
     "pytest-repeat",
+    "psutil",
 ]
 
 [tool.ruff]
