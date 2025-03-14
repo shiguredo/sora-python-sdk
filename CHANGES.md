@@ -11,13 +11,13 @@
 
 ## develop
 
-- [CHANGE] 対応 Python バージョンの 3.10 のサポートを終了する
+- [CHANGE] Python 3.10 のサポートを終了する
   - [SPEC 0 — Minimum Supported Dependencies](https://scientific-python.org/specs/spec-0000/) を参考に直近 3 バージョンのサポートに変更する
+  - @voluntas
+- [CHANGE] macOS Sonoma 13 のサポートを終了する
   - @voluntas
 - [CHANGE] シグナリング接続時の ``"type": "connect"`` 時に ``multistream`` 項目を送らないようにする
   - Sora 2022.1.0 以前には接続できなくなる
-  - @voluntas
-- [CHANGE] macOS Sonoma 13 のサポートを終了する
   - @voluntas
 - [CHANGE] `client_cert` と `client_key` の指定にはパスではなく中身の文字列を指定するようにする
   - C++ SDK 側の仕様変更に追従する
@@ -30,9 +30,9 @@
   - @melpon
 - [UPDATE] GitHub Actions の Windows ビルドで Windows 2025 を利用する
   - @voluntas
-- [ADD] Windows で OpenH264 が利用できるようにする
+- [ADD] OpenH264 を Windows x86_64 に対応する
   - @melpon
-- [ADD] AMD AMF に対応する
+- [ADD] AMD AMF を Ubuntu x86_64 と Windows x86_64 に対応する
   - @melpon
 - [ADD] エンコード時の劣化の優先順位を指定できるようにする
   - `Sora.create_connection()` の引数に `degradation_preference` を追加する
@@ -68,9 +68,9 @@
   - @tnoho
 - [ADD] `Sora.create_connection()` の引数に `audio_opus_params` を追加する
   - @melpon
-- [ADD] data_channels の要素に `header` を指定可能にする
+- [ADD] `data_channels` の要素に `header` を指定可能にする
   - @melpon
-- [ADD] Encoded Transform に対応する
+- [ADD] `WebRTC Encoded Transform` に対応する
   - @tnoho
 - [ADD] `Sora()` の引数に `video_codec_preference` を追加
   - @melpon
@@ -85,9 +85,9 @@
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.2.0` に上げる
   - WEBRTC_BUILD_VERSION を `m132.6834.5.8` に上げる
-    - libwebrtc のモジュール分割に追従するため rtc::CreateRandomString のヘッダを追加
-    - Sora CPP SDK の absl::optional を std::optional に変更した仕様に追従する
-    - Sora CPP SDK の absl::nullopt を std::nullopt に変更した仕様に追従する
+    - libwebrtc のモジュール分割に追従するため `rtc::CreateRandomString` のヘッダを追加
+    - Sora CPP SDK の `absl::optional` を `std::optional` に変更した仕様に追従する
+    - Sora CPP SDK の `absl::nullopt` を `std::nullopt` に変更した仕様に追従する
   - CMAKE_VERSION を `3.31.6` に上げる
   - BOOST_VERSION を `1.87.0` に上げる
   - OPENH264_VERSION を `v2.6.0` に上げる
