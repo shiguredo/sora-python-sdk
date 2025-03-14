@@ -362,7 +362,7 @@ dev = [
     { name = "mypy" },
     { name = "nanobind", specifier = "==2.5.0" },
     { name = "numpy" },
-    { name = "psutil", specifier = ">=7.0.0" },
+    { name = "psutil" },
     { name = "pyjwt" },
     { name = "pytest" },
     { name = "pytest-repeat" },
