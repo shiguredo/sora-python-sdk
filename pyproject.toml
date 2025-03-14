@@ -12,7 +12,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-requires-python = ">= 3.10"
+requires-python = ">= 3.11"
 
 [project.urls]
 Source = "https://github.com/shiguredo/sora-python-sdk"
@@ -20,16 +20,16 @@ Documentation = "https://sora-python-sdk.shiguredo.jp"
 Discord = "https://discord.gg/shiguredo"
 
 [build-system]
-requires = ["setuptools~=76.0", "wheel~=0.45.1"]
+requires = ["setuptools==76.0", "wheel==0.45.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
 python-preference = "only-managed"
 dev-dependencies = [
-    "nanobind~=2.5.0",
-    "setuptools~=76.0",
-    "build~=1.2.2.post1",
-    "wheel~=0.45.1",
+    "nanobind==2.5.0",
+    "setuptools==76.0",
+    "build==1.2.2.post1",
+    "wheel==0.45.1",
     "typing-extensions",
     "python-dotenv",
     "numpy",
@@ -42,7 +42,7 @@ dev-dependencies = [
 ]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 100
 
 
