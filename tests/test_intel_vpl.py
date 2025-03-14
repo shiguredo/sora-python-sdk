@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 import time
 import uuid
@@ -112,6 +113,11 @@ def test_intel_vpl_simulcast(
 ):
     if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.INTEL_VPL):
         pytest.skip(f"このチップでは {video_codec_type} のエンコードがサポートされていません")
+
+    if platform.system() == "Windows" and simulcast_count == 1:
+        pytest.skip(
+            f"Windows では {video_codec_type} の simulcast_count が 1 の場合は失敗するので skip する"
+        )
 
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")

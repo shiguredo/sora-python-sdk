@@ -1,5 +1,7 @@
 #include "dummy_audio_mixer.h"
 
+#include <future>
+
 struct DummyAudioMixer::SourceStatus {
   SourceStatus(Source* audio_source) : audio_source(audio_source) {}
   Source* audio_source = nullptr;
@@ -55,11 +57,21 @@ DummyAudioMixer::DummyAudioMixer(webrtc::TaskQueueFactory* task_queue_factory)
   task_queue_ = task_queue_factory_->CreateTaskQueue(
       "TestAudioDeviceModuleImpl", webrtc::TaskQueueFactory::Priority::NORMAL);
 
-  webrtc::RepeatingTaskHandle::Start(task_queue_.get(), [this]() {
+  handle_ = webrtc::RepeatingTaskHandle::Start(task_queue_.get(), [this]() {
     ProcessAudio();
     // オーディオフレームは 10 ms ごとに処理するため 10000 us を指定する
     return webrtc::TimeDelta::Micros(10000);
   });
+}
+
+DummyAudioMixer::~DummyAudioMixer() {
+  std::promise<void> promise;
+  std::future<void> future = promise.get_future();
+  task_queue_->PostTask([&]() {
+    handle_.Stop();
+    promise.set_value();
+  });
+  future.wait();
 }
 
 void DummyAudioMixer::ProcessAudio() {
