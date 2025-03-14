@@ -61,17 +61,16 @@ def test_sendonly_recvonly_audio(setup):
 
 
 @pytest.mark.parametrize(
-    "video_codec_params",
+    "video_codec_type, encoder_implementation, decoder_implementation",
     [
-        # video_codec, encoder_implementation, decoder_implementation
         ("VP8", "libvpx", "libvpx"),
         ("VP9", "libvpx", "libvpx"),
         ("AV1", "libaom", "dav1d"),
     ],
 )
-def test_sendonly_recvonly_video(setup, video_codec_params):
-    video_codec, encoder_implementation, decoder_implementation = video_codec_params
-
+def test_sendonly_recvonly_video(
+    setup, video_codec_type, encoder_implementation, decoder_implementation
+):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
     metadata = setup.get("metadata")
@@ -84,7 +83,7 @@ def test_sendonly_recvonly_video(setup, video_codec_params):
         channel_id,
         audio=False,
         video=True,
-        video_codec_type=video_codec,
+        video_codec_type=video_codec_type,
         metadata=metadata,
     )
     sendonly.connect(fake_video=True)
@@ -107,7 +106,7 @@ def test_sendonly_recvonly_video(setup, video_codec_params):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    assert sendonly_codec_stats["mimeType"] == f"video/{video_codec}"
+    assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
@@ -117,7 +116,7 @@ def test_sendonly_recvonly_video(setup, video_codec_params):
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
-    assert recvonly_codec_stats["mimeType"] == f"video/{video_codec}"
+    assert recvonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
