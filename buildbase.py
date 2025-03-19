@@ -520,6 +520,7 @@ class WebrtcInfo(NamedTuple):
     webrtc_library_dir: str
     clang_dir: str
     libcxx_dir: str
+    libcxxabi_dir: str
 
 
 def get_webrtc_info(
@@ -536,6 +537,9 @@ def get_webrtc_info(
             webrtc_library_dir=os.path.join(webrtc_install_dir, "lib"),
             clang_dir=os.path.join(install_dir, "llvm", "clang"),
             libcxx_dir=os.path.join(install_dir, "llvm", "libcxx"),
+            libcxxabi_dir=os.path.join(
+                webrtc_install_dir, "include", "third_party", "libc++abi", "src"
+            ),
         )
     else:
         webrtc_build_source_dir = os.path.join(
@@ -556,6 +560,9 @@ def get_webrtc_info(
                 webrtc_build_source_dir, "src", "third_party", "llvm-build", "Release+Asserts"
             ),
             libcxx_dir=os.path.join(webrtc_build_source_dir, "src", "third_party", "libc++", "src"),
+            libcxxabi_dir=os.path.join(
+                webrtc_build_source_dir, "src", "third_party", "libc++abi", "src"
+            ),
         )
 
 
@@ -687,17 +694,19 @@ def build_and_install_boost(
     android_ndk,
     native_api_level,
     address_model="64",
+    runtime_link=None,
 ):
     version_underscore = version.replace(".", "_")
     archive = download(
-        f"https://boostorg.jfrog.io/artifactory/main/release/{version}/source/boost_{version_underscore}.tar.gz",
+        f"https://archives.boost.io/release/{version}/source/boost_{version_underscore}.tar.gz",
         source_dir,
     )
     extract(archive, output_dir=build_dir, output_dirname="boost")
     with cd(os.path.join(build_dir, "boost")):
         bootstrap = ".\\bootstrap.bat" if target_os == "windows" else "./bootstrap.sh"
         b2 = "b2" if target_os == "windows" else "./b2"
-        runtime_link = "static" if target_os == "windows" else "shared"
+        if runtime_link is None:
+            runtime_link = "static" if target_os == "windows" else "shared"
 
         # Windows かつ Boost 1.85.0 の場合はパッチを当てる
         if target_os == "windows" and version == "1.85.0":
@@ -862,23 +871,23 @@ def install_sora(version, source_dir, install_dir, platform: str):
     extract(archive, output_dir=install_dir, output_dirname="sora")
 
 
-def install_sora_and_deps(platform: str, source_dir: str, install_dir: str):
-    version = read_version_file("VERSION")
-
+def install_sora_and_deps(
+    sora_version: str, boost_version: str, platform: str, source_dir: str, install_dir: str
+):
     # Boost
     install_boost_args = {
-        "version": version["BOOST_VERSION"],
+        "version": boost_version,
         "version_file": os.path.join(install_dir, "boost.version"),
         "source_dir": source_dir,
         "install_dir": install_dir,
-        "sora_version": version["SORA_CPP_SDK_VERSION"],
+        "sora_version": sora_version,
         "platform": platform,
     }
     install_boost(**install_boost_args)
 
     # Sora C++ SDK
     install_sora_args = {
-        "version": version["SORA_CPP_SDK_VERSION"],
+        "version": sora_version,
         "version_file": os.path.join(install_dir, "sora.version"),
         "source_dir": source_dir,
         "install_dir": install_dir,
@@ -1630,10 +1639,11 @@ def install_spdlog(version, install_dir):
 
 
 class PlatformTarget(object):
-    def __init__(self, os, osver, arch):
+    def __init__(self, os, osver, arch, extra=None):
         self.os = os
         self.osver = osver
         self.arch = arch
+        self.extra = extra
 
     @property
     def package_name(self):
@@ -1650,9 +1660,13 @@ class PlatformTarget(object):
         if self.os == "raspberry-pi-os":
             return f"raspberry-pi-os_{self.arch}"
         if self.os == "jetson":
+            if self.extra is None:
+                ubuntu_version = "ubuntu-20.04"
+            else:
+                ubuntu_version = self.extra
             if self.osver is None:
-                return "ubuntu-20.04_armv8_jetson"
-            return f"ubuntu-20.04_armv8_jetson_{self.osver}"
+                return f"{ubuntu_version}_armv8_jetson"
+            return f"{ubuntu_version}_armv8_jetson_{self.osver}"
         raise Exception("error")
 
 
@@ -1694,7 +1708,10 @@ def get_build_platform() -> PlatformTarget:
     if arch in ("AMD64", "x86_64"):
         arch = "x86_64"
     elif arch in ("aarch64", "arm64"):
-        arch = "arm64"
+        if os == "ubuntu":
+            arch = "armv8"
+        else:
+            arch = "arm64"
     else:
         raise Exception(f"Arch {arch} not supported")
 
@@ -1763,18 +1780,20 @@ class Platform(object):
             self._check(p.arch == "armv8")
         elif p.os in ("ios", "android"):
             self._check(p.arch is None)
+        elif p.os == "ubuntu":
+            self._check(p.arch in ("x86_64", "armv8"))
         else:
-            self._check(p.arch in ("x86_64", "arm64"))
+            self._check(p.arch in ("x86_64", "arm64", "hololens2"))
 
-    def __init__(self, target_os, target_osver, target_arch):
+    def __init__(self, target_os, target_osver, target_arch, target_extra=None):
         build = get_build_platform()
-        target = PlatformTarget(target_os, target_osver, target_arch)
+        target = PlatformTarget(target_os, target_osver, target_arch, target_extra)
 
         self._check_platform_target(build)
         self._check_platform_target(target)
 
         if target.os == "windows":
-            self._check(target.arch == "x86_64")
+            self._check(target.arch in ("x86_64", "arm64", "hololens2"))
             self._check(build.os == "windows")
             self._check(build.arch == "x86_64")
         if target.os == "macos":
@@ -1791,8 +1810,9 @@ class Platform(object):
                 self._check(build.arch in ("x86_64", "arm64"))
         if target.os == "ubuntu":
             self._check(build.os == "ubuntu")
-            self._check(build.arch == "x86_64")
-            self._check(build.osver == target.osver)
+            self._check(build.arch in ("x86_64", "armv8"))
+            if build.arch == target.arch:
+                self._check(build.osver == target.osver)
         if target.os == "raspberry-pi-os":
             self._check(build.os == "ubuntu")
             self._check(build.arch == "x86_64")
@@ -1819,7 +1839,10 @@ def get_webrtc_platform(platform: Platform) -> str:
     elif platform.target.os == "raspberry-pi-os":
         return f"raspberry-pi-os_{platform.target.arch}"
     elif platform.target.os == "jetson":
-        return "ubuntu-20.04_armv8"
+        if platform.target.extra is None:
+            return "ubuntu-20.04_armv8"
+        else:
+            return f"{platform.target.extra}_armv8"
     else:
         raise Exception(f"Unknown platform {platform.target.os}")
 

@@ -3,9 +3,11 @@
 
 // WebRTC
 #include <api/media_stream_interface.h>
+#include <api/rtp_receiver_interface.h>
 #include <api/scoped_refptr.h>
 
 #include "dispose_listener.h"
+#include "sora_frame_transformer.h"
 
 /**
  * webrtc::MediaStreamTrackInterface を格納する SoraTrackInterface です。
@@ -13,7 +15,7 @@
  * webrtc::MediaStreamTrackInterface は rtc::scoped_refptr なので、
  * nanobind で直接のハンドリングが難しいので用意しました。
  */
-class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
+class SoraTrackInterface : public CountedPublisher, public DisposeSubscriber {
  public:
   SoraTrackInterface(
       DisposePublisher* publisher,
@@ -71,9 +73,12 @@ class SoraTrackInterface : public DisposePublisher, public DisposeSubscriber {
 class SoraMediaTrack : public SoraTrackInterface {
  public:
   SoraMediaTrack(DisposePublisher* publisher,
-                 rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
-                 std::string stream_id)
-      : SoraTrackInterface(publisher, track), stream_id_(stream_id) {}
+                 rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver)
+      : SoraTrackInterface(publisher, receiver->track()), receiver_(receiver) {}
+  ~SoraMediaTrack() override {
+    // Disposed() は SoraTrackInterface で呼ばれるため、ここでは SoraMediaTrack 分のみ処理する
+    receiver_ = nullptr;
+  }
 
   /**
    * この Track の Stream ID を std::string で返します。
@@ -82,9 +87,25 @@ class SoraMediaTrack : public SoraTrackInterface {
    * 本来 Track には複数の Stream ID を紐づけることができるのですが、
    * Sora の使用上 Track には Stream ID が 1 つしか紐づかないため Track のメンバーとしました。
    */
-  std::string stream_id() const { return stream_id_; }
+  std::string stream_id() const { return receiver_->stream_ids()[0]; }
+
+  /**
+   * 受信側の Encoded Transform を設定します。
+   * 
+   * @param transformer エンコードされたフレームが経由する SoraFrameTransformer
+   */
+  void SetFrameTransformer(SoraFrameTransformer* transformer) {
+    auto interface = transformer->GetFrameTransformerInterface();
+    receiver_->SetFrameTransformer(interface);
+  }
+
+  void Disposed() override {
+    // receiver_ を先に消したいところだがデストラクタはそうはならないのでこの順序
+    receiver_ = nullptr;
+    SoraTrackInterface::Disposed();
+  }
 
  private:
-  std::string stream_id_;
+  rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver_;
 };
 #endif

@@ -36,7 +36,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
    * @param output_sample_rate 音声の出力サンプリングレート
    * @param output_channels 音声の出力チャネル数
    */
-  SoraAudioSinkImpl(SoraTrackInterface* track,
+  SoraAudioSinkImpl(nb::ref<SoraTrackInterface> track,
                     int output_sample_rate,
                     size_t output_channels);
   ~SoraAudioSinkImpl();
@@ -50,7 +50,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
               int sample_rate,
               size_t number_of_channels,
               size_t number_of_frames,
-              absl::optional<int64_t> absolute_capture_timestamp_ms) override;
+              std::optional<int64_t> absolute_capture_timestamp_ms) override;
 
   /**
    * 実装上の留意点：コールバックと Read 関数の共存はパフォーマンスや使い方の面で難しいことが判明したので、
@@ -75,7 +75,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
                   size_t number_of_channels,
                   size_t number_of_frames);
 
-  SoraTrackInterface* track_;
+  nb::ref<SoraTrackInterface> track_;
   const int output_sample_rate_;
   const size_t output_channels_;
   std::unique_ptr<webrtc::AudioFrame> audio_frame_;

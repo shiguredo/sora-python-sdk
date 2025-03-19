@@ -23,66 +23,45 @@
 #include "dynamic_h264_encoder.h"
 #endif
 
-SoraFactory::SoraFactory(std::optional<bool> use_hardware_encoder,
-                         std::optional<std::string> openh264) {
+#include <exception>
+#include <iostream>
+
+#include <exception>
+#include <iostream>
+
+SoraFactory::SoraFactory(
+    std::optional<std::string> openh264,
+    std::optional<sora::VideoCodecPreference> video_codec_preference) {
   sora::SoraClientContextConfig context_config;
+  context_config.video_codec_factory_config.capability_config.openh264_path =
+      openh264;
+  if (sora::CudaContext::CanCreate()) {
+    context_config.video_codec_factory_config.capability_config.cuda_context =
+        sora::CudaContext::Create();
+  }
+  if (sora::AMFContext::CanCreate()) {
+    context_config.video_codec_factory_config.capability_config.amf_context =
+        sora::AMFContext::Create();
+  }
+  context_config.video_codec_factory_config.preference = video_codec_preference;
+
   // Audio デバイスは使わない、 use_audio_device を true にしただけでデバイスを掴んでしまうので常に false
   context_config.use_audio_device = false;
-  if (use_hardware_encoder) {
-    context_config.use_hardware_encoder = *use_hardware_encoder;
-  }
   context_config.configure_dependencies =
-      [use_hardware_encoder = context_config.use_hardware_encoder,
-       openh264](webrtc::PeerConnectionFactoryDependencies& dependencies) {
+      [openh264](webrtc::PeerConnectionFactoryDependencies& dependencies) {
         // 通常の AudioMixer を使うと use_audio_device が false のとき、音声のループは全て止まってしまうので自前の AudioMixer を使う
         dependencies.audio_mixer =
-            DummyAudioMixer::Create(dependencies.task_queue_factory.get());
+            dependencies.worker_thread->BlockingCall([&]() {
+              return DummyAudioMixer::Create(
+                  dependencies.task_queue_factory.get());
+            });
         // アンチエコーやゲインコントロール、ノイズサプレッションが必要になる用途は想定していないため nullptr
         dependencies.audio_processing = nullptr;
-
-#ifndef _WIN32
-        if (openh264) {
-          {
-            auto config =
-                use_hardware_encoder
-                    ? sora::GetDefaultVideoEncoderFactoryConfig()
-                    : sora::GetSoftwareOnlyVideoEncoderFactoryConfig();
-            config.use_simulcast_adapter = true;
-            config.encoders.insert(
-                config.encoders.begin(),
-                sora::VideoEncoderConfig(
-                    webrtc::kVideoCodecH264,
-                    [openh264 = openh264](
-                        auto format) -> std::unique_ptr<webrtc::VideoEncoder> {
-                      return webrtc::DynamicH264Encoder::Create(
-                          webrtc::CreateEnvironment(),
-                          webrtc::H264EncoderSettings(), *openh264);
-                    }));
-            dependencies.video_encoder_factory =
-                absl::make_unique<sora::SoraVideoEncoderFactory>(
-                    std::move(config));
-          }
-          {
-            auto config =
-                use_hardware_encoder
-                    ? sora::GetDefaultVideoDecoderFactoryConfig()
-                    : sora::GetSoftwareOnlyVideoDecoderFactoryConfig();
-            config.decoders.insert(
-                config.decoders.begin(),
-                sora::VideoDecoderConfig(
-                    webrtc::kVideoCodecH264,
-                    [openh264 = openh264](
-                        auto format) -> std::unique_ptr<webrtc::VideoDecoder> {
-                      return webrtc::DynamicH264Decoder::Create(*openh264);
-                    }));
-            dependencies.video_decoder_factory =
-                absl::make_unique<sora::SoraVideoDecoderFactory>(
-                    std::move(config));
-          }
-        }
-#endif
       };
   context_ = sora::SoraClientContext::Create(context_config);
+  if (context_ == nullptr) {
+    throw std::exception();
+  }
 }
 
 rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>

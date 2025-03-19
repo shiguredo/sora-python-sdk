@@ -1,0 +1,42 @@
+{
+  // IntelliSense を使用して利用可能な属性を学べます。
+  // 既存の属性の説明をホバーして表示します。
+  // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Ubuntu 24.04 デバッグ",
+      "type": "lldb-dap",
+      "request": "launch",
+      "program": "uv",
+      "args": ["run", "pytest", "tests/test_openh264.py"],
+      "cwd": "${workspaceFolder}",
+      "sourceMap": [
+        ["../../../../_source/ubuntu-24.04_x86_64/webrtc/src/", "/home/melpon/dev/webrtc-build/_source/ubuntu-24.04_x86_64/webrtc/src/"],
+      ],
+      "initCommands": [
+          "settings append target.debug-file-search-paths /home/melpon/dev/webrtc-build/_build/ubuntu-24.04_x86_64/debug/webrtc/",
+          "settings set target.process.follow-fork-mode child",
+      ],
+      "runInTerminal": true,
+    },
+    {
+      "name": "Windows デバッグ",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "uv",
+      "args": ["run", "pytest", "tests/test_sendonly_recvonly.py"],
+      "cwd": "${workspaceFolder}",
+      "sourceFileMap": {
+          ".\\..\\..\\..\\..\\_source\\windows_x86_64\\webrtc\\src": "D:\\dev\\webrtc-build\\_source\\windows_x86_64\\webrtc\\src",
+      },
+      "autoAttachChildProcess": true,
+      "environment": [
+        // {
+        //   "name": "AMD_AMF",
+        //   "value": "true",
+        // },
+      ]
+    }
+  ]
+}
