@@ -13,7 +13,7 @@
 
 ## 2025.1.0
 
-**リリース日**: 2025-03-20
+**リリース日**: 2025-03-19
 
 - [CHANGE] Python 3.10 のサポートを終了する
   - [SPEC 0 — Minimum Supported Dependencies](https://scientific-python.org/specs/spec-0000/) を参考に直近 3 バージョンのサポートに変更する
