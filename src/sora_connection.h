@@ -1,11 +1,16 @@
 #ifndef SORA_CONNECTION_H_
 #define SORA_CONNECTION_H_
 
+#include <condition_variable>
 #include <memory>
 #include <thread>
 
 // nonobind
+// clang-format off
 #include <nanobind/nanobind.h>
+// clang-format on
+#include <nanobind/intrusive/counter.h>
+#include <nanobind/intrusive/ref.h>
 #include <nanobind/stl/shared_ptr.h>
 
 // Boost
@@ -19,23 +24,28 @@
 #include <sora/sora_signaling.h>
 
 #include "dispose_listener.h"
+#include "sora_frame_transformer.h"
 #include "sora_track_interface.h"
 
 namespace nb = nanobind;
+
+class SoraSignalingObserver;
 
 /**
  * Sora との接続ごとに生成する SoraConnection です。
  * 
  * Python に Connection を制御する関数を提供します。
  */
-class SoraConnection : public sora::SoraSignalingObserver,
-                       public DisposePublisher,
-                       public DisposeSubscriber {
+class SoraConnection : public DisposePublisher,
+                       public DisposeSubscriber,
+                       public nb::intrusive_base {
  public:
   /**
    * コンストラクタではインスタンスの生成のみで実際の生成処理は Init 関数で行います。
    */
-  SoraConnection(DisposePublisher* publisher);
+  SoraConnection(CountedPublisher* publisher,
+                 boost::asio::io_context* ioc,
+                 std::shared_ptr<SoraSignalingObserver> observer);
   ~SoraConnection();
 
   void Disposed() override;
@@ -69,7 +79,7 @@ class SoraConnection : public sora::SoraSignalingObserver,
    * 
    * @param audio_source 入れ替える新しい音声トラック
    */
-  void SetAudioTrack(SoraTrackInterface* audio_source);
+  void SetAudioTrack(nb::ref<SoraTrackInterface> audio_source);
   /**
    * 映像トラックを入れ替える javascript でいう replaceTrack に相当する関数です。
    * 
@@ -77,7 +87,25 @@ class SoraConnection : public sora::SoraSignalingObserver,
    * 
    * @param audio_source 入れ替える新しい映像トラック
    */
-  void SetVideoTrack(SoraTrackInterface* video_source);
+  void SetVideoTrack(nb::ref<SoraTrackInterface> video_source);
+  /**
+   * 音声送信時の Encoded Transform を設定する関数です。
+   * 
+   * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
+   * 
+   * @param audio_sender_frame_transformer エンコードされたフレームが経由する SoraAudioFrameTransformer
+   */
+  void SetAudioSenderFrameTransformer(
+      SoraAudioFrameTransformer* audio_sender_frame_transformer);
+  /**
+   * 映像送信時の Encoded Transform を設定する関数です。
+   * 
+   * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
+   * 
+   * @param video_sender_frame_transformer エンコードされたフレームが経由する SoraVideoFrameTransformer
+   */
+  void SetVideoSenderFrameTransformer(
+      SoraVideoFrameTransformer* video_sender_frame_transformer);
   /**
    * DataChannel でデータを送信する関数です。
    * 
@@ -95,40 +123,93 @@ class SoraConnection : public sora::SoraSignalingObserver,
   std::string GetStats();
 
   // sora::SoraSignalingObserver に定義されているコールバック関数
-  void OnSetOffer(std::string offer) override;
-  void OnDisconnect(sora::SoraSignalingErrorCode ec,
-                    std::string message) override;
-  void OnNotify(std::string text) override;
-  void OnPush(std::string text) override;
-  void OnMessage(std::string label, std::string data) override;
-  void OnSwitched(std::string text) override;
-  void OnTrack(
-      rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
-  void OnRemoveTrack(
-      rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
-  void OnDataChannel(std::string label) override;
+  void OnSetOffer(std::string offer);
+  void OnDisconnect(sora::SoraSignalingErrorCode ec, std::string message);
+  void OnNotify(std::string text);
+  void OnPush(std::string text);
+  void OnMessage(std::string label, std::string data);
+  void OnSwitched(std::string text);
+  void OnSignalingMessage(sora::SoraSignalingType type,
+                          sora::SoraSignalingDirection direction,
+                          std::string message);
+  void OnWsClose(uint16_t code, std::string message);
+  void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver);
+  void OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver);
+  void OnDataChannel(std::string label);
 
   // sora::SoraSignalingObserver のコールバック関数が呼び出された時に対応して呼び出す Python の関数を保持する
+  std::function<
+      void(sora::SoraSignalingType, sora::SoraSignalingDirection, std::string)>
+      on_signaling_message_;
   std::function<void(std::string)> on_set_offer_;
+  std::function<void(int, std::string)> on_ws_close_;
   std::function<void(sora::SoraSignalingErrorCode, std::string)> on_disconnect_;
   std::function<void(std::string)> on_notify_;
   std::function<void(std::string)> on_push_;
   std::function<void(std::string, nb::bytes)> on_message_;
   std::function<void(std::string)> on_switched_;
-  std::function<void(std::shared_ptr<SoraMediaTrack>)> on_track_;
+  std::function<void(nb::ref<SoraMediaTrack>)> on_track_;
   std::function<void(std::string)> on_data_channel_;
 
  private:
-  DisposePublisher* publisher_;
-  std::unique_ptr<boost::asio::io_context> ioc_;
+  CountedPublisher* publisher_;
+  std::shared_ptr<SoraSignalingObserver> observer_;
+  boost::asio::io_context* ioc_;
   std::shared_ptr<sora::SoraSignaling> conn_;
-  std::unique_ptr<std::thread> thread_;
-  // javascript でいう replaceTrack された際に RemoveSubscriber を呼び出すために参照を保持する
-  SoraTrackInterface* audio_source_ = nullptr;
-  SoraTrackInterface* video_source_ = nullptr;
-  // javascript でいう replaceTrack を実装するために webrtc::RtpSenderInterface の参照を保持する
+  nb::ref<SoraTrackInterface> audio_source_ = nullptr;
+  nb::ref<SoraTrackInterface> video_source_ = nullptr;
   rtc::scoped_refptr<webrtc::RtpSenderInterface> audio_sender_;
   rtc::scoped_refptr<webrtc::RtpSenderInterface> video_sender_;
+  rtc::scoped_refptr<SoraFrameTransformerInterface>
+      audio_sender_frame_transformer_;
+  rtc::scoped_refptr<SoraFrameTransformerInterface>
+      video_sender_frame_transformer_;
+  bool on_disconnected_ = false;
+  std::condition_variable_any on_disconnect_cv_;
+};
+
+class SoraSignalingObserver : public sora::SoraSignalingObserver {
+ private:
+  SoraConnection* conn;
+
+ public:
+  void SetSoraConnection(SoraConnection* c) { conn = c; }
+
+  // sora::SoraSignalingObserver に定義されているコールバック関数
+  void OnSetOffer(std::string offer) override {
+    conn->OnSetOffer(std::move(offer));
+  }
+  void OnDisconnect(sora::SoraSignalingErrorCode ec,
+                    std::string message) override {
+    conn->OnDisconnect(ec, std::move(message));
+  }
+  void OnNotify(std::string text) override { conn->OnNotify(std::move(text)); }
+  void OnPush(std::string text) override { conn->OnPush(std::move(text)); }
+  void OnMessage(std::string label, std::string data) override {
+    conn->OnMessage(std::move(label), std::move(data));
+  }
+  void OnSwitched(std::string text) override {
+    conn->OnSwitched(std::move(text));
+  }
+  void OnSignalingMessage(sora::SoraSignalingType type,
+                          sora::SoraSignalingDirection direction,
+                          std::string message) override {
+    conn->OnSignalingMessage(type, direction, std::move(message));
+  }
+  void OnWsClose(uint16_t code, std::string message) override {
+    conn->OnWsClose(code, std::move(message));
+  }
+  void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver)
+      override {
+    conn->OnTrack(transceiver);
+  }
+  void OnRemoveTrack(
+      rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override {
+    conn->OnRemoveTrack(receiver);
+  }
+  void OnDataChannel(std::string label) override {
+    conn->OnDataChannel(std::move(label));
+  }
 };
 
 #endif

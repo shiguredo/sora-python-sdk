@@ -5,10 +5,17 @@
 #include <optional>
 #include <vector>
 
+// nonobind
+// clang-format off
+#include <nanobind/nanobind.h>
+// clang-format on
+#include <nanobind/intrusive/ref.h>
+
 #include "dispose_listener.h"
 #include "sora_audio_source.h"
 #include "sora_connection.h"
 #include "sora_factory.h"
+#include "sora_frame_transformer.h"
 #include "sora_track_interface.h"
 #include "sora_video_source.h"
 
@@ -20,16 +27,16 @@
  * 同じ Sora インスタンス内でしか Connection や AudioSource、VideoSource を共有できないので、
  * 複数の Sora インスタンスを生成することは不具合の原因になります。
  */
-class Sora : public DisposePublisher {
+class Sora : public CountedPublisher {
  public:
   /**
    * このタイミングで SoraFactory の生成まで行うため SoraFactory の生成にあたって必要な引数はここで設定します。
    * 
-   * @param use_hardware_encoder (オプション)ハードウェアエンコーダーの有効無効 デフォルト: true
    * @param openh264 (オプション) OpenH264 ライブラリへのパス
+   * @param video_codec_preference (オプション) 利用するエンコーダ/デコーダの実装の設定
    */
-  Sora(std::optional<bool> use_hardware_encoder,
-       std::optional<std::string> openh264);
+  Sora(std::optional<std::string> openh264,
+       std::optional<sora::VideoCodecPreference> video_codec_preference);
   ~Sora();
 
   /**
@@ -47,6 +54,8 @@ class Sora : public DisposePublisher {
    * @param signaling_notify_metadata (オプション)シグナリング通知メタデータ
    * @param audio_source (オプション)音声ソース CreateAudioSource で生成した SoraAudioSource を渡してください
    * @param video_source (オプション)映像ソース CreateVideoSource で生成した SoraVideoSource を渡してください
+   * @param audio_frame_transformer (オプション)音声送信時の Encoded Transform
+   * @param video_frame_transformer (オプション)映像送信時の Encoded Transform
    * @param audio (オプション)音声の有効無効 デフォルト: true
    * @param video (オプション)映像の有効無効 デフォルト: true
    * @param audio_codec_type (オプション)音声コーデック OPUS デフォルト: OPUS
@@ -56,6 +65,7 @@ class Sora : public DisposePublisher {
    * @param video_vp9_params (オプション)映像コーデック VP9 設定
    * @param video_av1_params (オプション)映像コーデック AV1 設定
    * @param video_h264_params (オプション)映像コーデック H264 設定
+   * @param audio_opus_params (オプション)音声コーデック OPUS 設定
    * @param simulcast (オプション)サイマルキャストの有効無効
    * @param spotlight (オプション)スポットライトの有効無効
    * @param spotlight_number (オプション)スポットライトのフォーカス数
@@ -74,13 +84,15 @@ class Sora : public DisposePublisher {
    * @param insecure (オプション) 証明書チェックの有効無効 デフォルト: false
    * @param client_cert (オプション) クライアント証明書
    * @param client_key (オプション) クライアントシークレットキー
+   * @param ca_cert (オプション) サーバー証明書チェック用の CA 証明書
    * @param proxy_url (オプション) Proxy URL
    * @param proxy_username (オプション) Proxy ユーザー名
    * @param proxy_password (オプション) Proxy パスワード
    * @param proxy_agent (オプション) Proxy エージェント
+   * @param degradation_preference (オプション) デグレード設定
    * @return SoraConnection インスタンス
    */
-  std::shared_ptr<SoraConnection> CreateConnection(
+  nb::ref<SoraConnection> CreateConnection(
       // 必須パラメータ
       const nb::handle& signaling_urls,
       const std::string& role,
@@ -92,8 +104,10 @@ class Sora : public DisposePublisher {
       std::optional<std::string> bundle_id,
       const nb::handle& metadata,
       const nb::handle& signaling_notify_metadata,
-      SoraTrackInterface* audio_source,
-      SoraTrackInterface* video_source,
+      nb::ref<SoraTrackInterface> audio_source,
+      nb::ref<SoraTrackInterface> video_source,
+      SoraAudioFrameTransformer* audio_frame_transformer,
+      SoraVideoFrameTransformer* video_frame_transformer,
       std::optional<bool> audio,
       std::optional<bool> video,
       std::optional<std::string> audio_codec_type,
@@ -103,6 +117,7 @@ class Sora : public DisposePublisher {
       const nb::handle& video_vp9_params,
       const nb::handle& video_av1_params,
       const nb::handle& video_h264_params,
+      const nb::handle& audio_opus_params,
       std::optional<bool> simulcast,
       std::optional<bool> spotlight,
       std::optional<int> spotlight_number,
@@ -110,6 +125,7 @@ class Sora : public DisposePublisher {
       std::optional<std::string> spotlight_focus_rid,
       std::optional<std::string> spotlight_unfocus_rid,
       const nb::handle& forwarding_filter,
+      const nb::handle& forwarding_filters,
       const nb::handle& data_channels,
       std::optional<bool> data_channel_signaling,
       std::optional<bool> ignore_disconnect_websocket,
@@ -119,12 +135,14 @@ class Sora : public DisposePublisher {
       std::optional<int> websocket_connection_timeout,
       std::optional<std::string> audio_streaming_language_code,
       std::optional<bool> insecure,
-      std::optional<std::string> client_cert,
-      std::optional<std::string> client_key,
+      std::optional<nb::bytes> client_cert,
+      std::optional<nb::bytes> client_key,
+      std::optional<nb::bytes> ca_cert,
       std::optional<std::string> proxy_url,
       std::optional<std::string> proxy_username,
       std::optional<std::string> proxy_password,
-      std::optional<std::string> proxy_agent);
+      std::optional<std::string> proxy_agent,
+      std::optional<webrtc::DegradationPreference> degradation_preference);
 
   /**
    * Sora に音声データを送る受け口である SoraAudioSource を生成します。
@@ -137,7 +155,7 @@ class Sora : public DisposePublisher {
    * @param sample_rate AudioSource に入力する音声データのサンプリングレート
    * @return SoraAudioSource インスタンス
    */
-  SoraAudioSource* CreateAudioSource(size_t channels, int sample_rate);
+  nb::ref<SoraAudioSource> CreateAudioSource(size_t channels, int sample_rate);
   /**
    * Sora に映像データを送る受け口である SoraVideoSource を生成します。
    * 
@@ -147,7 +165,7 @@ class Sora : public DisposePublisher {
    * 
    * @return SoraVideoSource インスタンス
    */
-  SoraVideoSource* CreateVideoSource();
+  nb::ref<SoraVideoSource> CreateVideoSource();
 
  private:
   /**
@@ -166,9 +184,14 @@ class Sora : public DisposePublisher {
       const nb::handle value);
   std::vector<std::string> ConvertSignalingUrls(const nb::handle value);
 
-  boost::optional<sora::SoraSignalingConfig::ForwardingFilter>
+  std::optional<std::vector<sora::SoraSignalingConfig::ForwardingFilter>>
+  ConvertForwardingFilters(const nb::handle value);
+
+  std::optional<sora::SoraSignalingConfig::ForwardingFilter>
   ConvertForwardingFilter(const nb::handle value);
 
   std::unique_ptr<SoraFactory> factory_;
+  std::unique_ptr<boost::asio::io_context> ioc_;
+  std::unique_ptr<std::thread> thread_;
 };
 #endif

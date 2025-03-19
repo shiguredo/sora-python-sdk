@@ -11,9 +11,163 @@
 
 ## develop
 
+## 2025.1.0
+
+**リリース日**: 2025-03-20
+
+- [CHANGE] Python 3.10 のサポートを終了する
+  - [SPEC 0 — Minimum Supported Dependencies](https://scientific-python.org/specs/spec-0000/) を参考に直近 3 バージョンのサポートに変更する
+  - @voluntas
+- [CHANGE] macOS Sonoma 13 のサポートを終了する
+  - @voluntas
+- [CHANGE] シグナリング接続時の ``"type": "connect"`` 時に ``multistream`` 項目を送らないようにする
+  - Sora 2022.1.0 以前には接続できなくなる
+  - @voluntas
+- [CHANGE] `client_cert` と `client_key` の指定にはパスではなく中身の文字列を指定するようにする
+  - C++ SDK 側の仕様変更に追従する
+  - @voluntas
+- [CHANGE] `ca_cert`, `client_cert`, `client_key` の指定には `str` ではなく `bytes` を使うようにする
+  - @tnoho
+- [CHANGE] `Sora()` の引数から `use_hardware_encoder` を削除
+  - デフォルトでは常に libwebrtc 実装のエンコーダ/デコーダを利用します
+  - ハードウェアエンコーダ/デコーダを利用するには `video_codec_preference` を利用して下さい
+  - @melpon
+- [ADD] OpenH264 を Windows x86_64 に対応する
+  - @melpon
+- [ADD] AMD AMF を Ubuntu x86_64 と Windows x86_64 に対応する
+  - @melpon
+- [ADD] エンコード時の劣化の優先順位を指定できるようにする
+  - `Sora.create_connection()` の引数に `degradation_preference` を追加する
+  - `SoraDegradationPreference` を追加
+    - `MAINTAIN_RESOLUTION` は解像度を優先
+    - `MAINTAIN_FRAMERATE` はフレームレートを優先
+    - `BALANCED` はバランスを優先
+    - `DISABLED` は無効
+  - @voluntas
+- [ADD] WebRTC Encoded Transform に対応する
+  - `SoraTransformableAudioFrame` と `SoraTransformableVideoFrame` を追加
+  - `SoraAudioFrameTransformer` と `SoraVideoFrameTransformer` を追加
+  - `create_connection()` の引数に `audio_frame_transformer` と `video_frame_transformer` を追加
+  - `SoraMediaTrack` に `set_frame_transformer()` を追加
+  - @tnoho
+- [ADD] 転送フィルターを複数指定できるようにする
+  - `Sora.create_connection()` の引数に `forwarding_filter` を追加する
+  - @voluntas
+- [ADD] サーバー証明書チェック用の CA 証明書を指定できるようにする
+  - `Sora.create_connection()` の引数に `ca_cert` を追加する
+  - @voluntas
+- [ADD] Python 3.13 に対応する
+  - @voluntas
+- [ADD] `on_ws_close` コールバックを追加する
+  - @tnoho
+- [ADD] `on_signaling_message` コールバックを追加する
+  - @tnoho
+- [ADD] Ubuntu 24.04 armv8 のビルドを arm64 上でできるようにする
+  - @melpon
+- [ADD] Ubuntu 24.04 armv8 に対応する
+  - @melpon
+- [ADD] `on_ws_close` コールバックを追加する
+  - @tnoho
+- [ADD] `Sora.create_connection()` の引数に `audio_opus_params` を追加する
+  - @melpon
+- [ADD] `data_channels` の要素に `header` を指定可能にする
+  - @melpon
+- [ADD] `WebRTC Encoded Transform` に対応する
+  - @tnoho
+- [ADD] `Sora()` の引数に `video_codec_preference` を追加
+  - @melpon
+- [ADD] video_codec_preference を構築するために必要な以下のクラス、関数、enum を追加
+  - `SoraVideoCodecCapability`
+  - `SoraVideoCodecPreference`
+  - `get_video_codec_capability()`
+  - `create_video_codec_preference_from_implementation()`
+  - `SoraVideoCodecType`
+  - @melpon
+- [UPDATE] nanobind を `2.5.0` に上げる
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2025.2.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m132.6834.5.8` に上げる
+    - libwebrtc のモジュール分割に追従するため `rtc::CreateRandomString` のヘッダを追加
+    - Sora CPP SDK の `absl::optional` を `std::optional` に変更した仕様に追従する
+    - Sora CPP SDK の `absl::nullopt` を `std::nullopt` に変更した仕様に追従する
+  - CMAKE_VERSION を `3.31.6` に上げる
+  - BOOST_VERSION を `1.87.0` に上げる
+  - OPENH264_VERSION を `v2.6.0` に上げる
+  - @torikizi @voluntas
+- [FIX] nanobind が libstdc++ を使ってしまっていたのを libc++ を使うように修正する
+  - @melpon
+
+### misc
+
+- [UPDATE] Boost のダウンロード URL を変更する
+  - @voluntas
+- [UPDATE] サイマルキャストの E2E テストについて encoderImplementation の値チェック内容を緩和する
+  - サイマルキャストの encoderImplementation のチェックを文字列一致としていたが、帯域推定機能を有効にした後、値が安定しなくなったためチェック内容を緩和した
+  - サイマルキャストの encoderImplementation の結果を以下の通り修正
+    - `SimulcastEncoderAdapter (libaom, libaom, libaom)` -> `SimulcastEncoderAdapter` と `libaom` を含む
+    - `SimulcastEncoderAdapter (libvpx, libvpx, libvpx)` -> `SimulcastEncoderAdapter` と `libvpx` を含む
+    - `SimulcastEncoderAdapter (OpenH264, OpenH264, OpenH264)` -> `SimulcastEncoderAdapter` と `OpenH264` を含む
+    - `SimulcastEncoderAdapter (VideoToolbox, VideoToolbox, VideoToolbox)` -> `SimulcastEncoderAdapter` と `VideoToolbox` を含む
+  - @voluntas
+- [UPDATE] ubuntu-latest を ubuntu-24.04 に変更する
+  - @voluntas
+- [CHANGE] CI の Ubuntu から libva と libdrm をインストールしないようにする
+  - @voluntas
+- [CHANGE] CMakefile の依存から libva と libdrm を削除する
+  - @voluntas
+- [CHANGE] ruff と mypy と pytest はバージョンを未指定にして、常に最新版を利用するようにする
+  - @voluntas
+- [CHANGE] 利用していなかった auditwheel を削除する
+  - @voluntas
+- [CHANGE] examples を <https://github.com/shiguredo/sora-python-sdk-examples> に移動する
+  - @voluntas
+- [CHANGE] rye から uv に変更する
+  - @voluntas
+- [CHANGE] サンプルアプリの src ディレクトリ構成を変更する
+  - @voluntas
+- [CHANGE] サンプルアプリの E2E テストを一旦削除する
+  - @voluntas
+- [ADD] pytest 実行時に sora_sdk のバージョンを表示する
+  - @voluntas
+- [ADD] dev-dependencies に pytest-repeat を追加する
+  - <https://github.com/pytest-dev/pytest-repeat>
+  - @voluntas
+- [ADD] .env.template に TEST_LIBWEBRTC_LOG を追加する
+  - none, verbose, error, warning, info, のいずれかを指定可能
+  - @voluntas
+- [ADD] Ubuntu 24.04 armv8 向けの E2E テストを追加する
+  - @voluntas
+- [ADD] pyjwt を dev-dependencies に追加する
+  - @voluntas
+- [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
+- [ADD] canary.py を追加
+  - @voluntas
+- [ADD] Python 3.13 を E2E テストに追加する
+  - @voluntas
+- [ADD] macos-15 を E2E テストに追加する
+  - @voluntas
+- [ADD] tests/ に E2E テストを追加する
+  - @voluntas
+- [ADD] examples に E2E テストを追加する
+  - @voluntas
+- [ADD] AMD AMF の E2E テストを追加する
+  - @voluntas
+- [ADD] Intel VPL の E2E テストを追加する
+  - @voluntas
+- [ADD] Intel VPL の E2E テストに AV1 を追加する
+  - @voluntas
+- [ADD] Opus 16khz / mono のテストを追加する
+  - @voluntas
+- [FIX] run.py で local_sora_cpp_sdk_dir を設定した際に boost が引けなくなってしまっている問題を修正する
+  - @tnoho
+- [FIX] examples の設定に virtual = true を指定するようにする
+  - これを指定しないとエラーになる
+  - @voluntas
+
 ## 2024.3.0
 
-**日時**: 2024-08-02
+**リリース日**: 2024-08-05
 
 - [CHANGE] Jetson 5 の対応を削除
   - 以降は support/jetson-jetpack-6 ブランチで Jetson 6 のみの対応となる
@@ -76,7 +230,7 @@
   - @enm10k
 - [UPDATE] nanobind を `1.9.2` に上げて固定する
   - @voluntas
-- [UPDATE] ruff の最小を ``0.3.0` に上げる
+- [UPDATE] ruff の最小を `0.3.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2024.6.0` に上げる
   - libwebrtc で `cricket::MediaEngineDependencies` が廃止された変更に追従する

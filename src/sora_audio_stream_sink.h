@@ -180,7 +180,7 @@ class SoraAudioStreamSinkImpl : public webrtc::AudioTrackSinkInterface,
               int sample_rate,
               size_t number_of_channels,
               size_t number_of_frames,
-              absl::optional<int64_t> absolute_capture_timestamp_ms) override;
+              std::optional<int64_t> absolute_capture_timestamp_ms) override;
   /**
    * 音声データが来るたびに呼び出されるコールバック変数です。
    * 

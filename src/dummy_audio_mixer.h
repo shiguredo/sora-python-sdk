@@ -30,6 +30,7 @@ class DummyAudioMixer : public webrtc::AudioMixer {
   struct SourceStatus;
   static rtc::scoped_refptr<DummyAudioMixer> Create(
       webrtc::TaskQueueFactory* task_queue_factory);
+  ~DummyAudioMixer();
 
   // AudioMixer functions
   bool AddSource(Source* audio_source) override;
@@ -46,6 +47,7 @@ class DummyAudioMixer : public webrtc::AudioMixer {
   void ProcessAudio();
   const webrtc::TaskQueueFactory* task_queue_factory_;
   std::unique_ptr<webrtc::TaskQueueBase, webrtc::TaskQueueDeleter> task_queue_;
+  webrtc::RepeatingTaskHandle handle_;
 
   mutable webrtc::Mutex mutex_;
   std::vector<std::unique_ptr<SourceStatus>> audio_source_list_

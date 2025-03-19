@@ -4,12 +4,23 @@ on:
   workflow_dispatch:
   push:
     paths-ignore:
-      - "doc/**"
       - "**.md"
-  # 毎日日本時間（JST）の14:00（UTCの5:00）に実行します。
-  # ただし、週末は除きます。
+      - "tests/**"
+    branches-ignore:
+      - "feature/e2e-test*"
+    tags:
+      - "*"
   schedule:
-    - cron: "0 5 * * 1-5"
+    # UTC の 01:00 は JST だと 10:00 。
+    # 1-5 で 月曜日から金曜日
+    - cron: "0 1 * * 1-5"
+
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.6.0
 
 jobs:
   # まず pyi を生成する
@@ -18,18 +29,19 @@ jobs:
   # それを各ビルドで利用する形にする。
   build_pyi:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - run: |
-          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
-      - uses: eifinger/setup-rye@v4
-      - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
-      - run: rye pin 3.12
-      - run: rye sync
+          sudo apt-get -y install libx11-dev
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: uv python pin 3.13
+      - run: uv sync
       - name: Generate pyi
         run: |
-          rye run python run.py ubuntu-24.04_x86_64
+          uv run python run.py ubuntu-24.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
@@ -38,7 +50,8 @@ jobs:
         with:
           name: sora_sdk
           path: sora_sdk/
-  build_linux_macos:
+
+  build_ubuntu:
     strategy:
       fail-fast: false
       matrix:
@@ -51,25 +64,82 @@ jobs:
             target: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
             os: ubuntu
-          - name: macos-13_arm64
-            target: macos_arm64
-            runs_on: macos-13
-            os: macos
-            python_host_platform: "macosx-13.0-arm64"
-            archflags: "-arch arm64"
-          - name: macos-14_arm64
-            target: macos_arm64
-            runs_on: macos-14
-            os: macos
-            python_host_platform: "macosx-14.0-arm64"
-            archflags: "-arch arm64"
+            arch: x86_64
         python_version:
-          - "3.10"
           - "3.11"
+          - "3.12"
+          - "3.13"
+        include:
+          - platform:
+              name: ubuntu-24.04_armv8
+              target: ubuntu-24.04_armv8
+              runs_on: ubuntu-24.04
+              os: ubuntu
+              arch: armv8
+            python_version: "3.12"
+    needs: [build_pyi] 
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sora_sdk
+          path: sora_sdk/
+      - run: |
+          cp sora_sdk/py.typed src/sora_sdk/py.typed
+          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
+      # libx11-dev は Ubuntu 24.04 の時に必要になる
+      - run: |
+          sudo apt-get update
+          sudo apt-get -y install libx11-dev
+      - if: ${{ matrix.platform.arch == 'armv8' }}
+        run: |
+          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
+          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
+          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+
+      - if: ${{ matrix.platform.arch == 'x86_64' }}
+        run: |
+          uv run python run.py ${{ matrix.platform.target }}
+          uv run python -m build
+
+      # Ubuntu armv8 向け
+      - if: ${{ matrix.platform.arch == 'armv8' }}
+        run: |
+          uv run python run.py ${{ matrix.platform.target }}
+          uv run python -m build
+        env:
+          SORA_SDK_TARGET: ${{ matrix.platform.target }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+          path: "dist/"
+
+  build_ubuntu_arm:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: ubuntu-24.04_armv8
+            target: ubuntu-24.04_armv8
+            # arm64 でビルド
+            runs_on: ubuntu-24.04-arm
+            os: ubuntu
+            arch: armv8
+        python_version:
           - "3.12"
     needs: [build_pyi] 
     runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 60
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -82,24 +152,69 @@ jobs:
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
-          sudo apt-get -y install libva-dev libdrm-dev libx11-dev
-        if: ${{ matrix.platform.os == 'ubuntu' }}
-      - uses: eifinger/setup-rye@v4
-      - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
-      - run: rye pin ${{ matrix.python_version }}
-      - run: rye sync
-
-      # Ubuntu 向け
+          sudo apt-get -y install libx11-dev
       - run: |
-          rye run python run.py ${{ matrix.platform.target }}
-          rye run python -m build
-        if: ${{ matrix.platform.os == 'ubuntu' }}
-
-      # macOS 向け
+          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
+          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
+          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+      # clang-18
+      - name: Install clang-18
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 18
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
       - run: |
-          rye run python run.py ${{ matrix.platform.target }}
-          rye run python -m build
-        if: ${{ matrix.platform.os == 'macos' }}
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+          uv run python run.py ${{ matrix.platform.target }}
+          uv run python -m build
+        env:
+          SORA_SDK_TARGET: ${{ matrix.platform.target }}
+
+  build_macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: macos-15_arm64
+            target: macos_arm64
+            runs_on: macos-15
+            os: macos
+            python_host_platform: "macosx-15.0-arm64"
+            archflags: "-arch arm64"
+          - name: macos-14_arm64
+            target: macos_arm64
+            runs_on: macos-14
+            os: macos
+            python_host_platform: "macosx-14.0-arm64"
+            archflags: "-arch arm64"
+        python_version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+    needs: [build_pyi] 
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sora_sdk
+          path: sora_sdk/
+      - run: |
+          cp sora_sdk/py.typed src/sora_sdk/py.typed
+          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+          uv run python run.py ${{ matrix.platform.target }}
+          uv run python -m build
         env:
           _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
           ARCHFLAGS: ${{ matrix.platform.archflags }}
@@ -113,14 +228,14 @@ jobs:
   build_windows:
     needs: [build_pyi] 
     runs-on: windows-2022
-    timeout-minutes: 60
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         python_version:
-          - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -131,12 +246,14 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: eifinger/setup-rye@v4
-      - run: echo "$HOME/.rye/shims" >> $GITHUB_PATH
-      - run: rye pin ${{ matrix.python_version }}
-      - run: rye sync
-      - run: rye run python run.py windows_x86_64
-      - run: rye run python -m build
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+      - run: |
+          uv python pin ${{ matrix.python_version }}
+          uv sync
+          uv run python run.py windows_x86_64
+          uv run python -m build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -144,22 +261,23 @@ jobs:
           name: windows-2022_python-${{ matrix.python_version }}
           path: dist/
 
-  slack_notify_succeeded:
-    needs: [build_linux_macos, build_windows]
-    runs-on: ubuntu-latest
-    if: success()
-    steps:
-     - name: Slack Notification
-       uses: rtCamp/action-slack-notify@v2
-       env:
-         SLACK_CHANNEL: sora-python-sdk
-         SLACK_COLOR: good
-         SLACK_TITLE: SUCCEEDED
-         SLACK_ICON_EMOJI: ":star-struck:"
-         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  # slack_notify_succeeded:
+  #   needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
+  #   runs-on: ubuntu-24.04
+  #   if: success()
+  #   steps:
+  #    - name: Slack Notification
+  #      uses: rtCamp/action-slack-notify@v2
+  #      env:
+  #        SLACK_CHANNEL: sora-python-sdk
+  #        SLACK_COLOR: good
+  #        SLACK_TITLE: SUCCEEDED
+  #        SLACK_ICON_EMOJI: ":star-struck:"
+  #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
   slack_notify_failed:
-    needs: [build_linux_macos, build_windows]
-    runs-on: ubuntu-latest
+    needs: [build_ubuntu, build_ubuntu_arm, build_macos,build_windows]
+    runs-on: ubuntu-24.04
     if: failure()
     steps:
       - name: Slack Notification
@@ -174,7 +292,8 @@ jobs:
   publish_wheel:
     if: contains(github.ref, 'tags/202')
     needs:
-      - build_linux_macos
+      - build_ubuntu
+      - build_macos
       - build_windows
     strategy:
       fail-fast: false
@@ -182,14 +301,18 @@ jobs:
         platform:
           # - name: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
+          - name: macos-15_arm64
           - name: macos-14_arm64
-          - name: macos-13_arm64
           - name: windows-2022
         python_version:
-          - "3.10"
           - "3.11"
           - "3.12"
-    runs-on: ubuntu-latest
+          - "3.13"
+        include:
+          - platform:
+              name: ubuntu-24.04_armv8
+            python_version: "3.12"
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/download-artifact@v4
@@ -202,7 +325,7 @@ jobs:
           fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-14_arm64' && matrix.python_version == '3.10' }}
+        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.11' }}
 
       # テスト用
       # - name: Publish package to TestPyPI
@@ -229,36 +352,39 @@ jobs:
   create-release:
     if: contains(github.ref, 'tags/202')
     needs:
-      - build_linux_macos
+      - build_ubuntu
+      - build_macos
       - build_windows
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.10" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.10" }
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "macos-15_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.10" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.11" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-13_arm64", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with: { "platform": "windows-2022", "python_version": "3.10" }
+        with: { "platform": "macos-14_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2022", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2022", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "windows-2022", "python_version": "3.13" }
       - name: Env to output
         run: |
           echo "package_paths<<EOF" >> $GITHUB_OUTPUT

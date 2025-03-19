@@ -2,12 +2,15 @@
 /_build
 /_source
 /_package
-__pycache__/
+__pycache__
 .pytest_cache/
 .venv/
 *.egg-info/
 /_skbuild
 build
+.ruff_cache
+.mypy_cache
+*.pyc
 
 src/sora_sdk/*.so
 src/sora_sdk/*.dll
@@ -19,9 +22,11 @@ src/sora_sdk/py.typed
 /dist
 /wheelhouse
 
-# E2E テスト用
-.env
-
+# examples / E2E テスト用
+.env*
+!.env.template
 
 # libopenh264
 libopenh264*
+
+/smallproj

@@ -10,7 +10,6 @@ from typing import List, Optional
 from buildbase import (
     Platform,
     add_path,
-    apply_patch,
     build_sora,
     build_webrtc,
     cd,
@@ -18,6 +17,7 @@ from buildbase import (
     cmd,
     cmdcap,
     get_macos_osver,
+    get_sora_info,
     get_webrtc_info,
     get_webrtc_platform,
     get_windows_osver,
@@ -49,7 +49,11 @@ def install_deps(
     version = read_version_file("VERSION")
 
     # multistrap を使った sysroot の構築
-    if platform.target.os == "jetson":
+    if (
+        platform.target.os == "jetson"
+        or platform.target.os == "ubuntu"
+        and platform.target.arch == "armv8"
+    ):
         conf = os.path.join("multistrap", f"{platform.target.package_name}.conf")
         # conf ファイルのハッシュ値をバージョンとする
         version_md5 = hashlib.md5(open(conf, "rb").read()).hexdigest()
@@ -123,7 +127,7 @@ def install_deps(
         install_cmake_args["platform"] = "macos-universal"
     elif platform.build.os == "ubuntu" and platform.build.arch == "x86_64":
         install_cmake_args["platform"] = "linux-x86_64"
-    elif platform.build.os == "ubuntu" and platform.build.arch == "arm64":
+    elif platform.build.os == "ubuntu" and platform.build.arch == "armv8":
         install_cmake_args["platform"] = "linux-aarch64"
     else:
         raise Exception("Failed to install CMake")
@@ -131,7 +135,13 @@ def install_deps(
 
     # Sora C++ SDK
     if local_sora_cpp_sdk_dir is None:
-        install_sora_and_deps(platform.target.package_name, source_dir, install_dir)
+        install_sora_and_deps(
+            version["SORA_CPP_SDK_VERSION"],
+            version["BOOST_VERSION"],
+            platform.target.package_name,
+            source_dir,
+            install_dir,
+        )
     else:
         build_sora(
             platform.target.package_name,
@@ -157,19 +167,15 @@ def install_deps(
         }
         install_openh264(**install_openh264_args)
 
-    # nanobind にパッチを適用する
-    nanobind_include_dir = cmdcap([sys.executable, "-m", "nanobind", "--include_dir"])
-    if not os.path.exists(os.path.join(nanobind_include_dir, "nanobind", "nb_func.h.old")):
-        shutil.copyfile(
-            os.path.join(nanobind_include_dir, "nanobind", "nb_func.h"),
-            os.path.join(nanobind_include_dir, "nanobind", "nb_func.h.old"),
-        )
-        patch = os.path.join(BASE_DIR, "fix_nanobind_nb_func.patch")
-        with cd(nanobind_include_dir):
-            apply_patch(patch, nanobind_include_dir, 1)
 
-
-AVAILABLE_TARGETS = ["windows_x86_64", "macos_arm64", "ubuntu-22.04_x86_64", "ubuntu-24.04_x86_64"]
+AVAILABLE_TARGETS = [
+    "windows_x86_64",
+    "macos_arm64",
+    "ubuntu-22.04_x86_64",
+    "ubuntu-24.04_x86_64",
+    "ubuntu-24.04_armv8",
+    "ubuntu-22.04_armv8_jetson",
+]
 
 
 def main():
@@ -193,6 +199,10 @@ def main():
         platform = Platform("ubuntu", "22.04", "x86_64")
     elif args.target == "ubuntu-24.04_x86_64":
         platform = Platform("ubuntu", "24.04", "x86_64")
+    elif args.target == "ubuntu-24.04_armv8":
+        platform = Platform("ubuntu", "24.04", "armv8")
+    elif args.target == "ubuntu-22.04_armv8_jetson":
+        platform = Platform("jetson", None, "armv8", "ubuntu-22.04")
     else:
         raise Exception(f"Unknown target {args.target}")
 
@@ -217,19 +227,27 @@ def main():
         )
 
         configuration = "Release"
+        if args.debug:
+            configuration = "Debug"
+        if args.relwithdebinfo:
+            configuration = "RelWithDebInfo"
 
         webrtc_platform = get_webrtc_platform(platform)
         webrtc_info = get_webrtc_info(
             webrtc_platform, args.local_webrtc_build_dir, install_dir, args.debug
         )
 
+        sora_info = get_sora_info(
+            webrtc_platform, args.local_sora_cpp_sdk_dir, install_dir, args.debug
+        )
+
         cmake_args = []
         cmake_args.append(f"-DCMAKE_BUILD_TYPE={configuration}")
         cmake_args.append(f"-DTARGET_OS={platform.target.os}")
-        cmake_args.append(f"-DBOOST_ROOT={cmake_path(os.path.join(install_dir, 'boost'))}")
+        cmake_args.append(f"-DBOOST_ROOT={cmake_path(sora_info.boost_install_dir)}")
         cmake_args.append(f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
         cmake_args.append(f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
-        cmake_args.append(f"-DSORA_DIR={cmake_path(os.path.join(install_dir, 'sora'))}")
+        cmake_args.append(f"-DSORA_DIR={cmake_path(sora_info.sora_install_dir)}")
         cmake_args.append(f"-DOPENH264_DIR={cmake_path(os.path.join(install_dir, 'openh264'))}")
         python_version = get_python_version()
         cmake_args.append(f"-DPYTHON_VERSION_STRING={python_version}")
@@ -243,11 +261,41 @@ def main():
         if platform.target.os == "ubuntu":
             # クロスコンパイルの設定。
             # 本来は toolchain ファイルに書く内容
+
+            if platform.build.arch == "armv8":
+                # ビルド環境が armv8 の場合は libwebrtc のバイナリが使えないのでローカルの clang を利用する
+                cmake_args += [
+                    "-DCMAKE_C_COMPILER=clang-18",
+                    "-DCMAKE_CXX_COMPILER=clang++-18",
+                ]
+            else:
+                cmake_args += [
+                    f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
+                    f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+                ]
             cmake_args += [
-                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
-                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
+                f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
             ]
+
+            if platform.build.arch != platform.target.arch:
+                sysroot = os.path.join(install_dir, "rootfs")
+                nb_cmake_dir = cmdcap(["uv", "run", "python", "-m", "nanobind", "--cmake_dir"])
+                cmake_args += [
+                    "-DCMAKE_SYSTEM_NAME=Linux",
+                    "-DCMAKE_SYSTEM_PROCESSOR=aarch64",
+                    "-DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu",
+                    "-DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu",
+                    f"-DCMAKE_FIND_ROOT_PATH={sysroot}",
+                    "-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER",
+                    "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH",
+                    "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH",
+                    "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
+                    f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.12'))}",
+                    f"-DCMAKE_SYSROOT={sysroot}",
+                    f"-DNB_CMAKE_DIR={nb_cmake_dir}",
+                    "-DNB_SUFFIX=.cpython-312-aarch64-linux-gnu.so",
+                ]
         elif platform.target.os == "macos":
             sysroot = cmdcap(["xcrun", "--sdk", "macosx", "--show-sdk-path"])
             cmake_args += [
@@ -275,8 +323,8 @@ def main():
                 "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
                 f"-DCMAKE_SYSROOT={sysroot}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
-                f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.9'))}",
-                "-DNB_SUFFIX=.cpython-38-aarch64-linux-gnu.so",
+                f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.10'))}",
+                "-DNB_SUFFIX=.cpython-310-aarch64-linux-gnu.so",
             ]
 
         # Windows 以外の、クロスコンパイルでない環境では pyi ファイルを生成する

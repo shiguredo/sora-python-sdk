@@ -21,21 +21,39 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 様々なプラットフォームに対応しすぐに使い始められる WebRTC SFU Sora 向けの Python SDK です。
 
+音声や映像デバイスの処理を SDK から独立させているため、様々なライブラリを利用する事ができます。
+
 ## 特徴
 
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
 - Windows / macOS / Linux (Ubuntu) プラットフォームに対応
-- NVIDIA Jetson JetPack SDK に対応
+- [WebRTC 統計情報](https://www.w3.org/TR/webrtc-stats/) の取得が可能
+- [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/) に対応
+- 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする [DegradationPreference](https://w3c.github.io/mst-content-hint/#degradation-preference-when-encoding) に対応
+  - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
-  - Intel VPL (AV1 / H.264 / H.265)
   - Apple Video Toolbox (H.264 / H.265)
-  - NVIDIA Video Codec SDK (VP9 / H.264 / H.265)
+    - macOS arm64 で利用できる
+  - Intel VPL (AV1 / H.264 / H.265)
+    - Ubuntu x86_64 / Windows x86_64 で利用できる
+  - AMD AMF (VP9 /AV1 / H.264 / H.265)
+    - Ubuntu x86_64 / Windows x86_64 で利用できる
+    - AV1 エンコードは Windows x86_64 でのみ利用できる
+    - VP9 はデコードのみ利用できる
+  - NVIDIA Video Codec SDK (VP8 / VP9 / AV1 / H.264 / H.265)
+    - Ubuntu x86_64 / Windows x86_64 で利用できる
+    - VP8 と VP9 はデコードのみ利用できる
   - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
+  - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
-- 物体検出などの入力に Sora 経由で受信した映像が利用できる
-- 音声認識などの入力に Sora 経由で受信した音声を利用できる
-- `pip install sora_sdk` でインストール可能
+  - Ubuntu x86_64 / Ubuntu arm64 / Windows x86_64 / macOS arm64 で利用できる
+- 音声デバイス処理に [sounddevice](https://pypi.org/project/sounddevice/) などが利用できる
+- 映像デバイス処理に [opencv-python](https://pypi.org/project/opencv-python/) などが利用できる
+- 音声認識などの入力に受信した音声を利用できる
+- 物体検出などの入力に受信した映像を利用できる
+- `uv add sora_sdk` や `pip install sora_sdk` でインストール可能
+- [NVIDIA Jetson JetPack SDK](https://developer.nvidia.com/embedded/jetpack) に対応
 
 ## 利用イメージ
 
@@ -50,9 +68,17 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 ## サンプル集
 
-[examples](examples) を参照してください。
+[shiguredo/sora-python-sdk-examples](https://github.com/shiguredo/sora-python-sdk-examples)
 
 ## sora_sdk パッケージの追加
+
+### uv
+
+[uv](https://docs.astral.sh/uv/)
+
+```bash
+uv add sora_sdk
+```
 
 ### pip
 
@@ -60,42 +86,41 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 pip install sora_sdk
 ```
 
-### Rye
-
-[Rye](https://rye-up.com/)
-
-```bash
-rye add sora_sdk
-rye sync
-```
-
 ### NVIDIA Jetson 向けパッケージ
 
 PyPI 経由ではインストールできません。
 パッケージバイナリを配布しておりますので、そちらをご利用ください。
 
+<https://github.com/shiguredo/sora-python-sdk/releases/tag/2024.3.0-jetson-jetpack-6.0.0.0>
+
 ## システム条件
 
-- WebRTC SFU Sora 2023.2.0 以降
-- Python 3.10 以上
+- WebRTC SFU Sora 2024.1.0 以降
+- Python 3.11 以上
+
+## Python サポートポリシー
+
+直近の 3 バージョンの Python をサポートします。
 
 ## 対応プラットフォーム
 
-- Windows 11 x86_64
-- Windows Server 2022 x86_64
-- macOS Ventura 14 arm64
-- macOS Sonoma 13 arm64
 - Ubuntu 24.04 LTS x86_64
+- Ubuntu 24.04 LTS arm64
 - Ubuntu 22.04 LTS x86_64
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください
+- macOS Sequoia 15 arm64
+- macOS Ventura 14 arm64
+- Windows 11 x86_64
+- Windows Server 2022 x86_64
 
-## 対応機能
+### macOS の対応バージョン
 
-- Sora の機能へ追従
-- VP8 / VP9 / AV1 / H.264 / H.265 のハードウェアアクセラレーター (HWA) 対応
-  - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
-- OpenH264 を利用した H.264 のソフトウェアエンコーダー/デコーダーへの対応
+直近の 2 バージョンをサポートします。
+
+### Ubuntu の対応バージョン
+
+直近の LTS 2 バージョンをサポートします。
 
 ## 優先実装
 
@@ -110,15 +135,10 @@ PyPI 経由ではインストールできません。
 
 ### 優先実装が可能な機能一覧
 
-**詳細は Discord やメールなどでお気軽にお問い合わせください**
-
 - Windows 11 arm64
-- Ubuntu 24.04 arm64
 - Ubuntu 22.04 arm64
+- Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6.1)
 - Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
-- AMD Video Core Next (VCN) 対応
-  - VP9 / AV1 / H.264 / H.265
-- Python 3.9 以前への対応
 
 ## サポートについて
 
@@ -141,9 +161,9 @@ Discord へお願いします。
 Apache License 2.0
 
 ```text
-Copyright 2023-2024, tnoho (Original Author)
-Copyright 2023-2024, Wandbox LLC (Original Author)
-Copyright 2023-2024, Shiguredo Inc.
+Copyright 2023-2025, tnoho (Original Author)
+Copyright 2023-2025, Wandbox LLC (Original Author)
+Copyright 2023-2025, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -158,8 +178,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-このリポジトリに含まれる `shiguremaru.png` ファイルのライセンスは [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja) です。
-
 ## OpenH264
 
 <https://www.openh264.org/BINARY_LICENSE.txt>
@@ -167,3 +185,25 @@ limitations under the License.
 ```text
 "OpenH264 Video Codec provided by Cisco Systems, Inc."
 ```
+
+## H.264 (AVC) と H.265 (HEVC) のライセンスについて
+
+**時雨堂が提供する libwebrtc のビルド済みバイナリには H.264 と H.265 のコーデックは含まれていません**
+
+### H.264
+
+H.264 対応は [Via LA Licensing](https://www.via-la.com/) (旧 MPEG-LA) に連絡を取り、ロイヤリティの対象にならないことを確認しています。
+
+> 時雨堂がエンドユーザーの PC /デバイスに既に存在する AVC / H.264 エンコーダー/デコーダーに依存する製品を提供する場合は、
+> ソフトウェア製品は AVC ライセンスの対象外となり、ロイヤリティの対象にもなりません。
+
+### H.265
+
+H.265 対応は以下の二つの団体に連絡を取り、H.265 ハードウェアアクセラレーターのみを利用し、
+H.265 が利用可能なバイナリを配布する事は、ライセンスが不要であることを確認しています。
+
+また、H.265 のハードウェアアクセラレーターのみを利用した H.265 対応の SDK を OSS で公開し、
+ビルド済みバイナリを配布する事は、ライセンスが不要であることも確認しています。
+
+- [Access Advance](https://accessadvance.com/ja/)
+- [Via LA Licensing](https://www.via-la.com/)
