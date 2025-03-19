@@ -80,7 +80,7 @@ def test_simulcast(
     )
     sendonly.connect(fake_video=True)
 
-    time.sleep(5)
+    time.sleep(10)
 
     sendonly_stats = sendonly.get_stats()
 
