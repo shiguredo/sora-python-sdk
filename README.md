@@ -33,12 +33,17 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする [DegradationPreference](https://w3c.github.io/mst-content-hint/#degradation-preference-when-encoding) に対応
   - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
-  - Intel VPL (AV1 / H.264 / H.265)
-    - Ubuntu x86_64 / Windows x86_64 で利用できる
   - Apple Video Toolbox (H.264 / H.265)
     - macOS arm64 で利用できる
-  - NVIDIA Video Codec SDK (VP9 / H.264 / H.265)
+  - Intel VPL (AV1 / H.264 / H.265)
     - Ubuntu x86_64 / Windows x86_64 で利用できる
+  - AMD AMF (VP9 /AV1 / H.264 / H.265)
+    - Ubuntu x86_64 / Windows x86_64 で利用できる
+    - AV1 エンコードは Windows x86_64 でのみ利用できる
+    - VP9 はデコードのみ利用できる
+  - NVIDIA Video Codec SDK (VP8 / VP9 / AV1 / H.264 / H.265)
+    - Ubuntu x86_64 / Windows x86_64 で利用できる
+    - VP8 と VP9 はデコードのみ利用できる
   - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
   - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
@@ -134,8 +139,6 @@ PyPI 経由ではインストールできません。
 - Ubuntu 22.04 arm64
 - Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6.1)
 - Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
-- AMD Video Core Next (VCN) 対応
-  - VP9 / AV1 / H.264 / H.265
 
 ## サポートについて
 
