@@ -186,6 +186,14 @@ limitations under the License.
 "OpenH264 Video Codec provided by Cisco Systems, Inc."
 ```
 
+## NVDIA Video Codec SDK
+
+<https://docs.nvidia.com/video-technologies/video-codec-sdk/12.0/index.html>
+
+```text
+“This software contains source code provided by NVIDIA Corporation.”
+```
+
 ## H.264 (AVC) と H.265 (HEVC) のライセンスについて
 
 **時雨堂が提供する libwebrtc のビルド済みバイナリには H.264 と H.265 のコーデックは含まれていません**
