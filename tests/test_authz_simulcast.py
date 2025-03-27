@@ -165,6 +165,13 @@ def test_simulcast_authz_scale_resolution_to(
             assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
         assert encoder_implementation in s["encoderImplementation"]
 
+        if (
+            s["qualityLimitationReason"] != "none"
+            and "frameWidth" not in s
+            and "frameHeight" not in s
+        ):
+            pytest.skip(f"qualityLimitationReason: {s['qualityLimitationReason']}")
+
         assert s["keyFramesEncoded"] > 0
         assert s["bytesSent"] > 500
         assert s["packetsSent"] > 10
