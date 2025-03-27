@@ -111,7 +111,7 @@ def test_simulcast(
         # simulcast_count が 2 の場合、rid r2 の bytesSent/packetsSent は 0 or 1 になる
         # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 or 1 になる
         if i < simulcast_count:
-            assert "qualityLimitationReason" not in s
+            assert "qualityLimitationReason" in s
             # qualityLimitationReason が none では無い場合は安定したテストができないので skip する
             if s["qualityLimitationReason"] != "none":
                 # frameWidth/frameHeight がないことを確認する
