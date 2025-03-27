@@ -227,7 +227,7 @@ jobs:
 
   build_windows:
     needs: [build_pyi] 
-    runs-on: windows-2022
+    runs-on: windows-2025
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -258,7 +258,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-2022_python-${{ matrix.python_version }}
+          name: windows-2025_python-${{ matrix.python_version }}
           path: dist/
 
   # slack_notify_succeeded:
@@ -303,7 +303,7 @@ jobs:
           - name: ubuntu-22.04_x86_64
           - name: macos-15_arm64
           - name: macos-14_arm64
-          - name: windows-2022
+          - name: windows-2025
         python_version:
           - "3.11"
           - "3.12"
@@ -380,11 +380,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2022", "python_version": "3.11" }
+        with: { "platform": "windows-2025", "python_version": "3.11" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2022", "python_version": "3.12" }
+        with: { "platform": "windows-2025", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2022", "python_version": "3.13" }
+        with: { "platform": "windows-2025", "python_version": "3.13" }
       - name: Env to output
         run: |
           echo "package_paths<<EOF" >> $GITHUB_OUTPUT
