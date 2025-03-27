@@ -11,7 +11,12 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを `2025.3.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.3.0-canary.2` に上げる
+  - 正式リリースまでは以下をアップデートしていく
+  - WEBRTC_BUILD_VERSION を `m132.6834.5.8` に上げる
+  - CMAKE_VERSION を `3.31.6` に上げる
+  - BOOST_VERSION を `1.87.0` に上げる
+  - OPENH264_VERSION を `v2.6.0` に上げる
   - @torikizi
 
 ## 2025.1.0
