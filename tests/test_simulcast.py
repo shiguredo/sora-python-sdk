@@ -112,11 +112,13 @@ def test_simulcast(
         # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 or 1 になる
         if i < simulcast_count:
             assert "qualityLimitationReason" in s
-            # qualityLimitationReason が none では無い場合は安定したテストができないので skip する
-            if s["qualityLimitationReason"] != "none":
-                # frameWidth/frameHeight がないことを確認する
-                assert "frameWidth" not in s
-                assert "frameHeight" not in s
+            # qualityLimitationReason が none で無い場合は安定したテストができない
+            # さらに frameWidth/frameHeight がない場合は送られてきてすら以内のでテストをスキップしてしまう
+            if (
+                s["qualityLimitationReason"] != "none"
+                and "frameWidth" not in s
+                and "frameHeight" not in s
+            ):
                 pytest.skip(f"qualityLimitationReason: {s['qualityLimitationReason']}")
 
             # 1 本になると simulcastEncodingAdapter がなくなる
