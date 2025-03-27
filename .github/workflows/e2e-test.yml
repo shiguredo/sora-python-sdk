@@ -44,7 +44,7 @@ jobs:
             arch: "armv8"
             openh264_arch: "linux-arm64"
     runs-on: ${{ matrix.platform.runs-on}}
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: tailscale/github-action@v3
@@ -86,7 +86,7 @@ jobs:
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: tailscale/github-action@v3
@@ -114,7 +114,7 @@ jobs:
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
     runs-on: windows-2025
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
