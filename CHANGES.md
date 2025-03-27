@@ -19,6 +19,16 @@
   - OPENH264_VERSION を `v2.6.0` に上げる
   - @torikizi
 
+### misc
+
+- [UPDATE] GitHub Actions の windows を windows-2025 に更新する
+  - @voluntas
+- [UPDATE] E2E テストのタイムアウトを 20 分に延長する
+  - @voluntas
+- [UPDATE] GitHub Actions の tailscale を v3 に上げて windows と macos にも追加する
+  - [v3](https://github.com/tailscale/github-action/releases/tag/v3.1.0) で Windows と macOS に対応した
+  - @voluntas
+
 ## 2025.1.0
 
 **リリース日**: 2025-03-19
