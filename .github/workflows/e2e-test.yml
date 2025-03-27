@@ -28,7 +28,6 @@ env:
 jobs:
   e2e_test_ubuntu:
     strategy:
-      fail-fast: false
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
         platform:
@@ -82,7 +81,6 @@ jobs:
 
   e2e_test_macos:
     strategy:
-      fail-fast: false
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
@@ -113,7 +111,6 @@ jobs:
 
   e2e_test_windows:
     strategy:
-      fail-fast: false
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
     runs-on: windows-2025
