@@ -1,20 +1,14 @@
-import os
 import sys
 import time
 import uuid
 
 import jwt
-import pytest
 from api import disconnect_connection_api
 from client import SoraClient, SoraRole
 
 from sora_sdk import SoraSignalingErrorCode
 
 
-@pytest.mark.skipif(
-    os.getenv("TEST_API_URL") != "",
-    reason="API 利用のため API URL が設定されている場合のみ実行にする",
-)
 def test_websocket_signaling_only_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -88,10 +82,6 @@ def test_websocket_signaling_only_lifetime_expired(setup):
         assert conn.ws_close_reason == "LIFETIME-EXPIRED"
 
 
-@pytest.mark.skipif(
-    os.getenv("TEST_API_URL") != "",
-    reason="API 利用のため API URL が設定されている場合のみ実行にする",
-)
 def test_websocket_datachannel_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -165,10 +155,6 @@ def test_websocket_datachannel_signaling_lifetime_expired(setup):
         assert conn.ws_close_reason == "LIFETIME-EXPIRED"
 
 
-@pytest.mark.skipif(
-    os.getenv("TEST_API_URL") != "",
-    reason="API 利用のため API URL が設定されている場合のみ実行にする",
-)
 def test_datachannel_only_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
