@@ -11,6 +11,24 @@
 
 ## develop
 
+- [UPDATE] Sora C++ SDK のバージョンを `2025.3.0-canary.2` に上げる
+  - 正式リリースまでは以下をアップデートしていく
+  - WEBRTC_BUILD_VERSION を `m132.6834.5.8` に上げる
+  - CMAKE_VERSION を `3.31.6` に上げる
+  - BOOST_VERSION を `1.87.0` に上げる
+  - OPENH264_VERSION を `v2.6.0` に上げる
+  - @torikizi
+
+### misc
+
+- [UPDATE] GitHub Actions の windows を windows-2025 に更新する
+  - @voluntas
+- [UPDATE] E2E テストのタイムアウトを 20 分に延長する
+  - @voluntas
+- [UPDATE] GitHub Actions の tailscale を v3 に上げて windows と macos にも追加する
+  - [v3](https://github.com/tailscale/github-action/releases/tag/v3.1.0) で Windows と macOS に対応した
+  - @voluntas
+
 ## 2025.1.0
 
 **リリース日**: 2025-03-19
@@ -32,6 +50,8 @@
   - デフォルトでは常に libwebrtc 実装のエンコーダ/デコーダを利用します
   - ハードウェアエンコーダ/デコーダを利用するには `video_codec_preference` を利用して下さい
   - @melpon
+- [UPDATE] GitHub Actions の Windows ビルドで Windows 2025 を利用する
+  - @voluntas
 - [ADD] OpenH264 を Windows x86_64 に対応する
   - @melpon
 - [ADD] AMD AMF を Ubuntu x86_64 と Windows x86_64 に対応する
