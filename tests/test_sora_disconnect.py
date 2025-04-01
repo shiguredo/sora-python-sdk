@@ -12,8 +12,8 @@ from sora_sdk import SoraSignalingErrorCode
 
 
 @pytest.mark.skipif(
-    os.getenv("CI") == "true" and sys.platform != "linux",
-    reason="CI では linux でのみ実行する",
+    os.getenv("TEST_API_URL") != "",
+    reason="API 利用のため API URL が設定されている場合のみ実行にする",
 )
 def test_websocket_signaling_only_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
@@ -89,7 +89,8 @@ def test_websocket_signaling_only_lifetime_expired(setup):
 
 
 @pytest.mark.skipif(
-    os.getenv("CI") == "true" and sys.platform != "linux", reason="linux でのみ実行する"
+    os.getenv("TEST_API_URL") != "",
+    reason="API 利用のため API URL が設定されている場合のみ実行にする",
 )
 def test_websocket_datachannel_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
@@ -165,7 +166,8 @@ def test_websocket_datachannel_signaling_lifetime_expired(setup):
 
 
 @pytest.mark.skipif(
-    os.getenv("CI") == "true" and sys.platform != "linux", reason="linux でのみ実行する"
+    os.getenv("TEST_API_URL") != "",
+    reason="API 利用のため API URL が設定されている場合のみ実行にする",
 )
 def test_datachannel_only_signaling_disconnect_api(setup):
     signaling_urls = setup.get("signaling_urls")
