@@ -208,7 +208,9 @@ class SoraClient:
         return self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
+        print("__exit__: disconnecting")
         self.disconnect()
+        print("__exit__: disconnected")
 
     def connect(self, fake_audio=False, fake_video=False) -> "SoraClient":
         # スレッドは connect 前に起動する
@@ -222,14 +224,20 @@ class SoraClient:
 
         self._connection.connect()
 
-        assert self._connected.wait(self._default_connection_timeout_s), (
-            "Could not connect to Sora."
-        )
+        try:
+            assert self._connected.wait(self._default_connection_timeout_s), (
+                "Could not connect to Sora."
+            )
+        except Exception as e:
+            self._connection.disconnect()
+            raise e
 
         return self
 
     def disconnect(self) -> None:
+        print("disconnect: disconnecting")
         self._connection.disconnect()
+        print("disconnect: disconnected")
 
     def send_message(self, label: str, data: bytes, timeout: float = 5):
         # TODO: direction が sendrecv / sendonly の時しか送れず、例外をあげるようにする
