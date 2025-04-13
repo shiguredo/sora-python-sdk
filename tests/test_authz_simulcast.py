@@ -7,7 +7,7 @@ import pytest
 from client import SoraClient, SoraRole
 
 
-@pytest.mark.skipif(sys.platform == "darwin", reason="Apple では SW コーデックは動作させない")
+# @pytest.mark.skipif(sys.platform == "darwin", reason="Apple では SW コーデックは動作させない")
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -179,12 +179,8 @@ def test_simulcast_authz_scale_resolution_to(
         assert s["frameWidth"] == 640
         assert s["frameHeight"] == 352
 
-        # FIXME:これは libwebrtc 側の挙動を制御できず L1T2 になってしまう
-        scalability_mode = None
-        # FIXME: scalabilityMode がない場合がある
-        if "scalabilityMode" in s:
-            scalability_mode = s["scalabilityMode"]
-            assert s["scalabilityMode"] == "L1T2"
+        assert "scalabilityMode" in s
+        assert s["scalabilityMode"] == "L1T1"
 
         # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
         expected_bitrate = video_bit_rate * 1000
@@ -192,7 +188,7 @@ def test_simulcast_authz_scale_resolution_to(
             s["rid"],
             video_codec_type,
             s["encoderImplementation"],
-            scalability_mode,
+            s["scalabilityMode"],
             expected_bitrate,
             s["targetBitrate"],
             s["frameWidth"],
