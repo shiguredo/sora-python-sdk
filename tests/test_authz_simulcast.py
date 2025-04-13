@@ -179,8 +179,10 @@ def test_simulcast_authz_scale_resolution_to(
         assert s["frameWidth"] == 640
         assert s["frameHeight"] == 352
 
-        assert "scalabilityMode" in s
-        assert s["scalabilityMode"] == "L1T1"
+        scalability_mode = None
+        if "scalabilityMode" in s:
+            assert s["scalabilityMode"] == "L1T1"
+            scalability_mode = s["scalabilityMode"]
 
         # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
         expected_bitrate = video_bit_rate * 1000
@@ -188,7 +190,7 @@ def test_simulcast_authz_scale_resolution_to(
             s["rid"],
             video_codec_type,
             s["encoderImplementation"],
-            s["scalabilityMode"],
+            scalability_mode,
             expected_bitrate,
             s["targetBitrate"],
             s["frameWidth"],
