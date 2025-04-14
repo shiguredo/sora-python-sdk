@@ -258,12 +258,19 @@ def test_openh264_simulcast(
 
             assert s["bytesSent"] > 500
             assert s["packetsSent"] > 20
+
+            scalability_mode = None
+            if "scalabilityMode" in s:
+                assert s["scalabilityMode"] == "L1T1"
+                scalability_mode = s["scalabilityMode"]
+
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
             print(
                 s["rid"],
                 video_codec_type,
                 expected_implementation,
+                scalability_mode,
                 expected_bitrate,
                 s["targetBitrate"],
                 s["frameWidth"],

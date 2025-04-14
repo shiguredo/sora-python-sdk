@@ -286,19 +286,19 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
         {
             "rid": "r0",
             "active": True,
-            "scaleResolutionDownTo": {"maxWidth": 320, "maxHeight": 180},
+            "scaleResolutionDownTo": {"maxWidth": video_width, "maxHeight": video_height},
             "scalabilityMode": "L1T1",
         },
         {
             "rid": "r1",
             "active": True,
-            "scaleResolutionDownTo": {"maxWidth": 320, "maxHeight": 180},
+            "scaleResolutionDownTo": {"maxWidth": video_width, "maxHeight": video_height},
             "scalabilityMode": "L1T1",
         },
         {
             "rid": "r2",
             "active": True,
-            "scaleResolutionDownTo": {"maxWidth": 320, "maxHeight": 180},
+            "scaleResolutionDownTo": {"maxWidth": video_width, "maxHeight": video_height},
             "scalabilityMode": "L1T1",
         },
     ]
@@ -417,12 +417,8 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
         assert s["frameWidth"] == 320
         assert s["frameHeight"] == 176
 
-        # FIXME:これは libwebrtc 側の挙動を制御できず L1T2 になってしまう
-        scalability_mode = None
-        # FIXME: scalabilityMode がない場合がある
-        if "scalabilityMode" in s:
-            scalability_mode = s["scalabilityMode"]
-            assert s["scalabilityMode"] == "L1T2"
+        # Apple Video Toolbox の場合は scalabilityMode がない
+        assert "scalabilityMode" not in s
 
         # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
         expected_bitrate = video_bit_rate * 1000
@@ -430,7 +426,6 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
             s["rid"],
             video_codec_type,
             s["encoderImplementation"],
-            scalability_mode,
             expected_bitrate,
             s["targetBitrate"],
             s["frameWidth"],
