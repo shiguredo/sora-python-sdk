@@ -225,6 +225,7 @@ def test_apple_video_toolbox_simulcast(
 
             assert "qualityLimitationReason" in s
             quality_limitation_reason = s["qualityLimitationReason"]
+            assert "qualityLimitationDurations" in s
 
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
@@ -239,9 +240,11 @@ def test_apple_video_toolbox_simulcast(
                 s["bytesSent"],
                 s["packetsSent"],
             )
+
             # 期待値の 20% 以上、100% 以下に収まることを確認
             assert expected_bitrate * 0.2 <= s["targetBitrate"] <= expected_bitrate, (
-                quality_limitation_reason
+                quality_limitation_reason,
+                s["qualityLimitationDurations"],
             )
         else:
             # 本来は 0 なのだが、simulcast_count が 1 の場合、
@@ -428,6 +431,7 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
 
         assert "qualityLimitationReason" in s
         quality_limitation_reason = s["qualityLimitationReason"]
+        assert "qualityLimitationDurations" in s
 
         # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
         expected_bitrate = video_bit_rate * 1000
@@ -444,5 +448,6 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
         )
         # 期待値の 20% 以上、100% 以下に収まることを確認
         assert expected_bitrate * 0.2 <= s["targetBitrate"] <= expected_bitrate, (
-            quality_limitation_reason
+            quality_limitation_reason,
+            s["qualityLimitationDurations"],
         )
