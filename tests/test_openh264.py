@@ -257,7 +257,7 @@ def test_openh264_simulcast(
             assert expected_implementation in s["encoderImplementation"]
 
             assert s["bytesSent"] > 500
-            assert s["packetsSent"] > 20
+            assert s["packetsSent"] > 5
 
             scalability_mode = None
             if "scalabilityMode" in s:

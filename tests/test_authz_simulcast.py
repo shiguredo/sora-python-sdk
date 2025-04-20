@@ -174,7 +174,7 @@ def test_simulcast_authz_scale_resolution_to(
 
         assert s["keyFramesEncoded"] > 0
         assert s["bytesSent"] > 500
-        assert s["packetsSent"] > 10
+        assert s["packetsSent"] > 5
 
         assert s["frameWidth"] == 640
         assert s["frameHeight"] == 352

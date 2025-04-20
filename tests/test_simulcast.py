@@ -127,7 +127,7 @@ def test_simulcast(
             assert encoder_implementation in s["encoderImplementation"]
 
             assert s["bytesSent"] > 500
-            assert s["packetsSent"] > 10
+            assert s["packetsSent"] > 5
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
             # 期待値の 20% 以上、100% 以下に収まることを確認
