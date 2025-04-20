@@ -8,7 +8,7 @@
 
 #include "sora_call.h"
 
-SoraAudioSinkImpl::SoraAudioSinkImpl(SoraTrackInterface* track,
+SoraAudioSinkImpl::SoraAudioSinkImpl(nb::ref<SoraTrackInterface> track,
                                      int output_sample_rate,
                                      size_t output_channels)
     : track_(track),

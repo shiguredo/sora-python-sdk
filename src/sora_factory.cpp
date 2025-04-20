@@ -35,8 +35,14 @@ SoraFactory::SoraFactory(
   sora::SoraClientContextConfig context_config;
   context_config.video_codec_factory_config.capability_config.openh264_path =
       openh264;
-  context_config.video_codec_factory_config.capability_config.cuda_context =
-      sora::CudaContext::Create();
+  if (sora::CudaContext::CanCreate()) {
+    context_config.video_codec_factory_config.capability_config.cuda_context =
+        sora::CudaContext::Create();
+  }
+  if (sora::AMFContext::CanCreate()) {
+    context_config.video_codec_factory_config.capability_config.amf_context =
+        sora::AMFContext::Create();
+  }
   context_config.video_codec_factory_config.preference = video_codec_preference;
 
   // Audio デバイスは使わない、 use_audio_device を true にしただけでデバイスを掴んでしまうので常に false
@@ -45,7 +51,10 @@ SoraFactory::SoraFactory(
       [openh264](webrtc::PeerConnectionFactoryDependencies& dependencies) {
         // 通常の AudioMixer を使うと use_audio_device が false のとき、音声のループは全て止まってしまうので自前の AudioMixer を使う
         dependencies.audio_mixer =
-            DummyAudioMixer::Create(dependencies.task_queue_factory.get());
+            dependencies.worker_thread->BlockingCall([&]() {
+              return DummyAudioMixer::Create(
+                  dependencies.task_queue_factory.get());
+            });
         // アンチエコーやゲインコントロール、ノイズサプレッションが必要になる用途は想定していないため nullptr
         dependencies.audio_processing = nullptr;
       };

@@ -8,13 +8,25 @@
 Sora::Sora(std::optional<std::string> openh264,
            std::optional<sora::VideoCodecPreference> video_codec_preference) {
   factory_.reset(new SoraFactory(openh264, video_codec_preference));
+  ioc_.reset(new boost::asio::io_context(1));
+  thread_.reset(new std::thread([this]() {
+    auto guard = boost::asio::make_work_guard(*ioc_);
+    ioc_->run();
+  }));
 }
 
 Sora::~Sora() {
+  factory_.reset();
+  if (thread_) {
+    ioc_->stop();
+    thread_->join();
+    thread_ = nullptr;
+    ioc_ = nullptr;
+  }
   Disposed();
 }
 
-std::shared_ptr<SoraConnection> Sora::CreateConnection(
+nb::ref<SoraConnection> Sora::CreateConnection(
     const nb::handle& signaling_urls,
     const std::string& role,
     const std::string& channel_id,
@@ -22,8 +34,8 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<std::string> bundle_id,
     const nb::handle& metadata,
     const nb::handle& signaling_notify_metadata,
-    SoraTrackInterface* audio_source,
-    SoraTrackInterface* video_source,
+    nb::ref<SoraTrackInterface> audio_source,
+    nb::ref<SoraTrackInterface> video_source,
     SoraAudioFrameTransformer* audio_frame_transformer,
     SoraVideoFrameTransformer* video_frame_transformer,
     std::optional<bool> audio,
@@ -61,10 +73,12 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     std::optional<std::string> proxy_password,
     std::optional<std::string> proxy_agent,
     std::optional<webrtc::DegradationPreference> degradation_preference) {
-  std::shared_ptr<SoraConnection> conn = std::make_shared<SoraConnection>(this);
+  std::shared_ptr<SoraSignalingObserver> observer(new SoraSignalingObserver());
+  nb::ref<SoraConnection> conn = new SoraConnection(this, ioc_.get(), observer);
+  observer->SetSoraConnection(conn);
   sora::SoraSignalingConfig config;
   config.pc_factory = factory_->GetPeerConnectionFactory();
-  config.observer = conn;
+  config.observer = observer;
   config.signaling_urls = ConvertSignalingUrls(signaling_urls);
   config.role = role;
   config.channel_id = channel_id;
@@ -212,29 +226,23 @@ std::shared_ptr<SoraConnection> Sora::CreateConnection(
     conn->SetVideoSenderFrameTransformer(video_frame_transformer);
   }
 
-  weak_connections_.erase(
-      std::remove_if(
-          weak_connections_.begin(), weak_connections_.end(),
-          [](std::weak_ptr<SoraConnection> w) { return w.expired(); }),
-      weak_connections_.end());
-  weak_connections_.push_back(conn);
-
   return conn;
 }
 
-SoraAudioSource* Sora::CreateAudioSource(size_t channels, int sample_rate) {
+nb::ref<SoraAudioSource> Sora::CreateAudioSource(size_t channels,
+                                                 int sample_rate) {
   auto source =
       rtc::make_ref_counted<SoraAudioSourceInterface>(channels, sample_rate);
 
   std::string track_id = rtc::CreateRandomString(16);
   auto track = factory_->GetPeerConnectionFactory()->CreateAudioTrack(
       track_id, source.get());
-  SoraAudioSource* audio_source =
+  nb::ref<SoraAudioSource> audio_source =
       new SoraAudioSource(this, source, track, channels, sample_rate);
   return audio_source;
 }
 
-SoraVideoSource* Sora::CreateVideoSource() {
+nb::ref<SoraVideoSource> Sora::CreateVideoSource() {
   sora::ScalableVideoTrackSourceConfig config;
   auto source = rtc::make_ref_counted<sora::ScalableVideoTrackSource>(config);
 
@@ -242,7 +250,8 @@ SoraVideoSource* Sora::CreateVideoSource() {
   auto track =
       factory_->GetPeerConnectionFactory()->CreateVideoTrack(source, track_id);
 
-  SoraVideoSource* video_source = new SoraVideoSource(this, source, track);
+  nb::ref<SoraVideoSource> video_source =
+      new SoraVideoSource(this, source, track);
   return video_source;
 }
 

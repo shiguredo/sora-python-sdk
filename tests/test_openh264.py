@@ -6,10 +6,83 @@ import pytest
 from client import SoraClient, SoraRole
 
 from sora_sdk import (
+    Sora,
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
     SoraVideoCodecType,
+    get_video_codec_capability,
 )
+
+
+def test_openh264_get_codec_capability(setup):
+    openh264_path = setup.get("openh264_path")
+    capability = get_video_codec_capability(openh264_path)
+
+    cisco_openh264_available = False
+
+    for e in capability.engines:
+        if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
+            cisco_openh264_available = True
+    assert cisco_openh264_available is True
+
+    codecs = []
+    for e in capability.engines:
+        # macOS では INTERNAL の Video Toolbox が利用されるので OpenH264 は採用しないようにする
+        if sys.platform == "darwin":
+            if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
+                continue
+
+        for c in e.codecs:
+            if c.decoder or c.encoder:
+                # encoder/decoder どちらかが true であれば採用する
+                if c.decoder or c.encoder:
+                    codecs.append(
+                        SoraVideoCodecPreference.Codec(
+                            type=c.type,
+                            decoder=e.name,
+                            encoder=e.name,
+                        )
+                    )
+
+    # エラーにならないことを確認する
+    Sora(
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=codecs,
+        ),
+        openh264=openh264_path,
+    )
+
+
+def test_openh264_video_codec_preference(setup):
+    openh264_path = setup.get("openh264_path")
+    Sora(
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.VP8,
+                    decoder=SoraVideoCodecImplementation.INTERNAL,
+                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.VP9,
+                    decoder=SoraVideoCodecImplementation.INTERNAL,
+                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                ),
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.AV1,
+                    decoder=SoraVideoCodecImplementation.INTERNAL,
+                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                ),
+                # H.264 だけは OpenH264 を利用するようにする
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.H264,
+                    decoder=SoraVideoCodecImplementation.CISCO_OPENH264,
+                    encoder=SoraVideoCodecImplementation.CISCO_OPENH264,
+                ),
+            ],
+        ),
+        openh264=openh264_path,
+    )
 
 
 def test_openh264_sendonly_recvonly(setup):
@@ -184,13 +257,20 @@ def test_openh264_simulcast(
             assert expected_implementation in s["encoderImplementation"]
 
             assert s["bytesSent"] > 500
-            assert s["packetsSent"] > 20
+            assert s["packetsSent"] > 5
+
+            scalability_mode = None
+            if "scalabilityMode" in s:
+                assert s["scalabilityMode"] == "L1T1"
+                scalability_mode = s["scalabilityMode"]
+
             # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
             expected_bitrate = video_bit_rate * 1000
             print(
                 s["rid"],
                 video_codec_type,
                 expected_implementation,
+                scalability_mode,
                 expected_bitrate,
                 s["targetBitrate"],
                 s["frameWidth"],

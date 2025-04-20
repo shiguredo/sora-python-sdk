@@ -1,5 +1,11 @@
 // nonobind
+// <nanobind/nanobind.h> の後に <nanobind/intrusive/ref.h> を定義しないと
+// type_caster が有効にならないため、clang-format を無効化している。
+// clang-format off
 #include <nanobind/nanobind.h>
+// clang-format on
+#include <nanobind/intrusive/counter.h>
+#include <nanobind/intrusive/ref.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/function.h>
 #include <nanobind/stl/optional.h>
@@ -8,6 +14,7 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/intrusive/counter.inl>
 
 // Sora C++ SDK
 #include <sora/sora_video_codec.h>
@@ -291,42 +298,22 @@ PyType_Slot connection_slots[] = {
     {Py_tp_clear, (void*)connection_tp_clear},
     {0, nullptr}};
 
-int sora_tp_traverse(PyObject* self, visitproc visit, void* arg) {
-  if (!nb::inst_ready(self)) {
-    return 0;
-  }
-
-  Sora* sora = nb::inst_ptr<Sora>(self);
-  for (auto wc : sora->weak_connections_) {
-    auto conn = wc.lock();
-    if (conn) {
-      nb::object conn_obj = nb::find(conn);
-      Py_VISIT(conn_obj.ptr());
-    }
-  }
-
-  return 0;
-}
-
-int sora_tp_clear(PyObject* self) {
-  if (!nb::inst_ready(self)) {
-    return 0;
-  }
-
-  Sora* sora = nb::inst_ptr<Sora>(self);
-  sora->weak_connections_.clear();
-
-  return 0;
-}
-
-PyType_Slot sora_slots[] = {{Py_tp_traverse, (void*)sora_tp_traverse},
-                            {Py_tp_clear, (void*)sora_tp_clear},
-                            {0, nullptr}};
-
 /**
  * Python で利用するすべてのクラスと定数は以下のように定義しなければならない
  */
 NB_MODULE(sora_sdk_ext, m) {
+  nb::intrusive_init(
+      [](PyObject* o) noexcept {
+        // C++ -> Python に切り替わったオブジェクトの参照を Python 側で保つ
+        nb::gil_scoped_acquire guard;
+        Py_INCREF(o);
+      },
+      [](PyObject* o) noexcept {
+        // Python 側の参照カウントが減ったタイミングを C++ 側で検知
+        nb::gil_scoped_acquire guard;
+        Py_DECREF(o);
+      });
+
   nb::enum_<sora::SoraSignalingErrorCode>(m, "SoraSignalingErrorCode",
                                           nb::is_arithmetic())
       .value("CLOSE_SUCCEEDED", sora::SoraSignalingErrorCode::CLOSE_SUCCEEDED)
@@ -376,19 +363,33 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("NONE", rtc::LoggingSeverity::LS_NONE);
 
   m.def("enable_libwebrtc_log", &EnableLibwebrtcLog);
+  m.def("rtc_log", &RtcLog);
 
-  nb::class_<SoraTrackInterface>(m, "SoraTrackInterface")
+  nb::class_<SoraTrackInterface>(
+      m, "SoraTrackInterface",
+      nb::intrusive_ptr<SoraTrackInterface>(
+          [](SoraTrackInterface* p, PyObject* po) noexcept {
+            p->set_self_py(po);
+          }))
       .def_prop_ro("kind", &SoraTrackInterface::kind)
       .def_prop_ro("id", &SoraTrackInterface::id)
       .def_prop_ro("enabled", &SoraTrackInterface::enabled)
       .def_prop_ro("state", &SoraTrackInterface::state)
       .def("set_enabled", &SoraTrackInterface::set_enabled, "enable"_a);
 
-  nb::class_<SoraMediaTrack, SoraTrackInterface>(m, "SoraMediaTrack")
+  nb::class_<SoraMediaTrack, SoraTrackInterface>(
+      m, "SoraMediaTrack",
+      nb::intrusive_ptr<SoraMediaTrack>(
+          [](SoraMediaTrack* p, PyObject* po) noexcept { p->set_self_py(po); }))
       .def_prop_ro("stream_id", &SoraMediaTrack::stream_id)
       .def("set_frame_transformer", &SoraMediaTrack::SetFrameTransformer);
 
-  nb::class_<SoraAudioSource, SoraTrackInterface>(m, "SoraAudioSource")
+  nb::class_<SoraAudioSource, SoraTrackInterface>(
+      m, "SoraAudioSource",
+      nb::intrusive_ptr<SoraAudioSource>(
+          [](SoraAudioSource* p, PyObject* po) noexcept {
+            p->set_self_py(po);
+          }))
       .def("on_data",
            nb::overload_cast<const int16_t*, size_t, double>(
                &SoraAudioSource::OnData),
@@ -407,7 +408,12 @@ NB_MODULE(sora_sdk_ext, m) {
                &SoraAudioSource::OnData),
            "ndarray"_a);
 
-  nb::class_<SoraVideoSource, SoraTrackInterface>(m, "SoraVideoSource")
+  nb::class_<SoraVideoSource, SoraTrackInterface>(
+      m, "SoraVideoSource",
+      nb::intrusive_ptr<SoraVideoSource>(
+          [](SoraVideoSource* p, PyObject* po) noexcept {
+            p->set_self_py(po);
+          }))
       .def("on_captured",
            nb::overload_cast<nb::ndarray<uint8_t, nb::shape<-1, -1, 3>,
                                          nb::c_contig, nb::device::cpu>>(
@@ -479,8 +485,11 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("__del__", &SoraVideoSinkImpl::Del)
       .def_rw("on_frame", &SoraVideoSinkImpl::on_frame_);
 
-  nb::class_<SoraConnection>(m, "SoraConnection",
-                             nb::type_slots(connection_slots))
+  nb::class_<SoraConnection>(
+      m, "SoraConnection",
+      nb::intrusive_ptr<SoraConnection>(
+          [](SoraConnection* p, PyObject* po) noexcept { p->set_self_py(po); }),
+      nb::type_slots(connection_slots))
       .def("connect", &SoraConnection::Connect)
       .def("disconnect", &SoraConnection::Disconnect)
       .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a,
@@ -579,7 +588,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("CISCO_OPENH264", sora::VideoCodecImplementation::kCiscoOpenH264)
       .value("INTEL_VPL", sora::VideoCodecImplementation::kIntelVpl)
       .value("NVIDIA_VIDEO_CODEC_SDK",
-             sora::VideoCodecImplementation::kNvidiaVideoCodecSdk);
+             sora::VideoCodecImplementation::kNvidiaVideoCodecSdk)
+      .value("AMD_AMF", sora::VideoCodecImplementation::kAmdAmf);
 
   nb::enum_<webrtc::VideoCodecType>(m, "SoraVideoCodecType",
                                     nb::is_arithmetic())
@@ -606,7 +616,11 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_ro("vpl_impl_value",
               &sora::VideoCodecCapability::Parameters::vpl_impl_value)
       .def_ro("nvcodec_gpu_device_name",
-              &sora::VideoCodecCapability::Parameters::nvcodec_gpu_device_name);
+              &sora::VideoCodecCapability::Parameters::nvcodec_gpu_device_name)
+      .def_ro("amf_runtime_version",
+              &sora::VideoCodecCapability::Parameters::amf_runtime_version)
+      .def_ro("amf_embedded_version",
+              &sora::VideoCodecCapability::Parameters::amf_embedded_version);
   nb::class_<sora::VideoCodecCapability::Codec>(video_codec_capability, "Codec")
       .def_ro("type", &sora::VideoCodecCapability::Codec::type)
       .def_ro("encoder", &sora::VideoCodecCapability::Codec::encoder)
@@ -623,7 +637,12 @@ NB_MODULE(sora_sdk_ext, m) {
       [](std::optional<std::string> openh264) -> sora::VideoCodecCapability {
         sora::VideoCodecCapabilityConfig config;
         config.openh264_path = openh264;
-        config.cuda_context = sora::CudaContext::Create();
+        if (sora::CudaContext::CanCreate()) {
+          config.cuda_context = sora::CudaContext::Create();
+        }
+        if (sora::AMFContext::CanCreate()) {
+          config.amf_context = sora::AMFContext::Create();
+        }
         return sora::GetVideoCodecCapability(config);
       },
       "openh264"_a = nb::none());
@@ -676,7 +695,10 @@ NB_MODULE(sora_sdk_ext, m) {
   m.def("create_video_codec_preference_from_implementation",
         &sora::CreateVideoCodecPreferenceFromImplementation);
 
-  nb::class_<Sora>(m, "Sora", nb::type_slots(sora_slots))
+  nb::class_<Sora>(m, "Sora",
+                   nb::intrusive_ptr<Sora>([](Sora* p, PyObject* po) noexcept {
+                     p->set_self_py(po);
+                   }))
       .def(nb::init<std::optional<std::string>,
                     std::optional<sora::VideoCodecPreference>>(),
            "openh264"_a = nb::none(), "video_codec_preference"_a = nb::none())

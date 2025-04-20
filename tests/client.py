@@ -1,4 +1,5 @@
 import json
+import os
 import queue
 import threading
 import time
@@ -8,20 +9,25 @@ from typing import Any, Callable, Optional
 
 import numpy
 
+import sora_sdk
 from sora_sdk import (
     Sora,
     SoraAudioSink,
     SoraAudioSource,
     SoraConnection,
     SoraDegradationPreference,
+    SoraLoggingSeverity,
     SoraMediaTrack,
     SoraSignalingDirection,
     SoraSignalingErrorCode,
     SoraSignalingType,
+    SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
+    SoraVideoCodecType,
     SoraVideoFrame,
     SoraVideoSink,
     SoraVideoSource,
+    get_video_codec_capability,
 )
 
 
@@ -85,6 +91,21 @@ class SoraClient:
 
         self._video_width: int = video_width
         self._video_height: int = video_height
+
+        if webrtc_log := os.environ.get("TEST_LIBWEBRTC_LOG"):
+            match webrtc_log:
+                case "none":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.NONE)
+                case "verbose":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.VERBOSE)
+                case "info":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.INFO)
+                case "warning":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.WARNING)
+                case "error":
+                    sora_sdk.enable_libwebrtc_log(SoraLoggingSeverity.ERROR)
+                case _:
+                    pass
 
         self._sora: Sora = Sora(
             openh264=openh264_path, video_codec_preference=video_codec_preference
@@ -182,17 +203,16 @@ class SoraClient:
 
     def __enter__(self) -> "SoraClient":
         if self._role == SoraRole.RECVONLY:
-            self.connect()
-            return self
+            return self.connect()
 
-        self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
-
-        return self
+        return self.connect(fake_audio=bool(self._audio), fake_video=bool(self._video))
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
+        print("__exit__: disconnecting")
         self.disconnect()
+        print("__exit__: disconnected")
 
-    def connect(self, fake_audio=False, fake_video=False) -> None:
+    def connect(self, fake_audio=False, fake_video=False) -> "SoraClient":
         # スレッドは connect 前に起動する
         if fake_audio:
             self._fake_audio_thread = threading.Thread(target=self._fake_audio_loop, daemon=True)
@@ -204,12 +224,20 @@ class SoraClient:
 
         self._connection.connect()
 
-        assert self._connected.wait(
-            self._default_connection_timeout_s
-        ), "Could not connect to Sora."
+        try:
+            assert self._connected.wait(self._default_connection_timeout_s), (
+                "Could not connect to Sora."
+            )
+        except Exception as e:
+            self._connection.disconnect()
+            raise e
+
+        return self
 
     def disconnect(self) -> None:
+        print("disconnect: disconnecting")
         self._connection.disconnect()
+        print("disconnect: disconnected")
 
     def send_message(self, label: str, data: bytes, timeout: float = 5):
         # TODO: direction が sendrecv / sendonly の時しか送れず、例外をあげるようにする
@@ -447,3 +475,32 @@ class SoraClient:
             notify = self._notify_queue.get(block=True, timeout=timeout)
             if pred(notify):
                 return notify
+
+
+def codec_type_string_to_codec_type(codec_type: str) -> SoraVideoCodecType:
+    match codec_type:
+        case "VP8":
+            return SoraVideoCodecType.VP8
+        case "VP9":
+            return SoraVideoCodecType.VP9
+        case "AV1":
+            return SoraVideoCodecType.AV1
+        case "H264":
+            return SoraVideoCodecType.H264
+        case "H265":
+            return SoraVideoCodecType.H265
+        case _:
+            raise ValueError(f"Unknown codec_type: {codec_type}")
+
+
+# テストしている Intel のチップが指定したコーデックに対応しているかどうかを確認する関数
+# decoder / encoder の両方が対応している場合のみ True を返す
+def is_codec_supported(codec_type: str, codec_implementation: SoraVideoCodecImplementation) -> bool:
+    capability = get_video_codec_capability()
+    for e in capability.engines:
+        if e.name == codec_implementation:
+            for c in e.codecs:
+                if c.type == codec_type_string_to_codec_type(codec_type):
+                    if c.decoder is True and c.encoder is True:
+                        return True
+    return False
