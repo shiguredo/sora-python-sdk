@@ -54,7 +54,6 @@ def test_simulcast(
     setup,
     video_codec_type,
     encoder_implementation,
-    video_bit_rate,
     video_width,
     video_height,
     simulcast_count,
