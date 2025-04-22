@@ -4,6 +4,7 @@ import uuid
 
 import pytest
 from client import SoraClient, SoraRole
+from simulcast import default_video_bit_rate, expect_target_bitrate
 
 from sora_sdk import (
     Sora,
@@ -164,31 +165,29 @@ def test_openh264_sendonly_recvonly(setup):
     (
         "video_codec_type",
         "expected_implementation",
-        "video_bit_rate",
         "video_width",
         "video_height",
         "simulcast_count",
     ),
     [
         # 1080p
-        ("H264", "OpenH264", 5000, 1920, 1080, 3),
+        ("H264", "OpenH264", 1920, 1080, 3),
         # 720p
-        ("H264", "OpenH264", 2500, 1280, 720, 3),
+        ("H264", "OpenH264", 1280, 720, 3),
         # 540p
-        ("H264", "OpenH264", 1200, 960, 540, 3),
+        ("H264", "OpenH264", 960, 540, 3),
         # 360p
-        ("H264", "OpenH264", 700, 640, 360, 2),
+        ("H264", "OpenH264", 640, 360, 2),
         # 270p
-        ("H264", "OpenH264", 450, 480, 270, 2),
+        ("H264", "OpenH264", 480, 270, 2),
         # 180p
-        ("H264", "OpenH264", 200, 320, 180, 1),
+        ("H264", "OpenH264", 320, 180, 1),
     ],
 )
 def test_openh264_simulcast(
     setup,
     video_codec_type,
     expected_implementation,
-    video_bit_rate,
     video_width,
     video_height,
     simulcast_count,
@@ -200,6 +199,7 @@ def test_openh264_simulcast(
     openh264_path = setup.get("openh264_path")
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+    video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
         signaling_urls,
@@ -247,6 +247,18 @@ def test_openh264_simulcast(
     sorted_stats = sorted(outbound_rtp_stats, key=lambda x: x.get("rid", ""))
 
     for i, s in enumerate(sorted_stats):
+        assert "qualityLimitationReason" in s
+        assert "qualityLimitationDurations" in s
+
+        # qualityLimitationReason が none で無い場合は安定したテストができない
+        # さらに frameWidth/frameHeight がない場合は送られてきてすらいないのでテストをスキップしてしまう
+        if (
+            s["qualityLimitationReason"] != "none"
+            and "frameWidth" not in s
+            and "frameHeight" not in s
+        ):
+            pytest.skip(f"qualityLimitationReason: {s['qualityLimitationReason']}")
+
         assert s["rid"] == f"r{i}"
         # simulcast_count が 2 の場合、rid r2 の bytesSent/packetsSent は 0 or 1 になる
         # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 or 1 になる
@@ -259,27 +271,27 @@ def test_openh264_simulcast(
             assert s["bytesSent"] > 500
             assert s["packetsSent"] > 5
 
+            assert s["targetBitrate"] >= expect_target_bitrate(
+                video_codec_type, s["frameWidth"], s["frameHeight"]
+            )
+
             scalability_mode = None
             if "scalabilityMode" in s:
                 assert s["scalabilityMode"] == "L1T1"
                 scalability_mode = s["scalabilityMode"]
 
-            # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
-            expected_bitrate = video_bit_rate * 1000
             print(
                 s["rid"],
                 video_codec_type,
                 expected_implementation,
                 scalability_mode,
-                expected_bitrate,
+                video_bit_rate * 1000,
                 s["targetBitrate"],
                 s["frameWidth"],
                 s["frameHeight"],
                 s["bytesSent"],
                 s["packetsSent"],
             )
-            # 期待値の 20% 以上、100% 以下に収まることを確認
-            assert expected_bitrate * 0.2 <= s["targetBitrate"] <= expected_bitrate
         else:
             # 本来は 0 なのだが、simulcast_count が 1 の場合、
             # packetSent が 0 ではなく 1 や 2 になる場合がある
