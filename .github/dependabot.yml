@@ -12,6 +12,5 @@ updates:
   - package-ecosystem: uv
     directory: "/"
     schedule:
-      interval: daily
-    open-pull-requests-limit: 5
+      interval: "weekly"
     target-branch: develop
