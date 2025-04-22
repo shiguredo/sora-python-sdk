@@ -167,7 +167,6 @@ def test_nvidia_codec_sdk_sendonly_recvonly(setup, video_codec_type, expected_im
     (
         "video_codec_type",
         "expected_implementation",
-        "video_bit_rate",
         "video_width",
         "video_height",
         "simulcast_count",
