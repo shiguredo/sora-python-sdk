@@ -67,7 +67,6 @@ def test_intel_vpl_available(setup):
     (
         "video_codec_type",
         "expected_implementation",
-        "video_bit_rate",
         "video_width",
         "video_height",
         "simulcast_count",

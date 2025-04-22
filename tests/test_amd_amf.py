@@ -161,7 +161,6 @@ def test_amd_amf_sendonly_recvonly(setup, video_codec_type):
     (
         "video_codec_type",
         "expected_implementation",
-        "video_bit_rate",
         "video_width",
         "video_height",
         "simulcast_count",
