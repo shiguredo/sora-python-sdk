@@ -5,6 +5,7 @@ import uuid
 import jwt
 import pytest
 from client import SoraClient, SoraRole
+from simulcast import expect_target_bitrate
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Apple では SW コーデックは動作させない")
@@ -18,9 +19,9 @@ from client import SoraClient, SoraRole
     ),
     [
         # どうやら scaleResolutionDownTo を指定すると規定されたテーブルのビットレートでは足りない模様
-        ("VP8", "libvpx", 2500, 960, 540),
-        ("VP9", "libvpx", 2000, 960, 540),
-        ("AV1", "libaom", 2500, 960, 540),
+        ("VP8", "libvpx", 1200 * 3, 960, 540),
+        ("VP9", "libvpx", 879 * 3, 960, 540),
+        ("AV1", "libaom", 879 * 3, 960, 540),
     ],
 )
 def test_simulcast_authz_scale_resolution_to(
@@ -179,6 +180,10 @@ def test_simulcast_authz_scale_resolution_to(
         assert s["frameWidth"] == 640
         assert s["frameHeight"] == 352
 
+        assert s["targetBitrate"] >= expect_target_bitrate(
+            video_codec_type, s["frameWidth"], s["frameHeight"]
+        )
+
         scalability_mode = None
         if "scalabilityMode" in s:
             assert s["scalabilityMode"] == "L1T1"
@@ -198,5 +203,3 @@ def test_simulcast_authz_scale_resolution_to(
             s["bytesSent"],
             s["packetsSent"],
         )
-        # 期待値の 20% 以上、100% 以下に収まることを確認
-        assert expected_bitrate * 0.2 <= s["targetBitrate"] <= expected_bitrate
