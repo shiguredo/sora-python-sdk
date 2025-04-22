@@ -3,8 +3,8 @@
 - 厳密なビットレートの計算はしない
 """
 
-# 60% 以上のビットレートが出ていれば良いと判断する
-MIN_TARGET_BITRATE_RATIO = 0.6
+# 期待値の 50% 以上のビットレートが出ていれば良いと判断する
+MIN_TARGET_BITRATE_RATIO = 0.5
 
 
 def default_video_bit_rate(video_codec_type, width, height) -> int:
