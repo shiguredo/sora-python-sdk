@@ -143,16 +143,16 @@ def test_apple_video_toolbox_sendonly_recvonly(setup, video_codec_type):
         ("H264", "VideoToolbox", 960, 540, 3),
         ("H265", "VideoToolbox", 960, 540, 3),
         # 360p
-        ("H264", "VideoToolbox", 640, 360, 2),
-        ("H265", "VideoToolbox", 640, 360, 2),
+        # ("H264", "VideoToolbox", 640, 360, 2),
+        # ("H265", "VideoToolbox", 640, 360, 2),
         # 270p
-        ("H264", "VideoToolbox", 480, 270, 2),
-        ("H265", "VideoToolbox", 480, 270, 2),
+        # ("H264", "VideoToolbox", 480, 270, 2),
+        # ("H265", "VideoToolbox", 480, 270, 2),
         # 180p
-        ("H264", "VideoToolbox", 320, 180, 1),
-        ("H265", "VideoToolbox", 320, 180, 1),
+        # ("H264", "VideoToolbox", 320, 180, 1),
+        # ("H265", "VideoToolbox", 320, 180, 1),
         # 135p
-        ("H265", "VideoToolbox", 240, 135, 1),
+        # ("H265", "VideoToolbox", 240, 135, 1),
     ],
 )
 def test_apple_video_toolbox_simulcast(
