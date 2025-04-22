@@ -22,6 +22,8 @@ def default_video_bit_rate(video_codec_type, width, height) -> int:
                 return 350 + 150
             case (320, 180):
                 return 150
+            case (240, 135):
+                return 130
 
     if video_codec_type in ["VP9", "AV1", "H265"]:
         match (width, height):

@@ -225,7 +225,7 @@ def test_openh264_simulcast(
     )
     sendonly.connect(fake_video=True)
 
-    time.sleep(5)
+    time.sleep(10)
 
     sendonly_stats = sendonly.get_stats()
 
@@ -251,12 +251,7 @@ def test_openh264_simulcast(
         assert "qualityLimitationDurations" in s
 
         # qualityLimitationReason が none で無い場合は安定したテストができない
-        # さらに frameWidth/frameHeight がない場合は送られてきてすらいないのでテストをスキップしてしまう
-        if (
-            s["qualityLimitationReason"] != "none"
-            and "frameWidth" not in s
-            and "frameHeight" not in s
-        ):
+        if s["qualityLimitationReason"] != "none":
             pytest.skip(f"qualityLimitationReason: {s['qualityLimitationReason']}")
 
         assert s["rid"] == f"r{i}"
