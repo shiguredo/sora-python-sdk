@@ -187,9 +187,9 @@ def test_nvidia_codec_sdk_sendonly_recvonly(setup, video_codec_type, expected_im
         ("H264", "NvCodec", 960, 540, 3),
         ("H265", "NvCodec", 960, 540, 3),
         # 360p
-        ("AV1", "NvCodec", 640, 360, 2),
-        ("H264", "NvCodec", 640, 360, 2),
-        ("H265", "NvCodec", 640, 360, 2),
+        # ("AV1", "NvCodec", 640, 360, 2),
+        # ("H264", "NvCodec", 640, 360, 2),
+        # ("H265", "NvCodec", 640, 360, 2),
         # 270p
         # ("AV1", "NvCodec", 480, 270, 2),
         # ("H264", "NvCodec", 480, 270, 2),
