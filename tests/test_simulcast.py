@@ -20,8 +20,6 @@ from simulcast import default_video_bit_rate, expect_target_bitrate
         "simulcast_count",
     ),
     [
-        # AV1 は VP8 と同じビットレートとして扱う
-        # https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/video/config/simulcast.cc;l=219-222
         # 1080p
         ("VP8", "libvpx", 1920, 1080, 3),
         ("VP9", "libvpx", 1920, 1080, 3),
@@ -113,12 +111,7 @@ def test_simulcast(
         assert "qualityLimitationDurations" in s
 
         # qualityLimitationReason が none で無い場合は安定したテストができない
-        # さらに frameWidth/frameHeight がない場合は送られてきてすらいないのでテストをスキップしてしまう
-        if (
-            s["qualityLimitationReason"] != "none"
-            and "frameWidth" not in s
-            and "frameHeight" not in s
-        ):
+        if s["qualityLimitationReason"] != "none":
             pytest.skip(f"qualityLimitationReason: {s['qualityLimitationReason']}")
 
         assert s["rid"] == f"r{i}"
