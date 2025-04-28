@@ -71,7 +71,7 @@ jobs:
           bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so.bz2
           mv libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |
@@ -102,7 +102,7 @@ jobs:
           bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
           mv libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib libopenh264.dylib
           echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |
@@ -136,7 +136,7 @@ jobs:
           7z e openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2
           Rename-Item -Path "openh264-${{ env.OPENH264_VERSION }}-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |
