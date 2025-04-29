@@ -22,6 +22,9 @@ env:
   # libva のログ出力が邪魔なので 0 にしているがデバッグ時は 2 などにする
   LIBVA_MESSAGING_LEVEL: 0
 
+permissions:
+  contents: read
+
 jobs:
   e2e_test_intel_vpl:
     strategy:
