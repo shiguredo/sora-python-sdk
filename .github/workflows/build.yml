@@ -15,6 +15,9 @@ on:
     # 1-5 で 月曜日から金曜日
     - cron: "0 1 * * 1-5"
 
+permissions:
+  contents: read
+
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}

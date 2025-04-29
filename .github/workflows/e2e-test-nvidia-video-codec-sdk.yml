@@ -20,6 +20,9 @@ env:
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
   NVIDIA_VIDEO_CODEC_SDK: true
 
+permissions:
+  contents: read
+
 jobs:
   e2e_test_nvidia_video_codec_sdk:
     strategy:
