@@ -22,6 +22,9 @@ env:
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
   OPENH264_VERSION: 2.6.0
 
+permissions:
+  contents: read
+
 jobs:
   build-linux:
     strategy:
