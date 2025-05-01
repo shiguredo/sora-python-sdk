@@ -25,58 +25,12 @@ env:
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
   OPENH264_VERSION: 2.6.0
 
-jobs:
-  # push 経由で実行される最小限の E2E テスト
-  e2e_test_minimal:
-    strategy:
-      fail-fast: false
-      matrix:
-        python_version: ["3.13"]
-        platform:
-          - target: "ubuntu-24.04_x86_64"
-            runs-on: "ubuntu-24.04"
-            arch: "x86_64"
-            openh264_arch: "linux64"
-    runs-on: ${{ matrix.platform.runs-on}}
-    timeout-minutes: 15
-    if: ${{ github.event_name == 'push' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-      - run: |
-          sudo apt-get update
-          sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
-      - if: matrix.platform.arch == 'armv8'
-        run: |
-          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
-          # clang-18
-          wget https://apt.llvm.org/llvm.sh
-          chmod a+x llvm.sh
-          sudo ./llvm.sh 18
-      - name: Download openh264
-        run: |
-          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so.bz2
-          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so.bz2
-          mv libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so libopenh264.so
-          echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: false
-      - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
-          uv run python run.py ${{ matrix.platform.target }}
-          uv run pytest tests -v
+permissions:
+  contents: read
 
+jobs:
   e2e_test_ubuntu:
     strategy:
-      fail-fast: false
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
         platform:
@@ -93,12 +47,7 @@ jobs:
             arch: "armv8"
             openh264_arch: "linux-arm64"
     runs-on: ${{ matrix.platform.runs-on}}
-    timeout-minutes: 15
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'schedule'
-      }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: tailscale/github-action@v3
@@ -106,6 +55,7 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
+          use-cache: 'true'
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
@@ -124,7 +74,7 @@ jobs:
           bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so.bz2
           mv libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so libopenh264.so
           echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |
@@ -135,27 +85,27 @@ jobs:
 
   e2e_test_macos:
     strategy:
-      fail-fast: false
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
         # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'schedule'
-      }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          use-cache: 'true'
       - name: Download openh264
         run: |
           curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
           bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
           mv libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib libopenh264.dylib
           echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |
@@ -166,21 +116,21 @@ jobs:
 
   e2e_test_windows:
     strategy:
-      fail-fast: false
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
-    runs-on: windows-2022
-    timeout-minutes: 15
+    runs-on: windows-2025
+    timeout-minutes: 20
     env:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'schedule'
-      }}
     steps:
       - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          use-cache: 'true'
       - name: Download openh264
         shell: pwsh
         run: |
@@ -189,7 +139,7 @@ jobs:
           7z e openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2
           Rename-Item -Path "openh264-${{ env.OPENH264_VERSION }}-win64.dll" -NewName "libopenh264.dll"
           echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |
@@ -213,7 +163,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_test_minimal,e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+    needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
     runs-on: ubuntu-24.04
     if: failure()
     steps:

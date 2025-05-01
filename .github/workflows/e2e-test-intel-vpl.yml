@@ -22,6 +22,9 @@ env:
   # libva のログ出力が邪魔なので 0 にしているがデバッグ時は 2 などにする
   LIBVA_MESSAGING_LEVEL: 0
 
+permissions:
+  contents: read
+
 jobs:
   e2e_test_intel_vpl:
     strategy:
@@ -46,7 +49,7 @@ jobs:
       }}
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |

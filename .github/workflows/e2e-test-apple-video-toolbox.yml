@@ -20,6 +20,9 @@ env:
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
   APPLE_VIDEO_TOOLBOX: true
 
+permissions:
+  contents: read
+
 jobs:
   e2e_test_apple_video_toolbox:
     strategy:
@@ -44,7 +47,7 @@ jobs:
       }}
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |
