@@ -11,9 +11,33 @@
 
 ## develop
 
+## 2025.2.0
+
+**リリース日**: 2025-05-01
+
+- [UPDATE] nanobind を `2.7.0` に上げる
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2025.3.0-canary.7` に上げる
+  - 正式リリースまでは以下をアップデートしていく
+  - WEBRTC_BUILD_VERSION を `m136.7103.0.0` に上げる
+  - CMAKE_VERSION を `4.0.1` に上げる
+  - BOOST_VERSION を `1.88.0` に上げる
+  - OPENH264_VERSION を `v2.6.0` に上げる
+  - @torikizi
+
+### misc
+
+- [UPDATE] GitHub Actions の windows を windows-2025 に更新する
+  - @voluntas
+- [UPDATE] E2E テストのタイムアウトを 20 分に延長する
+  - @voluntas
+- [UPDATE] GitHub Actions の tailscale を v3 に上げて windows と macos にも追加する
+  - [v3](https://github.com/tailscale/github-action/releases/tag/v3.1.0) で Windows と macOS に対応した
+  - @voluntas
+
 ## 2025.1.0
 
-**リリース日**: 2025-03-20
+**リリース日**: 2025-03-19
 
 - [CHANGE] Python 3.10 のサポートを終了する
   - [SPEC 0 — Minimum Supported Dependencies](https://scientific-python.org/specs/spec-0000/) を参考に直近 3 バージョンのサポートに変更する
@@ -32,6 +56,8 @@
   - デフォルトでは常に libwebrtc 実装のエンコーダ/デコーダを利用します
   - ハードウェアエンコーダ/デコーダを利用するには `video_codec_preference` を利用して下さい
   - @melpon
+- [UPDATE] GitHub Actions の Windows ビルドで Windows 2025 を利用する
+  - @voluntas
 - [ADD] OpenH264 を Windows x86_64 に対応する
   - @melpon
 - [ADD] AMD AMF を Ubuntu x86_64 と Windows x86_64 に対応する

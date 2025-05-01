@@ -20,6 +20,9 @@ env:
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
   AMD_AMF: true
 
+permissions:
+  contents: read
+
 jobs:
   e2e_test_amf:
     strategy:
@@ -44,7 +47,7 @@ jobs:
       }}
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |
