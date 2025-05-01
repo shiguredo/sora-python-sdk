@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2025.2.0
+
+**リリース日**: 2025-05-01
+
 - [UPDATE] nanobind を `2.7.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.3.0-canary.7` に上げる
