@@ -1,7 +1,7 @@
 [project]
 name = "sora_sdk"
 authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
-version = "2025.2.0.dev3"
+version = "2025.2.0"
 description = "WebRTC SFU Sora Python SDK"
 readme = "README.md"
 license = "Apache-2.0"
