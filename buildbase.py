@@ -701,7 +701,7 @@ def build_and_install_boost(
 ):
     version_underscore = version.replace(".", "_")
     archive = download(
-        # 公式サイトに負荷をかけないための時雨堂による R2 ミラー
+        # 公式サイトに負荷をかけないための時雨堂によるミラー
         f"https://oss-mirrors.shiguredo.jp/boost_{version_underscore}.tar.gz",
         # Boost 公式のミラー
         # f"https://archives.boost.io/release/{version}/source/boost_{version_underscore}.tar.gz",
