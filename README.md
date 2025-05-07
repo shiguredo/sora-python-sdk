@@ -113,7 +113,7 @@ PyPI 経由ではインストールできません。
 - macOS Sequoia 15 arm64
 - macOS Ventura 14 arm64
 - Windows 11 x86_64
-- Windows Server 2022 x86_64
+- Windows Server 2025 x86_64
 
 ### macOS の対応バージョン
 
