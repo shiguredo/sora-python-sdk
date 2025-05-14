@@ -31,17 +31,19 @@ def test_openh264_get_codec_capability(setup):
             if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
                 continue
 
-        for c in e.codecs:
-            if c.decoder or c.encoder:
-                # encoder/decoder どちらかが true であれば採用する
+        if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
+            for c in e.codecs:
                 if c.decoder or c.encoder:
-                    codecs.append(
-                        SoraVideoCodecPreference.Codec(
-                            type=c.type,
-                            decoder=e.name,
-                            encoder=e.name,
+                    # encoder/decoder どちらかが true であれば採用する
+                    if c.decoder or c.encoder:
+                        codecs.append(
+                            SoraVideoCodecPreference.Codec(
+                                type=c.type,
+                                decoder=e.name,
+                                encoder=e.name,
+                                parameters=SoraVideoCodecPreference.Parameters(),
+                            )
                         )
-                    )
 
     # エラーにならないことを確認する
     Sora(
