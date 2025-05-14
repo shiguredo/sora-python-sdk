@@ -1,7 +1,9 @@
+import os
 import sys
 import time
 import uuid
 
+import pytest
 from client import SoraClient, SoraRole
 
 from sora_sdk import (
@@ -13,6 +15,10 @@ from sora_sdk import (
 )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 def test_openh264_get_codec_capability(setup):
     openh264_path = setup.get("openh264_path")
     capability = get_video_codec_capability(openh264_path)
@@ -52,6 +58,10 @@ def test_openh264_get_codec_capability(setup):
     )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 def test_openh264_video_codec_preference(setup):
     openh264_path = setup.get("openh264_path")
     Sora(
@@ -84,6 +94,10 @@ def test_openh264_video_codec_preference(setup):
     )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 def test_openh264_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")

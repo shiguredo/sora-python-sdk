@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import uuid
@@ -14,6 +15,10 @@ from sora_sdk import (
 )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -148,6 +153,10 @@ def test_openh264_simulcast(
             )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -293,6 +302,10 @@ def test_openh264_authz_simulcast_r2_active_false(
         )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
