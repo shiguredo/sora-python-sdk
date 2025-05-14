@@ -681,12 +681,28 @@ NB_MODULE(sora_sdk_ext, m) {
       .def(nb::init<>());
   nb::class_<sora::VideoCodecPreference::Codec>(video_codec_preference, "Codec")
       .def(nb::init<>())
-      .def(nb::init<webrtc::VideoCodecType,
-                    std::optional<sora::VideoCodecImplementation>,
-                    std::optional<sora::VideoCodecImplementation>,
-                    sora::VideoCodecPreference::Parameters>(),
-           "type"_a, "encoder"_a = nb::none(), "decoder"_a = nb::none(),
-           "parameters"_a = sora::VideoCodecPreference::Parameters())
+      // 以下のように書くと sora::VideoCodecPreference::Parameters() がリークするので、
+      // sora::VideoCodecPreference::Parameters() を optional にして手動で __init__ を定義する
+      //
+      // .def(nb::init<webrtc::VideoCodecType,
+      //               std::optional<sora::VideoCodecImplementation>,
+      //               std::optional<sora::VideoCodecImplementation>,
+      //               sora::VideoCodecPreference::Parameters>(),
+      //      "type"_a, "encoder"_a = nb::none(), "decoder"_a = nb::none(),
+      //      "parameters"_a = sora::VideoCodecPreference::Parameters())
+      .def(
+          "__init__",
+          [](sora::VideoCodecPreference::Codec* self,
+             webrtc::VideoCodecType type,
+             std::optional<sora::VideoCodecImplementation> encoder,
+             std::optional<sora::VideoCodecImplementation> decoder,
+             std::optional<sora::VideoCodecPreference::Parameters> parameters) {
+            new (self) sora::VideoCodecPreference::Codec(
+                type, encoder, decoder,
+                parameters.value_or(sora::VideoCodecPreference::Parameters()));
+          },
+          "type"_a, "encoder"_a = nb::none(), "decoder"_a = nb::none(),
+          "parameters"_a = nb::none())
       .def_rw("type", &sora::VideoCodecPreference::Codec::type)
       .def_rw("encoder", &sora::VideoCodecPreference::Codec::encoder)
       .def_rw("decoder", &sora::VideoCodecPreference::Codec::decoder)
