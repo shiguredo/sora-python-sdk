@@ -1,4 +1,4 @@
-name: e2e-test
+name: e2e-test-openh264
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ permissions:
   contents: read
 
 jobs:
-  e2e_test_ubuntu:
+  e2e_test_openh264_ubuntu:
     strategy:
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
@@ -77,7 +77,7 @@ jobs:
           uv run python run.py ${{ matrix.platform.target }}
           uv run pytest tests/test_openh264 -v
 
-  e2e_test_macos:
+  e2e_test_openh264_macos:
     strategy:
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
@@ -102,7 +102,7 @@ jobs:
           uv run python run.py macos_arm64
           uv run pytest tests/test_openh264 -v
 
-  e2e_test_windows:
+  e2e_test_openh264_windows:
     strategy:
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
@@ -145,7 +145,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+    needs: [e2e_test_openh264_ubuntu, e2e_test_openh264_macos, e2e_test_openh264_windows]
     runs-on: ubuntu-24.04
     if: failure()
     steps:

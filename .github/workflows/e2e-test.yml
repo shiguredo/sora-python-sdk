@@ -5,6 +5,7 @@ on:
   push:
     paths-ignore:
       - "**.md"
+      - ".github/workflows/e2e-test-openh264.yml"
       - ".github/workflows/e2e-test-intel-vpl.yml"
       - ".github/workflows/e2e-test-amd-amf.yml"
       - ".github/workflows/e2e-test-apple-video-toolbox.yml"
