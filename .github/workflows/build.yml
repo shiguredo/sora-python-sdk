@@ -31,6 +31,13 @@ jobs:
   # １箇所で pyi を生成してアーティファクトにアップロードして、
   # それを各ビルドで利用する形にする。
   build_pyi:
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -40,7 +47,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
-      - run: uv python pin 3.13
+      - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - name: Generate pyi
         run: |
@@ -51,7 +58,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sora_sdk
+          name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
 
   build_ubuntu:
@@ -87,7 +94,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: sora_sdk
+          name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
