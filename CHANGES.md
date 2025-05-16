@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] WebSocket 接続時に User Agent を設定する機能を追加
+  - @melpon
+
 ## 2025.2.2
 
 **リリース日**: 2025-05-15
