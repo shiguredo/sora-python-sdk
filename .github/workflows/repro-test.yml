@@ -58,7 +58,7 @@ jobs:
           uv python pin ${{ matrix.python_version }}
           uv sync
           uv run python run.py ${{ matrix.platform.target }}
-          uv run pytest repro-disconnection.py -v
+          uv run python repro-disconnection.py
 
   slack_notify_failed:
     needs: [e2e_test_ubuntu]
