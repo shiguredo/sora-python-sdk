@@ -61,7 +61,7 @@ jobs:
           uv run pytest repro-disconnection.py -v
 
   slack_notify_failed:
-    needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+    needs: [e2e_test_ubuntu]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
