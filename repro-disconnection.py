@@ -32,6 +32,7 @@ openh264_path = os.getenv("OPENH264_PATH")
 role_str = "sendrecv"
 secret_key = os.environ.get("TEST_SECRET_KEY")
 metadata = {"access_token": secret_key}
+channel_id_prefix = os.environ.get("TEST_CHANNEL_ID_PREFIX")
 
 data_channels = [
     {
@@ -267,7 +268,7 @@ class Test:
 
     def _one(self):
         try:
-            channel_id = "hogefugapiyo"
+            channel_id = channel_id_prefix + "hogefugapiyo"
             tc = TestConnection(
                 signaling_urls,
                 channel_id,
