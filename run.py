@@ -1,5 +1,6 @@
 import argparse
 import hashlib
+import importlib.metadata
 import multiprocessing
 import os
 import shlex
@@ -244,6 +245,7 @@ def main():
         cmake_args = []
         cmake_args.append(f"-DCMAKE_BUILD_TYPE={configuration}")
         cmake_args.append(f"-DTARGET_OS={platform.target.os}")
+        cmake_args.append(f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk')}")
         cmake_args.append(f"-DBOOST_ROOT={cmake_path(sora_info.boost_install_dir)}")
         cmake_args.append(f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
         cmake_args.append(f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")

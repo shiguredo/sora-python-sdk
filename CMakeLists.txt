@@ -94,6 +94,8 @@ if (SORA_GEN_PYI)
   )
 endif()
 
+target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION=${SORA_PYTHON_SDK_VERSION})
+
 set_target_properties(sora_sdk_ext PROPERTIES CXX_STANDARD 20 C_STANDARD 20)
 set_target_properties(sora_sdk_ext PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
