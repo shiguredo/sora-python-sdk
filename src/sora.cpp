@@ -72,7 +72,8 @@ nb::ref<SoraConnection> Sora::CreateConnection(
     std::optional<std::string> proxy_username,
     std::optional<std::string> proxy_password,
     std::optional<std::string> proxy_agent,
-    std::optional<webrtc::DegradationPreference> degradation_preference) {
+    std::optional<webrtc::DegradationPreference> degradation_preference,
+    std::optional<std::string> user_agent) {
   std::shared_ptr<SoraSignalingObserver> observer(new SoraSignalingObserver());
   nb::ref<SoraConnection> conn = new SoraConnection(this, ioc_.get(), observer);
   observer->SetSoraConnection(conn);
@@ -195,6 +196,9 @@ nb::ref<SoraConnection> Sora::CreateConnection(
   }
   if (degradation_preference) {
     config.degradation_preference = *degradation_preference;
+  }
+  if (user_agent) {
+    config.user_agent = *user_agent;
   }
   config.network_manager = factory_->default_network_manager();
   config.socket_factory = factory_->default_socket_factory();

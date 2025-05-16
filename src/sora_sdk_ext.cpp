@@ -747,7 +747,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "client_key"_a = nb::none(), "ca_cert"_a = nb::none(),
            "proxy_url"_a = nb::none(), "proxy_username"_a = nb::none(),
            "proxy_password"_a = nb::none(), "proxy_agent"_a = nb::none(),
-           "degradation_preference"_a = nb::none(),
+           "degradation_preference"_a = nb::none(), "user_agent"_a = nb::none(),
            nb::sig("def create_connection("
                    "self, "
                    "signaling_urls: list[str], "
@@ -798,7 +798,8 @@ NB_MODULE(sora_sdk_ext, m) {
                    "proxy_password: Optional[str] = None, "
                    "proxy_agent: Optional[str] = None, "
                    "degradation_preference: "
-                   "Optional[SoraDegradationPreference] = None"
+                   "Optional[SoraDegradationPreference] = None, "
+                   "user_agent: Optional[str] = None"
                    ") -> SoraConnection"))
       .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
            "sample_rate"_a)
