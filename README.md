@@ -32,6 +32,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/) に対応
 - 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする [DegradationPreference](https://w3c.github.io/mst-content-hint/#degradation-preference-when-encoding) に対応
   - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
+- 発話区間の検出が可能な VAD (Voice Activity Detection) に対応
 - Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
   - Apple Video Toolbox (H.264 / H.265)
     - macOS arm64 で利用できる
@@ -112,7 +113,7 @@ PyPI 経由ではインストールできません。
 - macOS Sequoia 15 arm64
 - macOS Ventura 14 arm64
 - Windows 11 x86_64
-- Windows Server 2022 x86_64
+- Windows Server 2025 x86_64
 
 ### macOS の対応バージョン
 

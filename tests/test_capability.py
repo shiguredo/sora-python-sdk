@@ -9,31 +9,7 @@ from sora_sdk import (
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
     SoraVideoCodecType,
-    create_video_codec_preference_from_implementation,
-    get_video_codec_capability,
 )
-
-
-def test_capability(setup):
-    openh264_path = setup.get("openh264_path")
-    capability = get_video_codec_capability(openh264=openh264_path)
-    has_internal = False
-    has_openh264 = False
-    for engine in capability.engines:
-        if engine.name == SoraVideoCodecImplementation.INTERNAL:
-            has_internal = True
-        if engine.name == SoraVideoCodecImplementation.CISCO_OPENH264:
-            has_openh264 = True
-    assert has_internal and has_openh264
-
-
-def test_preference(setup):
-    openh264_path = setup.get("openh264_path")
-    capability = get_video_codec_capability(openh264=openh264_path)
-    preference = create_video_codec_preference_from_implementation(
-        capability, SoraVideoCodecImplementation.CISCO_OPENH264
-    )
-    assert preference.has_implementation(SoraVideoCodecImplementation.CISCO_OPENH264)
 
 
 def test_preference_invalid(setup):

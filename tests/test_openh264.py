@@ -1,7 +1,9 @@
+import os
 import sys
 import time
 import uuid
 
+import pytest
 from client import SoraClient, SoraRole
 
 from sora_sdk import (
@@ -9,10 +11,45 @@ from sora_sdk import (
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
     SoraVideoCodecType,
+    create_video_codec_preference_from_implementation,
     get_video_codec_capability,
 )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
+def test_capability(setup):
+    openh264_path = setup.get("openh264_path")
+    capability = get_video_codec_capability(openh264=openh264_path)
+    has_internal = False
+    has_openh264 = False
+    for engine in capability.engines:
+        if engine.name == SoraVideoCodecImplementation.INTERNAL:
+            has_internal = True
+        if engine.name == SoraVideoCodecImplementation.CISCO_OPENH264:
+            has_openh264 = True
+    assert has_internal and has_openh264
+
+
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
+def test_preference(setup):
+    openh264_path = setup.get("openh264_path")
+    capability = get_video_codec_capability(openh264=openh264_path)
+    preference = create_video_codec_preference_from_implementation(
+        capability, SoraVideoCodecImplementation.CISCO_OPENH264
+    )
+    assert preference.has_implementation(SoraVideoCodecImplementation.CISCO_OPENH264)
+
+
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 def test_openh264_get_codec_capability(setup):
     openh264_path = setup.get("openh264_path")
     capability = get_video_codec_capability(openh264_path)
@@ -31,17 +68,19 @@ def test_openh264_get_codec_capability(setup):
             if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
                 continue
 
-        for c in e.codecs:
-            if c.decoder or c.encoder:
-                # encoder/decoder どちらかが true であれば採用する
+        if e.name == SoraVideoCodecImplementation.CISCO_OPENH264:
+            for c in e.codecs:
                 if c.decoder or c.encoder:
-                    codecs.append(
-                        SoraVideoCodecPreference.Codec(
-                            type=c.type,
-                            decoder=e.name,
-                            encoder=e.name,
+                    # encoder/decoder どちらかが true であれば採用する
+                    if c.decoder or c.encoder:
+                        codecs.append(
+                            SoraVideoCodecPreference.Codec(
+                                type=c.type,
+                                decoder=e.name,
+                                encoder=e.name,
+                                parameters=SoraVideoCodecPreference.Parameters(),
+                            )
                         )
-                    )
 
     # エラーにならないことを確認する
     Sora(
@@ -52,6 +91,10 @@ def test_openh264_get_codec_capability(setup):
     )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 def test_openh264_video_codec_preference(setup):
     openh264_path = setup.get("openh264_path")
     Sora(
@@ -84,6 +127,10 @@ def test_openh264_video_codec_preference(setup):
     )
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 def test_openh264_sendonly_recvonly(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
