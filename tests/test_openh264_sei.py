@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import threading
 import time
@@ -7,6 +8,7 @@ from threading import Event
 from typing import Any, Optional
 
 import numpy
+import pytest
 
 from sora_sdk import (
     Sora,
@@ -267,8 +269,22 @@ class RecvonlyEncodedTransform:
         # 戻り値は ArrayLike になっている
         new_data = frame.get_data()
 
+        # SEI パケットのバイナリデータ
+        # 06 ‐ NAL ヘッダ (F=0, NRI=0, type=6 → SEI)
+        # 05 ‐ payload_type = 5 (user_data_unregistered)
+        # 11 ‐ payload_size = 0x11 = 17 バイト
+        # CF 0A 75 11 2E B7 43 3A 9D 2D 8D A1 55 9D A5 24
+        #    ‐ 16 バイトの UUID
+        # 81 ‐ ユーザーデータ 1 バイト
+        # 80 ‐ rbsp_trailing_bits (stop bit + padding)
+        data = bytes.fromhex("060511cf0a75112eb7433a9d2d8da1559da5248180")
+
         # ArrayLike を numpy.uint8 のバイト列に変換する
         new_data = numpy.asarray(new_data, dtype=numpy.uint8)
+
+        # 先頭が data と等しいかどうか確認する
+        # data は numpy.uint8 になってないので、data を numpy.uint8 に変換する
+        assert new_data[: len(data)] == numpy.frombuffer(data, dtype=numpy.uint8)
 
         self._is_called_on_video_transform = True
 
@@ -277,6 +293,10 @@ class RecvonlyEncodedTransform:
         self._video_transformer.enqueue(frame)
 
 
+@pytest.mark.skipif(
+    os.environ.get("OPENH264_VERSION") is None,
+    reason="OpenH264 のときだけ実行する",
+)
 def test_h264_sei(setup):
     signaling_urls = setup.get("signaling_urls")
     channel_id_prefix = setup.get("channel_id_prefix")
@@ -301,7 +321,7 @@ def test_h264_sei(setup):
     )
     recvonly.connect()
 
-    time.sleep(5)
+    time.sleep(10)
 
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
@@ -339,5 +359,4 @@ def test_h264_sei(setup):
 
     # on_transform が呼ばれていることを確認
     assert sendonly.is_called_on_video_transform is True
-
     assert recvonly.is_called_on_video_transform is True
