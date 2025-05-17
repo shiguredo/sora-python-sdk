@@ -298,11 +298,11 @@ class RecvonlyEncodedTransform:
     def _on_audio_transform(self, frame: SoraTransformableAudioFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
 
-        # frame からエンコードされたフレームデータを取得する
+        # frame から復号され結合されたフレームデータを取得する
         # 戻り値は ArrayLike になっている
         new_data = frame.get_data()
 
-        # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
+        # ここで new_data の末尾にデータを削除する、または new_data を復号するなど任意の処理を実装する
 
         # ArrayLike を numpy.uint8 のバイト列に変換する
         new_data = numpy.asarray(new_data, dtype=numpy.uint8)
@@ -323,11 +323,12 @@ class RecvonlyEncodedTransform:
 
     def _on_video_transform(self, frame: SoraTransformableVideoFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
-        # frame からエンコードされたフレームデータを取得する
+
+        # frame から復号され結合されたフレームデータを取得する
         # 戻り値は ArrayLike になっている
         new_data = frame.get_data()
 
-        # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
+        # ここで new_data の末尾にデータを削除する、または new_data を復号するなど任意の処理を実装する
 
         # ArrayLike を numpy.uint8 のバイト列に変換する
         new_data = numpy.asarray(new_data, dtype=numpy.uint8)
