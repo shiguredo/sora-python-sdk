@@ -144,6 +144,7 @@ class SendonlyEncodedTransform:
         # frame からエンコードされたフレームデータを取得する
         # 戻り値は numpy.ndarray になっている
         new_data = frame.get_data()
+        new_data = numpy.asarray(new_data, dtype=numpy.uint8)
 
         # SEI パケットのバイナリデータ
         # 06 ‐ NAL ヘッダ (F=0, NRI=0, type=6 → SEI)
@@ -153,16 +154,17 @@ class SendonlyEncodedTransform:
         #    ‐ 16 バイトの UUID
         # 81 ‐ ユーザーデータ 1 バイト
         # 80 ‐ rbsp_trailing_bits (stop bit + padding)
-        data = bytes.fromhex("060511cf0a75112eb7433a9d2d8da1559da5248180")
+        data = bytes.fromhex("00000001060511000102030405060708090a0b0c0d0e0f0180")
         print("sendonly: ", numpy.frombuffer(data, dtype=numpy.uint8))
 
-        new_data = numpy.append(new_data, numpy.frombuffer(data, dtype=numpy.uint8))
-        # new_data = numpy.append(numpy.frombuffer(data, dtype=numpy.uint8), new_data)
+        new_data = numpy.append(numpy.frombuffer(data, dtype=numpy.uint8), new_data)
         print("sendonly: ", new_data)
 
         self._is_called_on_video_transform = True
 
         # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
+
+        print("sendonly: ", new_data)
 
         # 加工したフレームデータで frame の フレームデータを入れ替える
         frame.set_data(new_data)
@@ -188,15 +190,15 @@ class RecvonlyEncodedTransform:
         self._disconnected = Event()
 
         self._sora = Sora(
-            openh264=openh264_path,
-            video_codec_preference=SoraVideoCodecPreference(
-                codecs=[
-                    SoraVideoCodecPreference.Codec(
-                        type=SoraVideoCodecType.H264,
-                        decoder=SoraVideoCodecImplementation.CISCO_OPENH264,
-                    )
-                ]
-            ),
+            # openh264=openh264_path,
+            # video_codec_preference=SoraVideoCodecPreference(
+            #     codecs=[
+            #         SoraVideoCodecPreference.Codec(
+            #             type=SoraVideoCodecType.H264,
+            #             decoder=SoraVideoCodecImplementation.CISCO_OPENH264,
+            #         )
+            #     ]
+            # ),
         )
 
         self._connection = self._sora.create_connection(
@@ -280,11 +282,10 @@ class RecvonlyEncodedTransform:
         #    ‐ 16 バイトの UUID
         # 81 ‐ ユーザーデータ 1 バイト
         # 80 ‐ rbsp_trailing_bits (stop bit + padding)
-        data = bytes.fromhex("060511cf0a75112eb7433a9d2d8da1559da5248180")
+        # data = bytes.fromhex("060511cf0a75112eb7433a9d2d8da1559da5248180")
 
         # ArrayLike を numpy.uint8 のバイト列に変換する
         new_data = numpy.asarray(new_data, dtype=numpy.uint8)
-
         print("recvonly: ", new_data)
 
         # 先頭が data と等しいかどうか確認する
@@ -317,13 +318,13 @@ def test_h264_sei(setup):
     )
     sendonly.connect()
 
-    # recvonly = RecvonlyEncodedTransform(
-    #     signaling_urls,
-    #     channel_id,
-    #     metadata,
-    #     openh264_path,
-    # )
-    # recvonly.connect()
+    recvonly = RecvonlyEncodedTransform(
+        signaling_urls,
+        channel_id,
+        metadata,
+        openh264_path,
+    )
+    recvonly.connect()
 
     time.sleep(10)
 
