@@ -11,6 +11,11 @@
 
 ## develop
 
+- [CHANGE] VERSION ファイルを SDK のバージョンのみにする
+  - @voluntas
+- [CHANGE] 依存ライブラリを指定する VERSION ファイルを DEPS に変更する
+  - @voluntas
+
 ## 2025.2.2
 
 **リリース日**: 2025-05-15
