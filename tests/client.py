@@ -62,6 +62,7 @@ class SoraClient:
         client_cert: Optional[bytes] = None,
         ca_cert: Optional[bytes] = None,
         degradation_preference: Optional[SoraDegradationPreference] = None,
+        user_agent: Optional[str] = None,
         video_codec_preference: Optional[SoraVideoCodecPreference] = None,
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
@@ -153,6 +154,7 @@ class SoraClient:
             video_source=self._video_source,
             ca_cert=ca_cert,
             degradation_preference=self._degradation_preference,
+            user_agent=user_agent,
         )
 
         # "type": "offer" のパラメータ
