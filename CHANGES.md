@@ -11,13 +11,16 @@
 
 ## develop
 
-- [CHANGE] VERSION ファイルを SDK のバージョンのみにする
-  - @voluntas
-- [CHANGE] 依存ライブラリを指定する VERSION ファイルを DEPS に変更する
-  - @voluntas
 - [ADD] WebSocket 接続時に User Agent を上書きする機能を追加
   - @melpon
 - [FIX] pyi ファイルをバージョン毎に生成していなかった問題を修正する
+  - @voluntas
+
+### misc
+
+- [CHANGE] VERSION ファイルを SDK のバージョンのみにする
+  - @voluntas
+- [CHANGE] 依存ライブラリを指定する VERSION ファイルを DEPS に変更する
   - @voluntas
 
 ## 2025.2.2
