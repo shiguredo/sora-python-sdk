@@ -15,6 +15,8 @@
   - @voluntas
 - [CHANGE] 依存ライブラリを指定する VERSION ファイルを DEPS に変更する
   - @voluntas
+- [FIX] pyi ファイルをバージョン毎に生成していなかった問題を修正する
+  - @voluntas
 
 ## 2025.2.2
 
