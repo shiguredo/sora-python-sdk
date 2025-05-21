@@ -8,6 +8,7 @@ on:
       - "tests/test_nvidia_video_codec_sdk.py"
       # C++ SDK のアップデートしたときテストするため
       - "VERSION"
+      - "DEPS"
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
@@ -19,6 +20,9 @@ env:
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
   NVIDIA_VIDEO_CODEC_SDK: true
+
+permissions:
+  contents: read
 
 jobs:
   e2e_test_nvidia_video_codec_sdk:
@@ -44,7 +48,7 @@ jobs:
       }}
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
       - run: |

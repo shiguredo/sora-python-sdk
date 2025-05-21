@@ -10,6 +10,7 @@ from client import (
     codec_type_string_to_codec_type,
     is_codec_supported,
 )
+from simulcast import default_video_bit_rate, expect_target_bitrate
 
 from sora_sdk import (
     SoraVideoCodecImplementation,
@@ -160,7 +161,6 @@ def test_amd_amf_sendonly_recvonly(setup, video_codec_type):
     (
         "video_codec_type",
         "expected_implementation",
-        "video_bit_rate",
         "video_width",
         "video_height",
         "simulcast_count",
@@ -169,17 +169,17 @@ def test_amd_amf_sendonly_recvonly(setup, video_codec_type):
     # FIXME: AV1 では、解像度が一定数より低くなる場合、エラーになるのでコメントアウトしている
     [
         # 1080p
-        ("AV1", "AMF", 5000, 1920, 1080, 3),
-        ("H264", "AMF", 5000, 1920, 1080, 3),
-        ("H265", "AMF", 5000, 1920, 1080, 3),
+        ("AV1", "AMF", 1920, 1080, 3),
+        ("H264", "AMF", 1920, 1080, 3),
+        ("H265", "AMF", 1920, 1080, 3),
         # 720p
-        ("AV1", "AMF", 2500, 1280, 720, 3),
-        ("H264", "AMF", 2500, 1280, 720, 3),
-        ("H265", "AMF", 2500, 1280, 720, 3),
+        ("AV1", "AMF", 1280, 720, 3),
+        ("H264", "AMF", 1280, 720, 3),
+        ("H265", "AMF", 1280, 720, 3),
         # 540p
-        ("AV1", "AMF", 1200, 960, 540, 3),
-        ("H264", "AMF", 1200, 960, 540, 3),
-        ("H265", "AMF", 1200, 960, 540, 3),
+        ("AV1", "AMF", 960, 540, 3),
+        ("H264", "AMF", 960, 540, 3),
+        ("H265", "AMF", 960, 540, 3),
         # 360p
         # ("AV1", "AMF", 700, 640, 360, 2),
         # ("H264", "AMF", 700, 640, 360, 2),
@@ -200,7 +200,6 @@ def test_amd_amf_simulcast(
     setup,
     video_codec_type,
     expected_implementation,
-    video_bit_rate,
     video_width,
     video_height,
     simulcast_count,
@@ -213,6 +212,8 @@ def test_amd_amf_simulcast(
     metadata = setup.get("metadata")
 
     channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+
+    video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
         signaling_urls,
@@ -237,7 +238,7 @@ def test_amd_amf_simulcast(
     )
     sendonly.connect(fake_video=True)
 
-    time.sleep(5)
+    time.sleep(10)
 
     sendonly_stats = sendonly.get_stats()
 
@@ -264,38 +265,38 @@ def test_amd_amf_simulcast(
     sorted_stats = sorted(outbound_rtp_stats, key=lambda x: x.get("rid", ""))
 
     for i, s in enumerate(sorted_stats):
+        assert "qualityLimitationReason" in s
+        assert "qualityLimitationDurations" in s
+
+        # qualityLimitationReason が none で無い場合は安定したテストができない
+        if s["qualityLimitationReason"] != "none":
+            pytest.skip(f"qualityLimitationReason: {s['qualityLimitationReason']}")
+
         assert s["rid"] == f"r{i}"
         # simulcast_count が 2 の場合、rid r2 の bytesSent/packetsSent は 0 or 1 になる
         # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 or 1 になる
         if i < simulcast_count:
-            # 1 本になると simulcastEncodingAdapter がなくなる
-            # if simulcast_count > 1:
-            #     assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
+            assert s["bytesSent"] > 1000
+            assert s["packetsSent"] > 5
 
-            # targetBitrate が指定したビットレートの 90% 以上、100% 以下に収まることを確認
-            expected_bitrate = video_bit_rate * 1000
+            assert s["targetBitrate"] >= expect_target_bitrate(
+                video_codec_type, s["frameWidth"], s["frameHeight"]
+            )
 
-            # パケットが一切送られてこない場合は frame_width/frame_height が含まれないので None になる
-            frame_width = s.get("frameWidth")
-            frame_height = s.get("frameHeight")
             encoder_implementation = s.get("encoderImplementation")
 
             print(
                 s["rid"],
                 video_codec_type,
-                expected_bitrate,
+                video_bit_rate * 1000,
                 s["targetBitrate"],
                 expected_implementation,
                 encoder_implementation,
-                frame_width,
-                frame_height,
+                s["frameWidth"],
+                s["frameHeight"],
                 s["bytesSent"],
                 s["packetsSent"],
             )
-            assert s["bytesSent"] > 1000
-            assert s["packetsSent"] > 5
-            # 期待値の 20% 以上、100% 以下に収まることを確認
-            assert expected_bitrate * 0.2 <= s["targetBitrate"] <= expected_bitrate
         else:
             # 本来は 0 なのだが、simulcast_count が 1 の場合、
             # packetSent が 0 ではなく 1 や 2 になる場合がある

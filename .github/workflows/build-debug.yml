@@ -22,6 +22,9 @@ env:
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
   OPENH264_VERSION: 2.6.0
 
+permissions:
+  contents: write
+
 jobs:
   build-linux:
     strategy:
@@ -90,7 +93,7 @@ jobs:
       - name: Get versions
         id: version
         run: |
-          source sora-python-sdk/VERSION
+          source sora-python-sdk/DEPS
           echo "webrtc_build_version=${WEBRTC_BUILD_VERSION}" >> $GITHUB_OUTPUT
           echo "sora_cpp_sdk_version=${SORA_CPP_SDK_VERSION}" >> $GITHUB_OUTPUT
           echo "boost_version=${BOOST_VERSION}" >> $GITHUB_OUTPUT
@@ -178,7 +181,7 @@ jobs:
         if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
         working-directory: sora-cpp-sdk
         run: |
-          source VERSION
+          source DEPS
           sudo apt-get update
           sudo apt-get install -y software-properties-common
 
@@ -252,7 +255,7 @@ jobs:
       - name: Copy version file
         if: steps.version-file-cache.outputs.cache-hit == 'true'
         run: cp versions/llvm.version sora-python-sdk/_install/${{ matrix.platform.name }}/
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
       - name: Build sora-python-sdk
         working-directory: sora-python-sdk
         run: |
