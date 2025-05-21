@@ -47,7 +47,7 @@ def install_deps(
     local_sora_cpp_sdk_dir: Optional[str],
     local_sora_cpp_sdk_args: List[str],
 ):
-    version = read_version_file("VERSION")
+    version = read_version_file("DEPS")
 
     # multistrap を使った sysroot の構築
     if (
