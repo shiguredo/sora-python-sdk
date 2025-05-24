@@ -105,17 +105,18 @@ class VAD:
 
 
 def test_vad(settings):
+    metadata = settings.metadata()
     sendonly = SoraClient(
         settings.signaling_urls,
         SoraRole.SENDONLY,
         settings.channel_id,
         audio=True,
         video=False,
-        metadata=settings.metadata(),
+        metadata=metadata,
     )
     sendonly.connect(fake_audio=True)
 
-    vad = VAD(settings.signaling_urls, settings.channel_id, settings.metadata)
+    vad = VAD(settings.signaling_urls, settings.channel_id, metadata)
     vad.connect()
 
     time.sleep(5)
