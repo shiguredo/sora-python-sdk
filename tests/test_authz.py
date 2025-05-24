@@ -1,6 +1,5 @@
-import sys
+
 import time
-import uuid
 
 import jwt
 import pytest
@@ -8,33 +7,27 @@ from client import SoraClient, SoraRole
 
 
 @pytest.mark.skipif(reason="Sora C++ SDK 側の対応が必要")
-def test_sendonly_authz_video_true(setup):
+def test_sendonly_authz_video_true(settings):
     """
     - type: connect で audio: true / video: false で繫ぐ
     - 認証成功時の払い出しで audio: false / video: true を払い出す
     """
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     access_token = jwt.encode(
         {
-            "channel_id": channel_id,
+            "channel_id": settings.channel_id,
             "audio": False,
             "video": True,
             # 現在時刻 + 300 秒 (5分)
             "exp": int(time.time()) + 300,
         },
-        secret,
+        settings.secret,
         algorithm="HS256",
     )
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=True,
         video=False,
         metadata={"access_token": access_token},
@@ -72,31 +65,25 @@ def test_sendonly_authz_video_true(setup):
         ("AV1", "libaom"),
     ],
 )
-def test_sendonly_authz_video_codec_type(setup, video_codec_params):
+def test_sendonly_authz_video_codec_type(settings, video_codec_params):
     video_codec_type, encoder_implementation = video_codec_params
-
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
 
     access_token = jwt.encode(
         {
-            "channel_id": channel_id,
+            "channel_id": settings.channel_id,
             "video": True,
             "video_codec_type": video_codec_type,
             # 現在時刻 + 300 秒 (5分)
             "exp": int(time.time()) + 300,
         },
-        secret,
+        settings.secret,
         algorithm="HS256",
     )
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         metadata={"access_token": access_token},
