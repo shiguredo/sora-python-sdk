@@ -5,28 +5,22 @@ import uuid
 from client import SoraClient, SoraRole
 
 
-def test_messaging_header(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
+def test_messaging_header(settings):
     messaging_label = "#test"
 
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
-    metadata = setup.get("metadata")
-
     messaging_sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         data_channel_signaling=True,
         data_channels=[{"label": messaging_label, "direction": "sendonly"}],
-        metadata=metadata,
+        metadata=settings.metadata,
     )
 
     messaging_recvonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.RECVONLY,
-        channel_id,
+        settings.channel_id,
         data_channel_signaling=True,
         data_channels=[
             {
@@ -35,7 +29,7 @@ def test_messaging_header(setup):
                 "header": [{"type": "sender_connection_id"}],
             }
         ],
-        metadata=metadata,
+        metadata=settings.metadata,
     )
 
     # Sora に接続する

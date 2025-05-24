@@ -22,7 +22,7 @@ from sora_sdk import (
 
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
-def test_intel_vpl_available(setup):
+def test_intel_vpl_available(settings):
     capability = get_video_codec_capability()
 
     intel_vpl_available = False
@@ -103,7 +103,7 @@ def test_intel_vpl_available(setup):
     ],
 )
 def test_intel_vpl_simulcast(
-    setup,
+    settings,
     video_codec_type,
     expected_implementation,
     video_width,
@@ -118,23 +118,18 @@ def test_intel_vpl_simulcast(
             f"Windows では {video_codec_type} の simulcast_count が 1 の場合は失敗するので skip する"
         )
 
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=metadata,
+        metadata=settings.metadata,
         video_width=video_width,
         video_height=video_height,
         video_codec_preference=SoraVideoCodecPreference(
@@ -232,26 +227,20 @@ def test_intel_vpl_simulcast(
         "H265",
     ],
 )
-def test_intel_vpl_sendonly_recvonly(setup, video_codec_type):
+def test_intel_vpl_sendonly_recvonly(settings, video_codec_type):
     if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.INTEL_VPL):
         pytest.skip(
             f"このチップでは {video_codec_type} のエンコード/デコードの両方がサポートされていません"
         )
 
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=metadata,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -264,10 +253,10 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type):
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.RECVONLY,
-        channel_id,
-        metadata=metadata,
+        settings.channel_id,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -340,28 +329,22 @@ def test_intel_vpl_sendonly_recvonly(setup, video_codec_type):
     ],
 )
 def test_intel_vpl_av1_mini_resolution(
-    setup, video_codec_type, expected_implementation, video_bit_rate, video_width, video_height
+    settings, video_codec_type, expected_implementation, video_bit_rate, video_width, video_height
 ):
     if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.INTEL_VPL):
         pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
 
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
         video_width=video_width,
         video_height=video_height,
-        metadata=metadata,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -376,7 +359,7 @@ def test_intel_vpl_av1_mini_resolution(
     time.sleep(5)
 
     assert sendonly.connect_message is not None
-    assert sendonly.connect_message["channel_id"] == channel_id
+    assert sendonly.connect_message["channel_id"] == settings.channel_id
     assert "video" in sendonly.connect_message
     assert sendonly.connect_message["video"]["codec_type"] == video_codec_type
 
@@ -412,24 +395,18 @@ def test_intel_vpl_av1_mini_resolution(
 
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
-def test_intel_vpl_decoding_av1(setup):
+def test_intel_vpl_decoding_av1(settings):
     """
     N100 などは AV1 のデコーディングに対応している
     """
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type="AV1",
-        metadata=metadata,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -442,10 +419,10 @@ def test_intel_vpl_decoding_av1(setup):
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.RECVONLY,
-        channel_id,
-        metadata=metadata,
+        settings.channel_id,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -512,21 +489,15 @@ def test_intel_vpl_decoding_av1(setup):
         ("VP9", "libvpl"),
     ],
 )
-def test_intel_vpl_vp9_failed(setup, video_codec_type, expected_implementation):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_intel_vpl_vp9_failed(settings, video_codec_type, expected_implementation):
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=metadata,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -541,7 +512,7 @@ def test_intel_vpl_vp9_failed(setup, video_codec_type, expected_implementation):
     time.sleep(5)
 
     assert sendonly.connect_message is not None
-    assert sendonly.connect_message["channel_id"] == channel_id
+    assert sendonly.connect_message["channel_id"] == settings.channel_id
     assert "video" in sendonly.connect_message
     assert sendonly.connect_message["video"]["codec_type"] == video_codec_type
 
@@ -573,24 +544,18 @@ def test_intel_vpl_vp9_failed(setup, video_codec_type, expected_implementation):
 
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
-def test_intel_vpl_decoding_vp9(setup):
+def test_intel_vpl_decoding_vp9(settings):
     """
     VPL VP9 はデコーダーは利用できるので、そのテスト
     """
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type="VP9",
-        metadata=metadata,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -604,10 +569,10 @@ def test_intel_vpl_decoding_vp9(setup):
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.RECVONLY,
-        channel_id,
-        metadata=metadata,
+        settings.channel_id,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(

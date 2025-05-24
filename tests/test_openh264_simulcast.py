@@ -37,35 +37,28 @@ from sora_sdk import (
     ],
 )
 def test_openh264_simulcast(
-    setup,
+    settings,
     video_codec_type,
     expected_implementation,
     video_width,
     video_height,
     simulcast_count,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    openh264_path = setup.get("openh264_path")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=metadata,
+        metadata=settings.metadata,
         video_width=video_width,
         video_height=video_height,
-        openh264_path=openh264_path,
+        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -172,19 +165,12 @@ def test_openh264_simulcast(
     ],
 )
 def test_openh264_authz_simulcast_r2_active_false(
-    setup,
+    settings,
     video_codec_type,
     expected_implementation,
     video_width,
     video_height,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    openh264_path = setup.get("openh264_path")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     simulcast_encodings = [
@@ -208,7 +194,7 @@ def test_openh264_authz_simulcast_r2_active_false(
 
     access_token = jwt.encode(
         {
-            "channel_id": channel_id,
+            "channel_id": settings.channel_id,
             "video": True,
             "video_codec_type": video_codec_type,
             "video_bit_rate": video_bit_rate,
@@ -217,14 +203,14 @@ def test_openh264_authz_simulcast_r2_active_false(
             # 現在時刻 + 300 秒 (5分)
             "exp": int(time.time()) + 300,
         },
-        secret,
+        settings.secret,
         algorithm="HS256",
     )
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
@@ -233,7 +219,7 @@ def test_openh264_authz_simulcast_r2_active_false(
         metadata={"access_token": access_token},
         video_width=video_width,
         video_height=video_height,
-        openh264_path=openh264_path,
+        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -319,19 +305,13 @@ def test_openh264_authz_simulcast_r2_active_false(
     ],
 )
 def test_openh264_authz_simulcast_r2_and_r1_active_false(
-    setup,
+    settings,
     video_codec_type,
     expected_implementation,
     video_width,
     video_height,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
 
-    openh264_path = setup.get("openh264_path")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     simulcast_encodings = [
@@ -353,7 +333,7 @@ def test_openh264_authz_simulcast_r2_and_r1_active_false(
 
     access_token = jwt.encode(
         {
-            "channel_id": channel_id,
+            "channel_id": settings.channel_id,
             "video": True,
             "video_codec_type": video_codec_type,
             "video_bit_rate": video_bit_rate,
@@ -362,14 +342,14 @@ def test_openh264_authz_simulcast_r2_and_r1_active_false(
             # 現在時刻 + 300 秒 (5分)
             "exp": int(time.time()) + 300,
         },
-        secret,
+        settings.secret,
         algorithm="HS256",
     )
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
@@ -378,7 +358,7 @@ def test_openh264_authz_simulcast_r2_and_r1_active_false(
         metadata={"access_token": access_token},
         video_width=video_width,
         video_height=video_height,
-        openh264_path=openh264_path,
+        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
