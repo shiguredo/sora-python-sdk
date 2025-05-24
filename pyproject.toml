@@ -41,6 +41,7 @@ dev-dependencies = [
     "pytest-repeat",
     "psutil",
     "ty",
+    "pydantic-settings",
 ]
 
 [tool.ruff]
