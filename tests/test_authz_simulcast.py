@@ -32,8 +32,6 @@ def test_authz_simulcast_r2_active_false(
     video_width,
     video_height,
 ):
-    secret = settings.secret
-
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     simulcast_encodings = [
@@ -66,7 +64,7 @@ def test_authz_simulcast_r2_active_false(
             # 現在時刻 + 300 秒 (5分)
             "exp": int(time.time()) + 300,
         },
-        secret,
+        settings.secret,
         algorithm="HS256",
     )
 
@@ -209,8 +207,6 @@ def test_authz_simulcast_r2_and_r1_active_false(
     video_width,
     video_height,
 ):
-    secret = settings.secret
-
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     simulcast_encodings = [
@@ -241,7 +237,7 @@ def test_authz_simulcast_r2_and_r1_active_false(
             # 現在時刻 + 300 秒 (5分)
             "exp": int(time.time()) + 300,
         },
-        secret,
+        settings.secret,
         algorithm="HS256",
     )
 
@@ -367,8 +363,6 @@ def test_authz_simulcast_scale_resolution_down_to(
     video_width,
     video_height,
 ):
-    secret = settings.secret
-
     simulcast_encodings = [
         {
             "rid": "r0",
@@ -401,7 +395,7 @@ def test_authz_simulcast_scale_resolution_down_to(
             # 現在時刻 + 300 秒 (5分)
             "exp": int(time.time()) + 300,
         },
-        secret,
+        settings.secret,
         algorithm="HS256",
     )
 

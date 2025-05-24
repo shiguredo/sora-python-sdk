@@ -1,8 +1,6 @@
 import json
-import sys
 import threading
 import time
-import uuid
 from threading import Event
 from typing import Any, Optional
 
@@ -347,24 +345,18 @@ class RecvonlyEncodedTransform:
         self._video_transformer.enqueue(frame)
 
 
-def test_encoded_transform(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_encoded_transform(settings):
     sendonly = SendonlyEncodedTransform(
-        signaling_urls,
-        channel_id,
-        metadata,
+        settings.signaling_urls,
+        settings.channel_id,
+        settings.metadata,
     )
     sendonly.connect()
 
     recvonly = RecvonlyEncodedTransform(
-        signaling_urls,
-        channel_id,
-        metadata,
+        settings.signaling_urls,
+        settings.channel_id,
+        settings.metadata,
     )
     recvonly.connect()
 

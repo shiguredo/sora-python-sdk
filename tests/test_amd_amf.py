@@ -72,18 +72,14 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
             f"このチップでは {video_codec_type} のエンコード/デコードの両方がサポートされていません"
         )
 
-    signaling_urls = settings.signaling_urls
-    channel_id = settings.channel_id
-    metadata = settings.metadata
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=metadata,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -96,10 +92,10 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.RECVONLY,
-        channel_id,
-        metadata=metadata,
+        settings.channel_id,
+        metadata=settings.metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -203,22 +199,18 @@ def test_amd_amf_simulcast(
     if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.AMD_AMF):
         pytest.skip(f"このチップでは {video_codec_type} のエンコードがサポートされていません")
 
-    signaling_urls = settings.signaling_urls
-    channel_id = settings.channel_id
-    metadata = settings.metadata
-
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=metadata,
+        metadata=settings.metadata,
         video_width=video_width,
         video_height=video_height,
         video_codec_preference=SoraVideoCodecPreference(
