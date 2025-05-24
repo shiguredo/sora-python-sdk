@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     signaling_urls: Annotated[list[str], NoDecode] = Field(default=[], alias="TEST_SIGNALING_URLS")
     channel_id_prefix: str = Field(default="", alias="TEST_CHANNEL_ID_PREFIX")
+    channel_id_suffix: str = Field(default=str(uuid.uuid4()))
     secret: str = Field(default="", alias="TEST_SECRET_KEY")
     api_url: str = Field(default="", alias="TEST_API_URL")
     openh264_path: str | None = Field(default=None, alias="OPENH264_PATH")
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
 
     @computed_field
     def channel_id(self) -> str:
-        return f"{self.channel_id_prefix}_{uuid.uuid4()}"
+        return f"{self.channel_id_prefix}_{self.channel_id_suffix}"
 
     @computed_field
     def metadata(self) -> dict[str, str]:
