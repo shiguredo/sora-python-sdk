@@ -1,6 +1,5 @@
 import sys
 import time
-import uuid
 
 import jwt
 import pytest
@@ -27,17 +26,13 @@ from simulcast import default_video_bit_rate, expect_target_bitrate
     ],
 )
 def test_authz_simulcast_r2_active_false(
-    setup,
+    settings,
     video_codec_type,
     encoder_implementation,
     video_width,
     video_height,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+    secret = settings.secret
 
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
@@ -62,7 +57,7 @@ def test_authz_simulcast_r2_active_false(
 
     access_token = jwt.encode(
         {
-            "channel_id": channel_id,
+            "channel_id": settings.channel_id,
             "video": True,
             "video_codec_type": video_codec_type,
             "video_bit_rate": video_bit_rate,
@@ -76,9 +71,9 @@ def test_authz_simulcast_r2_active_false(
     )
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         metadata={"access_token": access_token},
@@ -208,17 +203,14 @@ def test_authz_simulcast_r2_active_false(
     ],
 )
 def test_authz_simulcast_r2_and_r1_active_false(
-    setup,
+    settings,
     video_codec_type,
     encoder_implementation,
     video_width,
     video_height,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
+    secret = settings.secret
 
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     simulcast_encodings = [
@@ -240,7 +232,7 @@ def test_authz_simulcast_r2_and_r1_active_false(
 
     access_token = jwt.encode(
         {
-            "channel_id": channel_id,
+            "channel_id": settings.channel_id,
             "video": True,
             "video_codec_type": video_codec_type,
             "video_bit_rate": video_bit_rate,
@@ -254,9 +246,9 @@ def test_authz_simulcast_r2_and_r1_active_false(
     )
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         metadata={"access_token": access_token},
@@ -368,18 +360,14 @@ def test_authz_simulcast_r2_and_r1_active_false(
     ],
 )
 def test_authz_simulcast_scale_resolution_down_to(
-    setup,
+    settings,
     video_codec_type,
     encoder_implementation,
     video_bit_rate,
     video_width,
     video_height,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+    secret = settings.secret
 
     simulcast_encodings = [
         {
@@ -404,7 +392,7 @@ def test_authz_simulcast_scale_resolution_down_to(
 
     access_token = jwt.encode(
         {
-            "channel_id": channel_id,
+            "channel_id": settings.channel_id,
             "video": True,
             "video_codec_type": video_codec_type,
             "video_bit_rate": video_bit_rate,
@@ -418,9 +406,9 @@ def test_authz_simulcast_scale_resolution_down_to(
     )
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         metadata={"access_token": access_token},
