@@ -16,12 +16,10 @@ from simulcast import default_video_bit_rate, expect_target_bitrate
     "video_codec_type",
     ["H264", "H265"],
 )
-def test_apple_video_toolbox_sendonly(setup, video_codec_type):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+def test_apple_video_toolbox_sendonly(settings, video_codec_type):
+    signaling_urls = settings.signaling_urls
+    channel_id = settings.channel_id
+    metadata = settings.metadata
 
     sendonly = SoraClient(
         signaling_urls,
@@ -64,12 +62,10 @@ def test_apple_video_toolbox_sendonly(setup, video_codec_type):
     "video_codec_type",
     ["H264", "H265"],
 )
-def test_apple_video_toolbox_sendonly_recvonly(setup, video_codec_type):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+def test_apple_video_toolbox_sendonly_recvonly(settings, video_codec_type):
+    signaling_urls = settings.signaling_urls
+    channel_id = settings.channel_id
+    metadata = settings.metadata
 
     sendonly = SoraClient(
         signaling_urls,
@@ -156,18 +152,16 @@ def test_apple_video_toolbox_sendonly_recvonly(setup, video_codec_type):
     ],
 )
 def test_apple_video_toolbox_simulcast(
-    setup,
+    settings,
     video_codec_type,
     expected_implementation,
     video_width,
     video_height,
     simulcast_count,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
+    signaling_urls = settings.signaling_urls
+    channel_id = settings.channel_id
+    metadata = settings.metadata
 
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
