@@ -1,6 +1,4 @@
-import sys
 import time
-import uuid
 
 import pytest
 from client import SoraClient, SoraRole
@@ -66,40 +64,28 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD
 """
 
 
-def test_ca_cert(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_ca_cert(settings):
     with SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=True,
         video=True,
-        metadata=metadata,
+        metadata=settings.metadata,
         ca_cert=letsencrypt_org_ca_cert,
     ):
         time.sleep(5)
 
 
 @pytest.mark.xfail(reason="Invalid CA certificate")
-def test_ca_cert_invalid(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_ca_cert_invalid(settings):
     with SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=True,
         video=True,
-        metadata=metadata,
+        metadata=settings.metadata,
         ca_cert=pki_goog_ca_cert,
     ):
         pass
