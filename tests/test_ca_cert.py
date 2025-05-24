@@ -71,7 +71,7 @@ def test_ca_cert(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         ca_cert=letsencrypt_org_ca_cert,
     ):
         time.sleep(5)
@@ -85,7 +85,7 @@ def test_ca_cert_invalid(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         ca_cert=pki_goog_ca_cert,
     ):
         pass

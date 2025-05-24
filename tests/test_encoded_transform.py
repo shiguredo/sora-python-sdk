@@ -349,14 +349,14 @@ def test_encoded_transform(settings):
     sendonly = SendonlyEncodedTransform(
         settings.signaling_urls,
         settings.channel_id,
-        settings.metadata,
+        settings.metadata(),
     )
     sendonly.connect()
 
     recvonly = RecvonlyEncodedTransform(
         settings.signaling_urls,
         settings.channel_id,
-        settings.metadata,
+        settings.metadata(),
     )
     recvonly.connect()
 

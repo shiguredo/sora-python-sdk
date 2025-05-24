@@ -111,7 +111,7 @@ def test_vad(settings):
         settings.channel_id,
         audio=True,
         video=False,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly.connect(fake_audio=True)
 

@@ -11,7 +11,7 @@ def test_sendonly_recvonly_audio(settings):
         settings.channel_id,
         audio=True,
         video=False,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly.connect(fake_audio=True)
 
@@ -19,7 +19,7 @@ def test_sendonly_recvonly_audio(settings):
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     recvonly.connect()
 
@@ -70,7 +70,7 @@ def test_sendonly_recvonly_video(
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly.connect(fake_video=True)
 
@@ -78,7 +78,7 @@ def test_sendonly_recvonly_video(
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     recvonly.connect()
 

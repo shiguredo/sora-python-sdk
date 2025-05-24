@@ -67,7 +67,7 @@ def test_simulcast(
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         video_width=video_width,
         video_height=video_height,
     )

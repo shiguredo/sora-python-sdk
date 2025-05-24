@@ -5,7 +5,7 @@ from typing import Annotated
 
 import jwt
 import pytest
-from pydantic import Field, HttpUrl, WebsocketUrl, computed_field, field_validator
+from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -14,12 +14,10 @@ class Settings(BaseSettings):
         env_file=".env", env_prefix=".env", env_nested_delimiter="utf-8"
     )
 
-    signaling_urls: Annotated[list[WebsocketUrl], NoDecode] = Field(
-        default=[], alias="TEST_SIGNALING_URLS"
-    )
+    signaling_urls: Annotated[list[str], NoDecode] = Field(default=[], alias="TEST_SIGNALING_URLS")
     channel_id_prefix: str = Field(default="", alias="TEST_CHANNEL_ID_PREFIX")
     secret: str | None = Field(default=None, alias="TEST_SECRET_KEY")
-    api_url: HttpUrl | None = Field(default=None, alias="TEST_API_URL")
+    api_url: str | None = Field(default=None, alias="TEST_API_URL")
     openh264_path: str | None = Field(default=None, alias="OPENH264_PATH")
 
     channel_id_suffix: str = Field(default=str(uuid.uuid4()))

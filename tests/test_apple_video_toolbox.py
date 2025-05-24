@@ -1,9 +1,6 @@
 import os
-import sys
 import time
-import uuid
 
-import jwt
 import pytest
 from client import SoraClient, SoraRole
 from simulcast import default_video_bit_rate, expect_target_bitrate
@@ -24,7 +21,7 @@ def test_apple_video_toolbox_sendonly(settings, video_codec_type):
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly.connect(fake_video=True)
 
@@ -66,7 +63,7 @@ def test_apple_video_toolbox_sendonly_recvonly(settings, video_codec_type):
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly.connect(fake_video=True)
 
@@ -74,7 +71,7 @@ def test_apple_video_toolbox_sendonly_recvonly(settings, video_codec_type):
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     recvonly.connect()
 
@@ -162,7 +159,7 @@ def test_apple_video_toolbox_simulcast(
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         video_width=video_width,
         video_height=video_height,
     )
@@ -263,19 +260,13 @@ def test_apple_video_toolbox_simulcast(
     ],
 )
 def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
-    setup,
+    settings,
     video_codec_type,
     encoder_implementation,
     video_bit_rate,
     video_width,
     video_height,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     simulcast_encodings = [
         {
             "rid": "r0",
@@ -297,30 +288,21 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
         },
     ]
 
-    access_token = jwt.encode(
-        {
-            "channel_id": channel_id,
-            "video": True,
-            "video_codec_type": video_codec_type,
-            "video_bit_rate": video_bit_rate,
-            "simulcast": True,
-            "simulcast_encodings": simulcast_encodings,
-            # 現在時刻 + 300 秒 (5分)
-            "exp": int(time.time()) + 300,
-        },
-        secret,
-        algorithm="HS256",
-    )
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata={"access_token": access_token},
+        metadata=settings.metadata(
+            video=True,
+            video_codec_type=video_codec_type,
+            video_bit_rate=video_bit_rate,
+            simulcast=True,
+            simulcast_encodings=simulcast_encodings,
+        ),
         video_width=video_width,
         video_height=video_height,
     )

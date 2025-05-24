@@ -12,7 +12,7 @@ def test_messaging(settings):
         settings.channel_id,
         data_channel_signaling=True,
         data_channels=[{"label": messaging_label, "direction": "sendonly"}],
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
 
     messaging_recvonly = SoraClient(
@@ -21,7 +21,7 @@ def test_messaging(settings):
         settings.channel_id,
         data_channel_signaling=True,
         data_channels=[{"label": messaging_label, "direction": "recvonly"}],
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
 
     # Sora に接続する

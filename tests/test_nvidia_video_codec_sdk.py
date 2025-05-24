@@ -83,7 +83,7 @@ def test_nvidia_codec_sdk_sendonly_recvonly(settings, video_codec_type, expected
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -99,7 +99,7 @@ def test_nvidia_codec_sdk_sendonly_recvonly(settings, video_codec_type, expected
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -217,7 +217,7 @@ def test_nvidia_video_codec_sdk_simulcast(
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         video_width=video_width,
         video_height=video_height,
         video_codec_preference=SoraVideoCodecPreference(
@@ -329,7 +329,7 @@ def test_nvidia_video_codec_sdk_decoding_only(settings, video_codec_type, expect
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -345,7 +345,7 @@ def test_nvidia_video_codec_sdk_decoding_only(settings, video_codec_type, expect
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(

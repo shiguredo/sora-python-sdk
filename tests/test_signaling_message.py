@@ -10,7 +10,7 @@ def test_signaling_message(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly.connect(fake_audio=True, fake_video=True)
 
@@ -55,7 +55,7 @@ def test_signaling_message_type_connect_forwarding_filter(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         forwarding_filter=forwarding_filter,
     )
     sendonly.connect(fake_audio=True, fake_video=True)
@@ -102,7 +102,7 @@ def test_signaling_message_type_connect_forwarding_filters(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         forwarding_filters=forwarding_filters,
     )
     sendonly.connect(fake_audio=True, fake_video=True)

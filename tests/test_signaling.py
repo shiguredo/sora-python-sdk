@@ -11,7 +11,7 @@ def test_sendonly_audio_opus_params_none(settings):
         audio=True,
         audio_codec_type="OPUS",
         video=False,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     ) as sendonly:
         time.sleep(5)
 
@@ -49,7 +49,7 @@ def test_sendonly_audio_opus_params_usedtx_true(settings):
             "usedtx": True,
         },
         video=False,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     ) as sendonly:
         time.sleep(5)
 

@@ -131,7 +131,7 @@ def test_openh264_sendonly_recvonly(settings):
         settings.signaling_urls,
         SoraRole.SENDONLY,
         settings.channel_id,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         audio=False,
         video=True,
         video_codec_type="H264",
@@ -151,7 +151,7 @@ def test_openh264_sendonly_recvonly(settings):
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[

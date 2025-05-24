@@ -1,6 +1,4 @@
-import sys
 import time
-import uuid
 
 import pytest
 from client import SoraClient, SoraRole
@@ -18,7 +16,7 @@ def test_websocket_signaling_only_type_switched(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -40,7 +38,7 @@ def test_hybrid_signaling_type_switched(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -63,7 +61,7 @@ def test_datachannel_signaling_only_type_switched(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:
@@ -85,7 +83,7 @@ def test_disconnect_before_switched(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:
