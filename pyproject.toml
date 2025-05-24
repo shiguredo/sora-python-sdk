@@ -31,7 +31,6 @@ dev-dependencies = [
     "build==1.2.2.post1",
     "wheel==0.45.1",
     "typing-extensions",
-    "python-dotenv",
     "numpy",
     "httpx",
     "pytest",
@@ -39,7 +38,6 @@ dev-dependencies = [
     "mypy",
     "pyjwt",
     "pytest-repeat",
-    "psutil",
     "ty",
     "pydantic-settings",
 ]
