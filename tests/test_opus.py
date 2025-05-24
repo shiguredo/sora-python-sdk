@@ -9,20 +9,14 @@ from client import SoraClient, SoraRole
 # https://tex2e.github.io/rfc-translater/html/rfc7587.html
 
 
-def test_sendonly_audio_opus_params_16khz_mono(setup):
+def test_sendonly_audio_opus_params_16khz_mono(settings):
     """
     SDP では 48000/2 だが、Opus の設定で 16000/1 を配信してみる
     """
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     with SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=True,
         audio_codec_type="OPUS",
         audio_opus_params={
@@ -34,7 +28,7 @@ def test_sendonly_audio_opus_params_16khz_mono(setup):
             "sprop_stereo": False,
         },
         video=False,
-        metadata=metadata,
+        metadata=settings.metadata,
     ) as sendonly:
         time.sleep(5)
 

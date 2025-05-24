@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import uuid
 
 import pytest
 from client import SoraClient, SoraRole
@@ -20,9 +19,8 @@ from sora_sdk import (
     os.environ.get("OPENH264_VERSION") is None,
     reason="OpenH264 のときだけ実行する",
 )
-def test_capability(setup):
-    openh264_path = setup.get("openh264_path")
-    capability = get_video_codec_capability(openh264=openh264_path)
+def test_capability(settings):
+    capability = get_video_codec_capability(openh264=settings.openh264_path)
     has_internal = False
     has_openh264 = False
     for engine in capability.engines:
@@ -37,9 +35,8 @@ def test_capability(setup):
     os.environ.get("OPENH264_VERSION") is None,
     reason="OpenH264 のときだけ実行する",
 )
-def test_preference(setup):
-    openh264_path = setup.get("openh264_path")
-    capability = get_video_codec_capability(openh264=openh264_path)
+def test_preference(settings):
+    capability = get_video_codec_capability(openh264=settings.openh264_path)
     preference = create_video_codec_preference_from_implementation(
         capability, SoraVideoCodecImplementation.CISCO_OPENH264
     )
@@ -50,9 +47,8 @@ def test_preference(setup):
     os.environ.get("OPENH264_VERSION") is None,
     reason="OpenH264 のときだけ実行する",
 )
-def test_openh264_get_codec_capability(setup):
-    openh264_path = setup.get("openh264_path")
-    capability = get_video_codec_capability(openh264_path)
+def test_openh264_get_codec_capability(settings):
+    capability = get_video_codec_capability(openh264=settings.openh264_path)
 
     cisco_openh264_available = False
 
@@ -87,7 +83,7 @@ def test_openh264_get_codec_capability(setup):
         video_codec_preference=SoraVideoCodecPreference(
             codecs=codecs,
         ),
-        openh264=openh264_path,
+        openh264=settings.openh264_path,
     )
 
 
@@ -95,8 +91,7 @@ def test_openh264_get_codec_capability(setup):
     os.environ.get("OPENH264_VERSION") is None,
     reason="OpenH264 のときだけ実行する",
 )
-def test_openh264_video_codec_preference(setup):
-    openh264_path = setup.get("openh264_path")
+def test_openh264_video_codec_preference(settings):
     Sora(
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
@@ -123,7 +118,7 @@ def test_openh264_video_codec_preference(setup):
                 ),
             ],
         ),
-        openh264=openh264_path,
+        openh264=settings.openh264_path,
     )
 
 
@@ -131,24 +126,16 @@ def test_openh264_video_codec_preference(setup):
     os.environ.get("OPENH264_VERSION") is None,
     reason="OpenH264 のときだけ実行する",
 )
-def test_openh264_sendonly_recvonly(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    openh264_path = setup.get("openh264_path")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_openh264_sendonly_recvonly(settings):
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
-        metadata=metadata,
+        settings.channel_id,
+        metadata=settings.metadata,
         audio=False,
         video=True,
         video_codec_type="H264",
-        openh264_path=openh264_path,
+        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -161,11 +148,11 @@ def test_openh264_sendonly_recvonly(setup):
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.RECVONLY,
-        channel_id,
-        metadata=metadata,
-        openh264_path=openh264_path,
+        settings.channel_id,
+        metadata=settings.metadata,
+        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
