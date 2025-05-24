@@ -1,7 +1,5 @@
 import json
-import sys
 import time
-import uuid
 from threading import Event
 from typing import Any, Optional
 
@@ -106,24 +104,18 @@ class VAD:
             self._audio_stream_sink.on_frame = self._on_frame
 
 
-def test_vad(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_vad(settings):
     sendonly = SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=True,
         video=False,
-        metadata=metadata,
+        metadata=settings.metadata,
     )
     sendonly.connect(fake_audio=True)
 
-    vad = VAD(signaling_urls, channel_id, metadata=metadata)
+    vad = VAD(settings.signaling_urls, settings.channel_id, settings.metadata)
     vad.connect()
 
     time.sleep(5)

@@ -1,25 +1,17 @@
-import sys
 import time
-import uuid
 
 from client import SoraClient, SoraRole
 
 
-def test_sendonly_audio_opus_params_none(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_sendonly_audio_opus_params_none(settings):
     with SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=True,
         audio_codec_type="OPUS",
         video=False,
-        metadata=metadata,
+        metadata=settings.metadata,
     ) as sendonly:
         time.sleep(5)
 
@@ -46,24 +38,18 @@ def test_sendonly_audio_opus_params_none(setup):
         assert outbound_rtp_stats["packetsSent"] > 0
 
 
-def test_sendonly_audio_opus_params_usedtx_true(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_sendonly_audio_opus_params_usedtx_true(settings):
     with SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.SENDONLY,
-        channel_id,
+        settings.channel_id,
         audio=True,
         audio_codec_type="OPUS",
         audio_opus_params={
             "usedtx": True,
         },
         video=False,
-        metadata=metadata,
+        metadata=settings.metadata,
     ) as sendonly:
         time.sleep(5)
 
