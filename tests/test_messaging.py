@@ -1,6 +1,4 @@
-import sys
 import time
-import uuid
 
 from client import SoraClient, SoraRole
 
