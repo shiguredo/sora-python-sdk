@@ -16,7 +16,7 @@ def test_websocket_signaling_only_disconnect(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -43,7 +43,7 @@ def test_hybrid_signaling_disconnect(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -72,7 +72,7 @@ def test_datachannel_only_type_disconnect(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:

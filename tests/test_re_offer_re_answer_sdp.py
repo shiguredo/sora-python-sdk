@@ -1,6 +1,3 @@
-import sys
-import uuid
-
 from client import SoraClient, SoraRole
 
 
@@ -9,7 +6,7 @@ def test_re_offer_re_answer_sdp(settings):
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     recvonly.connect()
 
@@ -19,7 +16,7 @@ def test_re_offer_re_answer_sdp(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly1.connect(fake_audio=True, fake_video=True)
     sendonly1.disconnect()
@@ -30,7 +27,7 @@ def test_re_offer_re_answer_sdp(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly2.connect(fake_audio=True, fake_video=True)
 
@@ -40,7 +37,7 @@ def test_re_offer_re_answer_sdp(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     )
     sendonly3.connect(fake_audio=True, fake_video=True)
 

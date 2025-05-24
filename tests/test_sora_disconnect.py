@@ -1,8 +1,5 @@
-import sys
 import time
-import uuid
 
-import jwt
 from api import disconnect_connection_api
 from client import SoraClient, SoraRole
 
@@ -16,7 +13,7 @@ def test_websocket_signaling_only_disconnect_api(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -40,33 +37,14 @@ def test_websocket_signaling_only_disconnect_api(settings):
         assert "DISCONNECTED-API" in conn.disconnect_reason
 
 
-def test_websocket_signaling_only_lifetime_expired(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
-    access_token = jwt.encode(
-        {
-            "channel_id": channel_id,
-            "audio": False,
-            "video": True,
-            "connection_lifetime": 3,
-            # 現在時刻 + 300 秒 (5分)
-            "exp": int(time.time()) + 300,
-        },
-        secret,
-        algorithm="HS256",
-    )
-
+def test_websocket_signaling_only_lifetime_expired(settings):
     with SoraClient(
-        signaling_urls,
+        settings.signaling_urls,
         SoraRole.RECVONLY,
-        channel_id,
+        settings.channel_id,
         audio=True,
         video=True,
-        metadata={"access_token": access_token},
+        metadata=settings.metadata(audio=False, video=True, connection_lifetime=3),
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -84,7 +62,7 @@ def test_websocket_datachannel_signaling_disconnect_api(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -109,26 +87,13 @@ def test_websocket_datachannel_signaling_disconnect_api(settings):
 
 
 def test_websocket_datachannel_signaling_lifetime_expired(settings):
-    access_token = jwt.encode(
-        {
-            "channel_id": settings.channel_id,
-            "audio": True,
-            "video": True,
-            "connection_lifetime": 3,
-            # 現在時刻 + 300 秒 (5分)
-            "exp": int(time.time()) + 300,
-        },
-        settings.secret,
-        algorithm="HS256",
-    )
-
     with SoraClient(
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
         audio=True,
         video=True,
-        metadata={"access_token": access_token},
+        metadata=settings.metadata(audio=True, video=True, connection_lifetime=3),
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -146,7 +111,7 @@ def test_datachannel_only_signaling_disconnect_api(settings):
         settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:
@@ -178,26 +143,13 @@ def test_datachannel_only_signaling_disconnect_api(settings):
 
 
 def test_datachannel_only_signaling_lifetime_expired(settings):
-    access_token = jwt.encode(
-        {
-            "channel_id": settings.channel_id,
-            "audio": True,
-            "video": True,
-            "connection_lifetime": 3,
-            # 現在時刻 + 300 秒 (5分)
-            "exp": int(time.time()) + 300,
-        },
-        settings.secret,
-        algorithm="HS256",
-    )
-
     with SoraClient(
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
         audio=True,
         video=True,
-        metadata={"access_token": access_token},
+        metadata=settings.metadata(audio=True, video=True, connection_lifetime=3),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:

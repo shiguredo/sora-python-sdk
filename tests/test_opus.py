@@ -1,6 +1,4 @@
-import sys
 import time
-import uuid
 
 from client import SoraClient, SoraRole
 
@@ -28,7 +26,7 @@ def test_sendonly_audio_opus_params_16khz_mono(settings):
             "sprop_stereo": False,
         },
         video=False,
-        metadata=settings.metadata,
+        metadata=settings.metadata(),
     ) as sendonly:
         time.sleep(5)
 
