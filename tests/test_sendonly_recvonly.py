@@ -8,7 +8,7 @@ def test_sendonly_recvonly_audio(settings):
     sendonly = SoraClient(
         settings.signaling_urls,
         SoraRole.SENDONLY,
-        settings.channel_id_prefix,
+        settings.channel_id,
         audio=True,
         video=False,
         metadata=settings.metadata,
@@ -18,7 +18,7 @@ def test_sendonly_recvonly_audio(settings):
     recvonly = SoraClient(
         settings.signaling_urls,
         SoraRole.RECVONLY,
-        settings.channel_id_prefix,
+        settings.channel_id,
         metadata=settings.metadata,
     )
     recvonly.connect()
@@ -66,7 +66,7 @@ def test_sendonly_recvonly_video(
     sendonly = SoraClient(
         settings.signaling_urls,
         SoraRole.SENDONLY,
-        settings.channel_id_prefix,
+        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
@@ -77,7 +77,7 @@ def test_sendonly_recvonly_video(
     recvonly = SoraClient(
         settings.signaling_urls,
         SoraRole.RECVONLY,
-        settings.channel_id_prefix,
+        settings.channel_id,
         metadata=settings.metadata,
     )
     recvonly.connect()
