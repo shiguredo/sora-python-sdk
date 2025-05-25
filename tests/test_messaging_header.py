@@ -7,18 +7,15 @@ def test_messaging_header(settings):
     messaging_label = "#test"
 
     messaging_sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         data_channel_signaling=True,
         data_channels=[{"label": messaging_label, "direction": "sendonly"}],
-        metadata=settings.metadata(),
     )
 
     messaging_recvonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         data_channel_signaling=True,
         data_channels=[
             {
@@ -27,7 +24,6 @@ def test_messaging_header(settings):
                 "header": [{"type": "sender_connection_id"}],
             }
         ],
-        metadata=settings.metadata(),
     )
 
     # Sora に接続する

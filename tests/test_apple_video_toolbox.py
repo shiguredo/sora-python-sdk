@@ -15,13 +15,11 @@ from simulcast import default_video_bit_rate, expect_target_bitrate
 )
 def test_apple_video_toolbox_sendonly(settings, video_codec_type):
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata(),
     )
     sendonly.connect(fake_video=True)
 
@@ -57,21 +55,17 @@ def test_apple_video_toolbox_sendonly(settings, video_codec_type):
 )
 def test_apple_video_toolbox_sendonly_recvonly(settings, video_codec_type):
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata(),
     )
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
-        metadata=settings.metadata(),
     )
     recvonly.connect()
 
@@ -151,15 +145,13 @@ def test_apple_video_toolbox_simulcast(
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata(),
         video_width=video_width,
         video_height=video_height,
     )
@@ -296,13 +288,13 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata(
-            video=True,
-            video_codec_type=video_codec_type,
-            video_bit_rate=video_bit_rate,
-            simulcast=True,
-            simulcast_encodings=simulcast_encodings,
-        ),
+        jwt_private_claims={
+            "video": True,
+            "video_codec_type": video_codec_type,
+            "video_bit_rate": video_bit_rate,
+            "simulcast": True,
+            "simulcast_encodings": simulcast_encodings,
+        },
         video_width=video_width,
         video_height=video_height,
     )

@@ -11,12 +11,10 @@ def test_websocket_signaling_only_disconnect(settings):
     """
 
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -38,12 +36,10 @@ def test_hybrid_signaling_disconnect(settings):
     - WebSocket シグナリングと DataChannel シグナリング
     """
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -61,18 +57,15 @@ def test_hybrid_signaling_disconnect(settings):
 
 
 def test_datachannel_only_type_disconnect(settings):
-    signaling_urls = settings.signaling_urls
-
     """
     - DataChannel シグナリングのみ
     """
+
     with SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:

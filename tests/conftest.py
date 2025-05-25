@@ -63,7 +63,7 @@ class Settings(BaseSettings):
         """
         return f"{self.channel_id_prefix}_{self.channel_id_suffix}"
 
-    def metadata(self, **kwargs) -> dict[str, str] | None:
+    def access_token(self, **kwargs) -> str | None:
         if self.secret is None:
             return None
 
@@ -80,7 +80,7 @@ class Settings(BaseSettings):
             algorithm="HS256",
         )
 
-        return {"access_token": access_token}
+        return access_token
 
 
 def pytest_report_header(config):

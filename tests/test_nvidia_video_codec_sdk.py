@@ -20,7 +20,7 @@ from sora_sdk import (
 @pytest.mark.skipif(
     os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
 )
-def test_nvidia_video_codec_sdk_available(settings):
+def test_nvidia_video_codec_sdk_available():
     capability = get_video_codec_capability()
 
     nvidia_video_codec_sdk_available = False
@@ -77,13 +77,11 @@ def test_nvidia_codec_sdk_sendonly_recvonly(settings, video_codec_type, expected
     #     pytest.skip(f"このチップでは {video_codec_type} がサポートされていません")
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -96,10 +94,8 @@ def test_nvidia_codec_sdk_sendonly_recvonly(settings, video_codec_type, expected
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
-        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -209,15 +205,13 @@ def test_nvidia_video_codec_sdk_simulcast(
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata(),
         video_width=video_width,
         video_height=video_height,
         video_codec_preference=SoraVideoCodecPreference(
@@ -323,13 +317,11 @@ def test_nvidia_video_codec_sdk_decoding_only(settings, video_codec_type, expect
     NVIDIA Video Codec SDK VP8/VP9 はデコーダーは利用できるので、そのテスト
     """
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -342,10 +334,8 @@ def test_nvidia_video_codec_sdk_decoding_only(settings, video_codec_type, expect
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
-        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(

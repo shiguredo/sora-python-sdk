@@ -17,14 +17,12 @@ VIDEO_HEIGHT = 528
 )
 def test_degradation_preference_maintain_framerate(settings):
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=VIDEO_CODEC_TYPE,
         video_bit_rate=VIDEO_BIT_RATE,
-        metadata=settings.metadata(),
         video_width=VIDEO_WIDTH,
         video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.MAINTAIN_FRAMERATE,
@@ -69,14 +67,12 @@ def test_degradation_preference_maintain_resolution(settings):
     フレームレートがあまり変わらない
     """
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=VIDEO_CODEC_TYPE,
         video_bit_rate=VIDEO_BIT_RATE,
-        metadata=settings.metadata(),
         video_width=VIDEO_WIDTH,
         video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.MAINTAIN_RESOLUTION,
@@ -120,14 +116,12 @@ def test_degradation_preference_balanced(settings):
     バランス思った以上に両方悪くなる
     """
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=VIDEO_CODEC_TYPE,
         video_bit_rate=VIDEO_BIT_RATE,
-        metadata=settings.metadata(),
         video_width=VIDEO_WIDTH,
         video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.BALANCED,
@@ -172,14 +166,12 @@ def test_degradation_preference_disabled(settings):
     無効にする
     """
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=VIDEO_CODEC_TYPE,
         video_bit_rate=VIDEO_BIT_RATE,
-        metadata=settings.metadata(),
         video_width=VIDEO_WIDTH,
         video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.DISABLED,

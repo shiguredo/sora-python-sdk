@@ -5,13 +5,11 @@ from client import SoraClient, SoraRole
 
 def test_sendonly_audio_opus_params_none(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         audio_codec_type="OPUS",
         video=False,
-        metadata=settings.metadata(),
     ) as sendonly:
         time.sleep(5)
 
@@ -40,16 +38,14 @@ def test_sendonly_audio_opus_params_none(settings):
 
 def test_sendonly_audio_opus_params_usedtx_true(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         audio_codec_type="OPUS",
         audio_opus_params={
             "usedtx": True,
         },
         video=False,
-        metadata=settings.metadata(),
     ) as sendonly:
         time.sleep(5)
 

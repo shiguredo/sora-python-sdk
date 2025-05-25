@@ -79,7 +79,6 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -95,7 +94,6 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
         settings.signaling_urls,
         SoraRole.RECVONLY,
         settings.channel_id,
-        metadata=settings.metadata(),
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -202,15 +200,13 @@ def test_amd_amf_simulcast(
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata(),
         video_width=video_width,
         video_height=video_height,
         video_codec_preference=SoraVideoCodecPreference(

@@ -4,15 +4,11 @@ from client import SoraClient, SoraRole
 
 
 def test_signaling_message(settings):
-    metadata = settings.metadata()
-
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=metadata,
     )
     sendonly.connect(fake_audio=True, fake_video=True)
 
@@ -28,7 +24,7 @@ def test_signaling_message(settings):
     assert sendonly.connect_message["channel_id"] == settings.channel_id
     assert sendonly.connect_message["audio"] is True
     assert sendonly.connect_message["video"] is True
-    assert sendonly.connect_message["metadata"] == metadata
+    assert sendonly.connect_message["metadata"] == sendonly.metadata
 
 
 def test_signaling_message_type_connect_forwarding_filter(settings):

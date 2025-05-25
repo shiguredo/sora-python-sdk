@@ -12,12 +12,14 @@ def test_sendonly_authz_video_true(settings):
     """
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         video=False,
-        metadata=settings.metadata(audio=True, video=False),
+        jwt_private_claims={
+            "audio": True,
+            "video": False,
+        },
     )
     sendonly.connect(fake_video=False, fake_audio=True)
 
@@ -54,15 +56,14 @@ def test_sendonly_authz_video_true(settings):
 )
 def test_sendonly_authz_video_codec_type(settings, video_codec_type, expected_implementation):
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
-        metadata=settings.metadata(
-            video=True,
-            video_codec_type=video_codec_type,
-        ),
+        jwt_private_claims={
+            "video": True,
+            "video_codec_type": video_codec_type,
+        },
     )
     sendonly.connect(fake_video=True)
 

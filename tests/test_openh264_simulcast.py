@@ -44,18 +44,15 @@ def test_openh264_simulcast(
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata(),
         video_width=video_width,
         video_height=video_height,
-        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -190,24 +187,22 @@ def test_openh264_authz_simulcast_r2_active_false(
     ]
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata(
-            video=True,
-            video_codec_type=video_codec_type,
-            video_bit_rate=video_bit_rate,
-            simulcast=True,
-            simulcast_encodings=simulcast_encodings,
-        ),
+        jwt_private_claims={
+            "video": True,
+            "video_codec_type": video_codec_type,
+            "video_bit_rate": video_bit_rate,
+            "simulcast": True,
+            "simulcast_encodings": simulcast_encodings,
+        },
         video_width=video_width,
         video_height=video_height,
-        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -319,24 +314,22 @@ def test_openh264_authz_simulcast_r2_and_r1_active_false(
     ]
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata(
-            video=True,
-            video_codec_type=video_codec_type,
-            video_bit_rate=video_bit_rate,
-            simulcast=True,
-            simulcast_encodings=simulcast_encodings,
-        ),
+        jwt_private_claims={
+            "video": True,
+            "video_codec_type": video_codec_type,
+            "video_bit_rate": video_bit_rate,
+            "simulcast": True,
+            "simulcast_encodings": simulcast_encodings,
+        },
         video_width=video_width,
         video_height=video_height,
-        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(

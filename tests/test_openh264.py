@@ -128,14 +128,11 @@ def test_openh264_video_codec_preference(settings):
 )
 def test_openh264_sendonly_recvonly(settings):
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
-        metadata=settings.metadata(),
         audio=False,
         video=True,
         video_codec_type="H264",
-        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -148,11 +145,8 @@ def test_openh264_sendonly_recvonly(settings):
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
-        metadata=settings.metadata(),
-        openh264_path=settings.openh264_path,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(

@@ -6,20 +6,16 @@ from client import SoraClient, SoraRole
 
 def test_sendonly_recvonly_audio(settings):
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         video=False,
-        metadata=settings.metadata(),
     )
     sendonly.connect(fake_audio=True)
 
     recvonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
-        metadata=settings.metadata(),
     )
     recvonly.connect()
 
@@ -64,21 +60,17 @@ def test_sendonly_recvonly_video(
     settings, video_codec_type, encoder_implementation, decoder_implementation
 ):
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=settings.metadata(),
     )
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
-        metadata=settings.metadata(),
     )
     recvonly.connect()
 
