@@ -48,12 +48,10 @@ def test_signaling_message_type_connect_forwarding_filter(settings):
     }
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         forwarding_filter=forwarding_filter,
     )
     sendonly.connect(fake_audio=True, fake_video=True)
@@ -95,12 +93,10 @@ def test_signaling_message_type_connect_forwarding_filters(settings):
     ]
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         forwarding_filters=forwarding_filters,
     )
     sendonly.connect(fake_audio=True, fake_video=True)
