@@ -36,10 +36,11 @@ class Settings(BaseSettings):
 
     @field_validator("libwebrtc_log", mode="before")
     @classmethod
-    def validate_libwebrtc_log(cls, v: str) -> SoraLoggingSeverity | None:
+    def validate_libwebrtc_log(cls, v: str | None) -> SoraLoggingSeverity | None:
+        if v is None:
+            return None
+
         match v.lower():
-            case None:
-                return None
             case "verbose":
                 return SoraLoggingSeverity.VERBOSE
             case "info":
