@@ -1,29 +1,20 @@
-import sys
 import time
-import uuid
 
 from client import SoraClient, SoraRole
 
 from sora_sdk import SoraSignalingErrorCode
 
 
-def test_websocket_signaling_only_disconnect(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_websocket_signaling_only_disconnect(settings):
     """
     - WebSocket シグナリングのみ
     """
+
     with SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        channel_id,
         audio=True,
         video=True,
-        metadata=metadata,
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -40,23 +31,15 @@ def test_websocket_signaling_only_disconnect(setup):
         )
 
 
-def test_hybrid_signaling_disconnect(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_hybrid_signaling_disconnect(settings):
     """
     - WebSocket シグナリングと DataChannel シグナリング
     """
     with SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        channel_id,
         audio=True,
         video=True,
-        metadata=metadata,
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -73,23 +56,16 @@ def test_hybrid_signaling_disconnect(setup):
         assert conn.disconnect_reason == "Succeeded to close Websocket (DC signaling is enabled)"
 
 
-def test_datachannel_only_type_disconnect(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_datachannel_only_type_disconnect(settings):
     """
     - DataChannel シグナリングのみ
     """
+
     with SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        channel_id,
         audio=True,
         video=True,
-        metadata=metadata,
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:

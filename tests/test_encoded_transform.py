@@ -1,12 +1,11 @@
 import json
-import sys
 import threading
 import time
-import uuid
 from threading import Event
 from typing import Any, Optional
 
 import numpy
+from conftest import Settings
 
 from sora_sdk import (
     Sora,
@@ -23,14 +22,28 @@ from sora_sdk import (
 class SendonlyEncodedTransform:
     def __init__(
         self,
-        signaling_urls: list[str],
-        channel_id: str,
-        metadata: dict[str, Any],
+        settings: Settings,
+        metadata: dict[str, Any] | None = None,
+        jwt_private_claims: dict[str, Any] | None = None,
     ):
-        self._signaling_urls: list[str] = signaling_urls
-        self._channel_id: str = channel_id
+        self._signaling_urls: list[str] = settings.signaling_urls
+        self._channel_id: str = settings.channel_id
 
         self._connection_id: str
+
+        if jwt_private_claims is not None:
+            access_token = settings.access_token(**jwt_private_claims)
+        else:
+            access_token = settings.access_token()
+
+        # secret が設定されていない場合は access_token が存在しない
+        if access_token is not None:
+            if metadata is not None:
+                # metadata が設定されている場合は access_token を追加する
+                metadata.update({"access_token": access_token})
+            else:
+                # metadata が設定されていない場合は access_token のみを metadata に設定する
+                metadata = {"access_token": access_token}
 
         # 接続した
         self._connected: Event = Event()
@@ -67,9 +80,9 @@ class SendonlyEncodedTransform:
         self._video_transformer.on_transform = self._on_video_transform
 
         self._connection = self._sora.create_connection(
-            signaling_urls=signaling_urls,
+            signaling_urls=self._signaling_urls,
             role="sendonly",
-            channel_id=channel_id,
+            channel_id=self._channel_id,
             metadata=metadata,
             audio=True,
             video=True,
@@ -197,12 +210,26 @@ class SendonlyEncodedTransform:
 class RecvonlyEncodedTransform:
     def __init__(
         self,
-        signaling_urls: list[str],
-        channel_id: str,
-        metadata: dict[str, Any],
+        settings: Settings,
+        metadata: dict[str, Any] | None = None,
+        jwt_private_claims: dict[str, Any] | None = None,
     ):
-        self._signaling_urls: list[str] = signaling_urls
-        self._channel_id: str = channel_id
+        self._signaling_urls: list[str] = settings.signaling_urls
+        self._channel_id: str = settings.channel_id
+
+        if jwt_private_claims is not None:
+            access_token = settings.access_token(**jwt_private_claims)
+        else:
+            access_token = settings.access_token()
+
+        # secret が設定されていない場合は access_token が存在しない
+        if access_token is not None:
+            if metadata is not None:
+                # metadata が設定されている場合は access_token を追加する
+                metadata.update({"access_token": access_token})
+            else:
+                # metadata が設定されていない場合は access_token のみを metadata に設定する
+                metadata = {"access_token": access_token}
 
         self._connection_id: str
 
@@ -217,9 +244,9 @@ class RecvonlyEncodedTransform:
         self._sora = Sora()
 
         self._connection = self._sora.create_connection(
-            signaling_urls=signaling_urls,
+            signaling_urls=self._signaling_urls,
             role="recvonly",
-            channel_id=channel_id,
+            channel_id=self._channel_id,
             metadata=metadata,
             audio=True,
             video=True,
@@ -347,25 +374,11 @@ class RecvonlyEncodedTransform:
         self._video_transformer.enqueue(frame)
 
 
-def test_encoded_transform(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
-    sendonly = SendonlyEncodedTransform(
-        signaling_urls,
-        channel_id,
-        metadata,
-    )
+def test_encoded_transform(settings):
+    sendonly = SendonlyEncodedTransform(settings)
     sendonly.connect()
 
-    recvonly = RecvonlyEncodedTransform(
-        signaling_urls,
-        channel_id,
-        metadata,
-    )
+    recvonly = RecvonlyEncodedTransform(settings)
     recvonly.connect()
 
     time.sleep(5)

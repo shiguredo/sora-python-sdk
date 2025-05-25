@@ -1,33 +1,21 @@
-import sys
 import time
-import uuid
 
 import pytest
 from client import SoraClient, SoraRole
 
 
-def test_sendonly_recvonly_audio(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_sendonly_recvonly_audio(settings):
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=True,
         video=False,
-        metadata=metadata,
     )
     sendonly.connect(fake_audio=True)
 
     recvonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        channel_id,
-        metadata=metadata,
     )
     recvonly.connect()
 
@@ -69,30 +57,20 @@ def test_sendonly_recvonly_audio(setup):
     ],
 )
 def test_sendonly_recvonly_video(
-    setup, video_codec_type, encoder_implementation, decoder_implementation
+    settings, video_codec_type, encoder_implementation, decoder_implementation
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=metadata,
     )
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        channel_id,
-        metadata=metadata,
     )
     recvonly.connect()
 

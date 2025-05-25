@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import uuid
 
 import pytest
 from client import SoraClient, SoraRole
@@ -50,31 +49,23 @@ from simulcast import default_video_bit_rate, expect_target_bitrate
     ],
 )
 def test_simulcast(
-    setup,
+    settings,
     video_codec_type,
     encoder_implementation,
     video_width,
     video_height,
     simulcast_count,
 ):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=metadata,
         video_width=video_width,
         video_height=video_height,
     )
