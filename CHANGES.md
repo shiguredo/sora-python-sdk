@@ -22,6 +22,8 @@
   - @voluntas
 - [CHANGE] 依存ライブラリを指定する VERSION ファイルを DEPS に変更する
   - @voluntas
+- [UPDATE] `python-dotenv` を `pydantic-settings` に切り替える
+  - @voluntas
 
 ## 2025.2.3
 
