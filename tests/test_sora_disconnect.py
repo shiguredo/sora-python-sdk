@@ -8,12 +8,10 @@ from sora_sdk import SoraSignalingErrorCode
 
 def test_websocket_signaling_only_disconnect_api(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -39,12 +37,15 @@ def test_websocket_signaling_only_disconnect_api(settings):
 
 def test_websocket_signaling_only_lifetime_expired(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(audio=False, video=True, connection_lifetime=3),
+        jwt_private_claims={
+            "audio": False,
+            "video": True,
+            "connection_lifetime": 3,
+        },
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -57,12 +58,10 @@ def test_websocket_signaling_only_lifetime_expired(settings):
 
 def test_websocket_datachannel_signaling_disconnect_api(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -88,12 +87,15 @@ def test_websocket_datachannel_signaling_disconnect_api(settings):
 
 def test_websocket_datachannel_signaling_lifetime_expired(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(audio=True, video=True, connection_lifetime=3),
+        jwt_private_claims={
+            "audio": True,
+            "video": True,
+            "connection_lifetime": 3,
+        },
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -106,12 +108,10 @@ def test_websocket_datachannel_signaling_lifetime_expired(settings):
 
 def test_datachannel_only_signaling_disconnect_api(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:
@@ -144,12 +144,15 @@ def test_datachannel_only_signaling_disconnect_api(settings):
 
 def test_datachannel_only_signaling_lifetime_expired(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(audio=True, video=True, connection_lifetime=3),
+        jwt_private_claims={
+            "audio": True,
+            "video": True,
+            "connection_lifetime": 3,
+        },
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:

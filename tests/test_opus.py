@@ -12,9 +12,8 @@ def test_sendonly_audio_opus_params_16khz_mono(settings):
     SDP では 48000/2 だが、Opus の設定で 16000/1 を配信してみる
     """
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         audio_codec_type="OPUS",
         audio_opus_params={
@@ -26,7 +25,6 @@ def test_sendonly_audio_opus_params_16khz_mono(settings):
             "sprop_stereo": False,
         },
         video=False,
-        metadata=settings.metadata(),
     ) as sendonly:
         time.sleep(5)
 

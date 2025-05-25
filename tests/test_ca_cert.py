@@ -66,12 +66,10 @@ p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD
 
 def test_ca_cert(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         ca_cert=letsencrypt_org_ca_cert,
     ):
         time.sleep(5)
@@ -80,12 +78,10 @@ def test_ca_cert(settings):
 @pytest.mark.xfail(reason="Invalid CA certificate")
 def test_ca_cert_invalid(settings):
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         ca_cert=pki_goog_ca_cert,
     ):
         pass

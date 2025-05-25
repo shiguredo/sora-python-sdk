@@ -6,12 +6,10 @@ def test_signaling_notify(settings):
     2 接続での connection.created と connection.destroyed の通知を確認する
     """
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDRECV,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
     ) as c1:
         # c1 に自分の connection.created が通知される
         notify = c1.wait_notify(lambda notify: notify["event_type"] == "connection.created")
@@ -19,12 +17,10 @@ def test_signaling_notify(settings):
         assert notify["channel_connections"] == 1
 
         with SoraClient(
-            settings.signaling_urls,
+            settings,
             SoraRole.SENDRECV,
-            settings.channel_id,
             audio=True,
             video=True,
-            metadata=settings.metadata(),
         ) as c2:
             # c2 に自分の connection.created が通知される
             notify = c2.wait_notify(lambda notify: notify["event_type"] == "connection.created")

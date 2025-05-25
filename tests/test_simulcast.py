@@ -59,15 +59,13 @@ def test_simulcast(
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=settings.metadata(),
         video_width=video_width,
         video_height=video_height,
     )

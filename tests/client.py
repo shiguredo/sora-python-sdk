@@ -7,6 +7,7 @@ from threading import Event
 from typing import Any, Callable, Optional
 
 import numpy
+from conftest import Settings
 
 import sora_sdk
 from sora_sdk import (
@@ -15,7 +16,6 @@ from sora_sdk import (
     SoraAudioSource,
     SoraConnection,
     SoraDegradationPreference,
-    SoraLoggingSeverity,
     SoraMediaTrack,
     SoraSignalingDirection,
     SoraSignalingErrorCode,
@@ -39,12 +39,12 @@ class SoraRole(Enum):
 class SoraClient:
     def __init__(
         self,
-        signaling_urls: list[str],
+        settings: Settings,
         role: SoraRole,
-        channel_id: str,
         simulcast: Optional[bool] = None,
         spotlight: Optional[bool] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, str] | None = None,
+        jwt_private_claims: dict[str, Any] | None = None,
         audio: Optional[bool] = None,
         audio_codec_type: Optional[str] = None,
         audio_opus_params: Optional[dict[str, Any]] = None,
@@ -56,7 +56,6 @@ class SoraClient:
         data_channels: Optional[list[dict[str, Any]]] = None,
         forwarding_filter: Optional[dict[str, Any]] = None,
         forwarding_filters: Optional[list[dict[str, Any]]] = None,
-        openh264_path: Optional[str] = None,
         client_key: Optional[bytes] = None,
         client_cert: Optional[bytes] = None,
         ca_cert: Optional[bytes] = None,
@@ -69,11 +68,25 @@ class SoraClient:
         audio_output_frequency: int = 16000,
         video_width: int = 640,
         video_height: int = 480,
-        libwebrtc_log: SoraLoggingSeverity | None = None,
     ):
-        self._signaling_urls = signaling_urls
+        self._signaling_urls = settings.signaling_urls
         self._role = role.value
-        self._channel_id = channel_id
+        self._channel_id = settings.channel_id
+
+        if jwt_private_claims is not None:
+            access_token = settings.access_token(**jwt_private_claims)
+        else:
+            access_token = settings.access_token()
+
+        # secret が設定されていない場合は access_token が存在しない
+        if access_token is not None:
+            if metadata is not None:
+                # metadata が設定されている場合は access_token を追加する
+                metadata.update({"access_token": access_token})
+            else:
+                # metadata が設定されていない場合は access_token のみを metadata に設定する
+                metadata = {"access_token": access_token}
+        self._metadata = metadata
 
         self._audio = audio
         self._video = video
@@ -93,11 +106,11 @@ class SoraClient:
         self._video_width: int = video_width
         self._video_height: int = video_height
 
-        if libwebrtc_log is not None:
-            sora_sdk.enable_libwebrtc_log(libwebrtc_log)
+        if settings.libwebrtc_log is not None:
+            sora_sdk.enable_libwebrtc_log(settings.libwebrtc_log)
 
         self._sora: Sora = Sora(
-            openh264=openh264_path, video_codec_preference=video_codec_preference
+            openh264=settings.openh264_path, video_codec_preference=video_codec_preference
         )
 
         self._fake_audio_thread: Optional[threading.Thread] = None
@@ -123,7 +136,7 @@ class SoraClient:
         self._connection: SoraConnection = self._sora.create_connection(
             signaling_urls=self._signaling_urls,
             role=self._role,
-            channel_id=channel_id,
+            channel_id=self._channel_id,
             simulcast=simulcast,
             spotlight=spotlight,
             metadata=metadata,
@@ -247,6 +260,10 @@ class SoraClient:
     @property
     def role(self) -> str:
         return self._role
+
+    @property
+    def metadata(self) -> dict[str, Any] | None:
+        return self._metadata
 
     @property
     def connection_id(self) -> Optional[str]:

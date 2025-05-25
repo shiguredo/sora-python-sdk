@@ -14,10 +14,8 @@ def test_preference_invalid(settings):
     # opneh264 のパスを設定してないのに H264 エンコーダを使おうとしているので Sora 生成時にエラーになる
     with pytest.raises(RuntimeError):
         SoraClient(
-            settings.signaling_urls,
+            settings,
             SoraRole.SENDONLY,
-            settings.channel_id,
-            metadata=settings.metadata(),
             audio=False,
             video=True,
             video_codec_type="H264",
@@ -34,10 +32,8 @@ def test_preference_invalid(settings):
 
 def test_preference_vp8(settings):
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
-        metadata=settings.metadata(),
         audio=False,
         video=True,
         video_codec_type="VP8",

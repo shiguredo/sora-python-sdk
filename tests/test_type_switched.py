@@ -11,12 +11,10 @@ def test_websocket_signaling_only_type_switched(settings):
     """
 
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=False,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -33,12 +31,10 @@ def test_hybrid_signaling_type_switched(settings):
     - type: switched 送られてくる
     """
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=False,
     ) as conn:
@@ -56,12 +52,10 @@ def test_datachannel_signaling_only_type_switched(settings):
     - Python SDK は WebSocket を自分で切断する
     """
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:
@@ -78,12 +72,10 @@ def test_disconnect_before_switched(settings):
     # ignore_disconnect_websocket は true
 
     with SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         audio=True,
         video=True,
-        metadata=settings.metadata(),
         data_channel_signaling=True,
         ignore_disconnect_websocket=True,
     ) as conn:
