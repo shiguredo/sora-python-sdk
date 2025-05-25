@@ -281,9 +281,8 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
     ]
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,

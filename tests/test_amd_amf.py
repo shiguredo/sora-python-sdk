@@ -73,9 +73,8 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
         )
 
     sendonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        settings.channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
@@ -91,9 +90,8 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        settings.signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        settings.channel_id,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
