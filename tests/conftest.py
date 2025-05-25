@@ -10,9 +10,7 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env", env_prefix=".env", env_nested_delimiter="utf-8"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_prefix=".env", env_file_encoding="utf-8")
 
     # TODO: list[WebsocketUrl] 型にする
     signaling_urls: Annotated[list[str], NoDecode] = Field(default=[], alias="TEST_SIGNALING_URLS")
