@@ -22,7 +22,9 @@
   - @voluntas
 - [CHANGE] 依存ライブラリを指定する VERSION ファイルを DEPS に変更する
   - @voluntas
-- [UPDATE] `python-dotenv` を `pydantic-settings` に切り替える
+- [UPDATE] [mypy](https://github.com/python/mypy) から [ty](https://github.com/astral-sh/ty) に切り替える
+  - @voluntas
+- [UPDATE] [python-dotenv](https://github.com/theskumar/python-dotenv) を [pydantic-settings](https://github.com/pydantic/pydantic-settings) に切り替える
   - @voluntas
 
 ## 2025.2.3
