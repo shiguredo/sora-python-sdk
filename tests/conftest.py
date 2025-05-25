@@ -8,6 +8,9 @@ import pytest
 from pydantic import Field, HttpUrl, SecretStr, computed_field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
+# sora_sdk から SoraLoggingSeverity をインポート
+from sora_sdk import SoraLoggingSeverity
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix=".env", env_file_encoding="utf-8")
@@ -19,16 +22,37 @@ class Settings(BaseSettings):
     api_url: HttpUrl | None = Field(default=None, alias="TEST_API_URL")
     # TODO: openh264_path は FilePath 型にする
     openh264_path: str | None = Field(default=None, alias="OPENH264_PATH")
+    libwebrtc_log: SoraLoggingSeverity | None = Field(default=None, alias="TEST_LIBWEBRTC_LOG")
 
     channel_id_suffix: str = Field(default=str(uuid.uuid4()))
 
     @field_validator("signaling_urls", mode="before")
     @classmethod
-    def decode_signaling_urls(cls, v: str) -> list[str]:
+    def validate_signaling_urls(cls, v: str) -> list[str]:
         """
         TEST_SIGNALING_URLS が , で区切られている場合、それぞれの URL をリストに変換する
         """
         return [x.strip() for x in v.split(",")]
+
+    @field_validator("libwebrtc_log", mode="before")
+    @classmethod
+    def validate_libwebrtc_log(cls, v: str) -> SoraLoggingSeverity | None:
+        match v.lower():
+            case None:
+                return None
+            case "verbose":
+                return SoraLoggingSeverity.VERBOSE
+            case "info":
+                return SoraLoggingSeverity.INFO
+            case "warning":
+                return SoraLoggingSeverity.WARNING
+            case "error":
+                return SoraLoggingSeverity.ERROR
+            case "none":
+                return SoraLoggingSeverity.NONE
+            case _:
+                # TODO: 道の値が設定されてたらエラーにした方がいい気がする
+                return None
 
     @computed_field
     @property
