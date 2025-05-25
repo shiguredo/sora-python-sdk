@@ -33,6 +33,7 @@ class Settings(BaseSettings):
         return [x.strip() for x in v.split(",")]
 
     @computed_field
+    @property
     def channel_id(self) -> str:
         """
         TEST_CHANNEL_ID_PREFIX と TEST_CHANNEL_ID_SUFFIX を組み合わせて channel_id を生成する
