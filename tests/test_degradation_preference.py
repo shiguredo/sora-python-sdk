@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import uuid
 
 import pytest
 from client import SoraClient, SoraDegradationPreference, SoraRole
@@ -16,22 +15,14 @@ VIDEO_HEIGHT = 528
     os.getenv("CI") == "true" and sys.platform == "darwin",
     reason="CI の macOS では性能がでないためスキップする",
 )
-def test_degradation_preference_maintain_framerate(setup):
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
+def test_degradation_preference_maintain_framerate(settings):
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=False,
         video=True,
         video_codec_type=VIDEO_CODEC_TYPE,
         video_bit_rate=VIDEO_BIT_RATE,
-        metadata=metadata,
         video_width=VIDEO_WIDTH,
         video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.MAINTAIN_FRAMERATE,
@@ -71,25 +62,17 @@ def test_degradation_preference_maintain_framerate(setup):
     os.getenv("CI") == "true" and sys.platform == "darwin",
     reason="CI の macOS では性能がでないためスキップする",
 )
-def test_degradation_preference_maintain_resolution(setup):
+def test_degradation_preference_maintain_resolution(settings):
     """
     フレームレートがあまり変わらない
     """
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=False,
         video=True,
         video_codec_type=VIDEO_CODEC_TYPE,
         video_bit_rate=VIDEO_BIT_RATE,
-        metadata=metadata,
         video_width=VIDEO_WIDTH,
         video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.MAINTAIN_RESOLUTION,
@@ -128,25 +111,17 @@ def test_degradation_preference_maintain_resolution(setup):
     os.getenv("CI") == "true" and sys.platform == "darwin",
     reason="CI の macOS では性能がでないためスキップする",
 )
-def test_degradation_preference_balanced(setup):
+def test_degradation_preference_balanced(settings):
     """
     バランス思った以上に両方悪くなる
     """
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=False,
         video=True,
         video_codec_type=VIDEO_CODEC_TYPE,
         video_bit_rate=VIDEO_BIT_RATE,
-        metadata=metadata,
         video_width=VIDEO_WIDTH,
         video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.BALANCED,
@@ -186,25 +161,17 @@ def test_degradation_preference_balanced(setup):
     os.getenv("CI") == "true" and sys.platform == "darwin",
     reason="CI の macOS では性能がでないためスキップする",
 )
-def test_degradation_preference_disabled(setup):
+def test_degradation_preference_disabled(settings):
     """
     無効にする
     """
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=False,
         video=True,
         video_codec_type=VIDEO_CODEC_TYPE,
         video_bit_rate=VIDEO_BIT_RATE,
-        metadata=metadata,
         video_width=VIDEO_WIDTH,
         video_height=VIDEO_HEIGHT,
         degradation_preference=SoraDegradationPreference.DISABLED,

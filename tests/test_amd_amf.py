@@ -1,7 +1,5 @@
 import os
-import sys
 import time
-import uuid
 
 import pytest
 from client import (
@@ -21,7 +19,7 @@ from sora_sdk import (
 
 
 @pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
-def test_amd_amf_available(setup):
+def test_amd_amf_available(settings):
     capability = get_video_codec_capability()
 
     amd_amf_available = False
@@ -68,26 +66,18 @@ def test_amd_amf_available(setup):
         "H265",
     ],
 )
-def test_amd_amf_sendonly_recvonly(setup, video_codec_type):
+def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
     if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.AMD_AMF):
         pytest.skip(
             f"このチップでは {video_codec_type} のエンコード/デコードの両方がサポートされていません"
         )
 
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
-        metadata=metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -100,10 +90,8 @@ def test_amd_amf_sendonly_recvonly(setup, video_codec_type):
     sendonly.connect(fake_video=True)
 
     recvonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.RECVONLY,
-        channel_id,
-        metadata=metadata,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -197,7 +185,7 @@ def test_amd_amf_sendonly_recvonly(setup, video_codec_type):
     ],
 )
 def test_amd_amf_simulcast(
-    setup,
+    settings,
     video_codec_type,
     expected_implementation,
     video_width,
@@ -207,24 +195,16 @@ def test_amd_amf_simulcast(
     if not is_codec_supported(video_codec_type, SoraVideoCodecImplementation.AMD_AMF):
         pytest.skip(f"このチップでは {video_codec_type} のエンコードがサポートされていません")
 
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    metadata = setup.get("metadata")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
     video_bit_rate = default_video_bit_rate(video_codec_type, video_width, video_height)
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         simulcast=True,
         audio=False,
         video=True,
         video_codec_type=video_codec_type,
         video_bit_rate=video_bit_rate,
-        metadata=metadata,
         video_width=video_width,
         video_height=video_height,
         video_codec_preference=SoraVideoCodecPreference(
