@@ -11,7 +11,11 @@
 
 ## develop
 
-- [ADD] WebSocket 接続時に User Agent を上書きする機能を追加
+- [UPDATE] Sora C++ SDK のバージョンを `2025.4.0-canary.0` に上げる
+  - @melpon
+- [ADD] WebSocket 接続時に User Agent を上書きする機能を追加する
+  - @melpon
+- [ADD] `on_rpc` コールバック関数を追加する
   - @melpon
 - [FIX] pyi ファイルをバージョン毎に生成していなかった問題を修正する
   - @voluntas
