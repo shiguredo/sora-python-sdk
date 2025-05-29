@@ -128,6 +128,7 @@ class SoraConnection : public DisposePublisher,
   void OnNotify(std::string text);
   void OnPush(std::string text);
   void OnMessage(std::string label, std::string data);
+  void OnRpc(std::string data);
   void OnSwitched(std::string text);
   void OnSignalingMessage(sora::SoraSignalingType type,
                           sora::SoraSignalingDirection direction,
@@ -147,6 +148,7 @@ class SoraConnection : public DisposePublisher,
   std::function<void(std::string)> on_notify_;
   std::function<void(std::string)> on_push_;
   std::function<void(std::string, nb::bytes)> on_message_;
+  std::function<void(nb::bytes)> on_rpc_;
   std::function<void(std::string)> on_switched_;
   std::function<void(nb::ref<SoraMediaTrack>)> on_track_;
   std::function<void(std::string)> on_data_channel_;
@@ -188,6 +190,7 @@ class SoraSignalingObserver : public sora::SoraSignalingObserver {
   void OnMessage(std::string label, std::string data) override {
     conn->OnMessage(std::move(label), std::move(data));
   }
+  void OnRpc(std::string data) override { conn->OnRpc(std::move(data)); }
   void OnSwitched(std::string text) override {
     conn->OnSwitched(std::move(text));
   }
