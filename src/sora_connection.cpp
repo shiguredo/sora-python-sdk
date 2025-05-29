@@ -218,6 +218,13 @@ void SoraConnection::OnMessage(std::string label, std::string data) {
   }
 }
 
+void SoraConnection::OnRpc(std::string data) {
+  gil_scoped_acquire acq;
+  if (on_rpc_) {
+    call_python(on_rpc_, nb::bytes(data.c_str(), data.size()));
+  }
+}
+
 void SoraConnection::OnSwitched(std::string text) {
   gil_scoped_acquire acq;
   if (on_switched_) {
