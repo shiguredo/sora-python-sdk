@@ -3,7 +3,7 @@
 
 #include "sora.h"
 
-void EnableLibwebrtcLog(rtc::LoggingSeverity severity);
-void RtcLog(rtc::LoggingSeverity severity, const std::string& message);
+void EnableLibwebrtcLog(webrtc::LoggingSeverity severity);
+void RtcLog(webrtc::LoggingSeverity severity, const std::string& message);
 
 #endif

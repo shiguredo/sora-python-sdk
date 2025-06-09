@@ -28,7 +28,7 @@ namespace nb = nanobind;
  */
 class SoraVideoFrame {
  public:
-  SoraVideoFrame(rtc::scoped_refptr<webrtc::I420BufferInterface> i420_data);
+  SoraVideoFrame(webrtc::scoped_refptr<webrtc::I420BufferInterface> i420_data);
 
   /**
    * SoraVideoFrame 内のフレームデータへの numpy.ndarray での参照を渡します。
@@ -51,7 +51,7 @@ class SoraVideoFrame {
  * 実装上の留意点：Track の参照保持のための Impl のない SoraVideoSink を __init__.py に定義しています。
  * SoraVideoSinkImpl を直接 Python から呼び出すことは想定していません。
  */
-class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
+class SoraVideoSinkImpl : public webrtc::VideoSinkInterface<webrtc::VideoFrame>,
                           public DisposeSubscriber {
  public:
   /**
@@ -68,7 +68,7 @@ class SoraVideoSinkImpl : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   /**
    * VideoTrack からフレームデータが来るたびに呼び出される関数です。
    * 
-   * 継承している rtc::VideoSinkInterface で定義されています。
+   * 継承している webrtc::VideoSinkInterface で定義されています。
    * 
    * @param frame VideoTrack から渡されるフレームデータ
    */

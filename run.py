@@ -267,8 +267,8 @@ def main():
             if platform.build.arch == "armv8":
                 # ビルド環境が armv8 の場合は libwebrtc のバイナリが使えないのでローカルの clang を利用する
                 cmake_args += [
-                    "-DCMAKE_C_COMPILER=clang-18",
-                    "-DCMAKE_CXX_COMPILER=clang++-18",
+                    "-DCMAKE_C_COMPILER=clang-19",
+                    "-DCMAKE_CXX_COMPILER=clang++-19",
                 ]
             else:
                 cmake_args += [

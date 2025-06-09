@@ -40,6 +40,17 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
                     int output_sample_rate,
                     size_t output_channels);
   ~SoraAudioSinkImpl();
+  
+  // コピーコンストラクタとコピー代入演算子を削除
+  // このクラスは WebRTC のオーディオトラックに唯一のシンクとして登録され、
+  // 内部バッファやミューテックスなどの同期リソースを管理しているため、
+  // コピーやムーブを禁止して所有権を明確にしている
+  SoraAudioSinkImpl(const SoraAudioSinkImpl&) = delete;
+  SoraAudioSinkImpl& operator=(const SoraAudioSinkImpl&) = delete;
+  
+  // ムーブコンストラクタとムーブ代入演算子を削除
+  SoraAudioSinkImpl(SoraAudioSinkImpl&&) = delete;
+  SoraAudioSinkImpl& operator=(SoraAudioSinkImpl&&) = delete;
 
   void Del();
   void Disposed();
@@ -82,7 +93,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
   webrtc::acm2::ACMResampler resampler_;
   std::mutex buffer_mtx_;
   std::condition_variable buffer_cond_;
-  rtc::BufferT<int16_t> buffer_;
+  webrtc::BufferT<int16_t> buffer_;
   int sample_rate_;
   size_t number_of_channels_;
 };

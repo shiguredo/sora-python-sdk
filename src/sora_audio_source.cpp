@@ -128,8 +128,8 @@ void SoraAudioSourceInterface::Add10MsData(const int16_t* data,
 
 SoraAudioSource::SoraAudioSource(
     DisposePublisher* publisher,
-    rtc::scoped_refptr<SoraAudioSourceInterface> source,
-    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+    webrtc::scoped_refptr<SoraAudioSourceInterface> source,
+    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
     size_t channels,
     int sample_rate)
     : SoraTrackInterface(publisher, track), source_(source) {

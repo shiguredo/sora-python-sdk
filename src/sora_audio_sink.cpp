@@ -118,7 +118,7 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
     }
 
     const size_t num_elements = number_of_channels_ * number_of_frames;
-    buffer_.AppendData(num_elements, [&](rtc::ArrayView<int16_t> buf) {
+    buffer_.AppendData(num_elements, [&](webrtc::ArrayView<int16_t> buf) {
       memcpy(buf.data(), audio_data, num_elements * sizeof(int16_t));
       return num_elements;
     });
