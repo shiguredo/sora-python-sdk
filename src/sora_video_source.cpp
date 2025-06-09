@@ -9,8 +9,8 @@
 
 SoraVideoSource::SoraVideoSource(
     DisposePublisher* publisher,
-    rtc::scoped_refptr<sora::ScalableVideoTrackSource> source,
-    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track)
+    webrtc::scoped_refptr<sora::ScalableVideoTrackSource> source,
+    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track)
     : SoraTrackInterface(publisher, track), source_(source), finished_(false) {
   publisher_->AddSubscriber(this);
   thread_.reset(new std::thread([this]() {
@@ -33,7 +33,7 @@ SoraVideoSource::~SoraVideoSource() {
 void SoraVideoSource::OnCaptured(
     nb::ndarray<uint8_t, nb::shape<-1, -1, 3>, nb::c_contig, nb::device::cpu>
         ndarray) {
-  OnCaptured(ndarray, rtc::TimeMicros());
+  OnCaptured(ndarray, webrtc::TimeMicros());
 }
 
 void SoraVideoSource::OnCaptured(
@@ -82,7 +82,7 @@ bool SoraVideoSource::SendFrame(const uint8_t* argb_data,
                                 const int width,
                                 const int height,
                                 const int64_t timestamp_us) {
-  rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer(
+  webrtc::scoped_refptr<webrtc::I420Buffer> i420_buffer(
       webrtc::I420Buffer::Create(width, height));
   i420_buffer->InitializeData();
   int ret = libyuv::ConvertToI420(

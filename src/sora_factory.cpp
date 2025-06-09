@@ -64,22 +64,22 @@ SoraFactory::SoraFactory(
   }
 }
 
-rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
+webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
 SoraFactory::GetPeerConnectionFactory() const {
   return context_->peer_connection_factory();
 };
 
-rtc::scoped_refptr<webrtc::ConnectionContext>
+webrtc::scoped_refptr<webrtc::ConnectionContext>
 SoraFactory::GetConnectionContext() const {
   return context_->connection_context();
 };
 
-rtc::NetworkManager* SoraFactory::default_network_manager() {
+webrtc::NetworkManager* SoraFactory::default_network_manager() {
   return context_->signaling_thread()->BlockingCall([this]() {
     return context_->connection_context()->default_network_manager();
   });
 }
-rtc::PacketSocketFactory* SoraFactory::default_socket_factory() {
+webrtc::PacketSocketFactory* SoraFactory::default_socket_factory() {
   return context_->signaling_thread()->BlockingCall([this]() {
     return context_->connection_context()->default_socket_factory();
   });

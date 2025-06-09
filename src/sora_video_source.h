@@ -33,8 +33,8 @@ namespace nb = nanobind;
 class SoraVideoSource : public SoraTrackInterface {
  public:
   SoraVideoSource(DisposePublisher* publisher,
-                  rtc::scoped_refptr<sora::ScalableVideoTrackSource> source,
-                  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track);
+                  webrtc::scoped_refptr<sora::ScalableVideoTrackSource> source,
+                  webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track);
   ~SoraVideoSource();
 
   /**
@@ -97,7 +97,7 @@ class SoraVideoSource : public SoraTrackInterface {
                  const int64_t timestamp_us);
 
   const int kMsToRtpTimestamp = 90;
-  rtc::scoped_refptr<sora::ScalableVideoTrackSource> source_;
+  webrtc::scoped_refptr<sora::ScalableVideoTrackSource> source_;
   std::unique_ptr<std::thread> thread_;
   std::condition_variable_any queue_cond_;
   std::queue<std::unique_ptr<Frame>> queue_;

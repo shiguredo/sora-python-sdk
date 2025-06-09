@@ -290,7 +290,7 @@ int32_t DynamicH264Encoder::InitEncode(const VideoCodec* inst,
 
     // Create downscaled image buffers.
     if (i > 0) {
-      downscaled_buffers_[i - 1] = I420Buffer::Create(
+      downscaled_buffers_[i - 1] = webrtc::I420Buffer::Create(
           configurations_[i].width, configurations_[i].height,
           configurations_[i].width, configurations_[i].width / 2,
           configurations_[i].width / 2);
@@ -432,7 +432,7 @@ int32_t DynamicH264Encoder::Encode(
     return WEBRTC_VIDEO_CODEC_UNINITIALIZED;
   }
 
-  rtc::scoped_refptr<I420BufferInterface> frame_buffer =
+  webrtc::scoped_refptr<I420BufferInterface> frame_buffer =
       input_frame.video_frame_buffer()->ToI420();
   if (!frame_buffer) {
     RTC_LOG(LS_ERROR) << "Failed to convert "

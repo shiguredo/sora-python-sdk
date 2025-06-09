@@ -110,7 +110,7 @@ class DynamicH264Encoder : public VideoEncoder {
 
   std::vector<ISVCEncoder*> encoders_;
   std::vector<SSourcePicture> pictures_;
-  std::vector<rtc::scoped_refptr<I420Buffer>> downscaled_buffers_;
+  std::vector<webrtc::scoped_refptr<I420Buffer>> downscaled_buffers_;
   std::vector<LayerConfig> configurations_;
   std::vector<EncodedImage> encoded_images_;
   std::vector<std::unique_ptr<ScalableVideoController>> svc_controllers_;

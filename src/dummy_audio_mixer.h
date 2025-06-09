@@ -28,7 +28,7 @@
 class DummyAudioMixer : public webrtc::AudioMixer {
  public:
   struct SourceStatus;
-  static rtc::scoped_refptr<DummyAudioMixer> Create(
+  static webrtc::scoped_refptr<DummyAudioMixer> Create(
       webrtc::TaskQueueFactory* task_queue_factory);
   ~DummyAudioMixer();
 

@@ -231,9 +231,9 @@ nb::ref<SoraConnection> Sora::CreateConnection(
 nb::ref<SoraAudioSource> Sora::CreateAudioSource(size_t channels,
                                                  int sample_rate) {
   auto source =
-      rtc::make_ref_counted<SoraAudioSourceInterface>(channels, sample_rate);
+      webrtc::make_ref_counted<SoraAudioSourceInterface>(channels, sample_rate);
 
-  std::string track_id = rtc::CreateRandomString(16);
+  std::string track_id = webrtc::CreateRandomString(16);
   auto track = factory_->GetPeerConnectionFactory()->CreateAudioTrack(
       track_id, source.get());
   nb::ref<SoraAudioSource> audio_source =
@@ -243,9 +243,9 @@ nb::ref<SoraAudioSource> Sora::CreateAudioSource(size_t channels,
 
 nb::ref<SoraVideoSource> Sora::CreateVideoSource() {
   sora::ScalableVideoTrackSourceConfig config;
-  auto source = rtc::make_ref_counted<sora::ScalableVideoTrackSource>(config);
+  auto source = webrtc::make_ref_counted<sora::ScalableVideoTrackSource>(config);
 
-  std::string track_id = rtc::CreateRandomString(16);
+  std::string track_id = webrtc::CreateRandomString(16);
   auto track =
       factory_->GetPeerConnectionFactory()->CreateVideoTrack(source, track_id);
 

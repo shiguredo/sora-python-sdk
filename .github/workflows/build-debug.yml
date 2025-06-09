@@ -82,10 +82,10 @@ jobs:
 
       - name: Setup common
         run: |
-          # clang-18
+          # clang-19
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
-          sudo ./llvm.sh 18
+          sudo ./llvm.sh 19
 
       - uses: actions/checkout@v4
         with:

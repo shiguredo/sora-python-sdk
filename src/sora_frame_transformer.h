@@ -65,12 +65,12 @@ class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
   // webrtc::TransformedFrameCallback を渡してくる関数が Audio と Video で異なる
   // Audio はこっち
   void RegisterTransformedFrameCallback(
-      rtc::scoped_refptr<webrtc::TransformedFrameCallback> callback) override {
+      webrtc::scoped_refptr<webrtc::TransformedFrameCallback> callback) override {
     default_callback_ = callback;
   }
   // Video はこっち
   void RegisterTransformedFrameSinkCallback(
-      rtc::scoped_refptr<webrtc::TransformedFrameCallback> callback,
+      webrtc::scoped_refptr<webrtc::TransformedFrameCallback> callback,
       uint32_t ssrc) override {
     callbacks_[ssrc] = callback;
   }
@@ -85,9 +85,9 @@ class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
 
  private:
   SoraTransformFrameCallback* transformer_;
-  rtc::scoped_refptr<webrtc::TransformedFrameCallback> default_callback_;
+  webrtc::scoped_refptr<webrtc::TransformedFrameCallback> default_callback_;
   std::unordered_map<uint32_t,
-                     rtc::scoped_refptr<webrtc::TransformedFrameCallback>>
+                     webrtc::scoped_refptr<webrtc::TransformedFrameCallback>>
       callbacks_;
 };
 
@@ -133,7 +133,7 @@ class SoraTransformableFrame {
   void SetData(
       nb::ndarray<const uint8_t, nb::shape<-1>, nb::c_contig, nb::device::cpu>
           data) {
-    frame_->SetData(rtc::ArrayView<const uint8_t>(data.data(), data.shape(0)));
+    frame_->SetData(webrtc::ArrayView<const uint8_t>(data.data(), data.shape(0)));
   }
   const uint8_t GetPayloadType() const { return frame_->GetPayloadType(); }
   const uint32_t GetSsrc() const { return frame_->GetSsrc(); }
@@ -146,7 +146,7 @@ class SoraTransformableFrame {
   }
   std::optional<int64_t> GetCaptureTimeIdentifier() const {
     // Audio, Video, Direction によっては実装されていないため optional
-    auto opt = frame_->GetCaptureTimeIdentifier();
+    auto opt = frame_->GetPresentationTimestamp();
     return opt.has_value() ? std::optional<int64_t>(opt->us()) : std::nullopt;
   }
   webrtc::TransformableFrameInterface::Direction GetDirection() {
@@ -166,7 +166,7 @@ class SoraTransformableFrame {
 class SoraFrameTransformer : public SoraTransformFrameCallback {
  public:
   SoraFrameTransformer() {
-    interface_ = rtc::make_ref_counted<SoraFrameTransformerInterface>(this);
+    interface_ = webrtc::make_ref_counted<SoraFrameTransformerInterface>(this);
   }
   virtual ~SoraFrameTransformer() { Del(); }
 
@@ -186,15 +186,15 @@ class SoraFrameTransformer : public SoraTransformFrameCallback {
   /**
    * SoraFrameTransformerInterface を取り出すため Python SDK 内で使う関数です。
    * 
-   * @return rtc::scoped_refptr<SoraFrameTransformerInterface>
+   * @return webrtc::scoped_refptr<SoraFrameTransformerInterface>
    */
-  const rtc::scoped_refptr<SoraFrameTransformerInterface>
+  const webrtc::scoped_refptr<SoraFrameTransformerInterface>
   GetFrameTransformerInterface() const {
     return interface_;
   }
 
  private:
-  rtc::scoped_refptr<SoraFrameTransformerInterface> interface_;
+  webrtc::scoped_refptr<SoraFrameTransformerInterface> interface_;
 };
 
 /**

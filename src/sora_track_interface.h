@@ -19,7 +19,7 @@ class SoraTrackInterface : public CountedPublisher, public DisposeSubscriber {
  public:
   SoraTrackInterface(
       DisposePublisher* publisher,
-      rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track)
+      webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track)
       : publisher_(publisher), track_(track) {}
   virtual ~SoraTrackInterface() {
     if (publisher_) {
@@ -44,9 +44,9 @@ class SoraTrackInterface : public CountedPublisher, public DisposeSubscriber {
   /**
    * webrtc::MediaStreamTrackInterface の実体を取り出すため Python SDK 内で使う関数です。
    * 
-   * @return rtc::scoped_refptr<webrtc::MediaStreamTrackInterface>
+   * @return webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>
    */
-  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> GetTrack() {
+  webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> GetTrack() {
     return track_;
   }
 
@@ -62,7 +62,7 @@ class SoraTrackInterface : public CountedPublisher, public DisposeSubscriber {
 
  protected:
   DisposePublisher* publisher_;
-  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track_;
+  webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track_;
 };
 
 /**
@@ -73,7 +73,7 @@ class SoraTrackInterface : public CountedPublisher, public DisposeSubscriber {
 class SoraMediaTrack : public SoraTrackInterface {
  public:
   SoraMediaTrack(DisposePublisher* publisher,
-                 rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver)
+                 webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver)
       : SoraTrackInterface(publisher, receiver->track()), receiver_(receiver) {}
   ~SoraMediaTrack() override {
     // Disposed() は SoraTrackInterface で呼ばれるため、ここでは SoraMediaTrack 分のみ処理する
@@ -106,6 +106,6 @@ class SoraMediaTrack : public SoraTrackInterface {
   }
 
  private:
-  rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver_;
+  webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver_;
 };
 #endif

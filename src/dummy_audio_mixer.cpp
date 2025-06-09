@@ -9,9 +9,9 @@ struct DummyAudioMixer::SourceStatus {
   webrtc::AudioFrame audio_frame;
 };
 
-rtc::scoped_refptr<DummyAudioMixer> DummyAudioMixer::Create(
+webrtc::scoped_refptr<DummyAudioMixer> DummyAudioMixer::Create(
     webrtc::TaskQueueFactory* task_queue_factory) {
-  return rtc::make_ref_counted<DummyAudioMixer>(task_queue_factory);
+  return webrtc::make_ref_counted<DummyAudioMixer>(task_queue_factory);
 }
 
 void DummyAudioMixer::Mix(size_t number_of_channels,
