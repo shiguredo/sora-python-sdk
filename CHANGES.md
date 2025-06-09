@@ -15,6 +15,9 @@
   - WEBRTC_BUILD_VERSION を `m137.7151.3.0` に上げる
   - CMAKE_VERSION を `4.0.2` に上げる
   - @melpon
+- [UPDATE] Ubuntu arm64 では Clang 19 に上げる
+  - libwebrtc m137 を上げたことで clang 18 ではビルドが通らなくなったため
+  - @voluntas
 - [ADD] WebSocket 接続時に User Agent を上書きする機能を追加する
   - @melpon
 - [ADD] `on_rpc` コールバック関数を追加する
