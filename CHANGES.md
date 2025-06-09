@@ -11,7 +11,9 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを `2025.4.0-canary.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.4.0-canary.1` に上げる
+  - WEBRTC_BUILD_VERSION を `m137.7151.3.0` に上げる
+  - CMAKE_VERSION を `4.0.2` に上げる
   - @melpon
 - [ADD] WebSocket 接続時に User Agent を上書きする機能を追加する
   - @melpon
