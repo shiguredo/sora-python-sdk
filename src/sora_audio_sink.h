@@ -41,11 +41,14 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
                     size_t output_channels);
   ~SoraAudioSinkImpl();
   
-  // Delete copy constructor and copy assignment operator
+  // コピーコンストラクタとコピー代入演算子を削除
+  // このクラスは WebRTC のオーディオトラックに唯一のシンクとして登録され、
+  // 内部バッファやミューテックスなどの同期リソースを管理しているため、
+  // コピーやムーブを禁止して所有権を明確にしている
   SoraAudioSinkImpl(const SoraAudioSinkImpl&) = delete;
   SoraAudioSinkImpl& operator=(const SoraAudioSinkImpl&) = delete;
   
-  // Delete move constructor and move assignment operator
+  // ムーブコンストラクタとムーブ代入演算子を削除
   SoraAudioSinkImpl(SoraAudioSinkImpl&&) = delete;
   SoraAudioSinkImpl& operator=(SoraAudioSinkImpl&&) = delete;
 
