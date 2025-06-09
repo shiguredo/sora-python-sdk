@@ -40,6 +40,14 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
                     int output_sample_rate,
                     size_t output_channels);
   ~SoraAudioSinkImpl();
+  
+  // Delete copy constructor and copy assignment operator
+  SoraAudioSinkImpl(const SoraAudioSinkImpl&) = delete;
+  SoraAudioSinkImpl& operator=(const SoraAudioSinkImpl&) = delete;
+  
+  // Delete move constructor and move assignment operator
+  SoraAudioSinkImpl(SoraAudioSinkImpl&&) = delete;
+  SoraAudioSinkImpl& operator=(SoraAudioSinkImpl&&) = delete;
 
   void Del();
   void Disposed();
@@ -82,7 +90,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
   webrtc::acm2::ACMResampler resampler_;
   std::mutex buffer_mtx_;
   std::condition_variable buffer_cond_;
-  rtc::BufferT<int16_t> buffer_;
+  webrtc::BufferT<int16_t> buffer_;
   int sample_rate_;
   size_t number_of_channels_;
 };

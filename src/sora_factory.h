@@ -19,11 +19,11 @@ class SoraFactory {
   SoraFactory(std::optional<std::string> openh264,
               std::optional<sora::VideoCodecPreference> video_codec_preference);
 
-  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
+  webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
   GetPeerConnectionFactory() const;
-  rtc::scoped_refptr<webrtc::ConnectionContext> GetConnectionContext() const;
-  rtc::NetworkManager* default_network_manager();
-  rtc::PacketSocketFactory* default_socket_factory();
+  webrtc::scoped_refptr<webrtc::ConnectionContext> GetConnectionContext() const;
+  webrtc::NetworkManager* default_network_manager();
+  webrtc::PacketSocketFactory* default_socket_factory();
 
  private:
   std::shared_ptr<sora::SoraClientContext> context_;

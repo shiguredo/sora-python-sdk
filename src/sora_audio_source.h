@@ -71,8 +71,8 @@ class SoraAudioSourceInterface
 class SoraAudioSource : public SoraTrackInterface {
  public:
   SoraAudioSource(DisposePublisher* publisher,
-                  rtc::scoped_refptr<SoraAudioSourceInterface> source,
-                  rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+                  webrtc::scoped_refptr<SoraAudioSourceInterface> source,
+                  webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
                   size_t channels,
                   int sample_rate);
 
@@ -117,7 +117,7 @@ class SoraAudioSource : public SoraTrackInterface {
           ndarray);
 
  private:
-  rtc::scoped_refptr<SoraAudioSourceInterface> source_;
+  webrtc::scoped_refptr<SoraAudioSourceInterface> source_;
 };
 
 #endif

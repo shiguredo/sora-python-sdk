@@ -134,8 +134,8 @@ class SoraConnection : public DisposePublisher,
                           sora::SoraSignalingDirection direction,
                           std::string message);
   void OnWsClose(uint16_t code, std::string message);
-  void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver);
-  void OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver);
+  void OnTrack(webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver);
+  void OnRemoveTrack(webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver);
   void OnDataChannel(std::string label);
 
   // sora::SoraSignalingObserver のコールバック関数が呼び出された時に対応して呼び出す Python の関数を保持する
@@ -160,11 +160,11 @@ class SoraConnection : public DisposePublisher,
   std::shared_ptr<sora::SoraSignaling> conn_;
   nb::ref<SoraTrackInterface> audio_source_ = nullptr;
   nb::ref<SoraTrackInterface> video_source_ = nullptr;
-  rtc::scoped_refptr<webrtc::RtpSenderInterface> audio_sender_;
-  rtc::scoped_refptr<webrtc::RtpSenderInterface> video_sender_;
-  rtc::scoped_refptr<SoraFrameTransformerInterface>
+  webrtc::scoped_refptr<webrtc::RtpSenderInterface> audio_sender_;
+  webrtc::scoped_refptr<webrtc::RtpSenderInterface> video_sender_;
+  webrtc::scoped_refptr<SoraFrameTransformerInterface>
       audio_sender_frame_transformer_;
-  rtc::scoped_refptr<SoraFrameTransformerInterface>
+  webrtc::scoped_refptr<SoraFrameTransformerInterface>
       video_sender_frame_transformer_;
   bool on_disconnected_ = false;
   std::condition_variable_any on_disconnect_cv_;
@@ -202,12 +202,12 @@ class SoraSignalingObserver : public sora::SoraSignalingObserver {
   void OnWsClose(uint16_t code, std::string message) override {
     conn->OnWsClose(code, std::move(message));
   }
-  void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver)
+  void OnTrack(webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver)
       override {
     conn->OnTrack(transceiver);
   }
   void OnRemoveTrack(
-      rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override {
+      webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override {
     conn->OnRemoveTrack(receiver);
   }
   void OnDataChannel(std::string label) override {

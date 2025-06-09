@@ -150,7 +150,7 @@ std::string SoraConnection::GetStats() {
   gil_scoped_release release;
   pc->GetStats(
       sora::RTCStatsCallback::Create(
-          [&](const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
+          [&](const webrtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
             stats.set_value(report->ToJson());
           })
           .get());
@@ -159,9 +159,9 @@ std::string SoraConnection::GetStats() {
 
 void SoraConnection::OnSetOffer(std::string offer) {
   gil_scoped_acquire acq;
-  std::string stream_id = rtc::CreateRandomString(16);
+  std::string stream_id = webrtc::CreateRandomString(16);
   if (audio_source_) {
-    webrtc::RTCErrorOr<rtc::scoped_refptr<webrtc::RtpSenderInterface>>
+    webrtc::RTCErrorOr<webrtc::scoped_refptr<webrtc::RtpSenderInterface>>
         audio_result = conn_->GetPeerConnection()->AddTrack(
             audio_source_->GetTrack(), {stream_id});
     if (audio_result.ok()) {
@@ -173,7 +173,7 @@ void SoraConnection::OnSetOffer(std::string offer) {
     }
   }
   if (video_source_) {
-    webrtc::RTCErrorOr<rtc::scoped_refptr<webrtc::RtpSenderInterface>>
+    webrtc::RTCErrorOr<webrtc::scoped_refptr<webrtc::RtpSenderInterface>>
         video_result = conn_->GetPeerConnection()->AddTrack(
             video_source_->GetTrack(), {stream_id});
     if (video_result.ok()) {
@@ -249,7 +249,7 @@ void SoraConnection::OnWsClose(uint16_t code, std::string message) {
 }
 
 void SoraConnection::OnTrack(
-    rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+    webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   gil_scoped_acquire acq;
   if (on_track_) {
     auto receiver = transceiver->receiver();
@@ -259,7 +259,7 @@ void SoraConnection::OnTrack(
 }
 
 void SoraConnection::OnRemoveTrack(
-    rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+    webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
   gil_scoped_acquire acq;
   // TODO(tnoho): 要実装
 }
