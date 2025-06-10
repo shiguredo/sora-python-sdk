@@ -401,11 +401,28 @@ jobs:
           cat package_paths.env >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         id: env
+      - name: Release (Prerelease)
+        if: contains(github.ref, 'dev')
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "${{ github.ref_name }}" \
+            --prerelease \
+            $(cat package_paths.env)
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ${{ steps.env.outputs.package_paths }}
-          prerelease: ${{ contains(github.ref, 'dev') }}
+        if: ${{ !contains(github.ref, 'dev') }}
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "${{ github.ref_name }}" \
+            $(cat package_paths.env)
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Verify Release Creation
+        run: |
+          gh release view ${{ github.ref_name }} --json url
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
