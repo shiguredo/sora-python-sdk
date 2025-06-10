@@ -27,6 +27,8 @@
 
 ### misc
 
+- [CHANGE] GitHub Actions 経由のリリースを gh コマンドに切り替える
+  - @voluntas
 - [CHANGE] VERSION ファイルを SDK のバージョンのみにする
   - @voluntas
 - [CHANGE] 依存ライブラリを指定する VERSION ファイルを DEPS に変更する
