@@ -283,6 +283,8 @@ def main():
             if platform.build.arch != platform.target.arch:
                 sysroot = os.path.join(install_dir, "rootfs")
                 nb_cmake_dir = cmdcap(["uv", "run", "python", "-m", "nanobind", "--cmake_dir"])
+                python_version = get_python_version()
+                python_version_short = f"{python_version.split('.')[0]}.{python_version.split('.')[1]}"
                 cmake_args += [
                     "-DCMAKE_SYSTEM_NAME=Linux",
                     "-DCMAKE_SYSTEM_PROCESSOR=aarch64",
@@ -293,10 +295,10 @@ def main():
                     "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH",
                     "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH",
                     "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
-                    f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.12'))}",
+                    f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', f'python{python_version_short}'))}",
                     f"-DCMAKE_SYSROOT={sysroot}",
                     f"-DNB_CMAKE_DIR={nb_cmake_dir}",
-                    "-DNB_SUFFIX=.cpython-312-aarch64-linux-gnu.so",
+                    f"-DNB_SUFFIX=.cpython-{python_version_short.replace('.', '')}-aarch64-linux-gnu.so",
                 ]
         elif platform.target.os == "macos":
             sysroot = cmdcap(["xcrun", "--sdk", "macosx", "--show-sdk-path"])
