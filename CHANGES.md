@@ -24,6 +24,10 @@
   - @melpon
 - [FIX] pyi ファイルをバージョン毎に生成していなかった問題を修正する
   - @voluntas
+- [FIX] Ubuntu 24.04 arm64 のクロスコンパイル時に Python 3.11 と Python 3.13 でビルドが失敗する問題を修正する
+  - run.py でハードコードされていた `python3.12` を動的にバージョンを取得するように修正
+  - CMakeLists.txt でクロスコンパイル時の Python 設定を改善
+  - @voluntas
 
 ### misc
 
