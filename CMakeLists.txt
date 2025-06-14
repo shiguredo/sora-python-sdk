@@ -15,17 +15,30 @@ if (NOT CMAKE_CROSSCOMPILING)
 endif()
 
 if (CMAKE_CROSSCOMPILING)
+  # クロスコンパイル時の変数設定
+  # run.pyから渡される PYTHON_* 変数を CMake の FindPython が期待する Python_* 変数に変換
   set(Python_VERSION "${PYTHON_VERSION_STRING}")
   set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
   set(Python_LIBRARIES "${PYTHON_LIBRARY}")
-  # Python_ROOT_DIRがインクルードディレクトリを直接指している場合の対応
+  
+  # run.py では Python_ROOT_DIR に sysroot 内の Python インクルードディレクトリを直接指定している
+  # (例: /path/to/sysroot/usr/include/python3.11)
+  # これを Python_INCLUDE_DIRS として使用することで、クロスコンパイル時に正しいヘッダーを参照する
   if (Python_ROOT_DIR)
     set(Python_INCLUDE_DIRS "${Python_ROOT_DIR}")
   endif()
+  
+  # FindPython を実行する際、一時的に CMAKE_FIND_ROOT_PATH の検索モードを NEVER に設定
+  # これにより、ホストシステムの CMake モジュールを使用できる
   set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
   set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
+  
+  # クロスコンパイル時は Interpreter コンポーネントは不要（ARM64 バイナリは x86_64 環境で実行できない）
+  # Development.Module のみを要求することで、Python 拡張モジュールのビルドに必要なヘッダーのみを探す
   find_package(Python COMPONENTS Development.Module REQUIRED)
+  
+  # FindPython 実行後、検索モードを元に戻す
   set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
   set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
