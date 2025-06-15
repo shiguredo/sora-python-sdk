@@ -66,10 +66,10 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # - name: ubuntu-24.04_x86_64
-          #   target: ubuntu-24.04_x86_64
-          #   runs_on: ubuntu-24.04
-          #   os: ubuntu
+          - name: ubuntu-24.04_x86_64
+            target: ubuntu-24.04_x86_64
+            runs_on: ubuntu-24.04
+            os: ubuntu
           # - name: ubuntu-22.04_x86_64
           #   target: ubuntu-22.04_x86_64
           #   runs_on: ubuntu-22.04
@@ -133,10 +133,17 @@ jobs:
 
 
   # x86_64 でクロスビルドした arm64 向けのビルドの動作確認をする
-  verify_ubuntu_arm_whl:
+  verify_ubuntu_whl:
     strategy:
       fail-fast: false
       matrix:
+        platform:
+          - name: ubuntu-24.04_x86_64
+            runs_on: ubuntu-24.04
+            arch: x86_64
+          - name: ubuntu-24.04_armv8
+            runs_on: ubuntu-24.04-arm
+            arch: aarch64
         version:
           # - python: "3.11"
           #   pkg: "311"
@@ -154,7 +161,7 @@ jobs:
           enable-cache: false
       - uses: actions/download-artifact@v4
         with:
-          name: ubuntu-24.04_armv8_python-${{ matrix.version.python }}
+          name: ${{ matrix.platform.name }}_python-${{ matrix.version.python }}
           path: dist/
 
       # VERSION ファイルからバージョンを取得
@@ -169,7 +176,7 @@ jobs:
         run: ls -la dist/
       
       - run: |
-          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_aarch64.manylinux2014_aarch64.whl python3 -c "import sora_sdk"
+          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_${{ matrix.platform.arch }}.manylinux2014_${{ matrix.platform.arch }}.whl python3 -c "import sora_sdk"
 
   build_ubuntu_arm:
     if: false
