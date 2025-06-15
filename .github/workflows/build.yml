@@ -165,7 +165,7 @@ jobs:
 
       # ここで download した whl ファイルの動作を確認する
       - run: |
-          uv add --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_aarch64.manylinux2014_aarch64.whl 
+          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_aarch64.manylinux2014_aarch64.whl python3 -c "import sora_sdk"
 
   build_ubuntu_arm:
     if: false
