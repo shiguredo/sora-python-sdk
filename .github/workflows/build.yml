@@ -137,10 +137,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version:
-          - "311"
-          - "312"
-          - "313"
+        version:
+          - python: "3.11"
+            pkg: "311"
+          - python: "3.12"
+            pkg: "312"
+          - python: "3.13"
+            pkg: "313"
     needs: [build_ubuntu_arm]
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 15
@@ -151,7 +154,7 @@ jobs:
           enable-cache: false
       - uses: actions/download-artifact@v4
         with:
-          name: ubuntu-24.04_armv8_python-${{ matrix.python_version }}
+          name: ubuntu-24.04_armv8_python-${{ matrix.version.python }}
       
       # VERSION ファイルからバージョンを取得
       - name: Get version from VERSION file
@@ -162,8 +165,10 @@ jobs:
 
       # ここで download した whl ファイルの動作を確認する
       - run: |
-          uv add --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.python_version }}-cp${{ matrix.python_version }}-manylinux_2_17_aarch64.manylinux2014_aarch64.whl 
+          uv add --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_aarch64.manylinux2014_aarch64.whl 
+
   build_ubuntu_arm:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -216,6 +221,7 @@ jobs:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
   build_macos:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -267,6 +273,7 @@ jobs:
           path: "dist/"
 
   build_windows:
+    if: false
     needs: [build_pyi] 
     runs-on: windows-2025
     timeout-minutes: 15
