@@ -81,8 +81,8 @@ jobs:
             os: ubuntu
             arch: armv8
         python_version:
-          - "3.11"
-          - "3.12"
+          # - "3.11"
+          # - "3.12"
           - "3.13"
     needs: [build_pyi] 
     runs-on: ${{ matrix.platform.runs_on }}
@@ -138,10 +138,10 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - python: "3.11"
-            pkg: "311"
-          - python: "3.12"
-            pkg: "312"
+          # - python: "3.11"
+          #   pkg: "311"
+          # - python: "3.12"
+          #   pkg: "312"
           - python: "3.13"
             pkg: "313"
     needs: [build_ubuntu]
@@ -164,6 +164,9 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       # ここで download した whl ファイルの動作を確認する
+      - name: List files in dist directory
+        run: ls -la dist/
+      
       - run: |
           uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_aarch64.manylinux2014_aarch64.whl python3 -c "import sora_sdk"
 
