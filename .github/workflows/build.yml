@@ -180,7 +180,7 @@ jobs:
           uv python pin ${{ matrix.version.python }}
       
       - run: |
-          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_${{ matrix.platform.arch }}.manylinux2014_${{ matrix.platform.arch }}.whl python3 -c "import sora_sdk"
+          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_${{ matrix.platform.arch }}.manylinux2014_${{ matrix.platform.arch }}.whl python3 -c "import sora_sdk; sora_sdk.get_video_codec_capability()"
 
   build_ubuntu_arm:
     if: false
