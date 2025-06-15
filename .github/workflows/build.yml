@@ -131,6 +131,38 @@ jobs:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
 
+
+  # x86_64 でクロスビルドした arm64 向けのビルドの動作確認をする
+  verify_ubuntu_arm_whl:
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version:
+          - "311"
+          - "312"
+          - "313"
+    needs: [build_ubuntu_arm]
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ubuntu-24.04_armv8_python-${{ matrix.python_version }}
+      
+      # VERSION ファイルからバージョンを取得
+      - name: Get version from VERSION file
+        id: get_version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # ここで download した whl ファイルの動作を確認する
+      - run: |
+          uv add --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.python_version }}-cp${{ matrix.python_version }}-manylinux_2_17_aarch64.manylinux2014_aarch64.whl 
   build_ubuntu_arm:
     strategy:
       fail-fast: false
