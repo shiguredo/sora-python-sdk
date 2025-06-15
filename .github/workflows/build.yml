@@ -70,11 +70,11 @@ jobs:
           #   target: ubuntu-24.04_x86_64
           #   runs_on: ubuntu-24.04
           #   os: ubuntu
-          - name: ubuntu-22.04_x86_64
-            target: ubuntu-22.04_x86_64
-            runs_on: ubuntu-22.04
-            os: ubuntu
-            arch: x86_64
+          # - name: ubuntu-22.04_x86_64
+          #   target: ubuntu-22.04_x86_64
+          #   runs_on: ubuntu-22.04
+          #   os: ubuntu
+          #   arch: x86_64
           - name: ubuntu-24.04_armv8
             target: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04
@@ -144,7 +144,7 @@ jobs:
             pkg: "312"
           - python: "3.13"
             pkg: "313"
-    needs: [build_ubuntu_arm]
+    needs: [build_ubuntu]
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 15
     steps:
