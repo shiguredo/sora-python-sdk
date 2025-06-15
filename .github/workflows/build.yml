@@ -70,6 +70,7 @@ jobs:
             target: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
             os: ubuntu
+            arch: x86_64
           # - name: ubuntu-22.04_x86_64
           #   target: ubuntu-22.04_x86_64
           #   runs_on: ubuntu-22.04
