@@ -155,7 +155,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ubuntu-24.04_armv8_python-${{ matrix.version.python }}
-      
+          path: dist/
+
       # VERSION ファイルからバージョンを取得
       - name: Get version from VERSION file
         id: get_version
