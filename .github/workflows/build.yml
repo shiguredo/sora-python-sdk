@@ -177,6 +177,9 @@ jobs:
         run: ls -la dist/
       
       - run: |
+          uv python pin ${{ matrix.version.python }}
+      
+      - run: |
           uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_${{ matrix.platform.arch }}.manylinux2014_${{ matrix.platform.arch }}.whl python3 -c "import sora_sdk"
 
   build_ubuntu_arm:
