@@ -39,7 +39,8 @@ jobs:
           - "3.13"
     runs-on:
       group: Self
-      labels: [self-hosted, self-hosted, macOS, ARM64, Apple-M2-Pro]
+      # labels: [self-hosted, self-hosted, macOS, ARM64, Apple-M2-Pro]
+      labels: [self-hosted, self-hosted, macOS, ARM64]
     timeout-minutes: 15
     if: >-
       ${{
