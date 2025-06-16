@@ -174,6 +174,7 @@ AVAILABLE_TARGETS = [
     "macos_arm64",
     "ubuntu-22.04_x86_64",
     "ubuntu-24.04_x86_64",
+    "ubuntu-22.04_armv8",
     "ubuntu-24.04_armv8",
     "ubuntu-22.04_armv8_jetson",
 ]
@@ -200,6 +201,8 @@ def main():
         platform = Platform("ubuntu", "22.04", "x86_64")
     elif args.target == "ubuntu-24.04_x86_64":
         platform = Platform("ubuntu", "24.04", "x86_64")
+    elif args.target == "ubuntu-22.04_armv8":
+        platform = Platform("ubuntu", "22.04", "armv8")
     elif args.target == "ubuntu-24.04_armv8":
         platform = Platform("ubuntu", "24.04", "armv8")
     elif args.target == "ubuntu-22.04_armv8_jetson":

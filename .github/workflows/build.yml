@@ -76,9 +76,9 @@ jobs:
             runs_on: ubuntu-22.04
             os: ubuntu
             arch: x86_64
-          - name: ubuntu-24.04_armv8
-            target: ubuntu-24.04_armv8
-            runs_on: ubuntu-24.04
+          - name: ubuntu-22.04_armv8
+            target: ubuntu-22.04_armv8
+            runs_on: ubuntu-22.04
             os: ubuntu
             arch: armv8
         python_version:
@@ -142,6 +142,9 @@ jobs:
           - name: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
             arch: x86_64
+          - name: ubuntu-22.04_armv8
+            runs_on: ubuntu-22.04-arm
+            arch: aarch64
           - name: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04-arm
             arch: aarch64
@@ -360,6 +363,7 @@ jobs:
         platform:
           # - name: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
+          - name: ubuntu-22.04_armv8
           - name: ubuntu-24.04_armv8
           - name: macos-15_arm64
           - name: macos-14_arm64
@@ -421,6 +425,12 @@ jobs:
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.11" }
       - uses: ./.github/actions/download
