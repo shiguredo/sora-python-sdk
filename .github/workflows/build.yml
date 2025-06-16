@@ -445,6 +445,13 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
+      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.12" }
