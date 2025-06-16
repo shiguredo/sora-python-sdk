@@ -31,6 +31,8 @@
 
 ### misc
 
+- [ADD] GitHub Actions で Ubuntu 向けの whl ファイルの動作を uv run --with で動作確認するようにする
+  - @voluntas
 - [CHANGE] GitHub Actions 経由のリリースを gh コマンドに切り替える
   - @voluntas
 - [CHANGE] VERSION ファイルを SDK のバージョンのみにする
