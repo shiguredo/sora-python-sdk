@@ -432,7 +432,9 @@ class SoraClient:
             and message["event_type"] == "connection.created"
             and message["connection_id"] == self._connection_id
         ):
-            print(f"Connected Sora: connection_id={self._connection_id}")
+            print(
+                f"Connected Sora: channel_id={self._channel_id}, connection_id={self._connection_id}"
+            )
             self._connected.set()
 
     def _on_message(self, label: str, data: bytes):
