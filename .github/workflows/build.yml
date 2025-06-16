@@ -151,8 +151,8 @@ jobs:
             manylinux: manylinux_2_31
           - name: ubuntu-24.04_x86_64
             download_name: ubuntu-22.04_x86_64
-            runs_on: ubuntu-24.04-arm
-            arch: aarch64
+            runs_on: ubuntu-24.04
+            arch: x86_64
             manylinux: manylinux_2_31
           - name: ubuntu-24.04_armv8
             download_name: ubuntu-22.04_armv8
