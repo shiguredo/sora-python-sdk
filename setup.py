@@ -65,6 +65,8 @@ def main():
     target = os.getenv("SORA_SDK_TARGET")
     if target is None:
         target_platform = build_platform
+    elif target == "ubuntu-22.04_armv8":
+        target_platform = PlatformTarget("ubuntu", "22.04", "armv8")
     elif target == "ubuntu-24.04_armv8":
         target_platform = PlatformTarget("ubuntu", "24.04", "armv8")
     elif target == "ubuntu-22.04_armv8_jetson":
