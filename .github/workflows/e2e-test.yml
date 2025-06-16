@@ -42,6 +42,10 @@ jobs:
             runs-on: "ubuntu-24.04"
             arch: "x86_64"
             openh264_arch: "linux64"
+          - target: "ubuntu-22.04_armv8"
+            runs-on: "ubuntu-22.04-arm"
+            arch: "armv8"
+            openh264_arch: "linux-arm64"
           - target: "ubuntu-24.04_armv8"
             runs-on: "ubuntu-24.04-arm"
             arch: "armv8"
@@ -81,7 +85,6 @@ jobs:
     strategy:
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
-        # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
