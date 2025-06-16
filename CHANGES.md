@@ -18,6 +18,8 @@
 - [UPDATE] Ubuntu arm64 では Clang 19 に上げる
   - libwebrtc m137 を上げたことで clang 18 ではビルドが通らなくなったため
   - @voluntas
+- [ADD] `__version__` でバージョンを取得できるようにする
+  - @voluntas
 - [ADD] WebSocket 接続時に User Agent を上書きする機能を追加する
   - @melpon
 - [ADD] `on_rpc` コールバック関数を追加する
@@ -31,8 +33,6 @@
 
 ### misc
 
-- [ADD] GitHub Actions で Ubuntu 向けの whl ファイルの動作を uv run --with で動作確認するようにする
-  - @voluntas
 - [CHANGE] GitHub Actions 経由のリリースを gh コマンドに切り替える
   - @voluntas
 - [CHANGE] VERSION ファイルを SDK のバージョンのみにする
@@ -42,6 +42,8 @@
 - [UPDATE] [mypy](https://github.com/python/mypy) から [ty](https://github.com/astral-sh/ty) に切り替える
   - @voluntas
 - [UPDATE] [python-dotenv](https://github.com/theskumar/python-dotenv) を [pydantic-settings](https://github.com/pydantic/pydantic-settings) に切り替える
+  - @voluntas
+- [ADD] GitHub Actions で Ubuntu 向けの whl ファイルの動作を uv run --with で動作確認するようにする
   - @voluntas
 
 ## 2025.2.3
