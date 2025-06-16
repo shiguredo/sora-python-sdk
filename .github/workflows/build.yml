@@ -178,7 +178,7 @@ jobs:
 
       # ここで download した whl ファイルの動作を確認する
       - run: |
-          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_31_${{ matrix.platform.arch }}.whl \
+          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_35_${{ matrix.platform.arch }}.whl \
           python3 -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
 
   build_ubuntu_arm:
