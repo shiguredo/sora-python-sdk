@@ -35,8 +35,8 @@ jobs:
       fail-fast: false
       matrix:
         python_version:
-          # - "3.11"
-          # - "3.12"
+          - "3.11"
+          - "3.12"
           - "3.13"
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -66,24 +66,24 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - name: ubuntu-24.04_x86_64
-            target: ubuntu-24.04_x86_64
-            runs_on: ubuntu-24.04
-            os: ubuntu
-            arch: x86_64
-          # - name: ubuntu-22.04_x86_64
-          #   target: ubuntu-22.04_x86_64
-          #   runs_on: ubuntu-22.04
+          # - name: ubuntu-24.04_x86_64
+          #   target: ubuntu-24.04_x86_64
+          #   runs_on: ubuntu-24.04
           #   os: ubuntu
           #   arch: x86_64
+          - name: ubuntu-22.04_x86_64
+            target: ubuntu-22.04_x86_64
+            runs_on: ubuntu-22.04
+            os: ubuntu
+            arch: x86_64
           - name: ubuntu-24.04_armv8
             target: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04
             os: ubuntu
             arch: armv8
         python_version:
-          # - "3.11"
-          # - "3.12"
+          - "3.11"
+          - "3.12"
           - "3.13"
     needs: [build_pyi] 
     runs-on: ${{ matrix.platform.runs_on }}
@@ -133,23 +133,23 @@ jobs:
           path: "dist/"
 
 
-  # x86_64 でクロスビルドした arm64 向けのビルドの動作確認をする
-  verify_ubuntu_whl:
+  # x86_64 でビルドした x86_64/arm64 向けの whl を確認する
+  validate-linux-wheel:
     strategy:
       fail-fast: false
       matrix:
         platform:
-          - name: ubuntu-24.04_x86_64
-            runs_on: ubuntu-24.04
+          - name: ubuntu-22.04_x86_64
+            runs_on: ubuntu-22.04
             arch: x86_64
           - name: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04-arm
             arch: aarch64
         version:
-          # - python: "3.11"
-          #   pkg: "311"
-          # - python: "3.12"
-          #   pkg: "312"
+          - python: "3.11"
+            pkg: "311"
+          - python: "3.12"
+            pkg: "312"
           - python: "3.13"
             pkg: "313"
     needs: [build_ubuntu]
@@ -160,27 +160,23 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
+      - run: |
+          uv python pin ${{ matrix.version.python }}
       - uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.version.python }}
           path: dist/
 
       # VERSION ファイルからバージョンを取得
-      - name: Get version from VERSION file
-        id: get_version
+      - id: get_version
         run: |
           VERSION=$(cat VERSION)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       # ここで download した whl ファイルの動作を確認する
-      - name: List files in dist directory
-        run: ls -la dist/
-      
       - run: |
-          uv python pin ${{ matrix.version.python }}
-      
-      - run: |
-          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_17_${{ matrix.platform.arch }}.manylinux2014_${{ matrix.platform.arch }}.whl python3 -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
+          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-manylinux_2_31_${{ matrix.platform.arch }}.manylinux2014_${{ matrix.platform.arch }}.whl \
+          python3 -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
 
   build_ubuntu_arm:
     if: false
