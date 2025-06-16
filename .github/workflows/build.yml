@@ -134,7 +134,7 @@ jobs:
 
 
   # x86_64 でビルドした x86_64/arm64 向けの whl を確認する
-  validate-linux-wheel:
+  validate_linux_wheel:
     strategy:
       fail-fast: false
       matrix:

@@ -25,9 +25,9 @@ def run_setup(build_platform, target_platform):
         plat = "manylinux_2_17_aarch64.manylinux2014_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "armv8":
         if target_platform.osver == "22.04":
-            plat = "manylinux_2_31_x86_64"
+            plat = "manylinux_2_31_aarch64"
         if target_platform.osver == "24.04":
-            plat = "manylinux_2_35_x86_64"
+            plat = "manylinux_2_35_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "x86_64":
         if target_platform.osver == "22.04":
             plat = "manylinux_2_31_x86_64"
