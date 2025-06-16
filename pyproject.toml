@@ -20,14 +20,14 @@ Documentation = "https://sora-python-sdk.shiguredo.jp"
 Discord = "https://discord.gg/shiguredo"
 
 [build-system]
-requires = ["setuptools==80.8", "wheel==0.45.1"]
+requires = ["setuptools==80.9", "wheel==0.45.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
 python-preference = "only-managed"
 dev-dependencies = [
     "nanobind==2.7.0",
-    "setuptools==80.8",
+    "setuptools==80.9",
     "build==1.2.2.post1",
     "wheel==0.45.1",
     "typing-extensions",
@@ -37,7 +37,7 @@ dev-dependencies = [
     "ruff",
     "pyjwt",
     "pytest-repeat",
-    # "ty",
+    "ty",
     "pydantic-settings",
     "pyright",
 ]

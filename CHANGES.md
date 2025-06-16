@@ -18,11 +18,17 @@
 - [UPDATE] Ubuntu arm64 では Clang 19 に上げる
   - libwebrtc m137 を上げたことで clang 18 ではビルドが通らなくなったため
   - @voluntas
+- [ADD] `__version__` でバージョンを取得できるようにする
+  - @voluntas
 - [ADD] WebSocket 接続時に User Agent を上書きする機能を追加する
   - @melpon
 - [ADD] `on_rpc` コールバック関数を追加する
   - @melpon
 - [FIX] pyi ファイルをバージョン毎に生成していなかった問題を修正する
+  - @voluntas
+- [FIX] Ubuntu 24.04 arm64 のクロスコンパイル時に Python 3.11 と Python 3.13 でビルドが失敗する問題を修正する
+  - run.py でハードコードされていた `python3.12` を動的にバージョンを取得するように修正
+  - CMakeLists.txt でクロスコンパイル時の Python 設定を改善
   - @voluntas
 
 ### misc
@@ -36,6 +42,8 @@
 - [UPDATE] [mypy](https://github.com/python/mypy) から [ty](https://github.com/astral-sh/ty) に切り替える
   - @voluntas
 - [UPDATE] [python-dotenv](https://github.com/theskumar/python-dotenv) を [pydantic-settings](https://github.com/pydantic/pydantic-settings) に切り替える
+  - @voluntas
+- [ADD] GitHub Actions で Ubuntu 向けの whl ファイルの動作を uv run --with で動作確認するようにする
   - @voluntas
 
 ## 2025.2.3

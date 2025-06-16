@@ -31,7 +31,7 @@ from buildbase import (
     mkdir_p,
     read_version_file,
 )
-from pypath import get_python_include_dir, get_python_library, get_python_version
+from pypath import get_python_include_dir, get_python_version
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -174,6 +174,7 @@ AVAILABLE_TARGETS = [
     "macos_arm64",
     "ubuntu-22.04_x86_64",
     "ubuntu-24.04_x86_64",
+    "ubuntu-22.04_armv8",
     "ubuntu-24.04_armv8",
     "ubuntu-22.04_armv8_jetson",
 ]
@@ -200,6 +201,8 @@ def main():
         platform = Platform("ubuntu", "22.04", "x86_64")
     elif args.target == "ubuntu-24.04_x86_64":
         platform = Platform("ubuntu", "24.04", "x86_64")
+    elif args.target == "ubuntu-22.04_armv8":
+        platform = Platform("ubuntu", "22.04", "armv8")
     elif args.target == "ubuntu-24.04_armv8":
         platform = Platform("ubuntu", "24.04", "armv8")
     elif args.target == "ubuntu-22.04_armv8_jetson":
@@ -252,13 +255,8 @@ def main():
         cmake_args.append(f"-DSORA_DIR={cmake_path(sora_info.sora_install_dir)}")
         cmake_args.append(f"-DOPENH264_DIR={cmake_path(os.path.join(install_dir, 'openh264'))}")
         python_version = get_python_version()
-        cmake_args.append(f"-DPYTHON_VERSION_STRING={python_version}")
-        cmake_args.append(f"-DPYTHON_INCLUDE_DIR={get_python_include_dir(python_version)}")
-        cmake_args.append(f"-DPYTHON_EXECUTABLE={cmake_path(sys.executable)}")
-        python_library = get_python_library(python_version)
-        if python_library is None:
-            raise Exception("Failed to get Python library")
-        cmake_args.append(f"-DPYTHON_LIBRARY={cmake_path(python_library)}")
+        cmake_args.append(f"-DPython_INCLUDE_DIR={get_python_include_dir(python_version)}")
+        cmake_args.append(f"-DPython_EXECUTABLE={cmake_path(sys.executable)}")
 
         if platform.target.os == "ubuntu":
             # クロスコンパイルの設定。
@@ -282,7 +280,8 @@ def main():
 
             if platform.build.arch != platform.target.arch:
                 sysroot = os.path.join(install_dir, "rootfs")
-                nb_cmake_dir = cmdcap(["uv", "run", "python", "-m", "nanobind", "--cmake_dir"])
+                python_version = get_python_version()
+                python_version_short = ".".join(python_version.split(".")[:2])
                 cmake_args += [
                     "-DCMAKE_SYSTEM_NAME=Linux",
                     "-DCMAKE_SYSTEM_PROCESSOR=aarch64",
@@ -293,10 +292,8 @@ def main():
                     "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH",
                     "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH",
                     "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
-                    f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.12'))}",
                     f"-DCMAKE_SYSROOT={sysroot}",
-                    f"-DNB_CMAKE_DIR={nb_cmake_dir}",
-                    "-DNB_SUFFIX=.cpython-312-aarch64-linux-gnu.so",
+                    f"-DNB_SUFFIX=.cpython-{python_version_short.replace('.', '')}-aarch64-linux-gnu.so",
                 ]
         elif platform.target.os == "macos":
             sysroot = cmdcap(["xcrun", "--sdk", "macosx", "--show-sdk-path"])
