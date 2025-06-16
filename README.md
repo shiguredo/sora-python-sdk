@@ -73,18 +73,10 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 ## sora_sdk パッケージの追加
 
-### uv
-
-[uv](https://docs.astral.sh/uv/)
+[uv](https://docs.astral.sh/uv/) の利用を推奨します。
 
 ```bash
 uv add sora_sdk
-```
-
-### pip
-
-```bash
-pip install sora_sdk
 ```
 
 ### NVIDIA Jetson 向けパッケージ
@@ -108,12 +100,16 @@ PyPI 経由ではインストールできません。
 - Ubuntu 24.04 LTS x86_64
 - Ubuntu 24.04 LTS arm64
 - Ubuntu 22.04 LTS x86_64
-- Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
-  - PyPI からではなくパッケージファイルを利用してください
+- Ubuntu 22.04 LTS arm64
 - macOS Sequoia 15 arm64
 - macOS Ventura 14 arm64
 - Windows 11 x86_64
 - Windows Server 2025 x86_64
+
+### Jetson 向け
+
+- Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
+  - PyPI からではなくパッケージファイルを利用してください
 
 ### macOS の対応バージョン
 
@@ -137,7 +133,6 @@ PyPI 経由ではインストールできません。
 ### 優先実装が可能な機能一覧
 
 - Windows 11 arm64
-- Ubuntu 22.04 arm64
 - Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6.1)
 - Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
 
