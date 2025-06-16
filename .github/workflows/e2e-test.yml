@@ -17,7 +17,10 @@ on:
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
-    - cron: "0 1 * * 1-5"
+    # - cron: "0 1 * * 1-5"
+    # フレーキーテスト検証
+    # JST 11:00-16:00 の毎時 00 分と 30 分 (UTC 02:00-07:00)
+    - cron: "0,30 2-7 * * 1-5"
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
