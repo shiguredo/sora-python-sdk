@@ -31,11 +31,13 @@ class OpenCVRenderer:
         self.frames: dict[str, Optional[np.ndarray]] = {}
         self.lock = threading.Lock()
         self.running = True
-        self.render_thread = threading.Thread(target=self._render_loop)
-        self.render_thread.daemon = True
+        self.window_name = "Sumomo (Python)"
         
     def start(self):
-        self.render_thread.start()
+        # Initialize window on main thread
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        if self.fullscreen:
+            cv2.setWindowProperty(self.window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         
     def stop(self):
         self.running = False
@@ -61,53 +63,49 @@ class OpenCVRenderer:
                 del self.tracks[track_id]
                 del self.frames[track_id]
                 
-    def _render_loop(self):
-        while self.running:
-            with self.lock:
-                frames_to_render = [(track_id, frame.copy() if frame is not None else None) 
-                                    for track_id, frame in self.frames.items()]
-                                    
-            if not frames_to_render:
-                time.sleep(0.03)  # 30fps
+    def render_frame(self):
+        """Called from main thread to render frames"""
+        with self.lock:
+            frames_to_render = [(track_id, frame.copy() if frame is not None else None) 
+                                for track_id, frame in self.frames.items()]
+                                
+        if not frames_to_render:
+            return
+            
+        # Calculate grid layout
+        num_videos = len([f for _, f in frames_to_render if f is not None])
+        if num_videos == 0:
+            return
+            
+        cols = int(np.ceil(np.sqrt(num_videos)))
+        rows = int(np.ceil(num_videos / cols))
+        
+        cell_width = self.window_width // cols
+        cell_height = self.window_height // rows
+        
+        # Create canvas
+        canvas = np.zeros((self.window_height, self.window_width, 3), dtype=np.uint8)
+        
+        valid_idx = 0
+        for _, frame in frames_to_render:
+            if frame is None:
                 continue
                 
-            # Calculate grid layout
-            num_videos = len(frames_to_render)
-            if num_videos == 0:
-                continue
-                
-            cols = int(np.ceil(np.sqrt(num_videos)))
-            rows = int(np.ceil(num_videos / cols))
+            row = valid_idx // cols
+            col = valid_idx % cols
+            x = col * cell_width
+            y = row * cell_height
             
-            cell_width = self.window_width // cols
-            cell_height = self.window_height // rows
+            # Resize frame to fit cell
+            resized = cv2.resize(frame, (cell_width, cell_height))
+            canvas[y:y+cell_height, x:x+cell_width] = resized
+            valid_idx += 1
             
-            # Create canvas
-            canvas = np.zeros((self.window_height, self.window_width, 3), dtype=np.uint8)
-            
-            for idx, (track_id, frame) in enumerate(frames_to_render):
-                if frame is None:
-                    continue
-                    
-                row = idx // cols
-                col = idx % cols
-                x = col * cell_width
-                y = row * cell_height
-                
-                # Resize frame to fit cell
-                resized = cv2.resize(frame, (cell_width, cell_height))
-                canvas[y:y+cell_height, x:x+cell_width] = resized
-                
-            # Display
-            window_name = "Sumomo (Python)"
-            if self.fullscreen:
-                cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-                cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-            
-            cv2.imshow(window_name, canvas)
-            
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                self.running = False
+        # Display
+        cv2.imshow(self.window_name, canvas)
+        
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            self.running = False
                 
 
 class Sumomo:
@@ -224,7 +222,10 @@ class Sumomo:
         
         try:
             while not self._shutting_down:
-                time.sleep(0.1)
+                if self.renderer:
+                    self.renderer.render_frame()
+                else:
+                    time.sleep(0.1)
         except KeyboardInterrupt:
             pass
             
@@ -414,6 +415,9 @@ def main():
             level=getattr(logging, args.log_level.upper()),
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
+    else:
+        # Disable WebRTC logs completely when log level is none
+        enable_libwebrtc_log(SoraLoggingSeverity.NONE)
     
     # Build config
     config = vars(args)
