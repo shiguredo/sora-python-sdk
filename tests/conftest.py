@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     openh264_path: str | None = Field(default=None, alias="OPENH264_PATH")
     libwebrtc_log: SoraLoggingSeverity | None = Field(default=None, alias="TEST_LIBWEBRTC_LOG")
 
-    channel_id_suffix: str = Field(default=str(uuid.uuid4()))
+    channel_id_suffix: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     @field_validator("signaling_urls", mode="before")
     @classmethod
