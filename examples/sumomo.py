@@ -15,6 +15,7 @@ from sora_sdk import (
     SoraConnection,
     SoraMediaTrack,
     SoraSignalingErrorCode,
+    SoraTrackState,
     SoraVideoFrame,
     SoraVideoSinkImpl,
     SoraLoggingSeverity,
@@ -28,7 +29,9 @@ class OpenCVRenderer:
         self.window_height = window_height
         self.fullscreen = fullscreen
         self.tracks: dict[str, SoraVideoSinkImpl] = {}
+        self.track_refs: dict[str, SoraMediaTrack] = {}
         self.frames: dict[str, Optional[np.ndarray]] = {}
+        self.last_frame_time: dict[str, float] = {}
         self.lock = threading.Lock()
         self.running = True
         self.window_name = "Sumomo (Python)"
@@ -46,14 +49,17 @@ class OpenCVRenderer:
     def add_track(self, track: SoraMediaTrack):
         with self.lock:
             if track.id not in self.tracks:
+                logging.info(f"Adding track: {track.id}")
                 sink = SoraVideoSinkImpl(track)
                 self.tracks[track.id] = sink
+                self.track_refs[track.id] = track
                 self.frames[track.id] = None
                 
                 def on_frame(frame: SoraVideoFrame):
                     data = frame.data()
                     with self.lock:
-                        self.frames[track.id] = data.copy()
+                        self.frames[track.id] = np.array(data, copy=True)
+                        self.last_frame_time[track.id] = time.time()
                         
                 sink.on_frame = on_frame
                 
@@ -61,11 +67,38 @@ class OpenCVRenderer:
         with self.lock:
             if track_id in self.tracks:
                 del self.tracks[track_id]
+                del self.track_refs[track_id]
                 del self.frames[track_id]
+                if track_id in self.last_frame_time:
+                    del self.last_frame_time[track_id]
                 
     def render_frame(self):
         """Called from main thread to render frames"""
+        current_time = time.time()
+        
+        # Check for ended tracks or tracks that haven't received frames for a while
         with self.lock:
+            ended_tracks = []
+            for track_id, track in list(self.track_refs.items()):
+                # Check if track ended
+                if track.state == SoraTrackState.ENDED:
+                    ended_tracks.append(track_id)
+                # Check if no frames received for 5 seconds
+                elif track_id in self.last_frame_time:
+                    if current_time - self.last_frame_time[track_id] > 5.0:
+                        logging.info(f"Track {track_id} timed out (no frames for 5 seconds)")
+                        ended_tracks.append(track_id)
+            
+            # Remove ended tracks
+            for track_id in ended_tracks:
+                if track_id in self.tracks:
+                    logging.info(f"Removing track: {track_id}")
+                    del self.tracks[track_id]
+                    del self.track_refs[track_id]
+                    del self.frames[track_id]
+                    if track_id in self.last_frame_time:
+                        del self.last_frame_time[track_id]
+                
             frames_to_render = [(track_id, frame.copy() if frame is not None else None) 
                                 for track_id, frame in self.frames.items()]
                                 
@@ -77,8 +110,22 @@ class OpenCVRenderer:
         if num_videos == 0:
             return
             
-        cols = int(np.ceil(np.sqrt(num_videos)))
-        rows = int(np.ceil(num_videos / cols))
+        # Determine optimal grid layout
+        if num_videos == 1:
+            cols, rows = 1, 1
+        elif num_videos == 2:
+            cols, rows = 2, 1
+        elif num_videos <= 4:
+            cols, rows = 2, 2
+        elif num_videos <= 6:
+            cols, rows = 3, 2
+        elif num_videos <= 9:
+            cols, rows = 3, 3
+        elif num_videos <= 12:
+            cols, rows = 4, 3
+        else:
+            cols = int(np.ceil(np.sqrt(num_videos)))
+            rows = int(np.ceil(num_videos / cols))
         
         cell_width = self.window_width // cols
         cell_height = self.window_height // rows
@@ -93,12 +140,44 @@ class OpenCVRenderer:
                 
             row = valid_idx // cols
             col = valid_idx % cols
-            x = col * cell_width
-            y = row * cell_height
             
-            # Resize frame to fit cell
-            resized = cv2.resize(frame, (cell_width, cell_height))
-            canvas[y:y+cell_height, x:x+cell_width] = resized
+            # Calculate cell position
+            cell_x = col * cell_width
+            cell_y = row * cell_height
+            
+            # Get frame dimensions
+            frame_h, frame_w = frame.shape[:2]
+            frame_aspect = frame_w / frame_h
+            cell_aspect = cell_width / cell_height
+            
+            # Calculate scaled dimensions maintaining aspect ratio
+            if frame_aspect > cell_aspect:
+                # Frame is wider than cell
+                scaled_width = cell_width
+                scaled_height = int(cell_width / frame_aspect)
+            else:
+                # Frame is taller than cell
+                scaled_height = cell_height
+                scaled_width = int(cell_height * frame_aspect)
+            
+            # Center the frame in the cell
+            x_offset = (cell_width - scaled_width) // 2
+            y_offset = (cell_height - scaled_height) // 2
+            
+            # Resize frame maintaining aspect ratio
+            resized = cv2.resize(frame, (scaled_width, scaled_height))
+            
+            # Place resized frame in the center of the cell
+            x_start = cell_x + x_offset
+            y_start = cell_y + y_offset
+            x_end = x_start + scaled_width
+            y_end = y_start + scaled_height
+            
+            canvas[y_start:y_end, x_start:x_end] = resized
+            
+            # Draw border around cell (optional)
+            cv2.rectangle(canvas, (cell_x, cell_y), (cell_x + cell_width - 1, cell_y + cell_height - 1), (50, 50, 50), 1)
+            
             valid_idx += 1
             
         # Display
@@ -235,7 +314,7 @@ class Sumomo:
         if self.renderer:
             self.renderer.stop()
             
-    def _signal_handler(self, signum, frame):
+    def _signal_handler(self, _signum, _frame):
         self._shutting_down = True
         
     def _start_video_capture(self, video_source):
@@ -285,12 +364,12 @@ class Sumomo:
                     width = int(parts[0])
                     height = int(parts[1])
                     return (max(16, width), max(16, height))
-                except:
+                except ValueError:
                     pass
         
         return (640, 480)  # Default to VGA
         
-    def _on_set_offer(self, offer: str):
+    def _on_set_offer(self, _offer: str):
         logging.info("on_set_offer")
         
     def _on_disconnect(self, error_code: SoraSignalingErrorCode, message: str):
