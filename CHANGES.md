@@ -45,6 +45,8 @@
   - @voluntas
 - [ADD] GitHub Actions で Ubuntu 向けの whl ファイルの動作を uv run --with で動作確認するようにする
   - @voluntas
+- [ADD] .github ディレクトリに copilot-instructions.md を追加
+  - @torikizi
 
 ## 2025.2.3
 
