@@ -195,8 +195,6 @@ class SoraAudioStreamSinkImpl : public webrtc::AudioTrackSinkInterface,
   SoraTrackInterface* track_;
   const int output_sample_rate_;
   const size_t output_channels_;
-  // ACMResampler の前に std::unique_ptr がなんでも良いので無いと何故かビルドが通らない
-  std::unique_ptr<uint8_t> dummy_;
   webrtc::acm2::ACMResampler resampler_;
 };
 
