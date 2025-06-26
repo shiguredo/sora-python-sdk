@@ -55,8 +55,6 @@ SoraFactory::SoraFactory(
               return DummyAudioMixer::Create(
                   dependencies.task_queue_factory.get());
             });
-        // アンチエコーやゲインコントロール、ノイズサプレッションが必要になる用途は想定していないため nullptr
-        dependencies.audio_processing = nullptr;
       };
   context_ = sora::SoraClientContext::Create(context_config);
   if (context_ == nullptr) {
