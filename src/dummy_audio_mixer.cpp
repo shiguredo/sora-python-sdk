@@ -10,8 +10,8 @@ struct DummyAudioMixer::SourceStatus {
 };
 
 webrtc::scoped_refptr<DummyAudioMixer> DummyAudioMixer::Create(
-    webrtc::TaskQueueFactory* task_queue_factory) {
-  return webrtc::make_ref_counted<DummyAudioMixer>(task_queue_factory);
+    const webrtc::Environment& env) {
+  return webrtc::make_ref_counted<DummyAudioMixer>(env);
 }
 
 void DummyAudioMixer::Mix(size_t number_of_channels,
@@ -47,14 +47,13 @@ void DummyAudioMixer::RemoveSource(Source* audio_source) {
   audio_source_list_.erase(iter);
 }
 
-DummyAudioMixer::DummyAudioMixer(webrtc::TaskQueueFactory* task_queue_factory)
-    : task_queue_factory_(task_queue_factory) {
+DummyAudioMixer::DummyAudioMixer(const webrtc::Environment& env) : env_(env) {
   /**
    * 通常 webrtc::AudioMixer の Mix は音声出力デバイスのループで呼ばれるが、
    * sora::SoraClientContextConfig::use_audio_device を false にした際に設定される、
    * webrtc::AudioDeviceDummy はループを回さないため、ここでループを作ることとした。
    */
-  task_queue_ = task_queue_factory_->CreateTaskQueue(
+  task_queue_ = env_.task_queue_factory().CreateTaskQueue(
       "TestAudioDeviceModuleImpl", webrtc::TaskQueueFactory::Priority::NORMAL);
 
   handle_ = webrtc::RepeatingTaskHandle::Start(task_queue_.get(), [this]() {
