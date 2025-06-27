@@ -18,6 +18,8 @@
     - `Resample10Msec` から `Resample` へ変更
       - `Resample10Msec` で一度に行っていた入力と出力のサンプリングを `webrtc::InterleavedView` を利用してシンプルに行うように変更
     - PeerConnectionFactoryDependendencies の `audio_processing` は廃止されたので削除
+    - `default_task_queue_factory.h` のインクルードを削除
+    - `dependencies.task_queue_factory` は廃止されたので `env` 経由で取得するように変更
   - CMAKE_VERSION を `4.0.3` に上げる
   - @melpon @torikizi
 - [UPDATE] Ubuntu arm64 では Clang 19 に上げる
