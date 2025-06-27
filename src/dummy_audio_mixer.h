@@ -45,7 +45,7 @@ class DummyAudioMixer : public webrtc::AudioMixer {
 
  private:
   void ProcessAudio();
-  const webrtc::Environment& env_;
+  const webrtc::Environment env_;
   std::unique_ptr<webrtc::TaskQueueBase, webrtc::TaskQueueDeleter> task_queue_;
   webrtc::RepeatingTaskHandle handle_;
 
