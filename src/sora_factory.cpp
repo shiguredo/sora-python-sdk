@@ -7,7 +7,6 @@
 #include <api/create_peerconnection_factory.h>
 #include <api/environment/environment_factory.h>
 #include <api/rtc_event_log/rtc_event_log_factory.h>
-#include <api/task_queue/default_task_queue_factory.h>
 #include <media/engine/webrtc_media_engine.h>
 #include <rtc_base/ssl_adapter.h>
 
@@ -53,7 +52,7 @@ SoraFactory::SoraFactory(
         dependencies.audio_mixer =
             dependencies.worker_thread->BlockingCall([&]() {
               return DummyAudioMixer::Create(
-                  dependencies.task_queue_factory.get());
+                  &dependencies.env->task_queue_factory());
             });
       };
   context_ = sora::SoraClientContext::Create(context_config);
