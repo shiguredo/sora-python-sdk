@@ -67,7 +67,7 @@ void SoraAudioSinkImpl::OnData(
         number_of_channels);
     webrtc::InterleavedView<int16_t> dst = audio_frame_->mutable_data(
         webrtc::SampleRateToDefaultChannelSize(output_sample_rate_),
-        number_of_frames);
+        number_of_channels);
     resampler_.Resample(src, dst);
     audio_frame_->SetSampleRateAndChannelSize(output_sample_rate_);
     audio_frame_->num_channels_ = number_of_channels;
