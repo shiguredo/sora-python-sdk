@@ -12,7 +12,7 @@
 #include <api/audio/audio_frame.h>
 #include <api/media_stream_interface.h>
 #include <api/scoped_refptr.h>
-#include <modules/audio_coding/acm2/acm_resampler.h>
+#include <common_audio/resampler/include/push_resampler.h>
 #include <rtc_base/buffer.h>
 
 #include "sora_track_interface.h"
@@ -40,14 +40,14 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
                     int output_sample_rate,
                     size_t output_channels);
   ~SoraAudioSinkImpl();
-  
+
   // コピーコンストラクタとコピー代入演算子を削除
   // このクラスは WebRTC のオーディオトラックに唯一のシンクとして登録され、
   // 内部バッファやミューテックスなどの同期リソースを管理しているため、
   // コピーやムーブを禁止して所有権を明確にしている
   SoraAudioSinkImpl(const SoraAudioSinkImpl&) = delete;
   SoraAudioSinkImpl& operator=(const SoraAudioSinkImpl&) = delete;
-  
+
   // ムーブコンストラクタとムーブ代入演算子を削除
   SoraAudioSinkImpl(SoraAudioSinkImpl&&) = delete;
   SoraAudioSinkImpl& operator=(SoraAudioSinkImpl&&) = delete;
@@ -90,7 +90,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
   const int output_sample_rate_;
   const size_t output_channels_;
   std::unique_ptr<webrtc::AudioFrame> audio_frame_;
-  webrtc::acm2::ACMResampler resampler_;
+  webrtc::PushResampler<int16_t> resampler_;
   std::mutex buffer_mtx_;
   std::condition_variable buffer_cond_;
   webrtc::BufferT<int16_t> buffer_;

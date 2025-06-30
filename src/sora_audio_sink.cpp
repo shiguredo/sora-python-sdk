@@ -62,16 +62,14 @@ void SoraAudioSinkImpl::OnData(
   bool need_resample =
       output_sample_rate_ != -1 && sample_rate != output_sample_rate_;
   if (need_resample) {
-    int samples_per_channel_int = resampler_.Resample10Msec(
-        static_cast<const int16_t*>(audio_data), sample_rate,
-        output_sample_rate_, number_of_channels,
-        webrtc::AudioFrame::kMaxDataSizeSamples, audio_frame_->mutable_data());
-    if (samples_per_channel_int < 0) {
-      return;
-    }
-    audio_frame_->samples_per_channel_ =
-        static_cast<size_t>(samples_per_channel_int);
-    audio_frame_->sample_rate_hz_ = output_sample_rate_;
+    webrtc::InterleavedView<const int16_t> src(
+        static_cast<const int16_t*>(audio_data), number_of_frames,
+        number_of_channels);
+    webrtc::InterleavedView<int16_t> dst = audio_frame_->mutable_data(
+        webrtc::SampleRateToDefaultChannelSize(output_sample_rate_),
+        number_of_channels);
+    resampler_.Resample(src, dst);
+    audio_frame_->SetSampleRateAndChannelSize(output_sample_rate_);
     audio_frame_->num_channels_ = number_of_channels;
     // channel_layout_ は private になったので一旦コメントアウトする
     // https://webrtc-review.googlesource.com/c/src/+/349322

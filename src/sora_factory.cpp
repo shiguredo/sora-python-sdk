@@ -7,7 +7,6 @@
 #include <api/create_peerconnection_factory.h>
 #include <api/environment/environment_factory.h>
 #include <api/rtc_event_log/rtc_event_log_factory.h>
-#include <api/task_queue/default_task_queue_factory.h>
 #include <media/engine/webrtc_media_engine.h>
 #include <rtc_base/ssl_adapter.h>
 
@@ -32,6 +31,7 @@
 SoraFactory::SoraFactory(
     std::optional<std::string> openh264,
     std::optional<sora::VideoCodecPreference> video_codec_preference) {
+  auto env = webrtc::CreateEnvironment();
   sora::SoraClientContextConfig context_config;
   context_config.video_codec_factory_config.capability_config.openh264_path =
       openh264;
@@ -48,15 +48,11 @@ SoraFactory::SoraFactory(
   // Audio デバイスは使わない、 use_audio_device を true にしただけでデバイスを掴んでしまうので常に false
   context_config.use_audio_device = false;
   context_config.configure_dependencies =
-      [openh264](webrtc::PeerConnectionFactoryDependencies& dependencies) {
+      [openh264,
+       &env](webrtc::PeerConnectionFactoryDependencies& dependencies) {
         // 通常の AudioMixer を使うと use_audio_device が false のとき、音声のループは全て止まってしまうので自前の AudioMixer を使う
-        dependencies.audio_mixer =
-            dependencies.worker_thread->BlockingCall([&]() {
-              return DummyAudioMixer::Create(
-                  dependencies.task_queue_factory.get());
-            });
-        // アンチエコーやゲインコントロール、ノイズサプレッションが必要になる用途は想定していないため nullptr
-        dependencies.audio_processing = nullptr;
+        dependencies.audio_mixer = dependencies.worker_thread->BlockingCall(
+            [&env]() { return DummyAudioMixer::Create(env); });
       };
   context_ = sora::SoraClientContext::Create(context_config);
   if (context_ == nullptr) {
