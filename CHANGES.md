@@ -11,10 +11,17 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを `2025.4.0-canary.1` に上げる
-  - WEBRTC_BUILD_VERSION を `m137.7151.3.0` に上げる
-  - CMAKE_VERSION を `4.0.2` に上げる
-  - @melpon
+- [UPDATE] Sora C++ SDK のバージョンを `2025.4.0-canary.8` に上げる
+  - WEBRTC_BUILD_VERSION を `m138.7204.0.0` に上げる
+    - `ACMResampler` の廃止に伴い、`PushResampler` を利用するように変更
+      - `acm_resampler.h` のインクルードを削除して、`push_resampler.h` をインクルードするように変更
+    - `Resample10Msec` から `Resample` へ変更
+      - `Resample10Msec` で一度に行っていた入力と出力のサンプリングを `webrtc::InterleavedView` を利用してシンプルに行うように変更
+    - PeerConnectionFactoryDependendencies の `audio_processing` は廃止されたので削除
+    - `default_task_queue_factory.h` のインクルードを削除
+    - `dependencies.task_queue_factory` は廃止されたので `env` 経由で取得するように変更
+  - CMAKE_VERSION を `4.0.3` に上げる
+  - @melpon @torikizi
 - [UPDATE] Ubuntu arm64 では Clang 19 に上げる
   - libwebrtc m137 を上げたことで clang 18 ではビルドが通らなくなったため
   - @voluntas
