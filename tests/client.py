@@ -457,13 +457,6 @@ class SoraClient:
         self._messaging_recv_queues[label] = queue.Queue()
         self._data_channel_ready_events[label].set()
 
-    def _rpc_request_id(self, notification: bool = False) -> int | None:
-        if notification:
-            return None
-        rpc_id = self._rpc_id
-        self._rpc_id += 1
-        return rpc_id
-
     def send_rpc(
         self,
         method: str,
@@ -473,18 +466,20 @@ class SoraClient:
         if params is None:
             params = {}
 
-        rpc_id = self._rpc_request_id(notification)
-
         request = {
             "jsonrpc": "2.0",
             # notification が true の場合は id を None にする
-            "id": rpc_id,
             "method": method,
             "params": params,
         }
 
-        data = json.dumps(request, skipkeys=True).encode("utf-8")
-        print(f"Sending RPC Request: method={method}, params={params}, id={rpc_id}")
+        rpc_id: int | None = None
+        if not notification:
+            rpc_id = self._rpc_id
+            request["id"] = rpc_id
+            self._rpc_id += 1
+
+        data = json.dumps(request).encode("utf-8")
         self._connection.send_data_channel("rpc", data)
         print(f"Sent RPC Request: data={data.decode('utf-8')}")
 
