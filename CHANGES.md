@@ -29,7 +29,8 @@
   - @voluntas
 - [ADD] WebSocket 接続時に User Agent を上書きする機能を追加する
   - @melpon
-- [ADD] `on_rpc` コールバック関数を追加する
+- [ADD] RPC 機能向けの `on_rpc` コールバック関数を追加する
+  - この機能は 2025 年 12 月リリース予定の Sora 2025.2.0 から利用できるようになる予定です
   - @melpon
 - [FIX] pyi ファイルをバージョン毎に生成していなかった問題を修正する
   - @voluntas
@@ -49,6 +50,8 @@
 - [UPDATE] [mypy](https://github.com/python/mypy) から [ty](https://github.com/astral-sh/ty) に切り替える
   - @voluntas
 - [UPDATE] [python-dotenv](https://github.com/theskumar/python-dotenv) を [pydantic-settings](https://github.com/pydantic/pydantic-settings) に切り替える
+  - @voluntas
+- [ADD] RPC 機能の E2E テストを追加
   - @voluntas
 - [ADD] GitHub Actions で Ubuntu 向けの whl ファイルの動作を uv run --with で動作確認するようにする
   - @voluntas
