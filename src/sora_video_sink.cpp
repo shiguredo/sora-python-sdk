@@ -10,7 +10,7 @@
 #include "sora_call.h"
 
 SoraVideoFrame::SoraVideoFrame(
-    rtc::scoped_refptr<webrtc::I420BufferInterface> i420_data)
+    webrtc::scoped_refptr<webrtc::I420BufferInterface> i420_data)
     : width_(i420_data->width()), height_(i420_data->height()) {
   /**
    * データを取り出す際に Python 側で自由に FourCC を指定できる形にするのも手ですが、
@@ -45,7 +45,7 @@ SoraVideoSinkImpl::SoraVideoSinkImpl(const webrtc::Environment& env,
   webrtc::VideoTrackInterface* video_track =
       static_cast<webrtc::VideoTrackInterface*>(track_->GetTrack().get());
   // video_track にこの Sink を追加し OnFrame を呼び出してもらいます。
-  video_track->AddOrUpdateSink(this, rtc::VideoSinkWants());
+  video_track->AddOrUpdateSink(this, webrtc::VideoSinkWants());
 }
 
 SoraVideoSinkImpl::~SoraVideoSinkImpl() {
@@ -107,7 +107,7 @@ void SoraVideoSinkImpl::OnFrame(const webrtc::VideoFrame& frame) {
        * 特殊なコーデックを選択しない限りはデコードされたフレームデータは I420 の形式になっているはずなので問題ないと考えた。
        * webrtc::VideoFrame を継承した特殊なフレームであったとしても ToI420 は実装されているはず。
        */
-      rtc::scoped_refptr<webrtc::I420BufferInterface> i420_data =
+      webrtc::scoped_refptr<webrtc::I420BufferInterface> i420_data =
           frame.video_frame_buffer()->ToI420();
       call_python(on_frame_, std::make_shared<SoraVideoFrame>(i420_data));
     }

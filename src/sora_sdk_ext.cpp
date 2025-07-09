@@ -256,6 +256,11 @@ int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
     Py_VISIT(on_message.ptr());
   }
 
+  if (conn->on_rpc_) {
+    nb::object on_rpc = nb::find(conn->on_rpc_);
+    Py_VISIT(on_rpc.ptr());
+  }
+
   if (conn->on_switched_) {
     nb::object on_switched = nb::find(conn->on_switched_);
     Py_VISIT(on_switched.ptr());
@@ -355,12 +360,12 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("LIVE", webrtc::MediaStreamTrackInterface::TrackState::kLive)
       .value("ENDED", webrtc::MediaStreamTrackInterface::TrackState::kEnded);
 
-  nb::enum_<rtc::LoggingSeverity>(m, "SoraLoggingSeverity", nb::is_arithmetic())
-      .value("VERBOSE", rtc::LoggingSeverity::LS_VERBOSE)
-      .value("INFO", rtc::LoggingSeverity::LS_INFO)
-      .value("WARNING", rtc::LoggingSeverity::LS_WARNING)
-      .value("ERROR", rtc::LoggingSeverity::LS_ERROR)
-      .value("NONE", rtc::LoggingSeverity::LS_NONE);
+  nb::enum_<webrtc::LoggingSeverity>(m, "SoraLoggingSeverity", nb::is_arithmetic())
+      .value("VERBOSE", webrtc::LoggingSeverity::LS_VERBOSE)
+      .value("INFO", webrtc::LoggingSeverity::LS_INFO)
+      .value("WARNING", webrtc::LoggingSeverity::LS_WARNING)
+      .value("ERROR", webrtc::LoggingSeverity::LS_ERROR)
+      .value("NONE", webrtc::LoggingSeverity::LS_NONE);
 
   m.def("enable_libwebrtc_log", &EnableLibwebrtcLog);
   m.def("rtc_log", &RtcLog);
@@ -502,6 +507,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_rw("on_notify", &SoraConnection::on_notify_)
       .def_rw("on_push", &SoraConnection::on_push_)
       .def_rw("on_message", &SoraConnection::on_message_)
+      .def_rw("on_rpc", &SoraConnection::on_rpc_)
       .def_rw("on_switched", &SoraConnection::on_switched_)
       .def_rw("on_track", &SoraConnection::on_track_)
       .def_rw("on_data_channel", &SoraConnection::on_data_channel_);
@@ -747,7 +753,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "client_key"_a = nb::none(), "ca_cert"_a = nb::none(),
            "proxy_url"_a = nb::none(), "proxy_username"_a = nb::none(),
            "proxy_password"_a = nb::none(), "proxy_agent"_a = nb::none(),
-           "degradation_preference"_a = nb::none(),
+           "degradation_preference"_a = nb::none(), "user_agent"_a = nb::none(),
            nb::sig("def create_connection("
                    "self, "
                    "signaling_urls: list[str], "
@@ -798,7 +804,8 @@ NB_MODULE(sora_sdk_ext, m) {
                    "proxy_password: Optional[str] = None, "
                    "proxy_agent: Optional[str] = None, "
                    "degradation_preference: "
-                   "Optional[SoraDegradationPreference] = None"
+                   "Optional[SoraDegradationPreference] = None, "
+                   "user_agent: Optional[str] = None"
                    ") -> SoraConnection"))
       .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
            "sample_rate"_a)

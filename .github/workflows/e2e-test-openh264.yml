@@ -1,11 +1,10 @@
-name: e2e-test
+name: e2e-test-openh264
 
 on:
   workflow_dispatch:
   push:
     paths-ignore:
       - "**.md"
-      - ".github/workflows/e2e-test-openh264.yml"
       - ".github/workflows/e2e-test-intel-vpl.yml"
       - ".github/workflows/e2e-test-amd-amf.yml"
       - ".github/workflows/e2e-test-apple-video-toolbox.yml"
@@ -24,12 +23,13 @@ env:
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.6.0
 
 permissions:
   contents: read
 
 jobs:
-  e2e_test_ubuntu:
+  e2e_test_openh264_ubuntu:
     strategy:
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
@@ -42,10 +42,6 @@ jobs:
             runs-on: "ubuntu-24.04"
             arch: "x86_64"
             openh264_arch: "linux64"
-          - target: "ubuntu-22.04_armv8"
-            runs-on: "ubuntu-22.04-arm"
-            arch: "armv8"
-            openh264_arch: "linux-arm64"
           - target: "ubuntu-24.04_armv8"
             runs-on: "ubuntu-24.04-arm"
             arch: "armv8"
@@ -54,12 +50,6 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          use-cache: 'true'
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
@@ -72,6 +62,12 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
           sudo ./llvm.sh 19
+      - name: Download openh264
+        run: |
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-${{ matrix.platform.openh264_arch }}.8.so libopenh264.so
+          echo "OPENH264_PATH=$(pwd)/libopenh264.so" >> $GITHUB_ENV
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
@@ -79,23 +75,24 @@ jobs:
           uv python pin ${{ matrix.python_version }}
           uv sync
           uv run python run.py ${{ matrix.platform.target }}
-          uv run pytest tests -v
+          uv run pytest tests/test_openh264*.py -v
 
-  e2e_test_macos:
+  e2e_test_openh264_macos:
     strategy:
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
+        # macos-13 は test_macos.py が上手くテストが動かないのでスキップ
         os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          use-cache: 'true'
+      - name: Download openh264
+        run: |
+          curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
+          bzip2 -d libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
+          mv libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib libopenh264.dylib
+          echo "OPENH264_PATH=$(pwd)/libopenh264.dylib" >> $GITHUB_ENV
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
@@ -103,9 +100,9 @@ jobs:
           uv python pin ${{ matrix.python_version }}
           uv sync
           uv run python run.py macos_arm64
-          uv run pytest tests -v
+          uv run pytest -k test_openh264 -v
 
-  e2e_test_windows:
+  e2e_test_openh264_windows:
     strategy:
       matrix:
         python_version: ["3.11", "3.12", "3.13"]
@@ -116,12 +113,14 @@ jobs:
       PYTHONUTF8: 1
     steps:
       - uses: actions/checkout@v4
-      - uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          use-cache: 'true'
+      - name: Download openh264
+        shell: pwsh
+        run: |
+          $url = "http://ciscobinary.openh264.org/openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
+          Invoke-WebRequest -Uri $url -OutFile "openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2"
+          7z e openh264-${{ env.OPENH264_VERSION }}-win64.dll.bz2
+          Rename-Item -Path "openh264-${{ env.OPENH264_VERSION }}-win64.dll" -NewName "libopenh264.dll"
+          echo "OPENH264_PATH=$PWD\libopenh264.dll" >> $env:GITHUB_ENV
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
@@ -129,7 +128,7 @@ jobs:
           uv python pin ${{ matrix.python_version }}
           uv sync
           uv run python run.py windows_x86_64
-          uv run pytest tests -v
+          uv run pytest -k test_openh264 -v
 
   # slack_notify_succeeded:
   #   needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
@@ -146,7 +145,7 @@ jobs:
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   slack_notify_failed:
-    needs: [e2e_test_ubuntu, e2e_test_macos, e2e_test_windows]
+    needs: [e2e_test_openh264_ubuntu, e2e_test_openh264_macos, e2e_test_openh264_windows]
     runs-on: ubuntu-24.04
     if: failure()
     steps:

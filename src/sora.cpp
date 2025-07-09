@@ -72,7 +72,8 @@ nb::ref<SoraConnection> Sora::CreateConnection(
     std::optional<std::string> proxy_username,
     std::optional<std::string> proxy_password,
     std::optional<std::string> proxy_agent,
-    std::optional<webrtc::DegradationPreference> degradation_preference) {
+    std::optional<webrtc::DegradationPreference> degradation_preference,
+    std::optional<std::string> user_agent) {
   std::shared_ptr<SoraSignalingObserver> observer(new SoraSignalingObserver());
   nb::ref<SoraConnection> conn = new SoraConnection(this, ioc_.get(), observer);
   observer->SetSoraConnection(conn);
@@ -196,21 +197,19 @@ nb::ref<SoraConnection> Sora::CreateConnection(
   if (degradation_preference) {
     config.degradation_preference = *degradation_preference;
   }
+  if (user_agent) {
+    config.user_agent = std::optional<std::string>(*user_agent);
+  } else {
+    // 無指定時はデフォルトの User-Agent を設定する
+    config.user_agent = std::optional<std::string>(
+        "Mozilla 5.0 (Sora Unity SDK/" BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION) ")");
+  }
+
   config.network_manager = factory_->default_network_manager();
   config.socket_factory = factory_->default_socket_factory();
 
-  config.sora_client = "Sora Python SDK";
-  try {
-    nb::module_ importlib_metadata = nb::module_::import_("importlib.metadata");
-    auto version = importlib_metadata.attr("version")("sora_sdk");
-    if (nb::isinstance<const char*>(version)) {
-      config.sora_client += " ";
-      config.sora_client += nb::cast<const char*>(version);
-    }
-  } catch (std::exception&) {
-    // バージョン情報の取得に失敗した場合にはエラーにはせずに単に無視する
-    // なお、基本的にここに来ることはないはずだけど、念の為にハンドリングしている
-  }
+  config.sora_client =
+      "Sora Python SDK " BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION);
 
   conn->Init(config);
   if (audio_source) {
@@ -232,9 +231,9 @@ nb::ref<SoraConnection> Sora::CreateConnection(
 nb::ref<SoraAudioSource> Sora::CreateAudioSource(size_t channels,
                                                  int sample_rate) {
   auto source =
-      rtc::make_ref_counted<SoraAudioSourceInterface>(channels, sample_rate);
+      webrtc::make_ref_counted<SoraAudioSourceInterface>(channels, sample_rate);
 
-  std::string track_id = rtc::CreateRandomString(16);
+  std::string track_id = webrtc::CreateRandomString(16);
   auto track = factory_->GetPeerConnectionFactory()->CreateAudioTrack(
       track_id, source.get());
   nb::ref<SoraAudioSource> audio_source =
@@ -244,9 +243,9 @@ nb::ref<SoraAudioSource> Sora::CreateAudioSource(size_t channels,
 
 nb::ref<SoraVideoSource> Sora::CreateVideoSource() {
   sora::ScalableVideoTrackSourceConfig config;
-  auto source = rtc::make_ref_counted<sora::ScalableVideoTrackSource>(config);
+  auto source = webrtc::make_ref_counted<sora::ScalableVideoTrackSource>(config);
 
-  std::string track_id = rtc::CreateRandomString(16);
+  std::string track_id = webrtc::CreateRandomString(16);
   auto track =
       factory_->GetPeerConnectionFactory()->CreateVideoTrack(source, track_id);
 
