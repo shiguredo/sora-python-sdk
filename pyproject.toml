@@ -30,7 +30,6 @@ dev-dependencies = [
     "setuptools==80.9",
     "build==1.2.2.post1",
     "wheel==0.45.1",
-    "typing-extensions",
     "numpy",
     "httpx",
     "pytest",
@@ -39,7 +38,6 @@ dev-dependencies = [
     "pytest-repeat",
     "ty",
     "pydantic-settings",
-    "pyright",
 ]
 
 [tool.ruff]
