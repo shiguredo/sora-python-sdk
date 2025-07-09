@@ -11,7 +11,7 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを `2025.4.0-canary.8` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.4.0` に上げる
   - WEBRTC_BUILD_VERSION を `m138.7204.0.0` に上げる
     - `ACMResampler` の廃止に伴い、`PushResampler` を利用するように変更
       - `acm_resampler.h` のインクルードを削除して、`push_resampler.h` をインクルードするように変更
