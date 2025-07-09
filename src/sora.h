@@ -90,6 +90,7 @@ class Sora : public CountedPublisher {
    * @param proxy_password (オプション) Proxy パスワード
    * @param proxy_agent (オプション) Proxy エージェント
    * @param degradation_preference (オプション) デグレード設定
+   * @param user_agent (オプション) User-Agent
    * @return SoraConnection インスタンス
    */
   nb::ref<SoraConnection> CreateConnection(
@@ -142,7 +143,8 @@ class Sora : public CountedPublisher {
       std::optional<std::string> proxy_username,
       std::optional<std::string> proxy_password,
       std::optional<std::string> proxy_agent,
-      std::optional<webrtc::DegradationPreference> degradation_preference);
+      std::optional<webrtc::DegradationPreference> degradation_preference,
+      std::optional<std::string> user_agent);
 
   /**
    * Sora に音声データを送る受け口である SoraAudioSource を生成します。

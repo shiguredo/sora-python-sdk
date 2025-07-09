@@ -11,6 +11,54 @@
 
 ## develop
 
+### 2025.3.0
+
+**リリース日**: 2025-07-10
+
+- [UPDATE] Sora C++ SDK のバージョンを `2025.4.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m138.7204.0.0` に上げる
+    - `ACMResampler` の廃止に伴い、`PushResampler` を利用するように変更
+      - `acm_resampler.h` のインクルードを削除して、`push_resampler.h` をインクルードするように変更
+    - `Resample10Msec` から `Resample` へ変更
+      - `Resample10Msec` で一度に行っていた入力と出力のサンプリングを `webrtc::InterleavedView` を利用してシンプルに行うように変更
+    - PeerConnectionFactoryDependendencies の `audio_processing` は廃止されたので削除
+    - `default_task_queue_factory.h` のインクルードを削除
+    - `dependencies.task_queue_factory` は廃止されたので `env` 経由で取得するように変更
+  - CMAKE_VERSION を `4.0.3` に上げる
+  - @melpon @torikizi
+- [UPDATE] Ubuntu arm64 では Clang 19 に上げる
+  - libwebrtc m137 を上げたことで clang 18 ではビルドが通らなくなったため
+  - @voluntas
+- [ADD] `__version__` でバージョンを取得できるようにする
+  - @voluntas
+- [ADD] WebSocket 接続時に User Agent を上書きする機能を追加する
+  - @melpon
+- [ADD] `on_rpc` コールバック関数を追加する
+  - @melpon
+- [FIX] pyi ファイルをバージョン毎に生成していなかった問題を修正する
+  - @voluntas
+- [FIX] Ubuntu 24.04 arm64 のクロスコンパイル時に Python 3.11 と Python 3.13 でビルドが失敗する問題を修正する
+  - run.py でハードコードされていた `python3.12` を動的にバージョンを取得するように修正
+  - CMakeLists.txt でクロスコンパイル時の Python 設定を改善
+  - @voluntas
+
+### misc
+
+- [CHANGE] GitHub Actions 経由のリリースを gh コマンドに切り替える
+  - @voluntas
+- [CHANGE] VERSION ファイルを SDK のバージョンのみにする
+  - @voluntas
+- [CHANGE] 依存ライブラリを指定する VERSION ファイルを DEPS に変更する
+  - @voluntas
+- [UPDATE] [mypy](https://github.com/python/mypy) から [ty](https://github.com/astral-sh/ty) に切り替える
+  - @voluntas
+- [UPDATE] [python-dotenv](https://github.com/theskumar/python-dotenv) を [pydantic-settings](https://github.com/pydantic/pydantic-settings) に切り替える
+  - @voluntas
+- [ADD] GitHub Actions で Ubuntu 向けの whl ファイルの動作を uv run --with で動作確認するようにする
+  - @voluntas
+- [ADD] .github ディレクトリに copilot-instructions.md を追加
+  - @torikizi
+
 ## 2025.2.3
 
 **リリース日**: 2025-05-23

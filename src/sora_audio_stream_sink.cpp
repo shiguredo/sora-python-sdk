@@ -193,16 +193,12 @@ void SoraAudioStreamSinkImpl::OnData(
   bool need_resample = output_sample_rate_ != -1 &&
                        tuned_frame->sample_rate_hz() != output_sample_rate_;
   if (need_resample) {
-    int samples_per_channel_int = resampler_.Resample10Msec(
-        tuned_frame->data(), tuned_frame->sample_rate_hz(), output_sample_rate_,
-        tuned_frame->num_channels(), webrtc::AudioFrame::kMaxDataSizeSamples,
-        tuned_frame->mutable_data());
-    if (samples_per_channel_int < 0) {
-      return;
-    }
-    tuned_frame->samples_per_channel_ =
-        static_cast<size_t>(samples_per_channel_int);
-    tuned_frame->sample_rate_hz_ = output_sample_rate_;
+    webrtc::InterleavedView<const int16_t> src = tuned_frame->data_view();
+    webrtc::InterleavedView<int16_t> dst = tuned_frame->mutable_data(
+        webrtc::SampleRateToDefaultChannelSize(output_sample_rate_),
+        tuned_frame->num_channels());
+    resampler_.Resample(src, dst);
+    tuned_frame->SetSampleRateAndChannelSize(output_sample_rate_);
   }
   // Remix して channel 数を揃える
   if (output_channels_ != 0 &&

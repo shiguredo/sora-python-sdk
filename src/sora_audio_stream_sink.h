@@ -11,7 +11,7 @@
 #include <api/audio/audio_frame.h>
 #include <api/media_stream_interface.h>
 #include <api/scoped_refptr.h>
-#include <modules/audio_coding/acm2/acm_resampler.h>
+#include <common_audio/resampler/include/push_resampler.h>
 
 #include "sora_track_interface.h"
 
@@ -195,9 +195,7 @@ class SoraAudioStreamSinkImpl : public webrtc::AudioTrackSinkInterface,
   SoraTrackInterface* track_;
   const int output_sample_rate_;
   const size_t output_channels_;
-  // ACMResampler の前に std::unique_ptr がなんでも良いので無いと何故かビルドが通らない
-  std::unique_ptr<uint8_t> dummy_;
-  webrtc::acm2::ACMResampler resampler_;
+  webrtc::PushResampler<int16_t> resampler_;
 };
 
 #endif

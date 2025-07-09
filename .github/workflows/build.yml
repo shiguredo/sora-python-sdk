@@ -31,6 +31,13 @@ jobs:
   # １箇所で pyi を生成してアーティファクトにアップロードして、
   # それを各ビルドで利用する形にする。
   build_pyi:
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -40,7 +47,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
-      - run: uv python pin 3.13
+      - run: uv python pin ${{ matrix.python_version }}
       - run: uv sync
       - name: Generate pyi
         run: |
@@ -51,7 +58,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sora_sdk
+          name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
 
   build_ubuntu:
@@ -59,27 +66,30 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # - name: ubuntu-24.04_x86_64
-          #   target: ubuntu-24.04_x86_64
-          #   runs_on: ubuntu-24.04
-          #   os: ubuntu
+          - name: ubuntu-24.04_x86_64
+            target: ubuntu-24.04_x86_64
+            runs_on: ubuntu-24.04
+            os: ubuntu
+            arch: x86_64
           - name: ubuntu-22.04_x86_64
             target: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
             os: ubuntu
             arch: x86_64
+          - name: ubuntu-24.04_armv8
+            target: ubuntu-24.04_armv8
+            runs_on: ubuntu-24.04
+            os: ubuntu
+            arch: armv8
+          - name: ubuntu-22.04_armv8
+            target: ubuntu-22.04_armv8
+            runs_on: ubuntu-22.04
+            os: ubuntu
+            arch: armv8
         python_version:
           - "3.11"
           - "3.12"
           - "3.13"
-        include:
-          - platform:
-              name: ubuntu-24.04_armv8
-              target: ubuntu-24.04_armv8
-              runs_on: ubuntu-24.04
-              os: ubuntu
-              arch: armv8
-            python_version: "3.12"
     needs: [build_pyi] 
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
@@ -87,7 +97,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: sora_sdk
+          name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
@@ -127,6 +137,63 @@ jobs:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
 
+
+  # x86_64 でビルドした Ubuntu x86_64/arm64 向けの whl をチェックする
+  check_ubuntu_wheel:
+    strategy:
+      fail-fast: false
+      matrix:
+        # 22.04 x86_64 でクロスコンパイルした whl を 22.04 と 24.04 の x86_64/arm64 でチェックする
+        platform:
+          - name: ubuntu-22.04_x86_64
+            download_name: ubuntu-22.04_x86_64
+            runs_on: ubuntu-22.04
+            pytag: manylinux_2_31_x86_64
+          - name: ubuntu-22.04_armv8
+            download_name: ubuntu-22.04_armv8
+            runs_on: ubuntu-22.04-arm
+            pytag: manylinux_2_31_aarch64
+          - name: ubuntu-24.04_x86_64
+            download_name: ubuntu-22.04_x86_64
+            runs_on: ubuntu-24.04
+            pytag: manylinux_2_31_x86_64
+          - name: ubuntu-24.04_armv8
+            download_name: ubuntu-22.04_armv8
+            runs_on: ubuntu-24.04-arm
+            pytag: manylinux_2_31_aarch64
+        version:
+          - python: "3.11"
+            pkg: "311"
+          - python: "3.12"
+            pkg: "312"
+          - python: "3.13"
+            pkg: "313"
+    needs: [build_ubuntu]
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - run: |
+          uv python pin ${{ matrix.version.python }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.platform.download_name }}_python-${{ matrix.version.python }}
+          path: dist/
+
+      # VERSION ファイルからバージョンを取得
+      - id: get_version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # ここで download した whl ファイルの動作を確認する
+      - run: |
+          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl \
+          python3 -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
+
   build_ubuntu_arm:
     strategy:
       fail-fast: false
@@ -138,8 +205,16 @@ jobs:
             runs_on: ubuntu-24.04-arm
             os: ubuntu
             arch: armv8
+          - name: ubuntu-22.04_armv8
+            target: ubuntu-22.04_armv8
+            # arm64 でビルド
+            runs_on: ubuntu-22.04-arm
+            os: ubuntu
+            arch: armv8
         python_version:
+          - "3.11"
           - "3.12"
+          - "3.13"
     needs: [build_pyi] 
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
@@ -147,7 +222,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: sora_sdk
+          name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
@@ -160,12 +235,12 @@ jobs:
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
-      # clang-18
-      - name: Install clang-18
+      # clang-19
+      - name: Install clang-19
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
-          sudo ./llvm.sh 18
+          sudo ./llvm.sh 19
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
@@ -205,7 +280,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: sora_sdk
+          name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
@@ -243,7 +318,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: sora_sdk
+          name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
 
       - run: |
@@ -302,8 +377,8 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # - name: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
+          - name: ubuntu-22.04_armv8
           - name: macos-15_arm64
           - name: macos-14_arm64
           - name: windows-2025
@@ -311,10 +386,6 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-        include:
-          - platform:
-              name: ubuntu-24.04_armv8
-            python_version: "3.12"
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -352,6 +423,7 @@ jobs:
           SLACK_COLOR: danger
           SLACK_TITLE: Build failed
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
   create-release:
     if: contains(github.ref, 'tags/202')
     needs:
@@ -369,7 +441,23 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.11" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.13" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.11" }
+      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
@@ -394,11 +482,28 @@ jobs:
           cat package_paths.env >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         id: env
+      - name: Release (Prerelease)
+        if: contains(github.ref, 'dev')
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "${{ github.ref_name }}" \
+            --prerelease \
+            $(cat package_paths.env)
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ${{ steps.env.outputs.package_paths }}
-          prerelease: ${{ contains(github.ref, 'dev') }}
+        if: ${{ !contains(github.ref, 'dev') }}
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "${{ github.ref_name }}" \
+            $(cat package_paths.env)
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Verify Release Creation
+        run: |
+          gh release view ${{ github.ref_name }} --json url
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2

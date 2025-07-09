@@ -82,10 +82,10 @@ jobs:
 
       - name: Setup common
         run: |
-          # clang-18
+          # clang-19
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
-          sudo ./llvm.sh 18
+          sudo ./llvm.sh 19
 
       - uses: actions/checkout@v4
         with:
@@ -93,7 +93,7 @@ jobs:
       - name: Get versions
         id: version
         run: |
-          source sora-python-sdk/VERSION
+          source sora-python-sdk/DEPS
           echo "webrtc_build_version=${WEBRTC_BUILD_VERSION}" >> $GITHUB_OUTPUT
           echo "sora_cpp_sdk_version=${SORA_CPP_SDK_VERSION}" >> $GITHUB_OUTPUT
           echo "boost_version=${BOOST_VERSION}" >> $GITHUB_OUTPUT
@@ -181,7 +181,7 @@ jobs:
         if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
         working-directory: sora-cpp-sdk
         run: |
-          source VERSION
+          source DEPS
           sudo apt-get update
           sudo apt-get install -y software-properties-common
 

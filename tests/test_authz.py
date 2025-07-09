@@ -1,43 +1,25 @@
-import sys
 import time
-import uuid
 
-import jwt
 import pytest
 from client import SoraClient, SoraRole
 
 
 @pytest.mark.skipif(reason="Sora C++ SDK 側の対応が必要")
-def test_sendonly_authz_video_true(setup):
+def test_sendonly_authz_video_true(settings):
     """
     - type: connect で audio: true / video: false で繫ぐ
     - 認証成功時の払い出しで audio: false / video: true を払い出す
     """
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
-    access_token = jwt.encode(
-        {
-            "channel_id": channel_id,
-            "audio": False,
-            "video": True,
-            # 現在時刻 + 300 秒 (5分)
-            "exp": int(time.time()) + 300,
-        },
-        secret,
-        algorithm="HS256",
-    )
 
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=True,
         video=False,
-        metadata={"access_token": access_token},
+        jwt_private_claims={
+            "audio": True,
+            "video": False,
+        },
     )
     sendonly.connect(fake_video=False, fake_audio=True)
 
@@ -64,42 +46,24 @@ def test_sendonly_authz_video_true(setup):
 
 
 @pytest.mark.parametrize(
-    "video_codec_params",
+    ("video_codec_type", "expected_implementation"),
     [
-        # video_codec, encoder_implementation, decoder_implementation
+        # video_codec, expected_implementation
         ("VP8", "libvpx"),
         ("VP9", "libvpx"),
         ("AV1", "libaom"),
     ],
 )
-def test_sendonly_authz_video_codec_type(setup, video_codec_params):
-    video_codec_type, encoder_implementation = video_codec_params
-
-    signaling_urls = setup.get("signaling_urls")
-    channel_id_prefix = setup.get("channel_id_prefix")
-    secret = setup.get("secret")
-
-    channel_id = f"{channel_id_prefix}_{__name__}_{sys._getframe().f_code.co_name}_{uuid.uuid4()}"
-
-    access_token = jwt.encode(
-        {
-            "channel_id": channel_id,
-            "video": True,
-            "video_codec_type": video_codec_type,
-            # 現在時刻 + 300 秒 (5分)
-            "exp": int(time.time()) + 300,
-        },
-        secret,
-        algorithm="HS256",
-    )
-
+def test_sendonly_authz_video_codec_type(settings, video_codec_type, expected_implementation):
     sendonly = SoraClient(
-        signaling_urls,
+        settings,
         SoraRole.SENDONLY,
-        channel_id,
         audio=False,
         video=True,
-        metadata={"access_token": access_token},
+        jwt_private_claims={
+            "video": True,
+            "video_codec_type": video_codec_type,
+        },
     )
     sendonly.connect(fake_video=True)
 
@@ -120,6 +84,6 @@ def test_sendonly_authz_video_codec_type(setup, video_codec_params):
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    assert outbound_rtp_stats["encoderImplementation"] == encoder_implementation
+    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
