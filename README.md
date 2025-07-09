@@ -88,7 +88,7 @@ PyPI 経由ではインストールできません。
 
 ## システム条件
 
-- WebRTC SFU Sora 2024.1.0 以降
+- WebRTC SFU Sora 2024.2.0 以降
 - Python 3.11 以上
 
 ## Python サポートポリシー
