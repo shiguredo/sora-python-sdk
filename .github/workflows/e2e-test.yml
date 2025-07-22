@@ -32,7 +32,7 @@ jobs:
   e2e_test_ubuntu:
     strategy:
       matrix:
-        python_version: ["3.11", "3.12", "3.13"]
+        python_version: ["3.11", "3.12", "3.13", "3.14"]
         platform:
           - target: "ubuntu-22.04_x86_64"
             runs-on: "ubuntu-22.04"
