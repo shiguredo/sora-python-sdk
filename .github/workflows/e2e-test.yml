@@ -84,7 +84,7 @@ jobs:
   e2e_test_macos:
     strategy:
       matrix:
-        python_version: ["3.11", "3.12", "3.13"]
+        python_version: ["3.11", "3.12", "3.13", "3.14"]
         os: ["macos-14", "macos-15"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -108,7 +108,7 @@ jobs:
   e2e_test_windows:
     strategy:
       matrix:
-        python_version: ["3.11", "3.12", "3.13"]
+        python_version: ["3.11", "3.12", "3.13", "3.14"]
     runs-on: windows-2025
     timeout-minutes: 20
     env:
