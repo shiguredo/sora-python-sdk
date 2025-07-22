@@ -15,7 +15,7 @@
   - @voluntas
 - [FIX] GitHub Actions の check_ubuntu_wheel ジョブで uv 0.8 以降の externally managed Python 環境エラーを修正する
   - `uv run --with` から `uv pip install` を使用する方式に変更
-  - 一時ディレクトリで仮想環境を作成して wheel ファイルをテストするように変更
+  - checkouts せずに仮想環境を作成して wheel ファイルをテストするように変更
   - @voluntas
 
 ## 2025.3.0
