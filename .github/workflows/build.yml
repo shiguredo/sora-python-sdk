@@ -26,6 +26,23 @@ env:
   OPENH264_VERSION: 2.6.0
 
 jobs:
+  # VERSION ファイルからバージョン情報を取得
+  get_sdk_version:
+    runs-on: ubuntu-latest
+    outputs:
+      sdk_version: ${{ steps.version.outputs.sdk_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            VERSION
+          sparse-checkout-cone-mode: false
+      - id: version
+        run: |
+          SDK_VERSION=$(cat VERSION)
+          echo "sdk_version=$SDK_VERSION" >> $GITHUB_OUTPUT
+          echo "SDK Version: $SDK_VERSION"
+
   # まず pyi を生成する
   # クロスコンパイル環境だと pyi が生成できないので、
   # １箇所で pyi を生成してアーティファクトにアップロードして、
@@ -168,31 +185,24 @@ jobs:
             pkg: "312"
           - python: "3.13"
             pkg: "313"
-    needs: [build_ubuntu]
+    needs: [get_sdk_version, build_ubuntu]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
-      - run: |
-          uv python pin ${{ matrix.version.python }}
       - uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.platform.download_name }}_python-${{ matrix.version.python }}
           path: dist/
 
-      # VERSION ファイルからバージョンを取得
-      - id: get_version
-        run: |
-          VERSION=$(cat VERSION)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       # ここで download した whl ファイルの動作を確認する
       - run: |
-          uv pip install dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
-          uv run python3 -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
+          # 仮想環境を作成してテスト
+          uv venv --python ${{ matrix.version.python }}
+          uv pip install dist/sora_sdk-${{ needs.get_sdk_version.outputs.sdk_version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
+          uv run python -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
 
   build_ubuntu_arm:
     strategy:
