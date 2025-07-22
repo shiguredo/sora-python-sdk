@@ -26,6 +26,23 @@ env:
   OPENH264_VERSION: 2.6.0
 
 jobs:
+  # VERSION ファイルからバージョン情報を取得
+  get_sdk_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            VERSION
+          sparse-checkout-cone-mode: false
+      - id: version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "SDK Version: $VERSION"
+
   # まず pyi を生成する
   # クロスコンパイル環境だと pyi が生成できないので、
   # １箇所で pyi を生成してアーティファクトにアップロードして、
@@ -168,37 +185,24 @@ jobs:
             pkg: "312"
           - python: "3.13"
             pkg: "313"
-    needs: [build_ubuntu]
+    needs: [get_sdk_version, build_ubuntu]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
-      - run: |
-          uv python pin ${{ matrix.version.python }}
       - uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.platform.download_name }}_python-${{ matrix.version.python }}
           path: dist/
 
-      # VERSION ファイルからバージョンを取得
-      - id: get_version
-        run: |
-          VERSION=$(cat VERSION)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       # ここで download した whl ファイルの動作を確認する
       - run: |
-          # 一時ディレクトリで仮想環境を作成してテスト
-          TMPDIR=$(mktemp -d)
-          cd $TMPDIR
+          # 仮想環境を作成してテスト
           uv venv --python ${{ matrix.version.python }}
-          uv pip install $GITHUB_WORKSPACE/dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
+          uv pip install dist/sora_sdk-${{ needs.get_sdk_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
           uv run python -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
-          cd $GITHUB_WORKSPACE
-          rm -rf $TMPDIR
 
   build_ubuntu_arm:
     strategy:
