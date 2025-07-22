@@ -37,7 +37,6 @@ dev-dependencies = [
     "pyjwt",
     "pytest-repeat",
     "ty",
-    "pydantic-settings",
 ]
 
 [tool.ruff]
