@@ -191,7 +191,7 @@ jobs:
 
       # ここで download した whl ファイルの動作を確認する
       - run: |
-          uv pip install --system dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
+          uv pip install dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
           uv run python3 -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
 
   build_ubuntu_arm:
