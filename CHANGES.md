@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] nanobind を `2.8.0` に上げる
+  - @voluntas
+
 ## 2025.3.0
 
 **リリース日**: 2025-07-09
