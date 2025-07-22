@@ -13,6 +13,9 @@
 
 - [UPDATE] nanobind を `2.8.0` に上げる
   - @voluntas
+- [FIX] GitHub Actions で uv 0.8 にアップデートした際に wheel ファイルのインストールが失敗する問題を修正する
+  - `uv run --with` から `uv pip install` を使用する方式に変更
+  - @voluntas
 
 ## 2025.3.0
 
