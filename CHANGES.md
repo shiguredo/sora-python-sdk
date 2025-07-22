@@ -9,6 +9,11 @@
 - FIX
   - バグ修正
 
+## feature/python-314
+
+- [ADD] Python 3.14 をテスト対象に追加する
+  - @voluntas
+
 ## develop
 
 - [UPDATE] nanobind を `2.8.0` に上げる
