@@ -19,9 +19,6 @@
 // Sora C++ SDK
 #include <sora/sora_video_codec.h>
 
-// Boost
-#include <boost/json.hpp>
-
 #include "sora.h"
 #include "sora_audio_sink.h"
 #include "sora_audio_source.h"
@@ -612,9 +609,8 @@ NB_MODULE(sora_sdk_ext, m) {
       nb::class_<sora::VideoCodecCapability>(m, "SoraVideoCodecCapability")
           .def_ro("engines", &sora::VideoCodecCapability::engines)
           .def("to_json", [](const sora::VideoCodecCapability& capability) {
-            boost::json::value jv;
-            boost::json::value_from(capability, jv);
-            auto str = boost::json::serialize(jv);
+            auto str =
+                boost::json::serialize(boost::json::value_from(capability));
             return nb::module_::import_("json").attr("loads")(str);
           });
   nb::class_<sora::VideoCodecCapability::Parameters>(video_codec_capability,
@@ -664,9 +660,8 @@ NB_MODULE(sora_sdk_ext, m) {
           .def_rw("codecs", &sora::VideoCodecPreference::codecs)
           .def("to_json",
                [](const sora::VideoCodecPreference& capability) {
-                 boost::json::value jv;
-                 boost::json::value_from(capability, jv);
-                 auto str = boost::json::serialize(jv);
+                 auto str = boost::json::serialize(
+                     boost::json::value_from(capability));
                  return nb::module_::import_("json").attr("loads")(str);
                })
           .def("find",
