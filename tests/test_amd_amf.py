@@ -72,6 +72,20 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
             f"このチップでは {video_codec_type} のエンコード/デコードの両方がサポートされていません"
         )
 
+    recvonly = SoraClient(
+        settings,
+        SoraRole.RECVONLY,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type(video_codec_type),
+                    decoder=SoraVideoCodecImplementation.AMD_AMF,
+                ),
+            ]
+        ),
+    )
+    recvonly.connect()
+
     sendonly = SoraClient(
         settings,
         SoraRole.SENDONLY,
@@ -88,20 +102,6 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
         ),
     )
     sendonly.connect(fake_video=True)
-
-    recvonly = SoraClient(
-        settings,
-        SoraRole.RECVONLY,
-        video_codec_preference=SoraVideoCodecPreference(
-            codecs=[
-                SoraVideoCodecPreference.Codec(
-                    type=codec_type_string_to_codec_type(video_codec_type),
-                    decoder=SoraVideoCodecImplementation.AMD_AMF,
-                ),
-            ]
-        ),
-    )
-    recvonly.connect()
 
     time.sleep(5)
 
