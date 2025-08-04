@@ -72,6 +72,11 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
             f"このチップでは {video_codec_type} のエンコード/デコードの両方がサポートされていません"
         )
 
+    """
+    なぜかわからないが sendonly -> recvonly の順番だと Sora への接続が失敗する場合がある
+    そのため、recvonly -> sendonly の順番で接続している
+    """
+
     recvonly = SoraClient(
         settings,
         SoraRole.RECVONLY,
