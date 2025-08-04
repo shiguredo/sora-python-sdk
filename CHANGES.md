@@ -11,6 +11,12 @@
 
 ## develop
 
+- [UPDATE] Sora C++ SDK のバージョンを `2025.5.0-canary.1` に上げる
+  - WEBRTC_BUILD_VERSION を `m139.7258.3.0` に上げる
+  - Sora C++ SDK の tag_invoke ベースの Boost.JSON API に対応
+    - `std::promise` と `std::future` を使用するために `<future>` ヘッダーを追加
+    - `boost::json::value_from` の使用方法を 2 引数版に変更
+  - @voluntas
 - [UPDATE] nanobind を `2.8.0` に上げる
   - @voluntas
 - [FIX] GitHub Actions の check_ubuntu_wheel ジョブで uv 0.8 以降の externally managed Python 環境エラーを修正する
