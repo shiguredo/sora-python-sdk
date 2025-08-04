@@ -120,6 +120,7 @@ class Sora : public CountedPublisher {
       const nb::handle& video_h264_params,
       const nb::handle& audio_opus_params,
       std::optional<bool> simulcast,
+      std::optional<bool> simulcast_multicodec,
       std::optional<bool> spotlight,
       std::optional<int> spotlight_number,
       std::optional<std::string> simulcast_rid,

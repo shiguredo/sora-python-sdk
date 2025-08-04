@@ -49,6 +49,7 @@ nb::ref<SoraConnection> Sora::CreateConnection(
     const nb::handle& video_h264_params,
     const nb::handle& audio_opus_params,
     std::optional<bool> simulcast,
+    std::optional<bool> simulcast_multicodec,
     std::optional<bool> spotlight,
     std::optional<int> spotlight_number,
     std::optional<std::string> simulcast_rid,
@@ -130,6 +131,9 @@ nb::ref<SoraConnection> Sora::CreateConnection(
                        "Invalid JSON value in signaling_notify_metadata");
   if (simulcast) {
     config.simulcast = *simulcast;
+  }
+  if (simulcast_multicodec) {
+    config.simulcast_multicodec = *simulcast_multicodec;
   }
   if (spotlight) {
     config.spotlight = *spotlight;
