@@ -2,6 +2,10 @@
 
 #include "sora.h"
 
+// Boost
+#include <boost/json.hpp>
+#include <boost/json/value_to.hpp>
+
 // WebRTC
 #include <rtc_base/crypto_random.h>
 
