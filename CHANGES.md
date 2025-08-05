@@ -13,6 +13,9 @@
 
 - [UPDATE] nanobind を `2.8.0` に上げる
   - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2025.5.0-canary.2` に上げる
+  - WEBRTC_BUILD_VERSION を `m139.7258.3.0` に上げる
+  - @melpon
 - [FIX] GitHub Actions の check_ubuntu_wheel ジョブで uv 0.8 以降の externally managed Python 環境エラーを修正する
   - `uv run --with` から `uv pip install` を使用する方式に変更
   - checkouts せずに仮想環境を作成して wheel ファイルをテストするように変更
