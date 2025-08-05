@@ -645,13 +645,19 @@ def test_intel_vpl_decoding_vp9(settings):
 @pytest.mark.parametrize(
     "video_codec_type",
     [
-        # "VP9"
+        pytest.param(
+            "VP9",
+            marks=pytest.mark.xfail(
+                strict=True,
+                reason="Intel VPL VP9 Encoder は I フレーム要求が正常に動作しないためテストに失敗する",
+            ),
+        ),
         "AV1",
         "H264",
         "H265",
     ],
 )
-def test_amd_amf_key_frame_request(settings, video_codec_type):
+def test_intel_vpl_key_frame_request(settings, video_codec_type):
     sendonly = SoraClient(
         settings,
         SoraRole.SENDONLY,
