@@ -62,9 +62,10 @@ def test_amd_amf_available(settings):
     "video_codec_type",
     [
         # AV1 は decoder が正常に動作しない
+        # AV1 / H.265 は AMD AMF エンコーダーで PLI を送ってもキーフレームを送らない
         # "AV1",
         "H264",
-        "H265",
+        # "H265",
     ],
 )
 def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
@@ -126,7 +127,6 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    # H.264/H.265 が採用されているかどうか確認する
     assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
@@ -141,7 +141,6 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
-    # H.264/H.265 が採用されているかどうか確認する
     assert recvonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
@@ -303,9 +302,19 @@ def test_amd_amf_simulcast(
 @pytest.mark.parametrize(
     "video_codec_type",
     [
-        "AV1",
+        pytest.param(
+            "AV1",
+            marks=pytest.mark.xfail(
+                reason="AMD AMF の AV1 Encoder は PLI を送ってもキーフレームを送らない"
+            ),
+        ),
         "H264",
-        "H265",
+        pytest.param(
+            "H265",
+            marks=pytest.mark.xfail(
+                reason="AMD AMF の H265 Encoder は PLI を送ってもキーフレームを送らない"
+            ),
+        ),
     ],
 )
 def test_amd_amf_key_frame_request(settings, video_codec_type):
@@ -347,15 +356,16 @@ def test_amd_amf_key_frame_request(settings, video_codec_type):
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
 
-    # 3 回以上
-    assert outbound_rtp_stats["keyFramesEncoded"] > api_count
-    assert outbound_rtp_stats["pliCount"] >= api_count
+    print("video_codec_type:", video_codec_type)
     print("keyFramesEncoded:", outbound_rtp_stats["keyFramesEncoded"])
     print("pliCount:", outbound_rtp_stats["pliCount"])
-
-    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
-    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
     print(
         "keyFramesEncoded >= pliCount * 0.7:",
         outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7,
     )
+
+    assert outbound_rtp_stats["keyFramesEncoded"] > api_count
+    assert outbound_rtp_stats["pliCount"] >= api_count
+
+    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
+    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
