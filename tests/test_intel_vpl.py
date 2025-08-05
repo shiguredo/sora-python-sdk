@@ -495,7 +495,7 @@ def test_intel_vpl_encoding_vp9(settings):
             codecs=[
                 SoraVideoCodecPreference.Codec(
                     type=SoraVideoCodecType.VP9,
-                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                    decoder=SoraVideoCodecImplementation.INTERNAL,
                 ),
             ]
         ),
