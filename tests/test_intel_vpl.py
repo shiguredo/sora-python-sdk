@@ -466,13 +466,13 @@ def test_intel_vpl_decoding_av1(settings):
 @pytest.mark.xfail(
     strict=True, reason="VP9 は C++ SDK の Intel VPL で対応できていないのでテストが失敗する"
 )
-def test_intel_vpl_encoding_vp9(settings, video_codec_type, expected_implementation):
+def test_intel_vpl_encoding_vp9(settings):
     sendonly = SoraClient(
         settings,
         SoraRole.SENDONLY,
         audio=False,
         video=True,
-        video_codec_type=video_codec_type,
+        video_codec_type="VP9",
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -490,7 +490,7 @@ def test_intel_vpl_encoding_vp9(settings, video_codec_type, expected_implementat
         SoraRole.RECVONLY,
         audio=False,
         video=True,
-        video_codec_type=video_codec_type,
+        video_codec_type="VP9",
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
@@ -512,12 +512,12 @@ def test_intel_vpl_encoding_vp9(settings, video_codec_type, expected_implementat
     # offer の sdp に video_codec_type が含まれているかどうかを確認している
     assert sendonly.offer_message is not None
     assert "sdp" in sendonly.offer_message
-    assert video_codec_type in sendonly.offer_message["sdp"]
+    assert "VP9" in sendonly.offer_message["sdp"]
 
     # answer の sdp に video_codec_type が含まれているかどうかを確認している
     assert sendonly.answer_message is not None
     assert "sdp" in sendonly.answer_message
-    assert video_codec_type in sendonly.answer_message["sdp"]
+    assert "VP9" in sendonly.answer_message["sdp"]
 
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
