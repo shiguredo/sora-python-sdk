@@ -466,16 +466,7 @@ def test_intel_vpl_decoding_av1(settings):
 @pytest.mark.xfail(
     strict=True, reason="VP9 は C++ SDK の Intel VPL で対応できていないのでテストが失敗する"
 )
-@pytest.mark.parametrize(
-    (
-        "video_codec_type",
-        "expected_implementation",
-    ),
-    [
-        ("VP9", "libvpl"),
-    ],
-)
-def test_intel_vpl_vp9_failed(settings, video_codec_type, expected_implementation):
+def test_intel_vpl_encoding_vp9(settings, video_codec_type, expected_implementation):
     sendonly = SoraClient(
         settings,
         SoraRole.SENDONLY,
@@ -516,7 +507,7 @@ def test_intel_vpl_vp9_failed(settings, video_codec_type, expected_implementatio
     assert sendonly.connect_message is not None
     assert sendonly.connect_message["channel_id"] == settings.channel_id
     assert "video" in sendonly.connect_message
-    assert sendonly.connect_message["video"]["codec_type"] == video_codec_type
+    assert sendonly.connect_message["video"]["codec_type"] == "VP9"
 
     # offer の sdp に video_codec_type が含まれているかどうかを確認している
     assert sendonly.offer_message is not None
@@ -537,12 +528,12 @@ def test_intel_vpl_vp9_failed(settings, video_codec_type, expected_implementatio
     # codec が無かったら StopIteration 例外が上がる
     codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     # VP9 が採用されているかどうか確認する
-    assert codec_stats["mimeType"] == f"video/{video_codec_type}"
+    assert codec_stats["mimeType"] == "video/VP9"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
     # ここで libvpx になって失敗する
-    assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
+    assert outbound_rtp_stats["encoderImplementation"] == "libvpl"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
