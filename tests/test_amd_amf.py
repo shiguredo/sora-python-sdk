@@ -72,25 +72,6 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
             f"このチップでは {video_codec_type} のエンコード/デコードの両方がサポートされていません"
         )
 
-    """
-    なぜかわからないが sendonly -> recvonly の順番だと Sora への接続が失敗する場合がある
-    そのため、recvonly -> sendonly の順番で接続している
-    """
-
-    recvonly = SoraClient(
-        settings,
-        SoraRole.RECVONLY,
-        video_codec_preference=SoraVideoCodecPreference(
-            codecs=[
-                SoraVideoCodecPreference.Codec(
-                    type=codec_type_string_to_codec_type(video_codec_type),
-                    decoder=SoraVideoCodecImplementation.AMD_AMF,
-                ),
-            ]
-        ),
-    )
-    recvonly.connect()
-
     sendonly = SoraClient(
         settings,
         SoraRole.SENDONLY,
@@ -107,6 +88,22 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
         ),
     )
     sendonly.connect(fake_video=True)
+
+    time.sleep(5)
+
+    recvonly = SoraClient(
+        settings,
+        SoraRole.RECVONLY,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type(video_codec_type),
+                    decoder=SoraVideoCodecImplementation.AMD_AMF,
+                ),
+            ]
+        ),
+    )
+    recvonly.connect()
 
     time.sleep(5)
 
@@ -136,6 +133,8 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
     assert outbound_rtp_stats["encoderImplementation"] == "AMF"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
+    assert outbound_rtp_stats["keyFramesEncoded"] > 0
+    assert outbound_rtp_stats["pliCount"] > 0
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
@@ -147,6 +146,7 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
     assert inbound_rtp_stats["decoderImplementation"] == "AMF"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
+    assert inbound_rtp_stats["keyFramesDecoded"] > 0
 
 
 @pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
