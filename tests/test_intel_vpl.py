@@ -493,6 +493,24 @@ def test_intel_vpl_vp9_failed(settings, video_codec_type, expected_implementatio
     )
     sendonly.connect(fake_video=True)
 
+    # libvpx の VP9 デコーダーを利用して動作を確認する
+    recvonly = SoraClient(
+        settings,
+        SoraRole.RECVONLY,
+        audio=False,
+        video=True,
+        video_codec_type=video_codec_type,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=SoraVideoCodecType.VP9,
+                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                ),
+            ]
+        ),
+    )
+    recvonly.connect()
+
     time.sleep(5)
 
     assert sendonly.connect_message is not None
@@ -511,8 +529,10 @@ def test_intel_vpl_vp9_failed(settings, video_codec_type, expected_implementatio
     assert video_codec_type in sendonly.answer_message["sdp"]
 
     sendonly_stats = sendonly.get_stats()
+    recvonly_stats = recvonly.get_stats()
 
     sendonly.disconnect()
+    recvonly.disconnect()
 
     # codec が無かったら StopIteration 例外が上がる
     codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
@@ -525,6 +545,18 @@ def test_intel_vpl_vp9_failed(settings, video_codec_type, expected_implementatio
     assert outbound_rtp_stats["encoderImplementation"] == expected_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
+
+    # codec が無かったら StopIteration 例外が上がる
+    recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
+    # VP9 が採用されているかどうか確認する
+    assert recvonly_codec_stats["mimeType"] == "video/VP9"
+
+    # inbound-rtp が無かったら StopIteration 例外が上がる
+    inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
+    # ここで libvpx になっていなくて失敗する
+    assert outbound_rtp_stats["encoderImplementation"] == "libvpx"
+    assert inbound_rtp_stats["bytesReceived"] > 0
+    assert inbound_rtp_stats["packetsReceived"] > 0
 
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
