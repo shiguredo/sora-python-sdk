@@ -468,7 +468,7 @@ def test_intel_vpl_decoding_av1(settings):
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.xfail(
-    strict=True, reason="VP9 は C++ SDK の Intel VPL で対応できていないのでテストが失敗する"
+    strict=True, reason="VP9 Encoder は C++ SDK の Intel VPL で対応できていないのでテストが失敗する"
 )
 def test_intel_vpl_encoding_vp9(settings):
     sendonly = SoraClient(
@@ -553,7 +553,6 @@ def test_intel_vpl_encoding_vp9(settings):
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
-    # ここで libvpx になっていなくて失敗する
     assert outbound_rtp_stats["encoderImplementation"] == "libvpx"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
@@ -625,6 +624,8 @@ def test_intel_vpl_decoding_vp9(settings):
     assert outbound_rtp_stats["encoderImplementation"] == "libvpx"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
+    assert outbound_rtp_stats["keyFramesEncoded"] > 0
+    assert outbound_rtp_stats["pliCount"] > 0
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
@@ -636,3 +637,4 @@ def test_intel_vpl_decoding_vp9(settings):
     assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
+    assert inbound_rtp_stats["keyFramesDecoded"] > 0
