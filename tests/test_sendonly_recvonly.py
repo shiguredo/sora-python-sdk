@@ -68,6 +68,8 @@ def test_sendonly_recvonly_video(
     )
     sendonly.connect(fake_video=True)
 
+    time.sleep(5)
+
     recvonly = SoraClient(
         settings,
         SoraRole.RECVONLY,
@@ -91,6 +93,11 @@ def test_sendonly_recvonly_video(
     assert outbound_rtp_stats["encoderImplementation"] == encoder_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
+    assert outbound_rtp_stats["keyFramesEncoded"] > 0
+    assert outbound_rtp_stats["pliCount"] > 0
+
+    print("keyFramesEncoded:", outbound_rtp_stats["keyFramesEncoded"])
+    print("pliCount:", outbound_rtp_stats["pliCount"])
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
@@ -101,3 +108,6 @@ def test_sendonly_recvonly_video(
     assert inbound_rtp_stats["decoderImplementation"] == decoder_implementation
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
+    assert inbound_rtp_stats["keyFramesDecoded"] > 0
+
+    print("keyFrameDecoded:", inbound_rtp_stats["keyFramesDecoded"])
