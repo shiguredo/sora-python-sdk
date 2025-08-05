@@ -43,8 +43,8 @@ def test_intel_vpl_available():
                     case SoraVideoCodecType.VP9:
                         assert c.decoder is True
                         # VPL 的に VP9 は利用できるが、
-                        # Sora Python SDK では VPL VP9 Encoder が正常に動作しないため無効
-                        assert c.encoder is False
+                        # Sora Python SDK では VPL VP9 Encoder が正常に動作しない
+                        assert c.encoder is True
                     case SoraVideoCodecType.AV1:
                         # チップによって対応指定ないものがあるので判断しない
                         # assert c.decoder is True
