@@ -61,6 +61,79 @@ def test_amd_amf_available(settings):
 @pytest.mark.parametrize(
     "video_codec_type",
     [
+        pytest.param(
+            "AV1",
+            marks=pytest.mark.xfail(
+                reason="AMD AMF の AV1 Encoder は PLI を送ってもキーフレームを送らない"
+            ),
+        ),
+        "H264",
+        pytest.param(
+            "H265",
+            marks=pytest.mark.xfail(
+                reason="AMD AMF の H265 Encoder は PLI を送ってもキーフレームを送らない"
+            ),
+        ),
+    ],
+)
+def test_amd_amf_key_frame_request(settings, video_codec_type):
+    sendonly = SoraClient(
+        settings,
+        SoraRole.SENDONLY,
+        audio=False,
+        video=True,
+        video_codec_type=video_codec_type,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type(video_codec_type),
+                    encoder=SoraVideoCodecImplementation.AMD_AMF,
+                ),
+            ]
+        ),
+    )
+    sendonly.connect(fake_video=True)
+
+    time.sleep(3)
+
+    assert sendonly.connection_id is not None
+
+    # キーフレーム要求 API を 3 秒間隔で 3 回呼び出す
+    api_count = 3
+    for _ in range(api_count):
+        response = request_key_frame_api(
+            settings.api_url, sendonly.channel_id, sendonly.connection_id
+        )
+        assert response.status_code == 200
+        time.sleep(3)
+
+    # 統計を取得する
+    sendonly_stats = sendonly.get_stats()
+
+    sendonly.disconnect()
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+
+    print("video_codec_type:", video_codec_type)
+    print("keyFramesEncoded:", outbound_rtp_stats["keyFramesEncoded"])
+    print("pliCount:", outbound_rtp_stats["pliCount"])
+    print(
+        "keyFramesEncoded >= pliCount * 0.7:",
+        outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7,
+    )
+
+    assert outbound_rtp_stats["keyFramesEncoded"] > api_count
+    assert outbound_rtp_stats["pliCount"] >= api_count
+
+    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
+    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
+
+
+@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
+@pytest.mark.parametrize(
+    "video_codec_type",
+    [
         # AV1 は decoder が正常に動作しない
         # AV1 / H.265 は AMD AMF エンコーダーで PLI を送ってもキーフレームを送らない
         # "AV1",
@@ -296,76 +369,3 @@ def test_amd_amf_simulcast(
             )
             assert s["bytesSent"] == 0
             assert s["packetsSent"] <= 2
-
-
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
-@pytest.mark.parametrize(
-    "video_codec_type",
-    [
-        pytest.param(
-            "AV1",
-            marks=pytest.mark.xfail(
-                reason="AMD AMF の AV1 Encoder は PLI を送ってもキーフレームを送らない"
-            ),
-        ),
-        "H264",
-        pytest.param(
-            "H265",
-            marks=pytest.mark.xfail(
-                reason="AMD AMF の H265 Encoder は PLI を送ってもキーフレームを送らない"
-            ),
-        ),
-    ],
-)
-def test_amd_amf_key_frame_request(settings, video_codec_type):
-    sendonly = SoraClient(
-        settings,
-        SoraRole.SENDONLY,
-        audio=False,
-        video=True,
-        video_codec_type=video_codec_type,
-        video_codec_preference=SoraVideoCodecPreference(
-            codecs=[
-                SoraVideoCodecPreference.Codec(
-                    type=codec_type_string_to_codec_type(video_codec_type),
-                    encoder=SoraVideoCodecImplementation.AMD_AMF,
-                ),
-            ]
-        ),
-    )
-    sendonly.connect(fake_video=True)
-
-    time.sleep(3)
-
-    assert sendonly.connection_id is not None
-
-    # キーフレーム要求 API を 3 秒間隔で 3 回呼び出す
-    api_count = 3
-    for _ in range(api_count):
-        response = request_key_frame_api(
-            settings.api_url, sendonly.channel_id, sendonly.connection_id
-        )
-        assert response.status_code == 200
-        time.sleep(3)
-
-    # 統計を取得する
-    sendonly_stats = sendonly.get_stats()
-
-    sendonly.disconnect()
-
-    # outbound-rtp が無かったら StopIteration 例外が上がる
-    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-
-    print("video_codec_type:", video_codec_type)
-    print("keyFramesEncoded:", outbound_rtp_stats["keyFramesEncoded"])
-    print("pliCount:", outbound_rtp_stats["pliCount"])
-    print(
-        "keyFramesEncoded >= pliCount * 0.7:",
-        outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7,
-    )
-
-    assert outbound_rtp_stats["keyFramesEncoded"] > api_count
-    assert outbound_rtp_stats["pliCount"] >= api_count
-
-    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
-    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
