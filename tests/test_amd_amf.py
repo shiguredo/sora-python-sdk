@@ -61,19 +61,9 @@ def test_amd_amf_available(settings):
 @pytest.mark.parametrize(
     "video_codec_type",
     [
-        pytest.param(
-            "AV1",
-            marks=pytest.mark.xfail(
-                reason="AMD AMF の AV1 Encoder は PLI を送ってもキーフレームを送らない"
-            ),
-        ),
+        "AV1",
         "H264",
-        pytest.param(
-            "H265",
-            marks=pytest.mark.xfail(
-                reason="AMD AMF の H265 Encoder は PLI を送ってもキーフレームを送らない"
-            ),
-        ),
+        "H265",
     ],
 )
 def test_amd_amf_key_frame_request(settings, video_codec_type):
@@ -134,11 +124,9 @@ def test_amd_amf_key_frame_request(settings, video_codec_type):
 @pytest.mark.parametrize(
     "video_codec_type",
     [
-        # AV1 は decoder が正常に動作しない
-        # AV1 / H.265 は AMD AMF エンコーダーで PLI を送ってもキーフレームを送らない
-        # "AV1",
+        "AV1",
         "H264",
-        # "H265",
+        "H265",
     ],
 )
 def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
