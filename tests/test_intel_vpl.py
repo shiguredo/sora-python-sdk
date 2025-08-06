@@ -555,7 +555,8 @@ def test_intel_vpl_decode(
 
 
 @pytest.mark.xfail(
-    strict=True, reason="Intel VPL AV1 の Descriptor  RTP ヘッダー拡張が answer SDP に含まれないため"
+    strict=True,
+    reason="Intel VPL AV1 の Descriptor RTP ヘッダー拡張が answer SDP に含まれないため",
 )
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 def test_intel_vpl_av1_rtp_hdr_ext(settings):
@@ -565,6 +566,15 @@ def test_intel_vpl_av1_rtp_hdr_ext(settings):
         audio=False,
         video=True,
         video_codec_type="AV1",
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type("AV1"),
+                    # エンコーダーはソフトウェアを利用する
+                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                ),
+            ]
+        ),
     )
     sendonly.connect(fake_video=True)
 
@@ -582,7 +592,6 @@ def test_intel_vpl_av1_rtp_hdr_ext(settings):
     assert sendonly.answer_message is not None
     assert "sdp" in sendonly.answer_message
     assert "AV1" in sendonly.answer_message["sdp"]
-
     assert (
         "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
         in sendonly.answer_message["sdp"]
