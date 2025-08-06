@@ -554,7 +554,7 @@ def test_intel_vpl_decode(
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
 
 
-def test_intel_vpl_av1_rtp_hdr_ext(settings, video_codec_type):
+def test_intel_vpl_av1_rtp_hdr_ext(settings):
     sendonly = SoraClient(
         settings,
         SoraRole.SENDONLY,
