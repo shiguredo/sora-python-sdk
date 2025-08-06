@@ -552,3 +552,35 @@ def test_intel_vpl_decode(
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
+
+
+def test_intel_vpl_av1_rtp_hdr_ext(settings, video_codec_type):
+    sendonly = SoraClient(
+        settings,
+        SoraRole.SENDONLY,
+        audio=False,
+        video=True,
+        video_codec_type="AV1",
+    )
+    sendonly.connect(fake_video=True)
+
+    time.sleep(3)
+
+    assert sendonly.connection_id is not None
+    assert sendonly.offer_message is not None
+    assert "sdp" in sendonly.offer_message
+    assert "AV1" in sendonly.offer_message["sdp"]
+    assert (
+        "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
+        in sendonly.offer_message["sdp"]
+    )
+
+    assert sendonly.answer_message is not None
+    assert "sdp" in sendonly.answer_message
+    assert "AV1" in sendonly.answer_message["sdp"]
+
+    # おそらくこれは入ってこない
+    assert (
+        "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
+        in sendonly.offer_message["sdp"]
+    )
