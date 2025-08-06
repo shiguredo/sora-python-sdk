@@ -554,6 +554,10 @@ def test_intel_vpl_decode(
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
 
 
+@pytest.mark.xfail(
+    strict=True, reason="Intel VPL AV1 用の DD RTP ヘッダー拡張はまだ実装されていないため"
+)
+@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 def test_intel_vpl_av1_rtp_hdr_ext(settings):
     sendonly = SoraClient(
         settings,
