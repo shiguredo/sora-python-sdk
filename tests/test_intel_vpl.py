@@ -484,7 +484,7 @@ def test_intel_vpl_decode(
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
     # VP9 が採用されているかどうか確認する
-    assert recvonly_codec_stats["mimeType"] == "video/{video_codec_type}"
+    assert recvonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
