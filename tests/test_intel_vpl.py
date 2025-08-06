@@ -3,7 +3,7 @@ import platform
 import time
 
 import pytest
-from api import request_key_frame_api
+from api import get_stats_connection_api, request_key_frame_api
 from client import (
     SoraClient,
     SoraRole,
@@ -554,6 +554,7 @@ def test_intel_vpl_decode(
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
 
 
+@pytest.mark.xfail(strict=True, reason="C++ SDK では Intel VPL AV1 の RTP ヘッダー拡張が未実装")
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 def test_intel_vpl_av1_rtp_hdr_ext(settings):
     sendonly = SoraClient(
@@ -591,6 +592,18 @@ def test_intel_vpl_av1_rtp_hdr_ext(settings):
     assert (
         "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
         in sendonly.answer_message["sdp"]
+    )
+
+    # コネクションの統計情報を取得
+    response = get_stats_connection_api(
+        settings.api_url, sendonly.channel_id, sendonly.connection_id
+    )
+    assert response.status_code == 200
+    stats = response.json()
+
+    # AV1 の RTP ヘッダー拡張が送られてきていることを確認
+    assert stats["rtp_hdrext"]["total_received_rtp_hdrext_av1_rtp_sepc"] > 0, (
+        "Dependency Descriptor RTP Header Extension が Python SDK から送られてきていません"
     )
 
     sendonly.disconnect()
