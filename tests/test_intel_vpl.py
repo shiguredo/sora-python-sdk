@@ -63,6 +63,69 @@ def test_intel_vpl_available():
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
+    "video_codec_type",
+    [
+        "VP9",
+        "AV1",
+        "H264",
+        "H265",
+    ],
+)
+def test_intel_vpl_key_frame_request(settings, video_codec_type):
+    sendonly = SoraClient(
+        settings,
+        SoraRole.SENDONLY,
+        audio=False,
+        video=True,
+        video_codec_type=video_codec_type,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type(video_codec_type),
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
+    )
+    sendonly.connect(fake_video=True)
+
+    time.sleep(3)
+
+    assert sendonly.connection_id is not None
+
+    # キーフレーム要求 API を 3 秒間隔で 3 回呼び出す
+    api_count = 3
+    for _ in range(api_count):
+        response = request_key_frame_api(
+            settings.api_url, sendonly.channel_id, sendonly.connection_id
+        )
+        assert response.status_code == 200
+        time.sleep(3)
+
+    # 統計を取得する
+    sendonly_stats = sendonly.get_stats()
+
+    sendonly.disconnect()
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+
+    # 3 回以上
+    assert outbound_rtp_stats["keyFramesEncoded"] > api_count
+    assert outbound_rtp_stats["pliCount"] >= api_count
+    print("keyFramesEncoded:", outbound_rtp_stats["keyFramesEncoded"])
+    print("pliCount:", outbound_rtp_stats["pliCount"])
+
+    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
+    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
+    print(
+        "keyFramesEncoded >= pliCount * 0.7:",
+        outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7,
+    )
+
+
+@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+@pytest.mark.parametrize(
     (
         "video_codec_type",
         "expected_implementation",
@@ -74,14 +137,17 @@ def test_intel_vpl_available():
     # FIXME: AV1 では、解像度が一定数より低くなる場合、エラーになるのでコメントアウトしている
     [
         # 1080p
+        ("VP9", "libvpl", 1920, 1080, 3),
         ("AV1", "libvpl", 1920, 1080, 3),
         ("H264", "libvpl", 1920, 1080, 3),
         ("H265", "libvpl", 1920, 1080, 3),
         # 720p
+        ("VP9", "libvpl", 1280, 720, 3),
         ("AV1", "libvpl", 1280, 720, 3),
         ("H264", "libvpl", 1280, 720, 3),
         ("H265", "libvpl", 1280, 720, 3),
         # 540p
+        ("VP9", "libvpl", 960, 540, 3),
         ("AV1", "libvpl", 960, 540, 3),
         ("H264", "libvpl", 960, 540, 3),
         ("H265", "libvpl", 960, 540, 3),
@@ -219,13 +285,7 @@ def test_intel_vpl_simulcast(
 @pytest.mark.parametrize(
     "video_codec_type",
     [
-        pytest.param(
-            "VP9",
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason="Intel VPL VP9 Encoder は I フレーム要求が正常に動作しないためテストに失敗する",
-            ),
-        ),
+        "VP9",
         "AV1",
         "H264",
         "H265",
@@ -492,72 +552,3 @@ def test_intel_vpl_decode(
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
-
-
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
-@pytest.mark.parametrize(
-    "video_codec_type",
-    [
-        pytest.param(
-            "VP9",
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason="Intel VPL VP9 Encoder は I フレーム要求が正常に動作しないためテストに失敗する",
-            ),
-        ),
-        "AV1",
-        "H264",
-        "H265",
-    ],
-)
-def test_intel_vpl_key_frame_request(settings, video_codec_type):
-    sendonly = SoraClient(
-        settings,
-        SoraRole.SENDONLY,
-        audio=False,
-        video=True,
-        video_codec_type=video_codec_type,
-        video_codec_preference=SoraVideoCodecPreference(
-            codecs=[
-                SoraVideoCodecPreference.Codec(
-                    type=codec_type_string_to_codec_type(video_codec_type),
-                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
-                ),
-            ]
-        ),
-    )
-    sendonly.connect(fake_video=True)
-
-    time.sleep(3)
-
-    assert sendonly.connection_id is not None
-
-    # キーフレーム要求 API を 3 秒間隔で 3 回呼び出す
-    api_count = 3
-    for _ in range(api_count):
-        response = request_key_frame_api(
-            settings.api_url, sendonly.channel_id, sendonly.connection_id
-        )
-        assert response.status_code == 200
-        time.sleep(3)
-
-    # 統計を取得する
-    sendonly_stats = sendonly.get_stats()
-
-    sendonly.disconnect()
-
-    # outbound-rtp が無かったら StopIteration 例外が上がる
-    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-
-    # 3 回以上
-    assert outbound_rtp_stats["keyFramesEncoded"] > api_count
-    assert outbound_rtp_stats["pliCount"] >= api_count
-    print("keyFramesEncoded:", outbound_rtp_stats["keyFramesEncoded"])
-    print("pliCount:", outbound_rtp_stats["pliCount"])
-
-    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
-    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
-    print(
-        "keyFramesEncoded >= pliCount * 0.7:",
-        outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7,
-    )
