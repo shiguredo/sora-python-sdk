@@ -571,7 +571,7 @@ def test_intel_vpl_av1_rtp_hdr_ext(settings):
                 SoraVideoCodecPreference.Codec(
                     type=codec_type_string_to_codec_type("AV1"),
                     # エンコーダーはソフトウェアを利用する
-                    encoder=SoraVideoCodecImplementation.INTERNAL,
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
                 ),
             ]
         ),
