@@ -399,13 +399,19 @@ def test_intel_vpl_av1_mini_resolution(
 
 @pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
-    "video_codec_type",
+    (
+        "video_codec_type",
+        "encoder_implementation",
+        "decoder_implementation",
+    ),
     [
-        "VP9",
-        "AV1",
+        ("VP9", "libvpx", "libvpl"),
+        ("AV1", "libaom", "libvpl"),
     ],
 )
-def test_intel_vpl_decode(settings, video_codec_type):
+def test_intel_vpl_decode(
+    settings, video_codec_type, encoder_implementation, decoder_implementation
+):
     """
     * N100 などは AV1 のデコーディングに対応している
     * VPL VP9 はデコーダーは利用できるので、そのテスト
@@ -455,21 +461,21 @@ def test_intel_vpl_decode(settings, video_codec_type):
     # offer の sdp に video_codec_type が含まれているかどうかを確認している
     assert sendonly.offer_message is not None
     assert "sdp" in sendonly.offer_message
-    assert "VP9" in sendonly.offer_message["sdp"]
+    assert video_codec_type in sendonly.offer_message["sdp"]
 
     # answer の sdp に video_codec_type が含まれているかどうかを確認している
     assert sendonly.answer_message is not None
     assert "sdp" in sendonly.answer_message
-    assert "VP9" in sendonly.answer_message["sdp"]
+    assert video_codec_type in sendonly.answer_message["sdp"]
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
     # VP9 が採用されているかどうか確認する
-    assert sendonly_codec_stats["mimeType"] == "video/VP9"
+    assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    assert outbound_rtp_stats["encoderImplementation"] == "libvpx"
+    assert outbound_rtp_stats["encoderImplementation"] == encoder_implementation
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
     assert outbound_rtp_stats["keyFramesEncoded"] > 0
@@ -478,11 +484,11 @@ def test_intel_vpl_decode(settings, video_codec_type):
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
     # VP9 が採用されているかどうか確認する
-    assert recvonly_codec_stats["mimeType"] == "video/VP9"
+    assert recvonly_codec_stats["mimeType"] == "video/{video_codec_type}"
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(s for s in recvonly_stats if s.get("type") == "inbound-rtp")
-    assert inbound_rtp_stats["decoderImplementation"] == "libvpl"
+    assert inbound_rtp_stats["decoderImplementation"] == decoder_implementation
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
