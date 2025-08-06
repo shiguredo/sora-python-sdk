@@ -421,7 +421,7 @@ def test_intel_vpl_decode(
         SoraRole.SENDONLY,
         audio=False,
         video=True,
-        video_codec_type="VP9",
+        video_codec_type=video_codec_type,
         video_codec_preference=SoraVideoCodecPreference(
             codecs=[
                 SoraVideoCodecPreference.Codec(
