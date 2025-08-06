@@ -28,7 +28,7 @@ python-preference = "only-managed"
 dev-dependencies = [
     "nanobind==2.8.0",
     "setuptools==80.9",
-    "build==1.2.2.post1",
+    "build==1.3.0",
     "wheel==0.45.1",
     "numpy",
     "httpx",
