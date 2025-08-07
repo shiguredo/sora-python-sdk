@@ -3,7 +3,7 @@ import platform
 import time
 
 import pytest
-from api import request_key_frame_api
+from api import get_stats_connection_api, request_key_frame_api
 from client import (
     SoraClient,
     SoraRole,
@@ -552,3 +552,59 @@ def test_intel_vpl_decode(
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
+
+
+@pytest.mark.xfail(strict=True, reason="C++ SDK では Intel VPL AV1 の RTP ヘッダー拡張が未実装")
+@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+def test_intel_vpl_av1_rtp_hdr_ext(settings):
+    sendonly = SoraClient(
+        settings,
+        SoraRole.SENDONLY,
+        audio=False,
+        video=True,
+        video_codec_type="AV1",
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type("AV1"),
+                    # エンコーダーはソフトウェアを利用する
+                    encoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
+    )
+    sendonly.connect(fake_video=True)
+
+    time.sleep(3)
+
+    assert sendonly.connection_id is not None
+    assert sendonly.offer_message is not None
+    assert "sdp" in sendonly.offer_message
+    assert "AV1" in sendonly.offer_message["sdp"]
+    assert (
+        "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
+        in sendonly.offer_message["sdp"]
+    )
+
+    assert sendonly.answer_message is not None
+    assert "sdp" in sendonly.answer_message
+    assert "AV1" in sendonly.answer_message["sdp"]
+    assert (
+        "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
+        in sendonly.answer_message["sdp"]
+    )
+
+    # コネクションの統計情報を取得
+    response = get_stats_connection_api(
+        settings.api_url, sendonly.channel_id, sendonly.connection_id
+    )
+    # FIX: ここで失敗すると disconnect が実行されずメモリーリークになる
+    assert response.status_code == 200
+    stats = response.json()
+
+    sendonly.disconnect()
+
+    # AV1 の RTP ヘッダー拡張が送られてきていることを確認
+    assert stats["rtp_hdrext"]["total_received_rtp_hdrext_av1_rtp_sepc"] > 0, (
+        "Dependency Descriptor RTP Header Extension が Python SDK から送られてきていません"
+    )
