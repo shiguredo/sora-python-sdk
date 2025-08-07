@@ -359,7 +359,6 @@ def test_amd_amf_simulcast(
             assert s["packetsSent"] <= 2
 
 
-@pytest.mark.xfail(strict=True, reason="C++ SDK では AMD AMF AV1 の RTP ヘッダー拡張が未実装")
 @pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 def test_intel_vpl_av1_rtp_hdr_ext(settings):
     sendonly = SoraClient(
