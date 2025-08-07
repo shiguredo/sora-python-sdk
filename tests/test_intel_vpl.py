@@ -598,12 +598,13 @@ def test_intel_vpl_av1_rtp_hdr_ext(settings):
     response = get_stats_connection_api(
         settings.api_url, sendonly.channel_id, sendonly.connection_id
     )
+    # FIX: ここで失敗すると disconnect が実行されずメモリーリークになる
     assert response.status_code == 200
     stats = response.json()
+
+    sendonly.disconnect()
 
     # AV1 の RTP ヘッダー拡張が送られてきていることを確認
     assert stats["rtp_hdrext"]["total_received_rtp_hdrext_av1_rtp_sepc"] > 0, (
         "Dependency Descriptor RTP Header Extension が Python SDK から送られてきていません"
     )
-
-    sendonly.disconnect()
