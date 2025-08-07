@@ -453,9 +453,6 @@ def test_nvidia_video_codec_sdk_decoding_only(settings, video_codec_type, expect
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.mark.xfail(
-    strict=True, reason="C++ SDK では NVIDIA Video Codec SDK AV1 の RTP ヘッダー拡張が未実装"
-)
 @pytest.mark.skipif(
     os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
 )
