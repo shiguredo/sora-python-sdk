@@ -1,4 +1,5 @@
 import argparse
+import glob
 import hashlib
 import importlib.metadata
 import multiprocessing
@@ -180,17 +181,8 @@ AVAILABLE_TARGETS = [
 ]
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--relwithdebinfo", action="store_true")
-    parser.add_argument("--local-webrtc-build-dir", type=os.path.abspath)
-    parser.add_argument("--local-webrtc-build-args", default="", type=shlex.split)
-    parser.add_argument("--local-sora-cpp-sdk-dir", type=os.path.abspath)
-    parser.add_argument("--local-sora-cpp-sdk-args", default="", type=shlex.split)
-    parser.add_argument("target", choices=AVAILABLE_TARGETS)
-
-    args = parser.parse_args()
+def build(args):
+    """Build command implementation"""
     if args.target == "windows_x86_64":
         platform = Platform("windows", get_windows_osver(), "x86_64")
     elif args.target == "macos_x86_64":
@@ -371,6 +363,79 @@ def main():
                 shutil.copyfile(
                     os.path.join(sora_build_target_dir, file), os.path.join(sora_src_dir, file)
                 )
+
+
+def _find_clang_binary(name: str) -> Optional[str]:
+    """Find clang binary with version suffix"""
+    if shutil.which(name) is not None:
+        return name
+    else:
+        # Try version suffixed names (e.g., clang-format-19, clang-format-18, ...)
+        for n in range(50, 14, -1):
+            if shutil.which(f"{name}-{n}") is not None:
+                return f"{name}-{n}"
+    return None
+
+
+def format_code(clang_format_path: Optional[str] = None):
+    """Format command implementation"""
+    # Python コードのフォーマット
+    print("Formatting Python code with ruff...")
+    cmd(["ruff", "format", "."])
+
+    # C++ コードのフォーマット
+    print("Formatting C++ code with clang-format...")
+    
+    if clang_format_path is None:
+        clang_format_path = _find_clang_binary("clang-format")
+    if clang_format_path is None:
+        raise Exception("clang-format not found. Please install it or specify the path.")
+    
+    patterns = [
+        "src/**/*.h",
+        "src/**/*.cpp",
+        "src/**/*.cc",
+        "src/**/*.hpp",
+    ]
+    target_files = []
+    for pattern in patterns:
+        files = glob.glob(pattern, recursive=True)
+        target_files.extend(files)
+    
+    if target_files:
+        cmd([clang_format_path, "-i"] + target_files)
+    
+    print("Formatting completed.")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+
+    # build サブコマンド
+    build_parser = subparsers.add_parser("build", help="Build the project")
+    build_parser.add_argument("--debug", action="store_true")
+    build_parser.add_argument("--relwithdebinfo", action="store_true")
+    build_parser.add_argument("--local-webrtc-build-dir", type=os.path.abspath)
+    build_parser.add_argument("--local-webrtc-build-args", default="", type=shlex.split)
+    build_parser.add_argument("--local-sora-cpp-sdk-dir", type=os.path.abspath)
+    build_parser.add_argument("--local-sora-cpp-sdk-args", default="", type=shlex.split)
+    build_parser.add_argument("target", choices=AVAILABLE_TARGETS)
+
+    # format サブコマンド
+    format_parser = subparsers.add_parser("format", help="Format code")
+    format_parser.add_argument("--clang-format-path", type=str, default=None,
+                             help="Path to clang-format binary")
+
+    args = parser.parse_args()
+
+    if args.command == "build":
+        build(args)
+    elif args.command == "format":
+        format_code(clang_format_path=args.clang_format_path)
+    else:
+        parser.print_help()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

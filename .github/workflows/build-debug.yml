@@ -262,7 +262,7 @@ jobs:
           set -x
           uv python pin ${{ matrix.python.version }}
           uv sync
-          uv run python run.py ${{ inputs.buildType == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }}
+          uv run python run.py build ${{ inputs.buildType == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }}
           # cache
           mkdir -p ../versions
           cp _install/${{ matrix.platform.name }}/llvm.version ../versions

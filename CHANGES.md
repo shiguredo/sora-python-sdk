@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] run.py を build と format サブコマンドに分離する
+  - 既存の `run.py <target>` は `run.py build <target>` に変更
+  - format コマンドは Python と C++ コードのフォーマットを実行
+  - @voluntas
 - [UPDATE] nanobind を `2.8.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.5.0-canary.4` に上げる

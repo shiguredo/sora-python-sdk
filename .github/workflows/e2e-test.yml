@@ -78,7 +78,7 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py ${{ matrix.platform.target }}
+          uv run python run.py build ${{ matrix.platform.target }}
           uv run pytest tests -v
 
   e2e_test_macos:
@@ -102,7 +102,7 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py macos_arm64
+          uv run python run.py build macos_arm64
           uv run pytest tests -v
 
   e2e_test_windows:
@@ -128,7 +128,7 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py windows_x86_64
+          uv run python run.py build windows_x86_64
           uv run pytest tests -v
 
   # slack_notify_succeeded:
