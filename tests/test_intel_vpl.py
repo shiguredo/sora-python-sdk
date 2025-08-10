@@ -19,8 +19,9 @@ from sora_sdk import (
     get_video_codec_capability,
 )
 
+pytestmark = pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+
 def test_intel_vpl_available():
     capability = get_video_codec_capability()
 
@@ -61,7 +62,6 @@ def test_intel_vpl_available():
                         pytest.fail(f"未実装の codec_type: {c.type}")
 
 
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
     "video_codec_type",
     [
@@ -124,7 +124,6 @@ def test_intel_vpl_key_frame_request(settings, video_codec_type):
     )
 
 
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -281,7 +280,6 @@ def test_intel_vpl_simulcast(
             assert s["packetsSent"] <= 2
 
 
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
     "video_codec_type",
     [
@@ -457,7 +455,6 @@ def test_intel_vpl_av1_mini_resolution(
 ## VPL Decode
 
 
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -554,7 +551,6 @@ def test_intel_vpl_decode(
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
 
 
-@pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
 def test_intel_vpl_av1_rtp_hdr_ext(settings):
     sendonly = SoraClient(
         settings,
