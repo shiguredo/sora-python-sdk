@@ -4,12 +4,16 @@ from .sora_sdk_ext import *  # noqa: F401,F403
 # 開発環境の場合は VERSION ファイルから取得
 try:
     from importlib.metadata import version, PackageNotFoundError
+
     try:
         __version__ = version("sora_sdk")
     except PackageNotFoundError:
         # パッケージがインストールされていない場合（開発環境）
         import os
-        _version_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "VERSION")
+
+        _version_file = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "VERSION"
+        )
         if os.path.exists(_version_file):
             with open(_version_file, "r") as f:
                 __version__ = f.read().strip()

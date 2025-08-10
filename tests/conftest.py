@@ -16,7 +16,7 @@ class Settings:
     def __init__(self):
         # .env ファイルから環境変数を読み込む
         self._load_env_file(".env")
-        
+
         # 環境変数から設定を読み込む
         # TEST_SIGNALING_URL (単数形) と TEST_SIGNALING_URLS (複数形) の両方をサポート
         signaling_urls_env = os.getenv("TEST_SIGNALING_URLS", os.getenv("TEST_SIGNALING_URL", ""))
@@ -33,13 +33,13 @@ class Settings:
         env_path = Path(env_file)
         if not env_path.exists():
             return
-        
+
         with open(env_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
-                
+
                 if "=" in line:
                     key, value = line.split("=", 1)
                     key = key.strip()
@@ -47,13 +47,13 @@ class Settings:
                     # 環境変数が既に設定されていない場合のみ設定
                     if key not in os.environ:
                         os.environ[key] = value
-    
+
     def _parse_signaling_urls(self, value: str) -> list[str]:
         """TEST_SIGNALING_URLS が , で区切られている場合、それぞれの URL をリストに変換する"""
         if not value:
             return []
         return [x.strip() for x in value.split(",") if x.strip()]
-    
+
     def _parse_api_url(self, value: str | None) -> str | None:
         """API URLのバリデーション"""
         if not value:
@@ -62,12 +62,12 @@ class Settings:
         if not (value.startswith("http://") or value.startswith("https://")):
             raise ValueError(f"Invalid API URL: {value}")
         return value
-    
+
     def _parse_libwebrtc_log(self, value: str | None) -> SoraLoggingSeverity | None:
         """libwebrtc_logの値をSoraLoggingSeverityに変換"""
         if not value:
             return None
-        
+
         match value.lower():
             case "verbose":
                 return SoraLoggingSeverity.VERBOSE
@@ -82,7 +82,7 @@ class Settings:
             case _:
                 # TODO: 未知の値が設定されてたらエラーにした方がいい気がする
                 return None
-    
+
     @property
     def channel_id(self) -> str:
         """TEST_CHANNEL_ID_PREFIX と TEST_CHANNEL_ID_SUFFIX を組み合わせて channel_id を生成する"""

@@ -385,12 +385,12 @@ def format_code(clang_format_path: Optional[str] = None):
 
     # C++ コードのフォーマット
     print("Formatting C++ code with clang-format...")
-    
+
     if clang_format_path is None:
         clang_format_path = _find_clang_binary("clang-format")
     if clang_format_path is None:
         raise Exception("clang-format not found. Please install it or specify the path.")
-    
+
     patterns = [
         "src/**/*.h",
         "src/**/*.cpp",
@@ -401,10 +401,10 @@ def format_code(clang_format_path: Optional[str] = None):
     for pattern in patterns:
         files = glob.glob(pattern, recursive=True)
         target_files.extend(files)
-    
+
     if target_files:
         cmd([clang_format_path, "-i"] + target_files)
-    
+
     print("Formatting completed.")
 
 
@@ -424,8 +424,9 @@ def main():
 
     # format サブコマンド
     format_parser = subparsers.add_parser("format", help="Format code")
-    format_parser.add_argument("--clang-format-path", type=str, default=None,
-                             help="Path to clang-format binary")
+    format_parser.add_argument(
+        "--clang-format-path", type=str, default=None, help="Path to clang-format binary"
+    )
 
     args = parser.parse_args()
 
