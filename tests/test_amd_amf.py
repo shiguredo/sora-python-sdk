@@ -18,8 +18,9 @@ from sora_sdk import (
     get_video_codec_capability,
 )
 
+pytestmark = pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
+
 def test_amd_amf_available(settings):
     capability = get_video_codec_capability()
 
@@ -57,7 +58,6 @@ def test_amd_amf_available(settings):
                         pytest.fail(f"未実装の codec_type: {c.type}")
 
 
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 @pytest.mark.parametrize(
     "video_codec_type",
     [
@@ -120,7 +120,6 @@ def test_amd_amf_key_frame_request(settings, video_codec_type):
     assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
 
 
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 @pytest.mark.parametrize(
     "video_codec_type",
     [
@@ -212,7 +211,6 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
     assert inbound_rtp_stats["keyFramesDecoded"] > 0
 
 
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 @pytest.mark.parametrize(
     (
         "video_codec_type",
