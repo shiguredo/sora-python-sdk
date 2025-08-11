@@ -17,10 +17,11 @@ from sora_sdk import (
     SoraVideoCodecType,
 )
 
-
-@pytest.mark.skipif(
+pytestmark = pytest.mark.skipif(
     os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
 )
+
+
 def test_nvidia_video_codec_sdk_available():
     capability = get_video_codec_capability()
 
@@ -57,9 +58,6 @@ def test_nvidia_video_codec_sdk_available():
                         pytest.fail(f"未実装の codec_type: {c.type}")
 
 
-@pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
-)
 @pytest.mark.parametrize(
     "video_codec_type",
     [
@@ -121,9 +119,6 @@ def test_intel_vpl_key_frame_request(settings, video_codec_type):
     )
 
 
-@pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
-)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -213,9 +208,6 @@ def test_nvidia_codec_sdk_sendonly_recvonly(settings, video_codec_type, expected
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
-)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -367,9 +359,6 @@ def test_nvidia_video_codec_sdk_simulcast(
 
 # VP8 / VP9 は HWA Decoder のみ搭載している
 # https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new
-@pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
-)
 @pytest.mark.parametrize(
     ("video_codec_type", "expected_implementation"),
     [
