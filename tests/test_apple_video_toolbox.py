@@ -5,10 +5,11 @@ import pytest
 from client import SoraClient, SoraRole
 from simulcast import default_video_bit_rate, expect_target_bitrate
 
-
-@pytest.mark.skipif(
+pytestmark = pytest.mark.skipif(
     os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
 )
+
+
 @pytest.mark.parametrize(
     "video_codec_type",
     ["H264", "H265"],
@@ -46,9 +47,6 @@ def test_apple_video_toolbox_sendonly(settings, video_codec_type):
     assert outbound_rtp_stats["packetsSent"] > 0
 
 
-@pytest.mark.skipif(
-    os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
-)
 @pytest.mark.parametrize(
     "video_codec_type",
     ["H264", "H265"],
@@ -100,9 +98,6 @@ def test_apple_video_toolbox_sendonly_recvonly(settings, video_codec_type):
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.mark.skipif(
-    os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
-)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -233,9 +228,6 @@ def test_apple_video_toolbox_simulcast(
             )
 
 
-@pytest.mark.skipif(
-    os.environ.get("APPLE_VIDEO_TOOLBOX") is None, reason="Apple Video Toolbox でのみ実行する"
-)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
