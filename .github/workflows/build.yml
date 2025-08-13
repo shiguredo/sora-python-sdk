@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -192,7 +192,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ matrix.platform.download_name }}_python-${{ matrix.version.python }}
           path: dist/
@@ -230,7 +230,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -288,7 +288,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -326,7 +326,7 @@ jobs:
           - "3.13"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -399,7 +399,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist
