@@ -49,7 +49,7 @@ jobs:
     runs-on: ${{ matrix.platform.runs-on}}
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
@@ -86,7 +86,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download openh264
         run: |
           curl -LO http://ciscobinary.openh264.org/libopenh264-${{ env.OPENH264_VERSION }}-mac-arm64.dylib.bz2
@@ -112,7 +112,7 @@ jobs:
       # Python を強制的に UTF-8 で利用するおまじない
       PYTHONUTF8: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download openh264
         shell: pwsh
         run: |
