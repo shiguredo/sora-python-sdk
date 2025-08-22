@@ -87,7 +87,7 @@ jobs:
           chmod a+x llvm.sh
           sudo ./llvm.sh 19
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: sora-python-sdk
       - name: Get versions
@@ -104,7 +104,7 @@ jobs:
         with:
           path: webrtc-build/_package/${{ matrix.platform.name }}/webrtc
           key: webrtc-build-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.webrtc_build_version }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: steps.webrtc-build-cache.outputs.cache-hit != 'true' && inputs.buildType == 'Debug'
         with:
           path: webrtc-build
@@ -153,7 +153,7 @@ jobs:
         with:
           path: sora-cpp-sdk/_install/${{ matrix.platform.name }}/${{ inputs.buildType == 'Debug' && 'debug' || 'release' }}/boost
           key: boost-${{ inputs.buildType }}-${{ matrix.platform.name }}-${{ steps.version.outputs.sora_cpp_sdk_version }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
         with:
           path: sora-cpp-sdk

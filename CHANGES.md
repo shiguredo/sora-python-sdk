@@ -21,6 +21,11 @@
   - checkouts せずに仮想環境を作成して wheel ファイルをテストするように変更
   - @voluntas
 
+### misc
+
+- [UPDATE] actions/checkout と actions/download-artifact を v5 に上げる
+  - @torikizi
+
 ## 2025.3.0
 
 **リリース日**: 2025-07-09
