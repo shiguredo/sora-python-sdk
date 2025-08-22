@@ -13,7 +13,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       with:
         name: ${{ inputs.platform }}_python-${{ inputs.python_version }}
         path: ${{ inputs.platform }}_python-${{ inputs.python_version }}
