@@ -23,7 +23,7 @@ def update_version(file_path: str, dry_run: bool) -> Optional[str]:
 
     print(f"Current version: {current_version}")
     print(f"New version: {new_version}")
-    confirmation: str = input("Do you want to update the version? (Y/n): ").strip().lower()
+    confirmation: str = input("Do you want to update the version? (y/N): ").strip().lower()
 
     if confirmation != "y":
         print("Version update canceled.")
