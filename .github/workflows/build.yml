@@ -68,7 +68,7 @@ jobs:
       - run: uv sync
       - name: Generate pyi
         run: |
-          uv run python run.py ubuntu-24.04_x86_64
+          uv run python run.py build ubuntu-24.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
@@ -137,13 +137,13 @@ jobs:
 
       - if: ${{ matrix.platform.arch == 'x86_64' }}
         run: |
-          uv run python run.py ${{ matrix.platform.target }}
+          uv run python run.py build ${{ matrix.platform.target }}
           uv run python -m build
 
       # Ubuntu armv8 向け
       - if: ${{ matrix.platform.arch == 'armv8' }}
         run: |
-          uv run python run.py ${{ matrix.platform.target }}
+          uv run python run.py build ${{ matrix.platform.target }}
           uv run python -m build
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
@@ -257,7 +257,7 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py ${{ matrix.platform.target }}
+          uv run python run.py build ${{ matrix.platform.target }}
           uv run python -m build
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
@@ -301,7 +301,7 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py ${{ matrix.platform.target }}
+          uv run python run.py build ${{ matrix.platform.target }}
           uv run python -m build
         env:
           _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
@@ -340,7 +340,7 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py windows_x86_64
+          uv run python run.py build windows_x86_64
           uv run python -m build
 
       - name: Upload Artifact

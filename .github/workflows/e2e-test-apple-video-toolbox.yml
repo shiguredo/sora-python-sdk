@@ -54,7 +54,7 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py macos_arm64
+          uv run python run.py build macos_arm64
           uv run pytest tests/test_apple_video_toolbox.py -v
 
   # slack_notify_succeeded:

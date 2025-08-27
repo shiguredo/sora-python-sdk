@@ -54,7 +54,7 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py ubuntu-24.04_x86_64
+          uv run python run.py build ubuntu-24.04_x86_64
           uv run pytest tests/test_nvidia_video_codec_sdk.py -v
 
   # slack_notify_succeeded:

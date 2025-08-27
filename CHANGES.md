@@ -11,6 +11,16 @@
 
 ## develop
 
+- [CHANGE] run.py をサブコマンド形式に変更する
+  - 従来: `python run.py <target>`
+  - 新形式: `python run.py build <target>`
+  - @voluntas
+- [ADD] run.py に format サブコマンドを追加する
+  - C++ ファイルの clang-format によるフォーマット機能
+  - Python ファイルの ty によるタイプチェック機能
+  - @voluntas
+- [UPDATE] .github/workflows 内のすべてのワークフローファイルを新しい run.py build 形式に更新する
+  - @voluntas
 - [UPDATE] nanobind を `2.8.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.5.0-canary.6` に上げる
