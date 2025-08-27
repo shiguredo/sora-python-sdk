@@ -58,7 +58,7 @@ def run_uv_sync(dry_run: bool) -> None:
 # git コミット、タグ、プッシュを実行
 def git_operations(new_version: str, dry_run: bool) -> None:
     if dry_run:
-        print("Dry-run: Would run 'git add VERSION' and 'git add uv.lock'")
+        print("Dry-run: Would run 'git add VERSION'")
         print(f"Dry-run: Would run 'git commit -m Bump version to {new_version}'")
         print(f"Dry-run: Would run 'git tag {new_version}'")
         print("Dry-run: Would run 'git push'")
