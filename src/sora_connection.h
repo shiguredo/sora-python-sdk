@@ -134,8 +134,10 @@ class SoraConnection : public DisposePublisher,
                           sora::SoraSignalingDirection direction,
                           std::string message);
   void OnWsClose(uint16_t code, std::string message);
-  void OnTrack(webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver);
-  void OnRemoveTrack(webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver);
+  void OnTrack(
+      webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver);
+  void OnRemoveTrack(
+      webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver);
   void OnDataChannel(std::string label);
 
   // sora::SoraSignalingObserver のコールバック関数が呼び出された時に対応して呼び出す Python の関数を保持する
@@ -202,8 +204,8 @@ class SoraSignalingObserver : public sora::SoraSignalingObserver {
   void OnWsClose(uint16_t code, std::string message) override {
     conn->OnWsClose(code, std::move(message));
   }
-  void OnTrack(webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver)
-      override {
+  void OnTrack(webrtc::scoped_refptr<webrtc::RtpTransceiverInterface>
+                   transceiver) override {
     conn->OnTrack(transceiver);
   }
   void OnRemoveTrack(

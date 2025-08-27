@@ -43,6 +43,8 @@ dev-dependencies = [
 target-version = "py311"
 line-length = 100
 
+[tool.ty.src]
+include = ["src", "tests"]
 
 [tool.pytest.ini_options]
 xfail_strict = true
