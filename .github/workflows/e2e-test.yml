@@ -60,6 +60,7 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
           use-cache: 'true'
+          version: latest
       - run: |
           sudo apt-get update
           sudo apt-get -y install libva2 libdrm2 libx11-dev portaudio19-dev
