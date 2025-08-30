@@ -75,6 +75,15 @@ jobs:
               NVIDIA_VIDEO_CODEC_SDK=true
             test_target: tests/test_nvidia_video_codec_sdk.py
             wheel_platform: ubuntu-24.04_x86_64  # NVIDIA Video Codec SDK 用の wheel は ubuntu-24.04_x86_64 のものを使用
+          # Apple Video Toolbox (self-hosted runner)
+          - name: apple-video-toolbox_arm64
+            runs_on:
+              group: Self
+              labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
+            env_vars: |
+              APPLE_VIDEO_TOOLBOX=true
+            test_target: tests/test_apple_video_toolbox.py
+            wheel_platform: macos_arm64  # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
         python_version:
           # TODO: schedule 時には全部でテストする
           # - "3.11"
