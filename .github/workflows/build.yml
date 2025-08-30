@@ -363,8 +363,16 @@ jobs:
   #        SLACK_ICON_EMOJI: ":star-struck:"
   #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
+  # E2E テストの実行
+  e2e_test:
+    needs: [build_ubuntu, build_macos, build_windows]
+    uses: ./.github/workflows/e2e-test-only.yml
+    with:
+      from_build: true
+    secrets: inherit
+
   slack_notify_failed:
-    needs: [build_ubuntu, build_ubuntu_arm, build_macos,build_windows]
+    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
@@ -380,9 +388,7 @@ jobs:
   publish_wheel:
     if: contains(github.ref, 'tags/202')
     needs:
-      - build_ubuntu
-      - build_macos
-      - build_windows
+      - e2e_test
     strategy:
       fail-fast: false
       matrix:
@@ -437,9 +443,7 @@ jobs:
   create-release:
     if: contains(github.ref, 'tags/202')
     needs:
-      - build_ubuntu
-      - build_macos
-      - build_windows
+      - e2e_test
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
