@@ -15,7 +15,7 @@ from sora_sdk import (
 )
 
 pytestmark = pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
+    os.environ.get("OPENH264_PATH") is None,
     reason="OpenH264 のときだけ実行する",
 )
 
