@@ -1,0 +1,158 @@
+name: e2e-test-only
+
+on:
+  push:
+    branches:
+      - develop
+      - "feature/**"
+    paths:
+      - "tests/**"
+  workflow_dispatch:
+
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
+
+jobs:
+  e2e_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: ubuntu-24.04_x86_64
+            runs_on: ubuntu-24.04
+          - name: ubuntu-22.04_x86_64
+            runs_on: ubuntu-22.04
+          - name: macos_arm64
+            runs_on: macos-15
+        python_version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      # Linux 向けの依存関係インストール
+      - if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libx11-dev libdrm-dev libva-dev
+
+      # macOS 向けの依存関係インストール  
+      - if: runner.os == 'macOS'
+        run: |
+          brew install pkg-config
+
+      # UV のセットアップ
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+
+      # Python バージョンの設定
+      - run: uv python pin ${{ matrix.python_version }}
+
+      # 依存関係のインストール
+      - run: uv sync
+
+      # 最新の成功したビルドから artifact をダウンロード、なければ release から取得
+      - name: Download artifacts or release binary
+        run: |
+          # 最新の成功したビルドの run ID を取得
+          RUN_ID=$(gh run list \
+            --workflow=build.yml \
+            --branch=${{ github.ref_name }} \
+            --status=success \
+            --limit=1 \
+            --json databaseId \
+            --jq '.[0].databaseId')
+          
+          if [ -n "$RUN_ID" ]; then
+            echo "Found successful build: $RUN_ID"
+            
+            # artifact をダウンロード（エラーを無視）
+            if gh run download "$RUN_ID" \
+              --name "${{ matrix.platform.name }}_python-${{ matrix.python_version }}" \
+              --dir dist 2>/dev/null; then
+              echo "Successfully downloaded artifact from build"
+            else
+              echo "Artifact not found in build, will try release"
+              RUN_ID=""
+            fi
+          fi
+          
+          # artifact が取得できなかった場合は release から取得
+          if [ -z "$RUN_ID" ] || [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "Downloading from release..."
+            
+            # VERSION ファイルからバージョンを取得
+            VERSION=$(cat VERSION)
+            echo "Version from VERSION file: $VERSION"
+            
+            # プラットフォーム名から wheel ファイル名を構築
+            # Python バージョンから cp タグを作成 (例: 3.11 -> cp311)
+            PY_TAG="cp$(echo ${{ matrix.python_version }} | tr -d '.')"
+            
+            # プラットフォームごとの wheel タグを設定
+            case "${{ matrix.platform.name }}" in
+              ubuntu-24.04_x86_64)
+                WHEEL_TAG="manylinux_2_35_x86_64"
+                ;;
+              ubuntu-22.04_x86_64)
+                WHEEL_TAG="manylinux_2_35_x86_64"
+                ;;
+              macos_arm64)
+                WHEEL_TAG="macosx_11_0_arm64"
+                ;;
+              *)
+                echo "Unknown platform: ${{ matrix.platform.name }}"
+                exit 1
+                ;;
+            esac
+            
+            # wheel ファイル名
+            WHEEL_NAME="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-${WHEEL_TAG}.whl"
+            
+            # dist ディレクトリを作成
+            mkdir -p dist
+            
+            # release から wheel をダウンロード
+            echo "Downloading ${WHEEL_NAME} from release ${VERSION}..."
+            gh release download "${VERSION}" \
+              --pattern "${WHEEL_NAME}" \
+              --dir dist \
+              --repo ${{ github.repository }}
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # wheel ファイルのインストール
+      - name: Install wheel package
+        run: |
+          # dist/ ディレクトリ内の .whl ファイルを探してインストール
+          WHEEL_FILE=$(find dist -name "*.whl" | head -1)
+          if [ -z "$WHEEL_FILE" ]; then
+            echo "No wheel file found in dist/"
+            exit 1
+          fi
+          echo "Installing wheel: $WHEEL_FILE"
+          uv add --dev "$WHEEL_FILE"
+
+      # E2E テストの実行
+      - name: Run E2E tests
+        run: |
+          uv run pytest tests/ -v
+
+      # エラー時の詳細情報
+      - if: failure()
+        name: Show debug information
+        run: |
+          echo "=== Python version ==="
+          uv run python --version
+          echo "=== Installed packages ==="
+          uv pip list
+          echo "=== Wheel files in dist/ ==="
+          ls -la dist/ || echo "dist/ directory not found"
