@@ -251,13 +251,9 @@ def _build(
             configuration = "RelWithDebInfo"
 
         webrtc_platform = get_webrtc_platform(platform)
-        webrtc_info = get_webrtc_info(
-            webrtc_platform, local_webrtc_build_dir, install_dir, debug
-        )
+        webrtc_info = get_webrtc_info(webrtc_platform, local_webrtc_build_dir, install_dir, debug)
 
-        sora_info = get_sora_info(
-            webrtc_platform, local_sora_cpp_sdk_dir, install_dir, debug
-        )
+        sora_info = get_sora_info(webrtc_platform, local_sora_cpp_sdk_dir, install_dir, debug)
 
         cmake_args = []
         cmake_args.append(f"-DCMAKE_BUILD_TYPE={configuration}")
@@ -390,7 +386,7 @@ def _build(
 def _format(
     clang_format_path: Optional[str] = None,
     skip_clang_format: bool = False,
-    skip_ty: bool = False,
+    skip_ruff: bool = False,
 ):
     # C++ ファイルのフォーマット
     if not skip_clang_format:
@@ -410,20 +406,20 @@ def _format(
             if target_files:
                 print(f"Formatting {len(target_files)} C++ files...")
                 cmd([clang_format_path, "-i"] + target_files)
-    
-    # Python ファイルのタイプチェック
-    if not skip_ty:
-        print("Running Python type checking with ty...")
+
+    # Python ファイルのフォーマット
+    if not skip_ruff:
+        print("Running Python formatting with ruff...")
         try:
-            cmd(["uv", "run", "ty", "check"])
+            cmd(["uv", "run", "ruff", "format"])
         except Exception as e:
-            print(f"Type checking failed: {e}")
+            print(f"Formatting failed: {e}")
 
 
 def main():
     parser = argparse.ArgumentParser()
     sp = parser.add_subparsers(dest="command", required=True)
-    
+
     # build サブコマンド
     bp = sp.add_parser("build")
     bp.add_argument("target", choices=AVAILABLE_TARGETS)
@@ -433,15 +429,17 @@ def main():
     bp.add_argument("--local-webrtc-build-args", default="", type=shlex.split)
     bp.add_argument("--local-sora-cpp-sdk-dir", type=os.path.abspath)
     bp.add_argument("--local-sora-cpp-sdk-args", default="", type=shlex.split)
-    
+
     # format サブコマンド
     fp = sp.add_parser("format")
     fp.add_argument("--clang-format-path", type=str, default=None)
-    fp.add_argument("--skip-clang-format", action="store_true", help="Skip C++ formatting with clang-format")
-    fp.add_argument("--skip-ty", action="store_true", help="Skip Python type checking with ty")
+    fp.add_argument(
+        "--skip-clang-format", action="store_true", help="Skip C++ formatting with clang-format"
+    )
+    fp.add_argument("--skip-ruff", action="store_true", help="Skip Python formatting with ruff")
 
     args = parser.parse_args()
-    
+
     if args.command == "build":
         _build(
             target=args.target,
@@ -456,7 +454,7 @@ def main():
         _format(
             clang_format_path=args.clang_format_path,
             skip_clang_format=args.skip_clang_format,
-            skip_ty=args.skip_ty,
+            skip_ruff=args.skip_ruff,
         )
 
 
