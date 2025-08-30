@@ -206,8 +206,23 @@ jobs:
           done
         shell: bash
 
-      # E2E テストの実行
-      - name: Run E2E tests
+      # E2E テストの実行 (self-hosted runner)
+      - name: Run E2E tests (self-hosted)
+        if: ${{ runner.environment == 'self-hosted' }}
+        run: |
+          # UV_NO_SYNC=1 を指定する理由:
+          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
+          # この同期により、uv pip install でインストールした wheel が削除され、
+          # 元のソースコードの sora-sdk がインストールされてしまう
+          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
+          # self-hosted runner では -n auto を使用しない
+          uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v --durations=0
+        env:
+          UV_NO_SYNC: 1
+
+      # E2E テストの実行 (GitHub-hosted runner)  
+      - name: Run E2E tests (GitHub-hosted)
+        if: ${{ runner.environment != 'self-hosted' }}
         run: |
           # UV_NO_SYNC=1 を指定する理由:
           # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
