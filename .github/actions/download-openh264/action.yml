@@ -1,0 +1,79 @@
+name: 'Download OpenH264'
+description: 'Download OpenH264 library for the platform'
+inputs:
+  platform_name:
+    description: 'Platform name (e.g. ubuntu-24.04_x86_64, macos_arm64, windows_x86_64)'
+    required: true
+  openh264_version:
+    description: 'OpenH264 version (e.g. 2.6.0)'
+    required: true
+outputs:
+  openh264_path:
+    description: 'Path to the downloaded OpenH264 library'
+    value: ${{ steps.result.outputs.openh264_path }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Download and setup OpenH264
+      id: result
+      shell: bash
+      run: |
+        VERSION="${{ inputs.openh264_version }}"
+        
+        # プラットフォームごとの設定
+        case "${{ inputs.platform_name }}" in
+          ubuntu-*_x86_64)
+            URL="http://ciscobinary.openh264.org/libopenh264-${VERSION}-linux64.8.so.bz2"
+            FILENAME="libopenh264-${VERSION}-linux64.8.so"
+            TARGET="libopenh264.so"
+            ;;
+          ubuntu-*_armv8)
+            URL="http://ciscobinary.openh264.org/libopenh264-${VERSION}-linux-arm64.8.so.bz2"
+            FILENAME="libopenh264-${VERSION}-linux-arm64.8.so"
+            TARGET="libopenh264.so"
+            ;;
+          macos_arm64)
+            URL="http://ciscobinary.openh264.org/libopenh264-${VERSION}-mac-arm64.dylib.bz2"
+            FILENAME="libopenh264-${VERSION}-mac-arm64.dylib"
+            TARGET="libopenh264.dylib"
+            ;;
+          windows_x86_64)
+            # Windows の場合は PowerShell を使用
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+              pwsh -Command "
+                \$url = 'http://ciscobinary.openh264.org/openh264-${VERSION}-win64.dll.bz2'
+                Write-Host \"Downloading from: \$url\"
+                Invoke-WebRequest -Uri \$url -OutFile 'openh264-${VERSION}-win64.dll.bz2'
+                7z e 'openh264-${VERSION}-win64.dll.bz2'
+                Rename-Item -Path 'openh264-${VERSION}-win64.dll' -NewName 'libopenh264.dll'
+                \$path = Join-Path \$PWD 'libopenh264.dll'
+                Write-Host \"openh264_path=\$path\"
+                echo \"openh264_path=\$path\" >> \$env:GITHUB_OUTPUT
+              "
+              exit 0
+            else
+              echo "Error: Windows platform but not running on Windows"
+              exit 1
+            fi
+            ;;
+          *)
+            echo "Unknown platform: ${{ inputs.platform_name }}"
+            exit 1
+            ;;
+        esac
+        
+        # Linux/macOS の場合の処理
+        if [[ "$RUNNER_OS" != "Windows" ]]; then
+          echo "Downloading from: ${URL}"
+          curl -LO "${URL}"
+          
+          echo "Extracting ${FILENAME}.bz2"
+          bzip2 -d "${FILENAME}.bz2"
+          
+          echo "Renaming to ${TARGET}"
+          mv "${FILENAME}" "${TARGET}"
+          
+          OPENH264_PATH="$(pwd)/${TARGET}"
+          echo "OpenH264 library path: ${OPENH264_PATH}"
+          echo "openh264_path=${OPENH264_PATH}" >> $GITHUB_OUTPUT
+        fi

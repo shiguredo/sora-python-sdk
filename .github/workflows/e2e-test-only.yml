@@ -28,6 +28,7 @@ env:
   TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
   TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.6.0
 
 jobs:
   e2e_test:
@@ -160,6 +161,21 @@ jobs:
           # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
           # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
           uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
+
+      # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
+      - name: Download OpenH264
+        if: ${{ runner.environment != 'self-hosted' }}
+        uses: ./.github/actions/download-openh264
+        id: download-openh264
+        with:
+          platform_name: ${{ matrix.platform.name }}
+          openh264_version: ${{ env.OPENH264_VERSION }}
+
+      # OpenH264 パスを環境変数に設定
+      - name: Set OpenH264 path
+        if: ${{ runner.environment != 'self-hosted' && steps.download-openh264.outputs.openh264_path }}
+        run: echo "OPENH264_PATH=${{ steps.download-openh264.outputs.openh264_path }}" >> $GITHUB_ENV
+        shell: bash
 
       # プラットフォーム固有の環境変数を設定
       - name: Set platform-specific environment variables
