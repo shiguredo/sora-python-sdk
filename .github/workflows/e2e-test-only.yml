@@ -19,7 +19,7 @@ env:
 jobs:
   e2e_test_ubuntu:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         platform:
           - name: ubuntu-24.04_x86_64
