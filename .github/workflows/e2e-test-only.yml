@@ -61,7 +61,8 @@ jobs:
               INTEL_VPL=true
               LIBVA_MESSAGING_LEVEL=0
             test_target: tests/test_intel_vpl.py
-            wheel_platform: ubuntu-24.04_x86_64  # Intel VPL 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            # Intel VPL 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            wheel_platform: ubuntu-24.04_x86_64
           # AMD AMF (self-hosted runner)
           - name: amd-amf_x86_64
             runs_on:
@@ -70,7 +71,8 @@ jobs:
             env_vars: |
               AMD_AMF=true
             test_target: tests/test_amd_amf.py
-            wheel_platform: ubuntu-24.04_x86_64  # AMD AMF 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            # AMD AMF 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            wheel_platform: ubuntu-24.04_x86_64
           # NVIDIA Video Codec SDK (self-hosted runner)
           - name: nvidia-video-codec-sdk_x86_64
             runs_on:
@@ -79,7 +81,8 @@ jobs:
             env_vars: |
               NVIDIA_VIDEO_CODEC_SDK=true
             test_target: tests/test_nvidia_video_codec_sdk.py
-            wheel_platform: ubuntu-24.04_x86_64  # NVIDIA Video Codec SDK 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            # NVIDIA Video Codec SDK 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            wheel_platform: ubuntu-24.04_x86_64
           # Apple Video Toolbox (self-hosted runner)
           - name: apple-video-toolbox_arm64
             runs_on:
@@ -88,7 +91,8 @@ jobs:
             env_vars: |
               APPLE_VIDEO_TOOLBOX=true
             test_target: tests/test_apple_video_toolbox.py
-            wheel_platform: macos_arm64  # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
+            # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
+            wheel_platform: macos_arm64
         python_version:
           # TODO: schedule 時には全部でテストする
           # - "3.11"
