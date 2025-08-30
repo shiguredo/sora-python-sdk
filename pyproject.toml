@@ -39,6 +39,9 @@ dev-dependencies = [
     "ty",
 ]
 
+[tool.uv.workspace]
+members = ["examples"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100
