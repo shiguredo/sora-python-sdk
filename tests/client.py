@@ -228,9 +228,9 @@ class SoraClient:
         self._connection.connect()
 
         try:
-            assert self._connected.wait(self._default_connection_timeout_s), (
-                "Could not connect to Sora."
-            )
+            assert self._connected.wait(
+                self._default_connection_timeout_s
+            ), "Could not connect to Sora."
         except Exception as e:
             self._connection.disconnect()
             raise e
