@@ -78,15 +78,21 @@ jobs:
       - name: Install wheel package
         run: |
           echo "Installing wheel: ${{ steps.download.outputs.wheel_file }}"
-          # file:// URL 形式で指定
-          WHEEL_URL="file://${PWD}/${{ steps.download.outputs.wheel_file }}"
-          echo "Installing wheel URL: ${WHEEL_URL}"
-          uv add --dev "sora-sdk @ ${WHEEL_URL}"
+          # uv pip install を使う理由:
+          # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
+          # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
+          # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
+          uv pip install "${{ steps.download.outputs.wheel_file }}"
 
       # E2E テストの実行
       - name: Run E2E tests
         run: |
-          uv run pytest tests/ -v
+          # UV_NO_SYNC=1 を指定する理由:
+          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
+          # この同期により、uv pip install でインストールした wheel が削除され、
+          # 元のソースコードの sora-sdk がインストールされてしまう
+          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
+          UV_NO_SYNC=1 uv run pytest tests/ -v
 
       # エラー時の詳細情報
       - if: failure()
@@ -146,15 +152,21 @@ jobs:
       - name: Install wheel package
         run: |
           echo "Installing wheel: ${{ steps.download.outputs.wheel_file }}"
-          # file:// URL 形式で指定
-          WHEEL_URL="file://${PWD}/${{ steps.download.outputs.wheel_file }}"
-          echo "Installing wheel URL: ${WHEEL_URL}"
-          uv add --dev "sora-sdk @ ${WHEEL_URL}"
+          # uv pip install を使う理由:
+          # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
+          # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
+          # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
+          uv pip install "${{ steps.download.outputs.wheel_file }}"
 
       # E2E テストの実行
       - name: Run E2E tests
         run: |
-          uv run pytest tests/ -v
+          # UV_NO_SYNC=1 を指定する理由:
+          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
+          # この同期により、uv pip install でインストールした wheel が削除され、
+          # 元のソースコードの sora-sdk がインストールされてしまう
+          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
+          UV_NO_SYNC=1 uv run pytest tests/ -v
 
       # エラー時の詳細情報
       - if: failure()
