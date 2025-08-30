@@ -72,6 +72,9 @@ runs:
             macos_arm64)
               WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-macosx_*_arm64.whl"
               ;;
+            windows_x86_64)
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-win_amd64.whl"
+              ;;
             *)
               echo "Unknown platform: ${{ inputs.platform_name }}"
               exit 1
