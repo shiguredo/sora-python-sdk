@@ -6,6 +6,7 @@ on:
       - develop
       - "feature/**"
     paths:
+      - ".github/workflows/e2e-test-only.yml"
       - "tests/**"
   workflow_dispatch:
 
