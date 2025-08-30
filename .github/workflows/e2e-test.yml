@@ -10,6 +10,7 @@ on:
       - ".github/workflows/e2e-test-amd-amf.yml"
       - ".github/workflows/e2e-test-apple-video-toolbox.yml"
       - ".github/workflows/e2e-test-nvidia-video-codec-sdk.yml"
+      - ".github/workflows/e2e-test-only.yml"
       - "tests/test_intel_vpl.py"
       - "tests/test_amd_amf.py"
       - "tests/test_apple_video_toolbox.py"
