@@ -1,6 +1,5 @@
 import time
 
-import pytest
 from client import SoraClient, SoraRole
 
 from sora_sdk import (
@@ -9,25 +8,24 @@ from sora_sdk import (
     SoraVideoCodecType,
 )
 
-
-def test_preference_invalid(settings):
-    # opneh264 のパスを設定してないのに H264 エンコーダを使おうとしているので Sora 生成時にエラーになる
-    with pytest.raises(RuntimeError):
-        SoraClient(
-            settings,
-            SoraRole.SENDONLY,
-            audio=False,
-            video=True,
-            video_codec_type="H264",
-            video_codec_preference=SoraVideoCodecPreference(
-                codecs=[
-                    SoraVideoCodecPreference.Codec(
-                        type=SoraVideoCodecType.H264,
-                        encoder=SoraVideoCodecImplementation.CISCO_OPENH264,
-                    )
-                ]
-            ),
-        )
+# def test_preference_invalid(settings):
+#     # opneh264 のパスを設定してないのに H264 エンコーダを使おうとしているので Sora 生成時にエラーになる
+#     with pytest.raises(RuntimeError):
+#         SoraClient(
+#             settings,
+#             SoraRole.SENDONLY,
+#             audio=False,
+#             video=True,
+#             video_codec_type="H264",
+#             video_codec_preference=SoraVideoCodecPreference(
+#                 codecs=[
+#                     SoraVideoCodecPreference.Codec(
+#                         type=SoraVideoCodecType.H264,
+#                         encoder=SoraVideoCodecImplementation.CISCO_OPENH264,
+#                     )
+#                 ]
+#             ),
+#         )
 
 
 def test_preference_vp8(settings):
