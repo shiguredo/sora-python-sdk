@@ -1,0 +1,101 @@
+name: 'Download Wheel'
+description: 'Download wheel file from build artifacts or release'
+inputs:
+  platform_name:
+    description: 'Platform name (e.g. ubuntu-24.04_x86_64, macos_arm64)'
+    required: true
+  python_version:
+    description: 'Python version (e.g. 3.11, 3.12, 3.13)'
+    required: true
+  github_token:
+    description: 'GitHub token'
+    required: true
+outputs:
+  wheel_file:
+    description: 'Path to the downloaded wheel file'
+    value: ${{ steps.result.outputs.wheel_file }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Download artifacts or release binary
+      shell: bash
+      run: |
+        # 最新の成功したビルドの run ID を取得
+        RUN_ID=$(gh run list \
+          --workflow=build.yml \
+          --branch=${{ github.ref_name }} \
+          --status=success \
+          --limit=1 \
+          --json databaseId \
+          --jq '.[0].databaseId')
+        
+        if [ -n "$RUN_ID" ]; then
+          echo "Found successful build: $RUN_ID"
+          
+          # artifact をダウンロード（エラーを無視）
+          if gh run download "$RUN_ID" \
+            --name "${{ inputs.platform_name }}_python-${{ inputs.python_version }}" \
+            --dir dist 2>/dev/null; then
+            echo "Successfully downloaded artifact from build"
+          else
+            echo "Artifact not found in build, will try release"
+            RUN_ID=""
+          fi
+        fi
+        
+        # artifact が取得できなかった場合は release から取得
+        if [ -z "$RUN_ID" ] || [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+          echo "Downloading from release..."
+          
+          # VERSION ファイルからバージョンを取得
+          VERSION=$(cat VERSION)
+          echo "Version from VERSION file: $VERSION"
+          
+          # プラットフォーム名から wheel ファイル名を構築
+          # Python バージョンから cp タグを作成 (例: 3.11 -> cp311)
+          PY_TAG="cp$(echo ${{ inputs.python_version }} | tr -d '.')"
+          
+          # プラットフォームごとの wheel タグを設定
+          case "${{ inputs.platform_name }}" in
+            ubuntu-24.04_x86_64)
+              WHEEL_TAG="manylinux_2_35_x86_64"
+              ;;
+            ubuntu-22.04_x86_64)
+              WHEEL_TAG="manylinux_2_35_x86_64"
+              ;;
+            macos_arm64)
+              WHEEL_TAG="macosx_11_0_arm64"
+              ;;
+            *)
+              echo "Unknown platform: ${{ inputs.platform_name }}"
+              exit 1
+              ;;
+          esac
+          
+          # wheel ファイル名
+          WHEEL_NAME="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-${WHEEL_TAG}.whl"
+          
+          # dist ディレクトリを作成
+          mkdir -p dist
+          
+          # release から wheel をダウンロード
+          echo "Downloading ${WHEEL_NAME} from release ${VERSION}..."
+          gh release download "${VERSION}" \
+            --pattern "${WHEEL_NAME}" \
+            --dir dist \
+            --repo ${{ github.repository }}
+        fi
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+    
+    - name: Set output
+      id: result
+      shell: bash
+      run: |
+        WHEEL_FILE=$(find dist -name "*.whl" | head -1)
+        if [ -z "$WHEEL_FILE" ]; then
+          echo "No wheel file found in dist/"
+          exit 1
+        fi
+        echo "wheel_file=$WHEEL_FILE" >> $GITHUB_OUTPUT
+        echo "Found wheel file: $WHEEL_FILE"
