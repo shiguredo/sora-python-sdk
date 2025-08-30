@@ -42,27 +42,27 @@ jobs:
         platform:
           - name: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
-          ## # - name: ubuntu-22.04_x86_64
-          ## #   runs_on: ubuntu-22.04
-          ## - name: ubuntu-24.04_armv8
-          ##   runs_on: ubuntu-24.04-arm
-          ## # - name: ubuntu-22.04_armv8
-          ## #   runs_on: ubuntu-22.04-arm
-          ## - name: macos_arm64
-          ##   runs_on: macos-15
-          ## - name: windows_x86_64
-          ##   runs_on: windows-2025
-          ## # Intel VPL (self-hosted runner)
-          ## - name: intel-vpl_x86_64
-          ##   runs_on:
-          ##     group: Self
-          ##     labels: [self-hosted, linux, x64, Intel-VPL]
-          ##   env_vars: |
-          ##     INTEL_VPL=true
-          ##     LIBVA_MESSAGING_LEVEL=0
-          ##   test_target: tests/test_intel_vpl.py
-          ##   # Intel VPL 用の wheel は ubuntu-24.04_x86_64 のものを使用
-          ##   wheel_platform: ubuntu-24.04_x86_64
+          # - name: ubuntu-22.04_x86_64
+          #   runs_on: ubuntu-22.04
+          - name: ubuntu-24.04_armv8
+            runs_on: ubuntu-24.04-arm
+          # - name: ubuntu-22.04_armv8
+          #   runs_on: ubuntu-22.04-arm
+          - name: macos_arm64
+            runs_on: macos-15
+          - name: windows_x86_64
+            runs_on: windows-2025
+          # Intel VPL (self-hosted runner)
+          - name: intel-vpl_x86_64
+            runs_on:
+              group: Self
+              labels: [self-hosted, linux, x64, Intel-VPL]
+            env_vars: |
+              INTEL_VPL=true
+              LIBVA_MESSAGING_LEVEL=0
+            test_target: tests/test_intel_vpl.py
+            # Intel VPL 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            wheel_platform: ubuntu-24.04_x86_64
           ## # AMD AMF (self-hosted runner)
           ## - name: amd-amf_x86_64
           ##   runs_on:
