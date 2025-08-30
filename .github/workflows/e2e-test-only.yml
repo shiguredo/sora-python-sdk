@@ -77,9 +77,8 @@ jobs:
       # wheel ファイルのインストール
       - name: Install wheel package
         run: |
-          WHEEL_PATH="${PWD}/${{ steps.download.outputs.wheel_file }}"
-          echo "Installing wheel: ${WHEEL_PATH}"
-          uv add --dev "${WHEEL_PATH}"
+          echo "Installing wheel: ${{ steps.download.outputs.wheel_file }}"
+          uv pip install "${{ steps.download.outputs.wheel_file }}"
 
       # E2E テストの実行
       - name: Run E2E tests
@@ -143,9 +142,8 @@ jobs:
       # wheel ファイルのインストール
       - name: Install wheel package
         run: |
-          WHEEL_PATH="${PWD}/${{ steps.download.outputs.wheel_file }}"
-          echo "Installing wheel: ${WHEEL_PATH}"
-          uv add --dev "${WHEEL_PATH}"
+          echo "Installing wheel: ${{ steps.download.outputs.wheel_file }}"
+          uv pip install "${{ steps.download.outputs.wheel_file }}"
 
       # E2E テストの実行
       - name: Run E2E tests
