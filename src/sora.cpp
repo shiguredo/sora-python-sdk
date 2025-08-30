@@ -243,7 +243,8 @@ nb::ref<SoraAudioSource> Sora::CreateAudioSource(size_t channels,
 
 nb::ref<SoraVideoSource> Sora::CreateVideoSource() {
   sora::ScalableVideoTrackSourceConfig config;
-  auto source = webrtc::make_ref_counted<sora::ScalableVideoTrackSource>(config);
+  auto source =
+      webrtc::make_ref_counted<sora::ScalableVideoTrackSource>(config);
 
   std::string track_id = webrtc::CreateRandomString(16);
   auto track =

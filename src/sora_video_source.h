@@ -32,9 +32,10 @@ namespace nb = nanobind;
  */
 class SoraVideoSource : public SoraTrackInterface {
  public:
-  SoraVideoSource(DisposePublisher* publisher,
-                  webrtc::scoped_refptr<sora::ScalableVideoTrackSource> source,
-                  webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track);
+  SoraVideoSource(
+      DisposePublisher* publisher,
+      webrtc::scoped_refptr<sora::ScalableVideoTrackSource> source,
+      webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track);
   ~SoraVideoSource();
 
   /**
