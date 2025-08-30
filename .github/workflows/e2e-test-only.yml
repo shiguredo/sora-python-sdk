@@ -12,6 +12,10 @@ on:
       - "VERSION"
       - "DEPS"
   workflow_dispatch:
+  schedule:
+    # UTC の 01:00 は JST だと 10:00 。
+    # 1-5 で 月曜日から金曜日
+    - cron: "0 1 * * 1-5"
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
@@ -20,19 +24,29 @@ env:
   TEST_API_URL: ${{ secrets.TEST_API_URL }}
 
 jobs:
-  e2e_test_ubuntu:
+  e2e_test:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         platform:
           - name: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
+            type: ubuntu
           # - name: ubuntu-22.04_x86_64
           #   runs_on: ubuntu-22.04
+          #   type: ubuntu
           - name: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04-arm
+            type: ubuntu
           # - name: ubuntu-22.04_armv8
           #   runs_on: ubuntu-22.04-arm
+          #   type: ubuntu
+          - name: macos_arm64
+            runs_on: macos-15
+            type: macos
+          - name: windows_x86_64
+            runs_on: windows-2025
+            type: windows
         python_version:
           # TODO: schedule 時には全部でテストする
           # - "3.11"
@@ -49,11 +63,15 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          cache: true
+          use-cache: true
+          hostname: gha-${{ github.run_id }}-${{ github.run_number }}
           version: latest
+          timeout: 2m
+          retry: 5
 
-      # Linux 向けの依存関係インストール
-      - run: |
+      # Linux 向けの依存関係インストール（Ubuntu のみ）
+      - if: matrix.platform.type == 'ubuntu'
+        run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev libdrm-dev libva-dev
 
@@ -107,161 +125,16 @@ jobs:
           echo "=== Wheel files in dist/ ==="
           ls -la dist/ || echo "dist/ directory not found"
 
-  e2e_test_macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: macos_arm64
-            runs_on: macos-15
-        python_version:
-          # - "3.11"
-          # - "3.12"
-          - "3.13"
-    runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 30
+  slack_notify_failed:
+    needs: [e2e_test]
+    runs-on: ubuntu-24.04
+    if: failure()
     steps:
-      - uses: actions/checkout@v5
-      
-      # Tailscale のセットアップ
-      - uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          cache: true
-          hostname: gha-${{ github.run_id }}
-          version: latest
-          timeout: 2m
-          retry: 5
-
-      # UV のセットアップ
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: false
-
-      # Python バージョンの設定
-      - run: uv python pin ${{ matrix.python_version }}
-
-      # 依存関係のインストール
-      - run: uv sync
-
-      # Wheel ファイルのダウンロード
-      - uses: ./.github/actions/download-whl
-        id: download
-        with:
-          platform_name: ${{ matrix.platform.name }}
-          python_version: ${{ matrix.python_version }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      # wheel ファイルのインストール
-      - name: Install wheel package
-        run: |
-          echo "Installing wheel: ${{ steps.download.outputs.wheel_file }}"
-          # uv pip install を使う理由:
-          # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
-          # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
-          # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
-          uv pip install "${{ steps.download.outputs.wheel_file }}"
-
-      # E2E テストの実行
-      - name: Run E2E tests
-        run: |
-          # UV_NO_SYNC=1 を指定する理由:
-          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
-          # この同期により、uv pip install でインストールした wheel が削除され、
-          # 元のソースコードの sora-sdk がインストールされてしまう
-          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
-          UV_NO_SYNC=1 uv run pytest tests/ -v
-
-      # エラー時の詳細情報
-      - if: failure()
-        name: Show debug information
-        run: |
-          echo "=== Python version ==="
-          uv run python --version
-          echo "=== Installed packages ==="
-          uv pip list
-          echo "=== Wheel files in dist/ ==="
-          ls -la dist/ || echo "dist/ directory not found"
-
-  e2e_test_windows:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: windows_x86_64
-            runs_on: windows-2025
-        python_version:
-          # - "3.11"
-          # - "3.12"
-          - "3.13"
-    runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v5
-      
-      # Tailscale のセットアップ
-      - uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          cache: true
-          hostname: gha-${{ github.run_id }}
-          version: latest
-          timeout: 2m
-          retry: 5
-
-      # UV のセットアップ
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: false
-
-      # Python バージョンの設定
-      - run: uv python pin ${{ matrix.python_version }}
-
-      # 依存関係のインストール
-      - run: uv sync
-
-      # Wheel ファイルのダウンロード
-      - uses: ./.github/actions/download-whl
-        id: download
-        with:
-          platform_name: ${{ matrix.platform.name }}
-          python_version: ${{ matrix.python_version }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      # wheel ファイルのインストール
-      - name: Install wheel package
-        shell: bash
-        run: |
-          echo "Installing wheel: ${{ steps.download.outputs.wheel_file }}"
-          # uv pip install を使う理由:
-          # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
-          # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
-          # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
-          uv pip install "${{ steps.download.outputs.wheel_file }}"
-
-      # E2E テストの実行
-      - name: Run E2E tests
-        shell: bash
-        run: |
-          # UV_NO_SYNC=1 を指定する理由:
-          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
-          # この同期により、uv pip install でインストールした wheel が削除され、
-          # 元のソースコードの sora-sdk がインストールされてしまう
-          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
-          UV_NO_SYNC=1 uv run pytest tests/ -v
-
-      # エラー時の詳細情報
-      - if: failure()
-        name: Show debug information
-        shell: bash
-        run: |
-          echo "=== Python version ==="
-          uv run python --version
-          echo "=== Installed packages ==="
-          uv pip list
-          echo "=== Wheel files in dist/ ==="
-          ls -la dist/ || echo "dist/ directory not found"
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: "FAILED"
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
