@@ -25,39 +25,39 @@ import re
 def run_pytest_and_check_for_leaks(pytest_args):
     # Construct the pytest command
     command = ["uv", "run", "pytest"] + pytest_args
-    
+
     # Run pytest and capture the output
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
-        universal_newlines=True
+        universal_newlines=True,
     )
-    
+
     # Variables to track test status and memory leaks
     test_failed = False
     memory_leak_detected = False
     output_lines = []
-    
+
     # Process the output line by line
     if process.stdout:
         for line in process.stdout:
             # Print the line to the console
             print(line, end="")
             output_lines.append(line)
-            
+
             # Check for test failures
             if "FAILED" in line:
                 test_failed = True
-            
+
             # Check for memory leaks
             if "nanobind: leaked" in line:
                 memory_leak_detected = True
-    
+
     # Wait for the process to complete
     process.wait()
-    
+
     # Determine the exit code
     if memory_leak_detected:
         print("\n\033[91mERROR: Memory leak detected in nanobind code!\033[0m")
@@ -72,15 +72,15 @@ def run_pytest_and_check_for_leaks(pytest_args):
 if __name__ == "__main__":
     # Get the pytest arguments from the command line
     pytest_args = sys.argv[1:]
-    
+
     # If no arguments are provided, show usage information
     if not pytest_args:
         print("Usage: python pytest_memory_leak_checker.py [pytest_args]")
         print("Example: python pytest_memory_leak_checker.py tests/test_memory_leak.py -v")
         sys.exit(1)
-    
+
     # Run pytest and check for memory leaks
     exit_code = run_pytest_and_check_for_leaks(pytest_args)
-    
+
     # Exit with the appropriate code
     sys.exit(exit_code)

@@ -19,7 +19,9 @@ from sora_sdk import (
     get_video_codec_capability,
 )
 
-pytestmark = pytest.mark.skipif(os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する")
+pytestmark = pytest.mark.skipif(
+    os.environ.get("INTEL_VPL") is None, reason="Intel VPL でのみ実行する"
+)
 
 
 def test_intel_vpl_available():
