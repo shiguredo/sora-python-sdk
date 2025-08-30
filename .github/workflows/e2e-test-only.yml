@@ -31,7 +31,6 @@ env:
 
 jobs:
   e2e_test:
-    name: ${{ inputs.from_build && 'E2E Test (from build)' || 'E2E Test (standalone)' }}
     strategy:
       fail-fast: false
       matrix:
@@ -54,6 +53,16 @@ jobs:
           - name: windows_x86_64
             runs_on: windows-2025
             type: windows
+          # Intel VPL (self-hosted runner)
+          - name: intel-vpl_x86_64
+            runs_on:
+              group: Self
+              labels: [self-hosted, linux, x64, Intel-VPL]
+            env_vars: |
+              INTEL_VPL=true
+              LIBVA_MESSAGING_LEVEL=0
+            test_target: tests/test_intel_vpl.py
+            wheel_platform: ubuntu-24.04_x86_64  # Intel VPL 用の wheel は ubuntu-24.04_x86_64 のものを使用
         python_version:
           # TODO: schedule 時には全部でテストする
           # - "3.11"
@@ -70,7 +79,6 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          use-cache: true
           hostname: gha-${{ github.run_id }}-${{ github.run_number }}
           version: latest
           timeout: 2m
@@ -105,7 +113,7 @@ jobs:
         uses: ./.github/actions/download-whl
         id: download-whl
         with:
-          platform_name: ${{ matrix.platform.name }}
+          platform_name: ${{ matrix.platform.wheel_platform || matrix.platform.name }}
           python_version: ${{ matrix.python_version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -130,6 +138,17 @@ jobs:
           # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
           uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
 
+      # プラットフォーム固有の環境変数を設定
+      - name: Set platform-specific environment variables
+        if: matrix.platform.env_vars
+        run: |
+          echo "${{ matrix.platform.env_vars }}" | while read line; do
+            if [ -n "$line" ]; then
+              echo "$line" >> $GITHUB_ENV
+            fi
+          done
+        shell: bash
+
       # E2E テストの実行
       - name: Run E2E tests
         run: |
@@ -138,7 +157,7 @@ jobs:
           # この同期により、uv pip install でインストールした wheel が削除され、
           # 元のソースコードの sora-sdk がインストールされてしまう
           # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
-          uv run pytest tests/ -v
+          uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v
         env:
           UV_NO_SYNC: 1
 
