@@ -1,6 +1,12 @@
 name: e2e-test-only
 
 on:
+  workflow_call:
+    inputs:
+      from_build:
+        type: boolean
+        default: false
+        description: "build.yml から呼び出されたかどうか"
   push:
     branches:
       - develop
@@ -25,6 +31,7 @@ env:
 
 jobs:
   e2e_test:
+    name: ${{ inputs.from_build && 'E2E Test (from build)' || 'E2E Test (standalone)' }}
     strategy:
       fail-fast: false
       matrix:
@@ -86,23 +93,42 @@ jobs:
       # 依存関係のインストール
       - run: uv sync
 
-      # Wheel ファイルのダウンロード
-      - uses: ./.github/actions/download-whl
-        id: download
+      # Wheel ファイルのダウンロード (build.yml から呼び出された場合: 呼び出し元の artifact を使用)
+      - if: inputs.from_build == true
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.platform.runs_on }}_python-${{ matrix.python_version }}
+          path: dist/
+
+      # Wheel ファイルのダウンロード (直接実行の場合: 同一ブランチの最新成功ビルド artifact または GitHub Release から取得)
+      - if: inputs.from_build != true
+        uses: ./.github/actions/download-whl
+        id: download-whl
         with:
           platform_name: ${{ matrix.platform.name }}
           python_version: ${{ matrix.python_version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      # wheel ファイル名を取得
+      - name: Find wheel file
+        id: find-wheel
+        run: |
+          WHEEL_FILE=$(find dist -name "*.whl" | head -1)
+          if [ -z "$WHEEL_FILE" ]; then
+            echo "No wheel file found in dist/"
+            exit 1
+          fi
+          echo "wheel_file=$WHEEL_FILE" >> $GITHUB_OUTPUT
+
       # wheel ファイルのインストール
       - name: Install wheel package
         run: |
-          echo "Installing wheel: ${{ steps.download.outputs.wheel_file }}"
+          echo "Installing wheel: ${{ steps.find-wheel.outputs.wheel_file }}"
           # uv pip install を使う理由:
           # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
           # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
           # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
-          uv pip install "${{ steps.download.outputs.wheel_file }}"
+          uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
 
       # E2E テストの実行
       - name: Run E2E tests
