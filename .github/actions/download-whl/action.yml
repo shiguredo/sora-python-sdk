@@ -55,16 +55,20 @@ runs:
           # Python バージョンから cp タグを作成 (例: 3.11 -> cp311)
           PY_TAG="cp$(echo ${{ inputs.python_version }} | tr -d '.')"
           
-          # プラットフォームごとの wheel タグを設定
+          # dist ディレクトリを作成
+          mkdir -p dist
+          
+          # release から wheel をダウンロード（パターンマッチング）
+          # プラットフォームごとのパターンを設定
           case "${{ inputs.platform_name }}" in
-            ubuntu-24.04_x86_64)
-              WHEEL_TAG="manylinux_2_35_x86_64"
+            ubuntu-*_x86_64)
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_*_x86_64.whl"
               ;;
-            ubuntu-22.04_x86_64)
-              WHEEL_TAG="manylinux_2_35_x86_64"
+            ubuntu-*_armv8)
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_*_aarch64.whl"
               ;;
             macos_arm64)
-              WHEEL_TAG="macosx_11_0_arm64"
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-macosx_*_arm64.whl"
               ;;
             *)
               echo "Unknown platform: ${{ inputs.platform_name }}"
@@ -72,16 +76,9 @@ runs:
               ;;
           esac
           
-          # wheel ファイル名
-          WHEEL_NAME="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-${WHEEL_TAG}.whl"
-          
-          # dist ディレクトリを作成
-          mkdir -p dist
-          
-          # release から wheel をダウンロード
-          echo "Downloading ${WHEEL_NAME} from release ${VERSION}..."
+          echo "Downloading wheel matching pattern: ${WHEEL_PATTERN} from release ${VERSION}..."
           gh release download "${VERSION}" \
-            --pattern "${WHEEL_NAME}" \
+            --pattern "${WHEEL_PATTERN}" \
             --dir dist \
             --repo ${{ github.repository }}
         fi
