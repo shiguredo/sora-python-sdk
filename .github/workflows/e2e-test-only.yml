@@ -117,6 +117,16 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libx11-dev libdrm-dev libva-dev
 
+      # macOS: Homebrew セットアップ
+      - name: Setup Homebrew
+        if: ${{ contains(matrix.platform.name, 'macos') }}
+        uses: Homebrew/actions/setup-homebrew@master
+      
+      # macOS: GitHub CLI インストール
+      - name: Install GitHub CLI
+        if: ${{ contains(matrix.platform.name, 'macos') }}
+        run: brew install gh
+
       # UV のセットアップ
       - uses: astral-sh/setup-uv@v6
         with:
