@@ -62,20 +62,12 @@ runs:
           # プラットフォームごとのパターンを設定
           case "${{ inputs.platform_name }}" in
             ubuntu-*_x86_64)
-              # manylinux_2_31 があればそちらを優先（より互換性が高い）
-              if gh release view "${VERSION}" --json assets -q '.assets[].name' | grep -q "manylinux_2_31_x86_64"; then
-                WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_31_x86_64.whl"
-              else
-                WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_*_x86_64.whl"
-              fi
+              # manylinux_2_31 に固定
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_31_x86_64.whl"
               ;;
             ubuntu-*_armv8)
-              # manylinux_2_31 があればそちらを優先（より互換性が高い）
-              if gh release view "${VERSION}" --json assets -q '.assets[].name' | grep -q "manylinux_2_31_aarch64"; then
-                WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_31_aarch64.whl"
-              else
-                WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_*_aarch64.whl"
-              fi
+              # manylinux_2_31 に固定
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_31_aarch64.whl"
               ;;
             macos_arm64)
               WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-macosx_*_arm64.whl"
