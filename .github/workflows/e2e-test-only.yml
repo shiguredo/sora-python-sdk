@@ -117,14 +117,14 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libx11-dev libdrm-dev libva-dev
 
-      # macOS: Homebrew セットアップ
+      # macOS self-hosted runner: Homebrew セットアップ
       - name: Setup Homebrew
-        if: ${{ contains(matrix.platform.name, 'macos') }}
+        if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
         uses: Homebrew/actions/setup-homebrew@master
       
-      # macOS: GitHub CLI インストール
+      # macOS self-hosted runner: GitHub CLI インストール
       - name: Install GitHub CLI
-        if: ${{ contains(matrix.platform.name, 'macos') }}
+        if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
         run: brew install gh
 
       # UV のセットアップ
