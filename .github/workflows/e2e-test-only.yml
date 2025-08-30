@@ -73,8 +73,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       
-      # Tailscale のセットアップ
-      - uses: tailscale/github-action@v3
+      # Tailscale のセットアップ（self-hosted runner 以外）
+      - if: env.RUNNER_ENVIRONMENT != 'self-hosted'
+        uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
@@ -84,8 +85,8 @@ jobs:
           timeout: 2m
           retry: 5
 
-      # Linux 向けの依存関係インストール（Ubuntu のみ）
-      - if: matrix.platform.type == 'ubuntu'
+      # Linux 向けの依存関係インストール（Ubuntu のみ、self-hosted runner 以外）
+      - if: matrix.platform.type == 'ubuntu' && env.RUNNER_ENVIRONMENT != 'self-hosted'
         run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev libdrm-dev libva-dev
@@ -120,6 +121,7 @@ jobs:
       # wheel ファイル名を取得
       - name: Find wheel file
         id: find-wheel
+        shell: bash
         run: |
           WHEEL_FILE=$(find dist -name "*.whl" | head -1)
           if [ -z "$WHEEL_FILE" ]; then
