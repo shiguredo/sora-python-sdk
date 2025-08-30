@@ -8,6 +8,9 @@ on:
     paths:
       - ".github/workflows/e2e-test-only.yml"
       - "tests/**"
+      # C++ SDK のアップデートしたときテストするため
+      - "VERSION"
+      - "DEPS"
   workflow_dispatch:
 
 env:

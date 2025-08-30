@@ -3,7 +3,7 @@ name: e2e-test-openh264
 on:
   workflow_dispatch:
   push:
-    paths-ignore:
+    paths:
       - "**.md"
       - ".github/workflows/e2e-test-openh264.yml"
       - "tests/test_openh264*.py"
