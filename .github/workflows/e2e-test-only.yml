@@ -37,22 +37,16 @@ jobs:
         platform:
           - name: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
-            type: ubuntu
           # - name: ubuntu-22.04_x86_64
           #   runs_on: ubuntu-22.04
-          #   type: ubuntu
           - name: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04-arm
-            type: ubuntu
           # - name: ubuntu-22.04_armv8
           #   runs_on: ubuntu-22.04-arm
-          #   type: ubuntu
           - name: macos_arm64
             runs_on: macos-15
-            type: macos
           - name: windows_x86_64
             runs_on: windows-2025
-            type: windows
           # Intel VPL (self-hosted runner)
           - name: intel-vpl_x86_64
             runs_on:
@@ -74,7 +68,7 @@ jobs:
       - uses: actions/checkout@v5
       
       # Tailscale のセットアップ（self-hosted runner 以外）
-      - if: ${{ env.RUNNER_ENVIRONMENT != 'self-hosted' }}
+      - if: ${{ runner.environment != 'self-hosted' }}
         uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
@@ -86,7 +80,7 @@ jobs:
           retry: 5
 
       # Linux 向けの依存関係インストール（Ubuntu のみ、self-hosted runner 以外）
-      - if: ${{ matrix.platform.type == 'ubuntu' && env.RUNNER_ENVIRONMENT != 'self-hosted' }}
+      - if: ${{ contains(matrix.platform.name, 'ubuntu') && runner.environment != 'self-hosted' }}
         run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev libdrm-dev libva-dev
@@ -162,18 +156,6 @@ jobs:
           uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v
         env:
           UV_NO_SYNC: 1
-
-      # エラー時の詳細情報
-      - if: failure()
-        name: Show debug information
-        run: |
-          echo "=== Python version ==="
-          uv run python --version
-          echo "=== Installed packages ==="
-          uv pip list
-          echo "=== Wheel files in dist/ ==="
-          if [ -d "dist" ]; then ls -la dist/; else echo "dist/ directory not found"; fi
-        shell: bash
 
   slack_notify_failed:
     needs: [e2e_test]
