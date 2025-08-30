@@ -48,6 +48,7 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
+          cache: true
           version: latest
 
       # Linux 向けの依存関係インストール
@@ -127,6 +128,7 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
+          cache: true
           hostname: gha-${{ github.run_id }}
           version: latest
           timeout: 2m
