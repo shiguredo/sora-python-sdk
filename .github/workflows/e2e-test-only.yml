@@ -181,19 +181,19 @@ jobs:
           uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
 
       # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
-      - name: Download OpenH264
-        if: ${{ runner.environment != 'self-hosted' }}
-        uses: ./.github/actions/download-openh264
-        id: download-openh264
-        with:
-          platform_name: ${{ matrix.platform.name }}
-          openh264_version: ${{ env.OPENH264_VERSION }}
+      # - name: Download OpenH264
+      #   if: ${{ runner.environment != 'self-hosted' }}
+      #   uses: ./.github/actions/download-openh264
+      #   id: download-openh264
+      #   with:
+      #     platform_name: ${{ matrix.platform.name }}
+      #     openh264_version: ${{ env.OPENH264_VERSION }}
 
       # OpenH264 パスを環境変数に設定
-      - name: Set OpenH264 path
-        if: ${{ runner.environment != 'self-hosted' && steps.download-openh264.outputs.openh264_path }}
-        run: echo "OPENH264_PATH=${{ steps.download-openh264.outputs.openh264_path }}" >> $GITHUB_ENV
-        shell: bash
+      # - name: Set OpenH264 path
+      #   if: ${{ runner.environment != 'self-hosted' && steps.download-openh264.outputs.openh264_path }}
+      #   run: echo "OPENH264_PATH=${{ steps.download-openh264.outputs.openh264_path }}" >> $GITHUB_ENV
+      #   shell: bash
 
       # プラットフォーム固有の環境変数を設定
       - name: Set platform-specific environment variables
