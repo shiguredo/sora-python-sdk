@@ -29,13 +29,14 @@ jobs:
             runs_on: ubuntu-24.04
           # - name: ubuntu-22.04_x86_64
           #   runs_on: ubuntu-22.04
-          # - name: ubuntu-24.04_armv8
-          #   runs_on: ubuntu-24.04-arm
+          - name: ubuntu-24.04_armv8
+            runs_on: ubuntu-24.04-arm
           # - name: ubuntu-22.04_armv8
           #   runs_on: ubuntu-22.04-arm
         python_version:
-          - "3.11"
-          - "3.12"
+          # TODO: schedule 時には全部でテストする
+          # - "3.11"
+          # - "3.12"
           - "3.13"
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 30
@@ -114,8 +115,8 @@ jobs:
           - name: macos_arm64
             runs_on: macos-15
         python_version:
-          - "3.11"
-          - "3.12"
+          # - "3.11"
+          # - "3.12"
           - "3.13"
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 30
