@@ -138,7 +138,9 @@ jobs:
           # この同期により、uv pip install でインストールした wheel が削除され、
           # 元のソースコードの sora-sdk がインストールされてしまう
           # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
-          UV_NO_SYNC=1 uv run pytest tests/ -v
+          uv run pytest tests/ -v
+        env:
+          UV_NO_SYNC: 1
 
       # エラー時の詳細情報
       - if: failure()
@@ -149,7 +151,8 @@ jobs:
           echo "=== Installed packages ==="
           uv pip list
           echo "=== Wheel files in dist/ ==="
-          ls -la dist/ || echo "dist/ directory not found"
+          if [ -d "dist" ]; then ls -la dist/; else echo "dist/ directory not found"; fi
+        shell: bash
 
   slack_notify_failed:
     needs: [e2e_test]
