@@ -27,12 +27,12 @@ jobs:
         platform:
           - name: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
-          - name: ubuntu-22.04_x86_64
-            runs_on: ubuntu-22.04
-          - name: ubuntu-24.04_armv8
-            runs_on: ubuntu-24.04-arm
-          - name: ubuntu-22.04_armv8
-            runs_on: ubuntu-22.04-arm
+          # - name: ubuntu-22.04_x86_64
+          #   runs_on: ubuntu-22.04
+          # - name: ubuntu-24.04_armv8
+          #   runs_on: ubuntu-24.04-arm
+          # - name: ubuntu-22.04_armv8
+          #   runs_on: ubuntu-22.04-arm
         python_version:
           - "3.11"
           - "3.12"
