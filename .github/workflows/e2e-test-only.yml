@@ -104,7 +104,7 @@ jobs:
       - uses: actions/checkout@v5
       
       # Tailscale のセットアップ（self-hosted runner 以外）
-      - if: ${{ matrix.platform.runs_on.group != 'Self' }}
+      - if: ${{ runner.environment != 'self-hosted' }}
         uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
@@ -117,19 +117,19 @@ jobs:
           retry: 5
 
       # Linux 向けの依存関係インストール（Ubuntu のみ、self-hosted runner 以外）
-      - if: ${{ contains(matrix.platform.name, 'ubuntu') && matrix.platform.runs_on.group != 'Self' }}
+      - if: ${{ contains(matrix.platform.name, 'ubuntu') && runner.environment != 'self-hosted' }}
         run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev libdrm-dev libva-dev
 
       # macOS self-hosted runner: Homebrew セットアップ
       - name: Setup Homebrew
-        if: ${{ matrix.platform.runs_on.group == 'Self' && contains(matrix.platform.runs_on.labels, 'macOS') }}
+        if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
         uses: Homebrew/actions/setup-homebrew@master
       
       # macOS self-hosted runner: GitHub CLI インストール
       - name: Install GitHub CLI
-        if: ${{ matrix.platform.runs_on.group == 'Self' && contains(matrix.platform.runs_on.labels, 'macOS') }}
+        if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
         run: brew install gh
 
       # UV のセットアップ
@@ -183,7 +183,7 @@ jobs:
 
       # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
       - name: Download OpenH264
-        if: ${{ matrix.platform.runs_on.group != 'Self' }}
+        if: ${{ runner.environment != 'self-hosted' }}
         uses: ./.github/actions/download-openh264
         id: download-openh264
         with:
@@ -192,7 +192,7 @@ jobs:
 
       # OpenH264 パスを環境変数に設定
       - name: Set OpenH264 path
-        if: ${{ matrix.platform.runs_on.group != 'Self' && steps.download-openh264.outputs.openh264_path }}
+        if: ${{ runner.environment != 'self-hosted' && steps.download-openh264.outputs.openh264_path }}
         run: echo "OPENH264_PATH=${{ steps.download-openh264.outputs.openh264_path }}" >> $GITHUB_ENV
         shell: bash
 
@@ -211,7 +211,7 @@ jobs:
       - name: Set pytest extra arguments
         id: pytest-args
         run: |
-          if [ "${{ matrix.platform.runs_on.group }}" == "Self" ]; then
+          if [ "${{ runner.environment }}" == "self-hosted" ]; then
             # self-hosted runner では並列実行を無効化
             echo "pytest_extra_args=" >> $GITHUB_OUTPUT
           else
