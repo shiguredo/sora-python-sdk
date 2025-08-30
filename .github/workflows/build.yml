@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
