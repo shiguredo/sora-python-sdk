@@ -391,6 +391,10 @@ jobs:
     if: contains(github.ref, 'tags/202')
     # needs:
     #   - e2e_test
+    needs:
+      - build_ubuntu
+      - build_macos
+      - build_windows
     strategy:
       fail-fast: false
       matrix:
@@ -446,6 +450,10 @@ jobs:
     if: contains(github.ref, 'tags/202')
     # needs:
     #   - e2e_test
+    needs:
+      - build_ubuntu
+      - build_macos
+      - build_windows
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
