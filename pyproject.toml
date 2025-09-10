@@ -36,6 +36,7 @@ dev-dependencies = [
     "pyjwt",
     "ruff",
     "ty",
+    "blend2d-py",
 ]
 
 [tool.ruff]

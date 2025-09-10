@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 
 [[package]]
@@ -14,6 +14,31 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f1/b4/636b3b65173d3ce9a38ef5f0522789614e590dab6a8d505340a4efe4c567/anyio-4.10.0.tar.gz", hash = "sha256:3f3fae35c96039744587aa5b8371e7e8e603c0702999535961dd336026973ba6", size = 213252, upload-time = "2025-08-04T08:54:26.451Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/12/e5e0282d673bb9746bacfb6e2dba8719989d3660cdb2ea79aee9a9651afb/anyio-4.10.0-py3-none-any.whl", hash = "sha256:60e474ac86736bbfd6f210f7a61218939c318f43f9972497381f1c5e930ed3d1", size = 107213, upload-time = "2025-08-04T08:54:24.882Z" },
+]
+
+[[package]]
+name = "blend2d-py"
+version = "2025.1.0.dev8"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/30/795fb701468799229d640fed720e4775c77136b03ee1cee713cee4dd6a17/blend2d_py-2025.1.0.dev8-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:688c437b367bb06ed77a070a589858460b6210c42bafdacb3839448594b9233a", size = 701638, upload-time = "2025-09-10T05:39:01.42Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/0d/200296be3fd406f60abbf1fb48a59e161458601f3cf6ecb40c5472be68f4/blend2d_py-2025.1.0.dev8-cp311-cp311-macosx_15_0_arm64.whl", hash = "sha256:bcaefa205a20de9c9652068d29f7cd408a75d17ccea623071bd085e3199d2218", size = 683386, upload-time = "2025-09-10T05:38:59.763Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/53/464e9099e8f99ca69eb38ce06bcae08f71fafa27363b3d633614a92da3be/blend2d_py-2025.1.0.dev8-cp311-cp311-manylinux_2_35_aarch64.whl", hash = "sha256:fdb61d6b9f16abea0c654a5bd63935124b5fd149c59c8b7f41807999a425fe23", size = 986136, upload-time = "2025-09-10T05:38:58.577Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/8b/f92bdf284350ba5fbaffea01f32f7594eb3f076051716d5955bbc3c17d03/blend2d_py-2025.1.0.dev8-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:fab0d9c8fd569ed428f63fe17102c1ccf783717e1d624f9ec78699f242727212", size = 1142273, upload-time = "2025-09-10T05:39:00.701Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/cc/7da7b5d8460ade4126dd6e06a62b8e2f3eec3c34abaf80751265c65623c8/blend2d_py-2025.1.0.dev8-cp311-cp311-manylinux_2_39_aarch64.whl", hash = "sha256:7ff381f54b92e439cd8192e2a296b1f31b762076fd7f5f3672422489077bb7fc", size = 1010711, upload-time = "2025-09-10T05:42:07.71Z" },
+    { url = "https://files.pythonhosted.org/packages/59/9a/cbdb005ada4f0b811cd9093b0aad64ea007a3feec23313dbeb375bd87c50/blend2d_py-2025.1.0.dev8-cp311-cp311-manylinux_2_39_x86_64.whl", hash = "sha256:daca8e5dd8cffe60fd6d617d3dac9b9176bacef0335856bbbffe35810a9cf8f6", size = 1217329, upload-time = "2025-09-10T05:38:58.687Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/76/339a98e0bbed9397ee2e38d862608faf2a5ed69fcef98675841e0a9ba451/blend2d_py-2025.1.0.dev8-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:93288518720f443930c2551930a8b9c9c55469d999306eaeafd219ebad6268d5", size = 701106, upload-time = "2025-09-10T05:38:58.638Z" },
+    { url = "https://files.pythonhosted.org/packages/72/d2/55d5857f9e8fc665431d1a888e42d64418d6777ae3e26fb6844f3c644dcc/blend2d_py-2025.1.0.dev8-cp312-cp312-macosx_15_0_arm64.whl", hash = "sha256:13ac1c0fb216ce719d09b72430c4702d632b928566b383b6790a5d7ea3d5b6ab", size = 682809, upload-time = "2025-09-10T05:38:58.736Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/39/0391014a537d44533e77e6e1f38fb9aac0362b20fa3d9d9f0b6c972d92fb/blend2d_py-2025.1.0.dev8-cp312-cp312-manylinux_2_35_aarch64.whl", hash = "sha256:b8947256fc15652138ab3cfb232dfb083fed095afcebc42d050a6cac00f6b6b9", size = 985699, upload-time = "2025-09-10T05:39:00.097Z" },
+    { url = "https://files.pythonhosted.org/packages/64/70/3fc5d463eec102d65c7711e1fc32f6802ad3d3d12c0cee14c83b3262e855/blend2d_py-2025.1.0.dev8-cp312-cp312-manylinux_2_35_x86_64.whl", hash = "sha256:fa1e63289a273421e490201114875f5757b941a40cd0bcf0296134dfbef9988b", size = 1141868, upload-time = "2025-09-10T05:42:10.061Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/dc/3b707ca50c0871870f75d6c8fbc6855f6d91dbe24fd77c6e3299a65e6760/blend2d_py-2025.1.0.dev8-cp312-cp312-manylinux_2_39_aarch64.whl", hash = "sha256:e464b6b7e2783c9d4925b5b4e3c259c3a7a0495f02c84e77587da0929840e6d3", size = 1009869, upload-time = "2025-09-10T05:39:01.174Z" },
+    { url = "https://files.pythonhosted.org/packages/76/43/398657c93cc110466ff74e0c869f129708a12b6d6a72f7f1a23c20a4e5ce/blend2d_py-2025.1.0.dev8-cp312-cp312-manylinux_2_39_x86_64.whl", hash = "sha256:3862724ebda2dcf2bd8d17fbb9ca5e6f24ba6d25a0d8b5bed144514179ffcb8c", size = 1216468, upload-time = "2025-09-10T05:38:59.544Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/d5/d200b8c2cdb65fed5da66713795481277e9c92fbe0ec70e9023215a02c36/blend2d_py-2025.1.0.dev8-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:f0f9a29d9edf413d090aaa620df1eb95a10c96cf9d950395acc7b791f47dcc17", size = 700963, upload-time = "2025-09-10T05:39:00.386Z" },
+    { url = "https://files.pythonhosted.org/packages/65/9d/dcc1c7533f5ca1a4074fd9f72d6defd94b0941f243ebfdf2627da1450717/blend2d_py-2025.1.0.dev8-cp313-cp313-macosx_15_0_arm64.whl", hash = "sha256:0b88eebfba4dcab5a665c53b16dc6fc9fd851822955a52ea877f8f3262a855bb", size = 682784, upload-time = "2025-09-10T05:38:58.585Z" },
+    { url = "https://files.pythonhosted.org/packages/38/00/1c0a5af613b57fa2b59aef4c3ef7b75c93ffba04c41e32ed5e1859d69839/blend2d_py-2025.1.0.dev8-cp313-cp313-manylinux_2_35_aarch64.whl", hash = "sha256:26f458d2a648941edbc451e41f65ae03168bf4268c005fc7be6c0edaba2a8789", size = 985316, upload-time = "2025-09-10T05:38:59.425Z" },
+    { url = "https://files.pythonhosted.org/packages/25/2b/5faf2813e21f4f1c764819a8772f8e92a62ae03239fc71f092480ae29d15/blend2d_py-2025.1.0.dev8-cp313-cp313-manylinux_2_35_x86_64.whl", hash = "sha256:84d991440194bcb4f364df244424921d782c4b94c6c266460582132aac4f9983", size = 1141863, upload-time = "2025-09-10T05:42:06.371Z" },
+    { url = "https://files.pythonhosted.org/packages/48/4f/fcc0d12d0e3f285fc37bb9bed729e37e6eb1c7cf137f63a12e2a09cb272c/blend2d_py-2025.1.0.dev8-cp313-cp313-manylinux_2_39_aarch64.whl", hash = "sha256:c76b5dd349bd2b0d44634785a44dba8eb9490fa04764a96b64c2ab994e15be81", size = 1009953, upload-time = "2025-09-10T05:38:56.974Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/6f/002c4d1ed18da332f01eef4ed6b0f015ad95df0fc177341e224fbb544d8f/blend2d_py-2025.1.0.dev8-cp313-cp313-manylinux_2_39_x86_64.whl", hash = "sha256:3b84136d550f73a95e49570b758854ac384f7f109dd4d0998db68061439cec09", size = 1216469, upload-time = "2025-09-10T05:38:59.988Z" },
 ]
 
 [[package]]
@@ -315,6 +340,7 @@ source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "blend2d-py" },
     { name = "httpx" },
     { name = "nanobind" },
     { name = "numpy" },
@@ -331,6 +357,7 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "blend2d-py" },
     { name = "httpx" },
     { name = "nanobind", specifier = "==2.8.0" },
     { name = "numpy" },
