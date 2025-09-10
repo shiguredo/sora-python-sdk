@@ -35,6 +35,8 @@
 
 ### misc
 
+- [CHANGE] PyPI への publish を OIDC に切り替える
+  - @voluntas
 - [CHANGE] build から e2e-test-only を workflow_call で呼び出すようにする
   - @voluntas
 - [CHANGE] e2e-test を e2e-test-only.yml に統一する
