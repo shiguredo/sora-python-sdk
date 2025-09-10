@@ -602,6 +602,6 @@ def test_intel_vpl_av1_rtp_hdr_ext(settings):
     sendonly.disconnect()
 
     # AV1 の RTP ヘッダー拡張が送られてきていることを確認
-    assert (
-        stats["rtp_hdrext"]["total_received_rtp_hdrext_av1_rtp_sepc"] > 0
-    ), "Dependency Descriptor RTP Header Extension が Python SDK から送られてきていません"
+    assert stats["rtp_hdrext"]["total_received_rtp_hdrext_av1_rtp_sepc"] > 0, (
+        "Dependency Descriptor RTP Header Extension が Python SDK から送られてきていません"
+    )
