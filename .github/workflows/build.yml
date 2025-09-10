@@ -373,7 +373,8 @@ jobs:
   #   secrets: inherit
 
   slack_notify_failed:
-    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
+    # needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
+    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
@@ -388,8 +389,8 @@ jobs:
 
   publish_wheel:
     if: contains(github.ref, 'tags/202')
-    needs:
-      - e2e_test
+    # needs:
+    #   - e2e_test
     strategy:
       fail-fast: false
       matrix:
@@ -443,8 +444,8 @@ jobs:
 
   create-release:
     if: contains(github.ref, 'tags/202')
-    needs:
-      - e2e_test
+    # needs:
+    #   - e2e_test
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
