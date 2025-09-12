@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2025.4.0
+
+**リリース日**: 2025-09-12
+
 - [CHANGE] run.py をサブコマンド形式に変更する
   - 従来: `python run.py <target>`
   - 新形式: `python run.py build <target>`
