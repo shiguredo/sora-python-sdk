@@ -26,7 +26,7 @@ build-backend = "setuptools.build_meta"
 [tool.uv]
 python-preference = "only-managed"
 dev-dependencies = [
-    "nanobind==2.8.0",
+    "nanobind==2.9.2",
     "setuptools==80.9.0",
     "pytest",
     "pytest-repeat",
