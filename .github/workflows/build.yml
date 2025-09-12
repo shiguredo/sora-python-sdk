@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 env:
   TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
@@ -26,6 +27,23 @@ env:
   OPENH264_VERSION: 2.6.0
 
 jobs:
+  # VERSION ファイルからバージョン情報を取得
+  get_sdk_version:
+    runs-on: ubuntu-latest
+    outputs:
+      sdk_version: ${{ steps.version.outputs.sdk_version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            VERSION
+          sparse-checkout-cone-mode: false
+      - id: version
+        run: |
+          SDK_VERSION=$(cat VERSION)
+          echo "sdk_version=$SDK_VERSION" >> $GITHUB_OUTPUT
+          echo "SDK Version: $SDK_VERSION"
+
   # まず pyi を生成する
   # クロスコンパイル環境だと pyi が生成できないので、
   # １箇所で pyi を生成してアーティファクトにアップロードして、
@@ -41,7 +59,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           sudo apt-get -y install libx11-dev
       - uses: astral-sh/setup-uv@v6
@@ -51,7 +69,7 @@ jobs:
       - run: uv sync
       - name: Generate pyi
         run: |
-          uv run python run.py ubuntu-24.04_x86_64
+          uv run python run.py build ubuntu-24.04_x86_64
           mkdir sora_sdk/
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
@@ -94,8 +112,8 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -120,14 +138,14 @@ jobs:
 
       - if: ${{ matrix.platform.arch == 'x86_64' }}
         run: |
-          uv run python run.py ${{ matrix.platform.target }}
-          uv run python -m build
+          uv run python run.py build ${{ matrix.platform.target }}
+          uv build
 
       # Ubuntu armv8 向け
       - if: ${{ matrix.platform.arch == 'armv8' }}
         run: |
-          uv run python run.py ${{ matrix.platform.target }}
-          uv run python -m build
+          uv run python run.py build ${{ matrix.platform.target }}
+          uv build
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
@@ -168,31 +186,24 @@ jobs:
             pkg: "312"
           - python: "3.13"
             pkg: "313"
-    needs: [build_ubuntu]
+    needs: [get_sdk_version, build_ubuntu]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
-      - run: |
-          uv python pin ${{ matrix.version.python }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ matrix.platform.download_name }}_python-${{ matrix.version.python }}
           path: dist/
 
-      # VERSION ファイルからバージョンを取得
-      - id: get_version
-        run: |
-          VERSION=$(cat VERSION)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       # ここで download した whl ファイルの動作を確認する
       - run: |
-          uv run --with dist/sora_sdk-${{ steps.get_version.outputs.version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl \
-          python3 -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
+          # 仮想環境を作成してテスト
+          uv venv --python ${{ matrix.version.python }}
+          uv pip install dist/sora_sdk-${{ needs.get_sdk_version.outputs.sdk_version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
+          uv run python -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
 
   build_ubuntu_arm:
     strategy:
@@ -219,8 +230,8 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -247,8 +258,8 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py ${{ matrix.platform.target }}
-          uv run python -m build
+          uv run python run.py build ${{ matrix.platform.target }}
+          uv build
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
@@ -277,8 +288,8 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -291,8 +302,8 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py ${{ matrix.platform.target }}
-          uv run python -m build
+          uv run python run.py build ${{ matrix.platform.target }}
+          uv build
         env:
           _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
           ARCHFLAGS: ${{ matrix.platform.archflags }}
@@ -315,8 +326,8 @@ jobs:
           - "3.12"
           - "3.13"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -330,8 +341,8 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py windows_x86_64
-          uv run python -m build
+          uv run python run.py build windows_x86_64
+          uv build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -353,8 +364,17 @@ jobs:
   #        SLACK_ICON_EMOJI: ":star-struck:"
   #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
+  # E2E テストの実行
+  # e2e_test:
+  #   needs: [build_ubuntu, build_macos, build_windows]
+  #   uses: ./.github/workflows/e2e-test-only.yml
+  #   with:
+  #     from_build: true
+  #   secrets: inherit
+
   slack_notify_failed:
-    needs: [build_ubuntu, build_ubuntu_arm, build_macos,build_windows]
+    # needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
+    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
@@ -369,6 +389,8 @@ jobs:
 
   publish_wheel:
     if: contains(github.ref, 'tags/202')
+    # needs:
+    #   - e2e_test
     needs:
       - build_ubuntu
       - build_macos
@@ -387,9 +409,12 @@ jobs:
           - "3.12"
           - "3.13"
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 15
+    environment: pypi
+    permissions:
+      id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist
@@ -405,15 +430,12 @@ jobs:
       # - name: Publish package to TestPyPI
       #   uses: pypa/gh-action-pypi-publish@release/v1
       #   with:
-      #     password: ${{ secrets.TEST_PYPI_API_TOKEN }}
       #     repository-url: https://test.pypi.org/legacy/
       #     verbose: true
 
       # 本番用
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Slack Notification
         if: failure()
@@ -426,6 +448,8 @@ jobs:
 
   create-release:
     if: contains(github.ref, 'tags/202')
+    # needs:
+    #   - e2e_test
     needs:
       - build_ubuntu
       - build_macos
@@ -433,7 +457,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download

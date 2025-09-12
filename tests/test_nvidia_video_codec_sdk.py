@@ -2,6 +2,7 @@ import os
 import time
 
 import pytest
+from api import request_key_frame_api
 from client import (
     SoraClient,
     SoraRole,
@@ -16,10 +17,11 @@ from sora_sdk import (
     SoraVideoCodecType,
 )
 
-
-@pytest.mark.skipif(
+pytestmark = pytest.mark.skipif(
     os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
 )
+
+
 def test_nvidia_video_codec_sdk_available():
     capability = get_video_codec_capability()
 
@@ -56,9 +58,67 @@ def test_nvidia_video_codec_sdk_available():
                         pytest.fail(f"未実装の codec_type: {c.type}")
 
 
-@pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
+@pytest.mark.parametrize(
+    "video_codec_type",
+    [
+        "AV1",
+        "H264",
+        "H265",
+    ],
 )
+def test_intel_vpl_key_frame_request(settings, video_codec_type):
+    sendonly = SoraClient(
+        settings,
+        SoraRole.SENDONLY,
+        audio=False,
+        video=True,
+        video_codec_type=video_codec_type,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type(video_codec_type),
+                    encoder=SoraVideoCodecImplementation.NVIDIA_VIDEO_CODEC_SDK,
+                ),
+            ]
+        ),
+    )
+    sendonly.connect(fake_video=True)
+
+    time.sleep(3)
+
+    assert sendonly.connection_id is not None
+
+    # キーフレーム要求 API を 3 秒間隔で 3 回呼び出す
+    api_count = 3
+    for _ in range(api_count):
+        response = request_key_frame_api(
+            settings.api_url, sendonly.channel_id, sendonly.connection_id
+        )
+        assert response.status_code == 200
+        time.sleep(3)
+
+    # 統計を取得する
+    sendonly_stats = sendonly.get_stats()
+
+    sendonly.disconnect()
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+
+    # 3 回以上
+    assert outbound_rtp_stats["keyFramesEncoded"] > api_count
+    assert outbound_rtp_stats["pliCount"] >= api_count
+    print("keyFramesEncoded:", outbound_rtp_stats["keyFramesEncoded"])
+    print("pliCount:", outbound_rtp_stats["pliCount"])
+
+    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
+    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
+    print(
+        "keyFramesEncoded >= pliCount * 0.7:",
+        outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7,
+    )
+
+
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -148,9 +208,6 @@ def test_nvidia_codec_sdk_sendonly_recvonly(settings, video_codec_type, expected
     assert inbound_rtp_stats["packetsReceived"] > 0
 
 
-@pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
-)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -302,9 +359,6 @@ def test_nvidia_video_codec_sdk_simulcast(
 
 # VP8 / VP9 は HWA Decoder のみ搭載している
 # https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new
-@pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
-)
 @pytest.mark.parametrize(
     ("video_codec_type", "expected_implementation"),
     [

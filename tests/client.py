@@ -262,6 +262,10 @@ class SoraClient:
         return self._role
 
     @property
+    def channel_id(self) -> str:
+        return self._channel_id
+
+    @property
     def metadata(self) -> dict[str, Any] | None:
         return self._metadata
 

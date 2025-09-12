@@ -14,11 +14,12 @@ from sora_sdk import (
     get_video_codec_capability,
 )
 
-
-@pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
+pytestmark = pytest.mark.skipif(
+    os.environ.get("OPENH264_PATH") is None,
     reason="OpenH264 のときだけ実行する",
 )
+
+
 def test_capability(settings):
     capability = get_video_codec_capability(openh264=settings.openh264_path)
     has_internal = False
@@ -31,10 +32,6 @@ def test_capability(settings):
     assert has_internal and has_openh264
 
 
-@pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
-    reason="OpenH264 のときだけ実行する",
-)
 def test_preference(settings):
     capability = get_video_codec_capability(openh264=settings.openh264_path)
     preference = create_video_codec_preference_from_implementation(
@@ -43,10 +40,6 @@ def test_preference(settings):
     assert preference.has_implementation(SoraVideoCodecImplementation.CISCO_OPENH264)
 
 
-@pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
-    reason="OpenH264 のときだけ実行する",
-)
 def test_openh264_get_codec_capability(settings):
     capability = get_video_codec_capability(openh264=settings.openh264_path)
 
@@ -87,10 +80,6 @@ def test_openh264_get_codec_capability(settings):
     )
 
 
-@pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
-    reason="OpenH264 のときだけ実行する",
-)
 def test_openh264_video_codec_preference(settings):
     Sora(
         video_codec_preference=SoraVideoCodecPreference(
@@ -122,10 +111,6 @@ def test_openh264_video_codec_preference(settings):
     )
 
 
-@pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
-    reason="OpenH264 のときだけ実行する",
-)
 def test_openh264_sendonly_recvonly(settings):
     sendonly = SoraClient(
         settings,

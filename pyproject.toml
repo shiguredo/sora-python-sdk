@@ -26,24 +26,24 @@ build-backend = "setuptools.build_meta"
 [tool.uv]
 python-preference = "only-managed"
 dev-dependencies = [
-    "nanobind==2.7.0",
-    "setuptools==80.9",
-    "build==1.2.2.post1",
-    "wheel==0.45.1",
+    "nanobind==2.9.2",
+    "setuptools==80.9.0",
+    "pytest",
+    "pytest-repeat",
+    "pytest-xdist",
     "numpy",
     "httpx",
-    "pytest",
-    "ruff",
     "pyjwt",
-    "pytest-repeat",
+    "ruff",
     "ty",
-    "pydantic-settings",
 ]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
 
+[tool.ty.src]
+include = ["src", "tests"]
 
 [tool.pytest.ini_options]
 xfail_strict = true

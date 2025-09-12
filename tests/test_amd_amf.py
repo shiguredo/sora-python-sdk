@@ -2,6 +2,7 @@ import os
 import time
 
 import pytest
+from api import request_key_frame_api
 from client import (
     SoraClient,
     SoraRole,
@@ -17,8 +18,9 @@ from sora_sdk import (
     get_video_codec_capability,
 )
 
+pytestmark = pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
+
 def test_amd_amf_available(settings):
     capability = get_video_codec_capability()
 
@@ -56,12 +58,72 @@ def test_amd_amf_available(settings):
                         pytest.fail(f"未実装の codec_type: {c.type}")
 
 
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 @pytest.mark.parametrize(
     "video_codec_type",
     [
-        # AV1 は decoder が正常に動作しない
-        # "AV1",
+        "AV1",
+        "H264",
+        "H265",
+    ],
+)
+def test_amd_amf_key_frame_request(settings, video_codec_type):
+    sendonly = SoraClient(
+        settings,
+        SoraRole.SENDONLY,
+        audio=False,
+        video=True,
+        video_codec_type=video_codec_type,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type(video_codec_type),
+                    encoder=SoraVideoCodecImplementation.AMD_AMF,
+                ),
+            ]
+        ),
+    )
+    sendonly.connect(fake_video=True)
+
+    time.sleep(3)
+
+    assert sendonly.connection_id is not None
+
+    # キーフレーム要求 API を 3 秒間隔で 3 回呼び出す
+    api_count = 3
+    for _ in range(api_count):
+        response = request_key_frame_api(
+            settings.api_url, sendonly.channel_id, sendonly.connection_id
+        )
+        assert response.status_code == 200
+        time.sleep(3)
+
+    # 統計を取得する
+    sendonly_stats = sendonly.get_stats()
+
+    sendonly.disconnect()
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+
+    print("video_codec_type:", video_codec_type)
+    print("keyFramesEncoded:", outbound_rtp_stats["keyFramesEncoded"])
+    print("pliCount:", outbound_rtp_stats["pliCount"])
+    print(
+        "keyFramesEncoded >= pliCount * 0.7:",
+        outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7,
+    )
+
+    assert outbound_rtp_stats["keyFramesEncoded"] > api_count
+    assert outbound_rtp_stats["pliCount"] >= api_count
+
+    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
+    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.7
+
+
+@pytest.mark.parametrize(
+    "video_codec_type",
+    [
+        "AV1",
         "H264",
         "H265",
     ],
@@ -88,6 +150,8 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
         ),
     )
     sendonly.connect(fake_video=True)
+
+    time.sleep(5)
 
     recvonly = SoraClient(
         settings,
@@ -123,7 +187,6 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
-    # H.264/H.265 が採用されているかどうか確認する
     assert sendonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
@@ -131,10 +194,13 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
     assert outbound_rtp_stats["encoderImplementation"] == "AMF"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
+    assert outbound_rtp_stats["keyFramesEncoded"] > 0
+    assert outbound_rtp_stats["pliCount"] > 0
+    # PLI カウントの 50% 以上がキーフレームとしてエンコードされることを確認
+    assert outbound_rtp_stats["keyFramesEncoded"] >= outbound_rtp_stats["pliCount"] * 0.5
 
     # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(s for s in recvonly_stats if s.get("type") == "codec")
-    # H.264/H.265 が採用されているかどうか確認する
     assert recvonly_codec_stats["mimeType"] == f"video/{video_codec_type}"
 
     # inbound-rtp が無かったら StopIteration 例外が上がる
@@ -142,9 +208,9 @@ def test_amd_amf_sendonly_recvonly(settings, video_codec_type):
     assert inbound_rtp_stats["decoderImplementation"] == "AMF"
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
+    assert inbound_rtp_stats["keyFramesDecoded"] > 0
 
 
-@pytest.mark.skipif(os.environ.get("AMD_AMF") is None, reason="AMD AMF でのみ実行する")
 @pytest.mark.parametrize(
     (
         "video_codec_type",

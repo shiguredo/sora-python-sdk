@@ -11,9 +11,46 @@
 
 ## develop
 
-### 2025.3.0
+## 2025.4.0
 
-**リリース日**: 2025-07-10
+**リリース日**: 2025-09-12
+
+- [CHANGE] run.py をサブコマンド形式に変更する
+  - 従来: `python run.py <target>`
+  - 新形式: `python run.py build <target>`
+  - @voluntas
+- [ADD] run.py に format サブコマンドを追加する
+  - C++ ファイルの clang-format によるフォーマット機能
+  - Python ファイルの ty によるタイプチェック機能
+  - @voluntas
+- [UPDATE] .github/workflows 内のすべてのワークフローファイルを新しい run.py build 形式に更新する
+  - @voluntas
+- [UPDATE] nanobind を `2.9.2` に上げる
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2025.5.0` に上げる
+  - WEBRTC_BUILD_VERSION を `m139.7258.3.0` に上げる
+  - CMAKE_VERSION を `4.1.0` に上げる
+  - BOOST_VERSION を `1.89.0` に上げる
+  - @melpon @voluntas
+- [FIX] GitHub Actions の check_ubuntu_wheel ジョブで uv 0.8 以降の externally managed Python 環境エラーを修正する
+  - `uv run --with` から `uv pip install` を使用する方式に変更
+  - checkouts せずに仮想環境を作成して wheel ファイルをテストするように変更
+  - @voluntas
+
+### misc
+
+- [CHANGE] PyPI への publish を OIDC に切り替える
+  - @voluntas
+- [CHANGE] build から e2e-test-only を workflow_call で呼び出すようにする
+  - @voluntas
+- [CHANGE] e2e-test を e2e-test-only.yml に統一する
+  - @voluntas
+- [UPDATE] actions/checkout と actions/download-artifact を v5 に上げる
+  - @torikizi
+
+## 2025.3.0
+
+**リリース日**: 2025-07-09
 
 - [UPDATE] Sora C++ SDK のバージョンを `2025.4.0` に上げる
   - WEBRTC_BUILD_VERSION を `m138.7204.0.0` に上げる

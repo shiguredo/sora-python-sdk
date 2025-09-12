@@ -1,6 +1,7 @@
 #include "sora_connection.h"
 
 #include <chrono>
+#include <future>
 #include <stdexcept>
 
 // WebRTC
@@ -150,9 +151,8 @@ std::string SoraConnection::GetStats() {
   gil_scoped_release release;
   pc->GetStats(
       sora::RTCStatsCallback::Create(
-          [&](const webrtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
-            stats.set_value(report->ToJson());
-          })
+          [&](const webrtc::scoped_refptr<const webrtc::RTCStatsReport>&
+                  report) { stats.set_value(report->ToJson()); })
           .get());
   return future.get();
 }

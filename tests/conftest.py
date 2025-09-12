@@ -1,46 +1,74 @@
 import importlib.metadata
+import os
 import time
 import uuid
-from typing import Annotated
+from pathlib import Path
+from typing import Any
 
 import jwt
 import pytest
-from pydantic import Field, HttpUrl, SecretStr, computed_field, field_validator
-from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 # sora_sdk から SoraLoggingSeverity をインポート
 from sora_sdk import SoraLoggingSeverity
 
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_prefix=".env", env_file_encoding="utf-8")
+class Settings:
+    def __init__(self):
+        # .env ファイルから環境変数を読み込む
+        self._load_env_file(".env")
 
-    # TODO: list[WebsocketUrl] 型にする
-    signaling_urls: Annotated[list[str], NoDecode] = Field(default=[], alias="TEST_SIGNALING_URLS")
-    channel_id_prefix: str = Field(default="", alias="TEST_CHANNEL_ID_PREFIX")
-    secret: SecretStr | None = Field(default=None, alias="TEST_SECRET_KEY")
-    api_url: HttpUrl | None = Field(default=None, alias="TEST_API_URL")
-    # TODO: openh264_path は FilePath 型にする
-    openh264_path: str | None = Field(default=None, alias="OPENH264_PATH")
-    libwebrtc_log: SoraLoggingSeverity | None = Field(default=None, alias="TEST_LIBWEBRTC_LOG")
+        # 環境変数から設定を読み込む
+        # TEST_SIGNALING_URL (単数形) と TEST_SIGNALING_URLS (複数形) の両方をサポート
+        signaling_urls_env = os.getenv("TEST_SIGNALING_URLS", os.getenv("TEST_SIGNALING_URL", ""))
+        self.signaling_urls = self._parse_signaling_urls(signaling_urls_env)
+        self.channel_id_prefix = os.getenv("TEST_CHANNEL_ID_PREFIX", "")
+        self.secret = os.getenv("TEST_SECRET_KEY")
+        self.api_url = self._parse_api_url(os.getenv("TEST_API_URL"))
+        self.openh264_path = os.getenv("OPENH264_PATH")
+        self.libwebrtc_log = self._parse_libwebrtc_log(os.getenv("TEST_LIBWEBRTC_LOG"))
+        self.channel_id_suffix = str(uuid.uuid4())
 
-    channel_id_suffix: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    def _load_env_file(self, env_file: str) -> None:
+        """環境変数ファイルを読み込む"""
+        env_path = Path(env_file)
+        if not env_path.exists():
+            return
 
-    @field_validator("signaling_urls", mode="before")
-    @classmethod
-    def validate_signaling_urls(cls, v: str) -> list[str]:
-        """
-        TEST_SIGNALING_URLS が , で区切られている場合、それぞれの URL をリストに変換する
-        """
-        return [x.strip() for x in v.split(",")]
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
 
-    @field_validator("libwebrtc_log", mode="before")
-    @classmethod
-    def validate_libwebrtc_log(cls, v: str | None) -> SoraLoggingSeverity | None:
-        if v is None:
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    key = key.strip()
+                    value = value.strip().strip('"').strip("'")
+                    # 環境変数が既に設定されていない場合のみ設定
+                    if key not in os.environ:
+                        os.environ[key] = value
+
+    def _parse_signaling_urls(self, value: str) -> list[str]:
+        """TEST_SIGNALING_URLS が , で区切られている場合、それぞれの URL をリストに変換する"""
+        if not value:
+            return []
+        return [x.strip() for x in value.split(",") if x.strip()]
+
+    def _parse_api_url(self, value: str | None) -> str | None:
+        """API URLのバリデーション"""
+        if not value:
+            return None
+        # 簡易的なHTTP/HTTPS URLチェック
+        if not (value.startswith("http://") or value.startswith("https://")):
+            raise ValueError(f"Invalid API URL: {value}")
+        return value
+
+    def _parse_libwebrtc_log(self, value: str | None) -> SoraLoggingSeverity | None:
+        """libwebrtc_logの値をSoraLoggingSeverityに変換"""
+        if not value:
             return None
 
-        match v.lower():
+        match value.lower():
             case "verbose":
                 return SoraLoggingSeverity.VERBOSE
             case "info":
@@ -52,18 +80,15 @@ class Settings(BaseSettings):
             case "none":
                 return SoraLoggingSeverity.NONE
             case _:
-                # TODO: 道の値が設定されてたらエラーにした方がいい気がする
+                # TODO: 未知の値が設定されてたらエラーにした方がいい気がする
                 return None
 
-    @computed_field
     @property
     def channel_id(self) -> str:
-        """
-        TEST_CHANNEL_ID_PREFIX と TEST_CHANNEL_ID_SUFFIX を組み合わせて channel_id を生成する
-        """
+        """TEST_CHANNEL_ID_PREFIX と TEST_CHANNEL_ID_SUFFIX を組み合わせて channel_id を生成する"""
         return f"{self.channel_id_prefix}_{self.channel_id_suffix}"
 
-    def access_token(self, **kwargs) -> str | None:
+    def access_token(self, **kwargs: Any) -> str | None:
         if self.secret is None:
             return None
 
@@ -76,7 +101,7 @@ class Settings(BaseSettings):
 
         access_token = jwt.encode(
             payload,
-            self.secret.get_secret_value(),
+            self.secret,
             algorithm="HS256",
         )
 
@@ -85,6 +110,7 @@ class Settings(BaseSettings):
 
 def pytest_report_header(config):
     """pytest の実行時に特定のライブラリのバージョンを追加表示"""
+    # config パラメータは pytest から渡されるが、この関数では使用しない
     try:
         version = importlib.metadata.version("sora_sdk")
         return f"sora_sdk: {version}"
