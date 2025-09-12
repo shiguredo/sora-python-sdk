@@ -21,7 +21,7 @@
   - @voluntas
 - [UPDATE] .github/workflows 内のすべてのワークフローファイルを新しい run.py build 形式に更新する
   - @voluntas
-- [UPDATE] nanobind を `2.8.0` に上げる
+- [UPDATE] nanobind を `2.9.2` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.5.0-canary.6` に上げる
   - WEBRTC_BUILD_VERSION を `m139.7258.3.0` に上げる
