@@ -70,11 +70,12 @@ class SoraAudioSourceInterface
  */
 class SoraAudioSource : public SoraTrackInterface {
  public:
-  SoraAudioSource(DisposePublisher* publisher,
-                  webrtc::scoped_refptr<SoraAudioSourceInterface> source,
-                  webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
-                  size_t channels,
-                  int sample_rate);
+  SoraAudioSource(
+      DisposePublisher* publisher,
+      webrtc::scoped_refptr<SoraAudioSourceInterface> source,
+      webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+      size_t channels,
+      int sample_rate);
 
   /**
    * Sora に送る音声データを渡します。

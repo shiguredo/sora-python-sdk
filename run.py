@@ -1,4 +1,5 @@
 import argparse
+import glob
 import hashlib
 import importlib.metadata
 import multiprocessing
@@ -180,35 +181,48 @@ AVAILABLE_TARGETS = [
 ]
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--relwithdebinfo", action="store_true")
-    parser.add_argument("--local-webrtc-build-dir", type=os.path.abspath)
-    parser.add_argument("--local-webrtc-build-args", default="", type=shlex.split)
-    parser.add_argument("--local-sora-cpp-sdk-dir", type=os.path.abspath)
-    parser.add_argument("--local-sora-cpp-sdk-args", default="", type=shlex.split)
-    parser.add_argument("target", choices=AVAILABLE_TARGETS)
+def _find_clang_binary(name: str) -> Optional[str]:
+    if shutil.which(name) is not None:
+        return name
+    else:
+        for n in range(50, 14, -1):
+            if shutil.which(f"{name}-{n}") is not None:
+                return f"{name}-{n}"
+    return None
 
-    args = parser.parse_args()
-    if args.target == "windows_x86_64":
+
+def _get_platform(target: str) -> Platform:
+    if target == "windows_x86_64":
         platform = Platform("windows", get_windows_osver(), "x86_64")
-    elif args.target == "macos_x86_64":
+    elif target == "macos_x86_64":
         platform = Platform("macos", get_macos_osver(), "x86_64")
-    elif args.target == "macos_arm64":
+    elif target == "macos_arm64":
         platform = Platform("macos", get_macos_osver(), "arm64")
-    elif args.target == "ubuntu-22.04_x86_64":
+    elif target == "ubuntu-22.04_x86_64":
         platform = Platform("ubuntu", "22.04", "x86_64")
-    elif args.target == "ubuntu-24.04_x86_64":
+    elif target == "ubuntu-24.04_x86_64":
         platform = Platform("ubuntu", "24.04", "x86_64")
-    elif args.target == "ubuntu-22.04_armv8":
+    elif target == "ubuntu-22.04_armv8":
         platform = Platform("ubuntu", "22.04", "armv8")
-    elif args.target == "ubuntu-24.04_armv8":
+    elif target == "ubuntu-24.04_armv8":
         platform = Platform("ubuntu", "24.04", "armv8")
-    elif args.target == "ubuntu-22.04_armv8_jetson":
+    elif target == "ubuntu-22.04_armv8_jetson":
         platform = Platform("jetson", None, "armv8", "ubuntu-22.04")
     else:
-        raise Exception(f"Unknown target {args.target}")
+        raise Exception(f"Unknown target {target}")
+    return platform
+
+
+def _build(
+    target: str,
+    debug: bool,
+    relwithdebinfo: bool,
+    local_webrtc_build_dir: Optional[str],
+    local_webrtc_build_args: List[str],
+    local_sora_cpp_sdk_dir: Optional[str],
+    local_sora_cpp_sdk_args: List[str],
+):
+    platform = _get_platform(target)
 
     source_dir = os.path.join(BASE_DIR, "_source", platform.target.package_name)
     build_dir = os.path.join(BASE_DIR, "_build", platform.target.package_name)
@@ -223,27 +237,23 @@ def main():
             source_dir,
             build_dir,
             install_dir,
-            args.debug,
-            args.local_webrtc_build_dir,
-            args.local_webrtc_build_args,
-            args.local_sora_cpp_sdk_dir,
-            args.local_sora_cpp_sdk_args,
+            debug,
+            local_webrtc_build_dir,
+            local_webrtc_build_args,
+            local_sora_cpp_sdk_dir,
+            local_sora_cpp_sdk_args,
         )
 
         configuration = "Release"
-        if args.debug:
+        if debug:
             configuration = "Debug"
-        if args.relwithdebinfo:
+        if relwithdebinfo:
             configuration = "RelWithDebInfo"
 
         webrtc_platform = get_webrtc_platform(platform)
-        webrtc_info = get_webrtc_info(
-            webrtc_platform, args.local_webrtc_build_dir, install_dir, args.debug
-        )
+        webrtc_info = get_webrtc_info(webrtc_platform, local_webrtc_build_dir, install_dir, debug)
 
-        sora_info = get_sora_info(
-            webrtc_platform, args.local_sora_cpp_sdk_dir, install_dir, args.debug
-        )
+        sora_info = get_sora_info(webrtc_platform, local_sora_cpp_sdk_dir, install_dir, debug)
 
         cmake_args = []
         cmake_args.append(f"-DCMAKE_BUILD_TYPE={configuration}")
@@ -371,6 +381,81 @@ def main():
                 shutil.copyfile(
                     os.path.join(sora_build_target_dir, file), os.path.join(sora_src_dir, file)
                 )
+
+
+def _format(
+    clang_format_path: Optional[str] = None,
+    skip_clang_format: bool = False,
+    skip_ruff: bool = False,
+):
+    # C++ ファイルのフォーマット
+    if not skip_clang_format:
+        if clang_format_path is None:
+            clang_format_path = _find_clang_binary("clang-format")
+        if clang_format_path is None:
+            print("Warning: clang-format not found. Skipping C++ formatting.")
+        else:
+            patterns = [
+                "src/**/*.h",
+                "src/**/*.cpp",
+            ]
+            target_files = []
+            for pattern in patterns:
+                files = glob.glob(pattern, recursive=True)
+                target_files.extend(files)
+            if target_files:
+                print(f"Formatting {len(target_files)} C++ files...")
+                cmd([clang_format_path, "-i"] + target_files)
+
+    # Python ファイルのフォーマット
+    if not skip_ruff:
+        print("Running Python formatting with ruff...")
+        try:
+            cmd(["uv", "run", "ruff", "format"])
+        except Exception as e:
+            print(f"Formatting failed: {e}")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    sp = parser.add_subparsers(dest="command", required=True)
+
+    # build サブコマンド
+    bp = sp.add_parser("build")
+    bp.add_argument("target", choices=AVAILABLE_TARGETS)
+    bp.add_argument("--debug", action="store_true")
+    bp.add_argument("--relwithdebinfo", action="store_true")
+    bp.add_argument("--local-webrtc-build-dir", type=os.path.abspath)
+    bp.add_argument("--local-webrtc-build-args", default="", type=shlex.split)
+    bp.add_argument("--local-sora-cpp-sdk-dir", type=os.path.abspath)
+    bp.add_argument("--local-sora-cpp-sdk-args", default="", type=shlex.split)
+
+    # format サブコマンド
+    fp = sp.add_parser("format")
+    fp.add_argument("--clang-format-path", type=str, default=None)
+    fp.add_argument(
+        "--skip-clang-format", action="store_true", help="Skip C++ formatting with clang-format"
+    )
+    fp.add_argument("--skip-ruff", action="store_true", help="Skip Python formatting with ruff")
+
+    args = parser.parse_args()
+
+    if args.command == "build":
+        _build(
+            target=args.target,
+            debug=args.debug,
+            relwithdebinfo=args.relwithdebinfo,
+            local_webrtc_build_dir=args.local_webrtc_build_dir,
+            local_webrtc_build_args=args.local_webrtc_build_args,
+            local_sora_cpp_sdk_dir=args.local_sora_cpp_sdk_dir,
+            local_sora_cpp_sdk_args=args.local_sora_cpp_sdk_args,
+        )
+    elif args.command == "format":
+        _format(
+            clang_format_path=args.clang_format_path,
+            skip_clang_format=args.skip_clang_format,
+            skip_ruff=args.skip_ruff,
+        )
 
 
 if __name__ == "__main__":

@@ -65,7 +65,8 @@ class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
   // webrtc::TransformedFrameCallback を渡してくる関数が Audio と Video で異なる
   // Audio はこっち
   void RegisterTransformedFrameCallback(
-      webrtc::scoped_refptr<webrtc::TransformedFrameCallback> callback) override {
+      webrtc::scoped_refptr<webrtc::TransformedFrameCallback> callback)
+      override {
     default_callback_ = callback;
   }
   // Video はこっち
@@ -133,7 +134,8 @@ class SoraTransformableFrame {
   void SetData(
       nb::ndarray<const uint8_t, nb::shape<-1>, nb::c_contig, nb::device::cpu>
           data) {
-    frame_->SetData(webrtc::ArrayView<const uint8_t>(data.data(), data.shape(0)));
+    frame_->SetData(
+        webrtc::ArrayView<const uint8_t>(data.data(), data.shape(0)));
   }
   const uint8_t GetPayloadType() const { return frame_->GetPayloadType(); }
   const uint32_t GetSsrc() const { return frame_->GetSsrc(); }

@@ -1,0 +1,247 @@
+name: e2e-test-only
+
+on:
+  workflow_call:
+    inputs:
+      from_build:
+        type: boolean
+        default: false
+        description: "build.yml から呼び出されたかどうか"
+  push:
+    branches:
+      - develop
+      - "feature/**"
+    paths:
+      - ".github/workflows/e2e-test-only.yml"
+      - "tests/**"
+      # C++ SDK のアップデートしたときテストするため
+      - "VERSION"
+      - "DEPS"
+  workflow_dispatch:
+  schedule:
+    # UTC の 01:00 は JST だと 10:00 。
+    # 1-5 で 月曜日から金曜日
+    - cron: "0 1 * * 1-5"
+
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.6.0
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  e2e_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: ubuntu-24.04_x86_64
+            runs_on: ubuntu-24.04
+          - name: ubuntu-22.04_x86_64
+            runs_on: ubuntu-22.04
+          - name: ubuntu-24.04_armv8
+            runs_on: ubuntu-24.04-arm
+          - name: ubuntu-22.04_armv8
+            runs_on: ubuntu-22.04-arm
+          - name: macos_arm64
+            runs_on: macos-15
+          - name: windows_x86_64
+            runs_on: windows-2025
+          # Intel VPL (self-hosted runner)
+          - name: intel-vpl_x86_64
+            runs_on:
+              group: Self
+              labels: [self-hosted, linux, x64, Intel-VPL]
+            env_vars: |
+              INTEL_VPL=true
+              LIBVA_MESSAGING_LEVEL=0
+            test_target: tests/test_intel_vpl.py
+            # Intel VPL 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            wheel_platform: ubuntu-24.04_x86_64
+          # AMD AMF (self-hosted runner)
+          - name: amd-amf_x86_64
+            runs_on:
+              group: Self
+              labels: [self-hosted, linux, x64, AMD-AMF]
+            env_vars: |
+              AMD_AMF=true
+            test_target: tests/test_amd_amf.py
+            # AMD AMF 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            wheel_platform: ubuntu-24.04_x86_64
+          # NVIDIA Video Codec SDK (self-hosted runner)
+          - name: nvidia-video-codec-sdk_x86_64
+            runs_on:
+              group: Self
+              labels: [self-hosted, linux, x64, NVIDIA-Video-Codec-SDK]
+            env_vars: |
+              NVIDIA_VIDEO_CODEC_SDK=true
+            test_target: tests/test_nvidia_video_codec_sdk.py
+            # NVIDIA Video Codec SDK 用の wheel は ubuntu-24.04_x86_64 のものを使用
+            wheel_platform: ubuntu-24.04_x86_64
+          # Apple Video Toolbox (self-hosted runner)
+          - name: apple-video-toolbox_arm64
+            runs_on:
+              group: Self
+              labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
+            env_vars: |
+              APPLE_VIDEO_TOOLBOX=true
+            test_target: tests/test_apple_video_toolbox.py
+            # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
+            wheel_platform: macos_arm64
+        python_version:
+          # TODO: schedule 時には全部でテストする
+          # - "3.11"
+          # - "3.12"
+          - "3.13"
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      
+      # Tailscale のセットアップ（self-hosted runner 以外）
+      - if: ${{ runner.environment != 'self-hosted' }}
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          use-cache: 'true'
+          hostname: gha-${{ github.run_id }}-${{ github.run_number }}
+          version: latest
+          timeout: 2m
+          retry: 5
+
+      # Linux 向けの依存関係インストール（Ubuntu のみ、self-hosted runner 以外）
+      - if: ${{ contains(matrix.platform.name, 'ubuntu') && runner.environment != 'self-hosted' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libx11-dev libdrm-dev libva-dev
+
+      # macOS self-hosted runner: Homebrew セットアップ
+      - name: Setup Homebrew
+        if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
+        uses: Homebrew/actions/setup-homebrew@master
+      
+      # macOS self-hosted runner: GitHub CLI インストール
+      - name: Install GitHub CLI
+        if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
+        run: brew install gh
+
+      # UV のセットアップ
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+
+      # Python バージョンの設定
+      - run: uv python pin ${{ matrix.python_version }}
+
+      # 依存関係のインストール
+      - run: uv sync
+
+      # Wheel ファイルのダウンロード (build.yml から呼び出された場合: 呼び出し元の artifact を使用)
+      - if: inputs.from_build == true
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ matrix.platform.runs_on }}_python-${{ matrix.python_version }}
+          path: dist/
+
+      # Wheel ファイルのダウンロード (直接実行の場合: 同一ブランチの最新成功ビルド artifact または GitHub Release から取得)
+      - if: inputs.from_build != true
+        uses: ./.github/actions/download-whl
+        id: download-whl
+        with:
+          platform_name: ${{ matrix.platform.wheel_platform || matrix.platform.name }}
+          python_version: ${{ matrix.python_version }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # wheel ファイル名を取得
+      - name: Find wheel file
+        id: find-wheel
+        shell: bash
+        run: |
+          WHEEL_FILE=$(find dist -name "*.whl" | head -1)
+          if [ -z "$WHEEL_FILE" ]; then
+            echo "No wheel file found in dist/"
+            exit 1
+          fi
+          echo "wheel_file=$WHEEL_FILE" >> $GITHUB_OUTPUT
+
+      # wheel ファイルのインストール
+      - name: Install wheel package
+        run: |
+          echo "Installing wheel: ${{ steps.find-wheel.outputs.wheel_file }}"
+          # uv pip install を使う理由:
+          # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
+          # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
+          # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
+          uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
+
+      # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
+      - name: Download OpenH264
+        if: ${{ runner.environment != 'self-hosted' }}
+        uses: ./.github/actions/download-openh264
+        id: download-openh264
+        with:
+          platform_name: ${{ matrix.platform.name }}
+          openh264_version: ${{ env.OPENH264_VERSION }}
+
+      # OpenH264 パスを環境変数に設定
+      - name: Set OpenH264 path
+        if: ${{ runner.environment != 'self-hosted' && steps.download-openh264.outputs.openh264_path }}
+        run: echo "OPENH264_PATH=${{ steps.download-openh264.outputs.openh264_path }}" >> $GITHUB_ENV
+        shell: bash
+
+      # プラットフォーム固有の環境変数を設定
+      - name: Set platform-specific environment variables
+        if: matrix.platform.env_vars
+        run: |
+          echo "${{ matrix.platform.env_vars }}" | while read line; do
+            if [ -n "$line" ]; then
+              echo "$line" >> $GITHUB_ENV
+            fi
+          done
+        shell: bash
+
+      # pytest の追加引数を設定
+      - name: Set pytest extra arguments
+        id: pytest-args
+        run: |
+          if [ "${{ runner.environment }}" == "self-hosted" ]; then
+            # self-hosted runner では並列実行を無効化
+            echo "pytest_extra_args=" >> $GITHUB_OUTPUT
+          else
+            # GitHub-hosted runner では並列実行を有効化
+            echo "pytest_extra_args=-n auto" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      # E2E テストの実行
+      - name: Run E2E tests
+        run: |
+          # UV_NO_SYNC=1 を指定する理由:
+          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
+          # この同期により、uv pip install でインストールした wheel が削除され、
+          # 元のソースコードの sora-sdk がインストールされてしまう
+          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
+          uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v --durations=0 ${{ steps.pytest-args.outputs.pytest_extra_args }}
+        env:
+          UV_NO_SYNC: 1
+
+  slack_notify_failed:
+    needs: [e2e_test]
+    runs-on: ubuntu-24.04
+    if: failure()
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: "FAILED"
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

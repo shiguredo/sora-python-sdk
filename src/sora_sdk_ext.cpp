@@ -17,6 +17,7 @@
 #include <nanobind/intrusive/counter.inl>
 
 // Sora C++ SDK
+#include <sora/boost_json_iwyu.h>
 #include <sora/sora_video_codec.h>
 
 #include "sora.h"
@@ -360,7 +361,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("LIVE", webrtc::MediaStreamTrackInterface::TrackState::kLive)
       .value("ENDED", webrtc::MediaStreamTrackInterface::TrackState::kEnded);
 
-  nb::enum_<webrtc::LoggingSeverity>(m, "SoraLoggingSeverity", nb::is_arithmetic())
+  nb::enum_<webrtc::LoggingSeverity>(m, "SoraLoggingSeverity",
+                                     nb::is_arithmetic())
       .value("VERBOSE", webrtc::LoggingSeverity::LS_VERBOSE)
       .value("INFO", webrtc::LoggingSeverity::LS_INFO)
       .value("WARNING", webrtc::LoggingSeverity::LS_WARNING)

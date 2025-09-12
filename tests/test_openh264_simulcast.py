@@ -11,11 +11,12 @@ from sora_sdk import (
     SoraVideoCodecType,
 )
 
-
-@pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
+pytestmark = pytest.mark.skipif(
+    os.environ.get("OPENH264_PATH") is None,
     reason="OpenH264 のときだけ実行する",
 )
+
+
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -140,10 +141,6 @@ def test_openh264_simulcast(
             )
 
 
-@pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
-    reason="OpenH264 のときだけ実行する",
-)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
@@ -271,10 +268,6 @@ def test_openh264_authz_simulcast_r2_active_false(
         )
 
 
-@pytest.mark.skipif(
-    os.environ.get("OPENH264_VERSION") is None,
-    reason="OpenH264 のときだけ実行する",
-)
 @pytest.mark.parametrize(
     (
         "video_codec_type",
