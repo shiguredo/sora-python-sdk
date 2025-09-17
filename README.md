@@ -42,7 +42,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
     - Ubuntu x86_64 / Windows x86_64 で利用できる
     - AV1 エンコードは Windows x86_64 でのみ利用できる
     - VP9 はデコードのみ利用できる
-  - NVIDIA Video Codec SDK (VP8 / VP9 / AV1 / H.264 / H.265)
+  - NVIDIA Video Codec (VP8 / VP9 / AV1 / H.264 / H.265)
     - Ubuntu x86_64 / Windows x86_64 で利用できる
     - VP8 と VP9 はデコードのみ利用できる
   - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
