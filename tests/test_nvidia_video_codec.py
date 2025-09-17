@@ -18,7 +18,7 @@ from sora_sdk import (
 )
 
 pytestmark = pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
+    os.environ.get("NVIDIA_VIDEO_CODEC") is None, reason="NVIDIA Video Codec でのみ実行する"
 )
 
 
