@@ -79,7 +79,7 @@ jobs:
               group: Self
               labels: [self-hosted, linux, x64, NVIDIA-Video-Codec-SDK]
             env_vars: |
-              NVIDIA_VIDEO_CODEC_SDK=true
+              NVIDIA_VIDEO_CODEC=true
             test_target: tests/test_nvidia_video_codec_sdk.py
             # NVIDIA Video Codec SDK 用の wheel は ubuntu-24.04_x86_64 のものを使用
             wheel_platform: ubuntu-24.04_x86_64
