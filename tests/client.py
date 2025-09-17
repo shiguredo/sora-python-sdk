@@ -68,15 +68,23 @@ class SoraClient:
         audio_output_frequency: int = 16000,
         video_width: int = 640,
         video_height: int = 480,
+        # fake video の描画タイプ: None | "random" | "blend2d"
+        fake_video_type: Optional[str] = None,
+        # 動画のフレームレート (None または <=0 の場合は 30fps)
+        video_fps: Optional[int] = None,
+        # フレームペーシングを厳密化（高CPUになる可能性あり）
+        precise_timing: bool = False,
     ):
         self._signaling_urls = settings.signaling_urls
         self._role = role.value
         self._channel_id = settings.channel_id
 
+        # JWT の channel_id を self._channel_id に合わせる
+        claims: dict[str, Any] = {}
         if jwt_private_claims is not None:
-            access_token = settings.access_token(**jwt_private_claims)
-        else:
-            access_token = settings.access_token()
+            claims.update(jwt_private_claims)
+        claims.update({"channel_id": self._channel_id})
+        access_token = settings.access_token(**claims)
 
         # secret が設定されていない場合は access_token が存在しない
         if access_token is not None:
@@ -105,6 +113,14 @@ class SoraClient:
 
         self._video_width: int = video_width
         self._video_height: int = video_height
+        # None の場合は真っ黒画面
+        self._fake_video_type: Optional[str] = fake_video_type or None
+        # FPS は 30 をデフォルト
+        if video_fps is None or video_fps <= 0:
+            self._video_fps = 30
+        else:
+            self._video_fps = int(video_fps)
+        self._precise_timing = precise_timing
 
         if settings.libwebrtc_log is not None:
             sora_sdk.enable_libwebrtc_log(settings.libwebrtc_log)
@@ -348,22 +364,64 @@ class SoraClient:
                 self._audio_source.on_data(numpy.zeros((320, 1), dtype=numpy.int16))
 
     def _fake_video_loop(self):
-        while not self._disconnected.is_set():
-            time.sleep(1.0 / 30)
-            if self._video_source is not None:
-                # self._video_source.on_captured(
-                #     numpy.zeros((self._video_height, self._video_width, 3), dtype=numpy.uint8)
-                # )
+        # フレームレート
+        fps = self._video_fps
 
-                # お試し randint
-                def generate_random_image():
+        # Blend2D デモ指定時は専用のジェネレータを利用
+        generator = None
+        if self._fake_video_type == "blend2d":
+            try:
+                from fake_video_blend2d import Blend2DFakeGenerator  # type: ignore
+
+                generator = Blend2DFakeGenerator(self._video_width, self._video_height, fps)
+            except Exception as e:
+                # 失敗時はランダム画像にフォールバック
+                print(f"Blend2D fake video init failed: {e}. Fallback to random frames.")
+                generator = None
+
+        frame_interval = 1.0 / max(1, fps)
+        next_frame_at = time.perf_counter()
+
+        while not self._disconnected.is_set():
+            if self._video_source is None:
+                time.sleep(frame_interval)
+                next_frame_at = time.perf_counter() + frame_interval
+                continue
+
+            now = time.perf_counter()
+            if now < next_frame_at:
+                sleep_for = next_frame_at - now
+                if self._precise_timing and sleep_for > 0.0015:
+                    # ざっくり寝てから短時間ビジーウェイト
+                    time.sleep(sleep_for - 0.001)
+                    while time.perf_counter() < next_frame_at:
+                        pass
+                else:
+                    time.sleep(sleep_for)
+                now = time.perf_counter()
+
+            # フレーム生成と送出
+            if generator is not None:
+                frame_bgr = generator.next_bgr()
+                self._video_source.on_captured(frame_bgr)
+            else:
+                if self._fake_video_type == "random":
                     random_color = numpy.random.randint(0, 256, size=(3,), dtype=numpy.uint8)
-                    return numpy.full(
+                    frame = numpy.full(
                         (self._video_height, self._video_width, 3), random_color, dtype=numpy.uint8
                     )
+                else:
+                    frame = numpy.zeros(
+                        (self._video_height, self._video_width, 3), dtype=numpy.uint8
+                    )
+                self._video_source.on_captured(frame)
 
-                random_image = generate_random_image()
-                self._video_source.on_captured(random_image)
+            # 次フレームの予定時刻を更新（ドリフト対策）
+            next_frame_at += frame_interval
+            late_by = time.perf_counter() - next_frame_at
+            if late_by > frame_interval:
+                # かなり遅延している場合はリセット（追いつけないときの暴走防止）
+                next_frame_at = time.perf_counter() + frame_interval
 
     def _on_signaling_message(
         self,

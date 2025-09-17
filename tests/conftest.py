@@ -13,7 +13,7 @@ from sora_sdk import SoraLoggingSeverity
 
 
 class Settings:
-    def __init__(self):
+    def __init__(self, channel_id: str | None = None, signaling_urls: list[str] | None = None):
         # .env ファイルから環境変数を読み込む
         self._load_env_file(".env")
 
@@ -27,6 +27,12 @@ class Settings:
         self.openh264_path = os.getenv("OPENH264_PATH")
         self.libwebrtc_log = self._parse_libwebrtc_log(os.getenv("TEST_LIBWEBRTC_LOG"))
         self.channel_id_suffix = str(uuid.uuid4())
+        # CLI などから channel_id を明示指定するための上書き値
+        self._channel_id_override = channel_id
+        # CLI などから signaling_urls を明示指定するための上書き値
+        if signaling_urls is not None:
+            # 空文字などが混ざっていた場合に備えて軽くフィルタ
+            self.signaling_urls = [u.strip() for u in signaling_urls if u and u.strip()]
 
     def _load_env_file(self, env_file: str) -> None:
         """環境変数ファイルを読み込む"""
@@ -85,7 +91,11 @@ class Settings:
 
     @property
     def channel_id(self) -> str:
-        """TEST_CHANNEL_ID_PREFIX と TEST_CHANNEL_ID_SUFFIX を組み合わせて channel_id を生成する"""
+        """TEST_CHANNEL_ID_PREFIX と TEST_CHANNEL_ID_SUFFIX を組み合わせて channel_id を生成する。
+        _channel_id_override が設定されている場合はそれを優先する。
+        """
+        if self._channel_id_override:
+            return self._channel_id_override
         return f"{self.channel_id_prefix}_{self.channel_id_suffix}"
 
     def access_token(self, **kwargs: Any) -> str | None:
