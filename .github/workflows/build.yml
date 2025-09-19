@@ -108,7 +108,7 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-    needs: [build_pyi] 
+    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
@@ -226,7 +226,7 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-    needs: [build_pyi] 
+    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
