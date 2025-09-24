@@ -108,6 +108,14 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+        include:
+          - platform:
+              name: raspberry-pi-os_armv8
+              target: raspberry-pi-os_armv8
+              runs_on: ubuntu-24.04
+              os: raspberry-pi-os
+              arch: armv8
+            python_version: "3.11"
     needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15

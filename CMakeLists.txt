@@ -124,10 +124,20 @@ elseif(TARGET_OS STREQUAL "jetson")
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXXABI_INCLUDE_DIR}>"
   )
-  target_link_directories(sora_sdk_ext
+elseif(TARGET_OS STREQUAL "raspberry-pi-os")
+  target_compile_options(sora_sdk_ext
     PRIVATE
-      ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/tegra
-      ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/nvidia)
+      "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+  )
+  target_compile_options(nanobind-static
+    PRIVATE
+      "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXXABI_INCLUDE_DIR}>"
+  )
+  target_compile_definitions(sora_sdk_ext PRIVATE USE_V4L2=1)
+  set_target_properties(sora_sdk_ext PROPERTIES BUILD_RPATH "\$ORIGIN")
 elseif(TARGET_OS STREQUAL "windows")
   # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
