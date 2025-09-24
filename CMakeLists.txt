@@ -124,6 +124,10 @@ elseif(TARGET_OS STREQUAL "jetson")
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
       "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXXABI_INCLUDE_DIR}>"
   )
+  target_link_directories(sora_sdk_ext
+    PRIVATE
+      ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/tegra
+      ${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu/nvidia)
 elseif(TARGET_OS STREQUAL "raspberry-pi-os")
   target_compile_options(sora_sdk_ext
     PRIVATE
