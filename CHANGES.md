@@ -13,6 +13,10 @@
 
 - [UPDATE] Sora C++ SDK のバージョンを `2025.5.0` に上げる
   - @voluntas
+- [ADD] `raspberry-pi-os_armv8` の対応を追加する
+  - `VideoCodecImplementation.RASPI_V4L2M2M` を追加
+  - `Sora.create_libcamera_source()` 関数を追加
+  - @melpon
 
 ## 2025.4.0
 
