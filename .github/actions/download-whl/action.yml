@@ -69,6 +69,10 @@ runs:
               # manylinux_2_31 に固定
               WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_31_aarch64.whl"
               ;;
+            raspberry-pi-os_armv8)
+              # Raspberry Pi OS 用（sora_sdk_rpi prefix、manylinux_2_35）
+              WHEEL_PATTERN="sora_sdk_rpi-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_35_aarch64.whl"
+              ;;
             macos_arm64)
               WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-macosx_*_arm64.whl"
               ;;
