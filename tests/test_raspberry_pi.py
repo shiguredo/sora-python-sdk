@@ -25,13 +25,13 @@ def test_intel_vpl_available():
 
     intel_vpl_available = False
     for e in capability.engines:
-        if e.name == SoraVideoCodecImplementation.V4L2_M2M:
+        if e.name == SoraVideoCodecImplementation.RASPI_V4L2M2M:
             intel_vpl_available = True
 
     assert intel_vpl_available is True
 
     for e in capability.engines:
-        if e.name == SoraVideoCodecImplementation.V4L2_M2M:
+        if e.name == SoraVideoCodecImplementation.RASPI_V4L2M2M:
             # 対応コーデックは 5 種類
             assert len(e.codecs) == 5
 
@@ -68,7 +68,7 @@ def test_raspberry_pi_sendonly(settings):
             codecs=[
                 SoraVideoCodecPreference.Codec(
                     type=codec_type_string_to_codec_type(video_codec_type),
-                    encoder=SoraVideoCodecImplementation.V4L2_M2M,
+                    encoder=SoraVideoCodecImplementation.RASPI_V4L2M2M,
                 ),
             ]
         ),
