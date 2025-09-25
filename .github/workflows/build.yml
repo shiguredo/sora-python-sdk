@@ -6,8 +6,8 @@ on:
     paths-ignore:
       - "**.md"
       - "tests/**"
-    branches-ignore:
-      - "feature/e2e-test*"
+    # branches-ignore:
+    #   - "feature/e2e-test*"
     tags:
       - "*"
   schedule:

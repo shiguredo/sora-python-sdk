@@ -94,6 +94,7 @@ jobs:
           #   # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
           #   wheel_platform: macos_arm64
           - name: raspberry-pi-os_armv8
+            package: raspberry-pi-os_armv8
             runs_on:
               group: Self
               labels: [self-hosted, linux, arm64, Raspberry-Pi]
@@ -154,7 +155,7 @@ jobs:
       - if: inputs.from_build == true
         uses: actions/download-artifact@v5
         with:
-          name: ${{ matrix.platform.runs_on }}_python-${{ matrix.python_version }}
+          name: ${{ matrix.platform.package || matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist/
 
       # Wheel ファイルのダウンロード (直接実行の場合: 同一ブランチの最新成功ビルド artifact または GitHub Release から取得)
