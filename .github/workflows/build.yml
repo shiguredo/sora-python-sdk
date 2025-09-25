@@ -84,34 +84,34 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # - name: ubuntu-24.04_x86_64
-          #   target: ubuntu-24.04_x86_64
-          #   runs_on: ubuntu-24.04
-          #   os: ubuntu
-          #   arch: x86_64
-          # - name: ubuntu-22.04_x86_64
-          #   target: ubuntu-22.04_x86_64
-          #   runs_on: ubuntu-22.04
-          #   os: ubuntu
-          #   arch: x86_64
-          # - name: ubuntu-24.04_armv8
-          #   target: ubuntu-24.04_armv8
-          #   runs_on: ubuntu-24.04
-          #   os: ubuntu
-          #   arch: armv8
-          # - name: ubuntu-22.04_armv8
-          #   target: ubuntu-22.04_armv8
-          #   runs_on: ubuntu-22.04
-          #   os: ubuntu
-          #   arch: armv8
+          - name: ubuntu-24.04_x86_64
+            target: ubuntu-24.04_x86_64
+            runs_on: ubuntu-24.04
+            os: ubuntu
+            arch: x86_64
+          - name: ubuntu-22.04_x86_64
+            target: ubuntu-22.04_x86_64
+            runs_on: ubuntu-22.04
+            os: ubuntu
+            arch: x86_64
+          - name: ubuntu-24.04_armv8
+            target: ubuntu-24.04_armv8
+            runs_on: ubuntu-24.04
+            os: ubuntu
+            arch: armv8
+          - name: ubuntu-22.04_armv8
+            target: ubuntu-22.04_armv8
+            runs_on: ubuntu-22.04
+            os: ubuntu
+            arch: armv8
           - name: raspberry-pi-os_armv8
             target: raspberry-pi-os_armv8
             runs_on: ubuntu-24.04
             os: raspberry-pi-os
             arch: armv8
         python_version:
-          # - "3.11"
-          # - "3.12"
+          - "3.11"
+          - "3.12"
           - "3.13"
     needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
@@ -168,58 +168,7 @@ jobs:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
 
-
-  # x86_64 でビルドした Ubuntu x86_64/arm64 向けの whl をチェックする
-  # check_ubuntu_wheel:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       # 22.04 x86_64 でクロスコンパイルした whl を 22.04 と 24.04 の x86_64/arm64 でチェックする
-  #       platform:
-  #         - name: ubuntu-22.04_x86_64
-  #           download_name: ubuntu-22.04_x86_64
-  #           runs_on: ubuntu-22.04
-  #           pytag: manylinux_2_31_x86_64
-  #         - name: ubuntu-22.04_armv8
-  #           download_name: ubuntu-22.04_armv8
-  #           runs_on: ubuntu-22.04-arm
-  #           pytag: manylinux_2_31_aarch64
-  #         - name: ubuntu-24.04_x86_64
-  #           download_name: ubuntu-22.04_x86_64
-  #           runs_on: ubuntu-24.04
-  #           pytag: manylinux_2_31_x86_64
-  #         - name: ubuntu-24.04_armv8
-  #           download_name: ubuntu-22.04_armv8
-  #           runs_on: ubuntu-24.04-arm
-  #           pytag: manylinux_2_31_aarch64
-  #       version:
-  #         - python: "3.11"
-  #           pkg: "311"
-  #         - python: "3.12"
-  #           pkg: "312"
-  #         - python: "3.13"
-  #           pkg: "313"
-  #   needs: [get_sdk_version, build_ubuntu]
-  #   runs-on: ${{ matrix.platform.runs_on }}
-  #   timeout-minutes: 15
-  #   steps:
-  #     - uses: astral-sh/setup-uv@v6
-  #       with:
-  #         enable-cache: false
-  #     - uses: actions/download-artifact@v5
-  #       with:
-  #         name: ${{ matrix.platform.download_name }}_python-${{ matrix.version.python }}
-  #         path: dist/
-
-  #     # ここで download した whl ファイルの動作を確認する
-  #     - run: |
-  #         # 仮想環境を作成してテスト
-  #         uv venv --python ${{ matrix.version.python }}
-  #         uv pip install dist/sora_sdk-${{ needs.get_sdk_version.outputs.sdk_version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
-  #         uv run python -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
-
   build_ubuntu_arm:
-    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -278,7 +227,6 @@ jobs:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
   build_macos:
-    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -330,7 +278,6 @@ jobs:
           path: "dist/"
 
   build_windows:
-    if: false
     needs: [build_pyi] 
     runs-on: windows-2025
     timeout-minutes: 15
@@ -381,17 +328,15 @@ jobs:
   #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   # E2E テストの実行
-  # e2e_test:
-  #   # needs: [build_ubuntu, build_macos, build_windows]
-  #   needs: [build_ubuntu]
-  #   uses: ./.github/workflows/e2e-test.yml
-  #   with:
-  #     from_build: true
-  #   secrets: inherit
+  e2e_test:
+    needs: [build_ubuntu, build_macos, build_windows]
+    uses: ./.github/workflows/e2e-test.yml
+    with:
+      from_build: true
+    secrets: inherit
 
   slack_notify_failed:
-    # needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
-    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
+    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
