@@ -194,18 +194,6 @@ jobs:
           # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
           uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
 
-          # インストール後の確認
-          echo "Checking installed packages:"
-          uv pip list | grep -i sora || echo "No sora packages found"
-
-          # site-packages の確認
-          echo "Checking site-packages:"
-          find .venv -type d -name "sora*" | head -10
-
-          # import テスト
-          echo "Testing import:"
-          UV_NO_SYNC=1 uv run python -c "import sora_sdk; print(f'sora_sdk imported from: {sora_sdk.__file__}')" || echo "Failed to import sora_sdk"
-
       # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
       - name: Download OpenH264
         if: ${{ runner.environment != 'self-hosted' }}
