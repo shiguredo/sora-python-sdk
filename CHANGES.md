@@ -23,6 +23,11 @@
   - m140 から libwebrtc 提供のものでビルドするように変更したため
   - @melpon
 
+### misc
+
+- [ADD] Raspberry Pi OS armv8 向けの E2E テストを追加する
+  - @voluntas
+
 ## 2025.4.0
 
 **リリース日**: 2025-09-12

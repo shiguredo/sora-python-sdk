@@ -1,6 +1,7 @@
-name: e2e-test-only
+name: e2e-test
 
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       from_build:
@@ -12,12 +13,11 @@ on:
       - develop
       - "feature/**"
     paths:
-      - ".github/workflows/e2e-test-only.yml"
+      - ".github/workflows/e2e-test.yml"
       - "tests/**"
       # C++ SDK のアップデートしたときテストするため
       - "VERSION"
       - "DEPS"
-  workflow_dispatch:
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
@@ -93,6 +93,14 @@ jobs:
             test_target: tests/test_apple_video_toolbox.py
             # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
             wheel_platform: macos_arm64
+          - name: raspberry-pi-os_armv8
+            package: raspberry-pi-os_armv8
+            runs_on:
+              group: Self
+              labels: [self-hosted, linux, arm64, Raspberry-Pi]
+            test_target: tests/test_raspberry_pi.py
+            env_vars: |
+              RASPBERRY_PI=true
         python_version:
           # TODO: schedule 時には全部でテストする
           # - "3.11"
@@ -140,14 +148,14 @@ jobs:
       # Python バージョンの設定
       - run: uv python pin ${{ matrix.python_version }}
 
-      # 依存関係のインストール
-      - run: uv sync
+      # 依存関係のインストール (test グループのみ)
+      - run: uv sync --no-install-project --only-group test
 
       # Wheel ファイルのダウンロード (build.yml から呼び出された場合: 呼び出し元の artifact を使用)
       - if: inputs.from_build == true
         uses: actions/download-artifact@v5
         with:
-          name: ${{ matrix.platform.runs_on }}_python-${{ matrix.python_version }}
+          name: ${{ matrix.platform.package || matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist/
 
       # Wheel ファイルのダウンロード (直接実行の場合: 同一ブランチの最新成功ビルド artifact または GitHub Release から取得)
@@ -175,6 +183,11 @@ jobs:
       - name: Install wheel package
         run: |
           echo "Installing wheel: ${{ steps.find-wheel.outputs.wheel_file }}"
+
+          # wheel ファイルの内容を確認
+          echo "Checking wheel contents:"
+          unzip -l "${{ steps.find-wheel.outputs.wheel_file }}" | grep -E "sora_sdk|METADATA" | head -20
+
           # uv pip install を使う理由:
           # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
           # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる

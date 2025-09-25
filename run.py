@@ -266,7 +266,9 @@ def _build(
         cmake_args.append(f"-DTARGET_OS={platform.target.os}")
         # Raspberry Pi OS の場合は sora-sdk-rpi パッケージからバージョンを取得する
         if platform.target.os == "raspberry-pi-os":
-            cmake_args.append(f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk-rpi')}")
+            cmake_args.append(
+                f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk-rpi')}"
+            )
         else:
             cmake_args.append(f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk')}")
         cmake_args.append(f"-DBOOST_ROOT={cmake_path(sora_info.boost_install_dir)}")
@@ -350,6 +352,8 @@ def _build(
             ]
         elif platform.target.os == "raspberry-pi-os":
             sysroot = os.path.join(install_dir, "rootfs")
+            python_version = get_python_version()
+            python_version_short = ".".join(python_version.split(".")[:2])
             cmake_args += [
                 "-DCMAKE_SYSTEM_NAME=Linux",
                 "-DCMAKE_SYSTEM_PROCESSOR=aarch64",
@@ -365,8 +369,7 @@ def _build(
                 f"-DCMAKE_SYSROOT={sysroot}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
                 f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
-                f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.11'))}",
-                "-DNB_SUFFIX=.cpython-311-aarch64-linux-gnu.so",
+                f"-DNB_SUFFIX=.cpython-{python_version_short.replace('.', '')}-aarch64-linux-gnu.so",
             ]
 
         # Windows 以外の、クロスコンパイルでない環境では pyi ファイルを生成する
