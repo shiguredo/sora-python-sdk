@@ -109,6 +109,7 @@ jobs:
           - "3.12"
           - "3.13"
         include:
+          # TODO: 3.11 以外にも対応する
           - platform:
               name: raspberry-pi-os_armv8
               target: raspberry-pi-os_armv8
@@ -128,6 +129,14 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
+
+      # pyproject.toml の name を sora_sdk_rpi に書き換える
+      # Raspberry Pi OS armv8 向けにビルドする場合のみ
+      - name: sora_sdk_rpi
+        if: ${{ matrix.platform.name == 'raspberry-pi-os_armv8' }}
+        run: |
+          sed -e 's/^name = "sora_sdk"/name = "sora_sdk_rpi"/' -i pyproject.toml
+
       # libx11-dev は Ubuntu 24.04 の時に必要になる
       - run: |
           sudo apt-get update
@@ -412,6 +421,7 @@ jobs:
           - name: macos-15_arm64
           - name: macos-14_arm64
           - name: windows-2025
+          - name: raspberry-pi-os_armv8
         python_version:
           - "3.11"
           - "3.12"
