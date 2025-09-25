@@ -91,7 +91,9 @@ def install_deps(
     webrtc_info = get_webrtc_info(webrtc_platform, local_webrtc_build_dir, install_dir, debug)
     webrtc_version = read_version_file(webrtc_info.version_file)
 
-    if platform.build.os == "ubuntu" and local_webrtc_build_dir is None:
+    if (
+        platform.build.os == "macos" or platform.build.os == "ubuntu"
+    ) and local_webrtc_build_dir is None:
         # LLVM
         tools_url = webrtc_version["WEBRTC_SRC_TOOLS_URL"]
         tools_commit = webrtc_version["WEBRTC_SRC_TOOLS_COMMIT"]
@@ -318,11 +320,13 @@ def _build(
             cmake_args += [
                 "-DCMAKE_SYSTEM_PROCESSOR=arm64",
                 "-DCMAKE_OSX_ARCHITECTURES=arm64",
-                "-DCMAKE_C_COMPILER=clang",
+                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
                 "-DCMAKE_C_COMPILER_TARGET=aarch64-apple-darwin",
-                "-DCMAKE_CXX_COMPILER=clang++",
+                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
                 "-DCMAKE_CXX_COMPILER_TARGET=aarch64-apple-darwin",
                 f"-DCMAKE_SYSROOT={sysroot}",
+                f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
+                f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
             ]
         elif platform.target.os == "jetson":
             sysroot = os.path.join(install_dir, "rootfs")
