@@ -2,7 +2,11 @@ import os
 import time
 
 import pytest
-from client import SoraClient, SoraRole
+from client import (
+    SoraClient,
+    SoraRole,
+    codec_type_string_to_codec_type,
+)
 
 from sora_sdk import (
     SoraVideoCodecImplementation,
