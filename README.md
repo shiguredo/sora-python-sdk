@@ -27,13 +27,13 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
-- Windows / macOS / Linux (Ubuntu) プラットフォームに対応
+- Windows / macOS / Linux (Ubuntu / Raspberry Pi OS) プラットフォームに対応
 - [WebRTC 統計情報](https://www.w3.org/TR/webrtc-stats/) の取得が可能
 - [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/) に対応
 - 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする [DegradationPreference](https://w3c.github.io/mst-content-hint/#degradation-preference-when-encoding) に対応
   - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
 - 発話区間の検出が可能な VAD (Voice Activity Detection) に対応
-- Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
+- Intel / Apple / NVIDIA / Raspberry Pi のハードウェアデコーダー/エンコーダーに対応
   - Apple Video Toolbox (H.264 / H.265)
     - macOS arm64 で利用できる
   - Intel VPL (AV1 / H.264 / H.265)
@@ -46,6 +46,9 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
     - Ubuntu x86_64 / Windows x86_64 で利用できる
     - VP8 と VP9 はデコードのみ利用できる
   - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
+  - Raspberry Pi (H.264)
+    - Raspberry Pi 4 / Raspberry Pi 3 / Raspberry Pi 2 Model B v1.2 / Raspberry Pi Zero 2 W で利用できる
+    - V4L2-M2M API を利用している
   - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
   - Ubuntu x86_64 / Ubuntu arm64 / Windows x86_64 / macOS arm64 で利用できる
@@ -53,7 +56,9 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - 映像デバイス処理に [opencv-python](https://pypi.org/project/opencv-python/) などが利用できる
 - 音声認識などの入力に受信した音声を利用できる
 - 物体検出などの入力に受信した映像を利用できる
-- `uv add sora_sdk` や `pip install sora_sdk` でインストール可能
+- `uv add sora_sdk` や `pip install sora_sdk` でインストールできる
+  - Raspberry Pi 向けのパッケージも `uv add sora_sdk_rpi` でインストールできる
+- Raspberry Pi 向けに libcamera 用の `create_libcamera_source` を提供
 - [NVIDIA Jetson JetPack SDK](https://developer.nvidia.com/embedded/jetpack) に対応
 
 ## 利用イメージ
@@ -77,6 +82,12 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 ```bash
 uv add sora_sdk
+```
+
+### Raspberry Pi OS 向けパッケージ
+
+```bash
+uv add sora_sdk_rpi
 ```
 
 ### NVIDIA Jetson 向けパッケージ
@@ -105,8 +116,23 @@ PyPI 経由ではインストールできません。
 - macOS Ventura 14 arm64
 - Windows 11 x86_64
 - Windows Server 2025 x86_64
+- Raspberry Pi OS armv8
 
-### Jetson 向け
+### Raspberry Pi OS 向け
+
+- Raspberry Pi OS bookworm (64bit)
+  - Raspberry Pi 5
+  - Raspberry Pi 4
+  - Raspberry Pi 3
+  - Raspberry Pi 2 Model B v1.2
+  - Raspberry Pi Zero 2 W
+
+> [!CAUTION]
+>
+> - Raspberry Pi 5 は H.264 ハードウェアエンコーダーが搭載されていません
+> - Raspberry Pi 5 の H.265 ハードウェアデコーダーに対応していません
+
+### NVIDIA Jetson 向け
 
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください

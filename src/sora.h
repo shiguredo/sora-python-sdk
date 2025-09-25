@@ -11,6 +11,9 @@
 // clang-format on
 #include <nanobind/intrusive/ref.h>
 
+// Sora
+#include <sora/camera_device_capturer.h>
+
 #include "dispose_listener.h"
 #include "sora_audio_source.h"
 #include "sora_connection.h"
@@ -34,9 +37,11 @@ class Sora : public CountedPublisher {
    * 
    * @param openh264 (オプション) OpenH264 ライブラリへのパス
    * @param video_codec_preference (オプション) 利用するエンコーダ/デコーダの実装の設定
+   * @param force_i420_conversion (オプション) エンコーダに渡す前に I420 に変換するかどうかの設定
    */
   Sora(std::optional<std::string> openh264,
-       std::optional<sora::VideoCodecPreference> video_codec_preference);
+       std::optional<sora::VideoCodecPreference> video_codec_preference,
+       std::optional<bool> force_i420_conversion);
   ~Sora();
 
   /**
@@ -168,6 +173,15 @@ class Sora : public CountedPublisher {
    * @return SoraVideoSource インスタンス
    */
   nb::ref<SoraVideoSource> CreateVideoSource();
+
+#if USE_V4L2
+  nb::ref<SoraTrackInterface> CreateLibcameraSource(
+      int width,
+      int height,
+      int fps,
+      bool native_frame_output,
+      std::vector<std::pair<std::string, std::string>> controls);
+#endif
 
  private:
   /**
