@@ -6,8 +6,8 @@ on:
     paths-ignore:
       - "**.md"
       - "tests/**"
-    # branches-ignore:
-    #   - "feature/e2e-test*"
+    branches-ignore:
+      - "feature/e2e-test*"
     tags:
       - "*"
   schedule:
@@ -53,8 +53,8 @@ jobs:
       fail-fast: false
       matrix:
         python_version:
-          # - "3.11"
-          # - "3.12"
+          - "3.11"
+          - "3.12"
           - "3.13"
     runs-on: ubuntu-24.04
     timeout-minutes: 15
