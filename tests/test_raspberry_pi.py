@@ -46,6 +46,7 @@ def test_intel_vpl_available():
 
 
 def test_intel_vpl_key_frame_request(settings):
+    pass
 
 
 def test_raspberry_pi_sendonly(settings):
