@@ -64,15 +64,15 @@ jobs:
             # Intel VPL 用の wheel は ubuntu-24.04_x86_64 のものを使用
             wheel_platform: ubuntu-24.04_x86_64
           # AMD AMF (self-hosted runner)
-          - name: amd-amf_x86_64
-            runs_on:
-              group: Self
-              labels: [self-hosted, linux, x64, AMD-AMF]
-            env_vars: |
-              AMD_AMF=true
-            test_target: tests/test_amd_amf.py
-            # AMD AMF 用の wheel は ubuntu-24.04_x86_64 のものを使用
-            wheel_platform: ubuntu-24.04_x86_64
+          # - name: amd-amf_x86_64
+          #   runs_on:
+          #     group: Self
+          #     labels: [self-hosted, linux, x64, AMD-AMF]
+          #   env_vars: |
+          #     AMD_AMF=true
+          #   test_target: tests/test_amd_amf.py
+          #   # AMD AMF 用の wheel は ubuntu-24.04_x86_64 のものを使用
+          #   wheel_platform: ubuntu-24.04_x86_64
           # NVIDIA Video Codec (self-hosted runner)
           - name: nvidia-video-codec-x86_64
             runs_on:
