@@ -93,6 +93,6 @@ def test_raspberry_pi_sendonly(settings):
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
-    assert outbound_rtp_stats["encoderImplementation"] == "V4L2-M2M"
+    assert outbound_rtp_stats["encoderImplementation"] == "V4L2M2M H264"
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
