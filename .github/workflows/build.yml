@@ -310,7 +310,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-2025_python-${{ matrix.python_version }}
+          name: windows-2025_x86_64_python-${{ matrix.python_version }}
           path: dist/
 
   # slack_notify_succeeded:
@@ -365,7 +365,7 @@ jobs:
           - name: ubuntu-22.04_armv8
           - name: macos-15_arm64
           - name: macos-14_arm64
-          - name: windows-2025
+          - name: windows-2025_x86_64
           - name: raspberry-pi-os_armv8
         python_version:
           - "3.11"
@@ -458,11 +458,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2025", "python_version": "3.11" }
+        with: { "platform": "windows-2025_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2025", "python_version": "3.12" }
+        with: { "platform": "windows-2025_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2025", "python_version": "3.13" }
+        with: { "platform": "windows-2025_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "raspberry-pi-os_armv8", "python_version": "3.11" }
       - uses: ./.github/actions/download

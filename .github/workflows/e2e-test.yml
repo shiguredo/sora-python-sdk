@@ -48,9 +48,9 @@ jobs:
             runs_on: ubuntu-24.04-arm
           - name: ubuntu-22.04_armv8
             runs_on: ubuntu-22.04-arm
-          - name: macos_arm64
+          - name: macos-15_arm64
             runs_on: macos-15
-          - name: windows_x86_64
+          - name: windows_2025_x86_64
             runs_on: windows-2025
           # Intel VPL (self-hosted runner)
           - name: intel-vpl_x86_64
@@ -92,7 +92,7 @@ jobs:
               APPLE_VIDEO_TOOLBOX=true
             test_target: tests/test_apple_video_toolbox.py
             # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
-            wheel_platform: macos_arm64
+            wheel_platform: macos-15_arm64
           - name: raspberry-pi-os_armv8
             package: raspberry-pi-os_armv8
             runs_on:
