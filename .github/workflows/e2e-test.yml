@@ -54,7 +54,7 @@ jobs:
             wheel_platform: ubuntu-22.04_armv8
           - name: macos-15_arm64
             runs_on: macos-15
-            wheel_platform: macos_arm64
+            wheel_platform: macos-15_arm64
           - name: windows-2025_x86_64
             runs_on: windows-2025
             wheel_platform: windows-2025_x86_64
