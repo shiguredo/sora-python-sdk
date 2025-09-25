@@ -104,19 +104,15 @@ jobs:
             runs_on: ubuntu-22.04
             os: ubuntu
             arch: armv8
+          - name: raspberry-pi-os_armv8
+            target: raspberry-pi-os_armv8
+            runs_on: ubuntu-24.04
+            os: raspberry-pi-os
+            arch: armv8
         python_version:
           - "3.11"
           - "3.12"
           - "3.13"
-        include:
-          # TODO: 3.11 以外にも対応する
-          - platform:
-              name: raspberry-pi-os_armv8
-              target: raspberry-pi-os_armv8
-              runs_on: ubuntu-24.04
-              os: raspberry-pi-os
-              arch: armv8
-            python_version: "3.11"
     needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
