@@ -262,7 +262,11 @@ def _build(
         cmake_args = []
         cmake_args.append(f"-DCMAKE_BUILD_TYPE={configuration}")
         cmake_args.append(f"-DTARGET_OS={platform.target.os}")
-        cmake_args.append(f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk')}")
+        # Raspberry Pi OS の場合は sora-sdk-rpi パッケージからバージョンを取得する
+        if platform.target.os == "raspberry-pi-os":
+            cmake_args.append(f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk-rpi')}")
+        else:
+            cmake_args.append(f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk')}")
         cmake_args.append(f"-DBOOST_ROOT={cmake_path(sora_info.boost_install_dir)}")
         cmake_args.append(f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
         cmake_args.append(f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
