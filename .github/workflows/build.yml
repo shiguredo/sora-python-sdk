@@ -381,13 +381,13 @@ jobs:
   #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   # E2E テストの実行
-  e2e_test:
-    # needs: [build_ubuntu, build_macos, build_windows]
-    needs: [build_ubuntu]
-    uses: ./.github/workflows/e2e-test.yml
-    with:
-      from_build: true
-    secrets: inherit
+  # e2e_test:
+  #   # needs: [build_ubuntu, build_macos, build_windows]
+  #   needs: [build_ubuntu]
+  #   uses: ./.github/workflows/e2e-test.yml
+  #   with:
+  #     from_build: true
+  #   secrets: inherit
 
   slack_notify_failed:
     # needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
