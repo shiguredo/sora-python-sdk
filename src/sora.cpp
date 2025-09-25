@@ -6,8 +6,10 @@
 #include <rtc_base/crypto_random.h>
 
 Sora::Sora(std::optional<std::string> openh264,
-           std::optional<sora::VideoCodecPreference> video_codec_preference) {
-  factory_.reset(new SoraFactory(openh264, video_codec_preference));
+           std::optional<sora::VideoCodecPreference> video_codec_preference,
+           std::optional<bool> force_i420_conversion) {
+  factory_.reset(
+      new SoraFactory(openh264, video_codec_preference, force_i420_conversion));
   ioc_.reset(new boost::asio::io_context(1));
   thread_.reset(new std::thread([this]() {
     auto guard = boost::asio::make_work_guard(*ioc_);
@@ -254,6 +256,34 @@ nb::ref<SoraVideoSource> Sora::CreateVideoSource() {
       new SoraVideoSource(this, source, track);
   return video_source;
 }
+
+#if USE_V4L2
+nb::ref<SoraTrackInterface> Sora::CreateLibcameraSource(
+    int width,
+    int height,
+    int fps,
+    bool native_frame_output,
+    std::vector<std::pair<std::string, std::string>> controls) {
+  sora::CameraDeviceCapturerConfig config;
+  config.use_libcamera = true;
+  config.width = width;
+  config.height = height;
+  config.fps = fps;
+  config.libcamera_native_frame_output = native_frame_output;
+  config.libcamera_controls = controls;
+
+  auto source = sora::CreateCameraDeviceCapturer(config);
+
+  std::string track_id = webrtc::CreateRandomString(16);
+  auto track =
+      factory_->GetPeerConnectionFactory()->CreateVideoTrack(source, track_id);
+
+  nb::ref<SoraTrackInterface> video_source =
+      new SoraTrackInterface(this, track);
+
+  return video_source;
+}
+#endif
 
 boost::json::value Sora::ConvertJsonValue(nb::handle value,
                                           const char* error_message) {
