@@ -93,12 +93,11 @@ jobs:
           #   test_target: tests/test_apple_video_toolbox.py
           #   # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
           #   wheel_platform: macos_arm64
-          - name: Raspberry Pi VideoCore
-            package: raspberry-pi-os_armv8
+          - name: raspberry-pi-os_armv8
             runs_on:
               group: Self
               labels: [self-hosted, linux, arm64, Raspberry-Pi]
-            test_target: tests/test_apple_video_toolbox.py
+            test_target: tests/test_raspberry_pi.py
             env_vars: |
               RASPBERRY_PI=true
         python_version:
