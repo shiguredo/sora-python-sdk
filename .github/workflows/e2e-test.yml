@@ -204,7 +204,7 @@ jobs:
 
           # import テスト
           echo "Testing import:"
-          uv run python -c "import sora_sdk; print(f'sora_sdk imported from: {sora_sdk.__file__}')" || echo "Failed to import sora_sdk"
+          UV_NO_SYNC=1 uv run python -c "import sora_sdk; print(f'sora_sdk imported from: {sora_sdk.__file__}')" || echo "Failed to import sora_sdk"
 
       # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
       - name: Download OpenH264
