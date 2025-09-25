@@ -11,8 +11,10 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを `2025.5.0` に上げる
-  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2025.6.0-canary.2` に上げる
+  - @voluntas @melpon
+- [UPDATE] libwebrtc のバージョンを `m140.7339.2.2` に上げる
+  - @melpon
 - [ADD] `raspberry-pi-os_armv8` の対応を追加する
   - `VideoCodecImplementation.RASPI_V4L2M2M` を追加
   - `Sora.create_libcamera_source()` 関数を追加
