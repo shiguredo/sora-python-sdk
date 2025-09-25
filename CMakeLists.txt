@@ -100,6 +100,17 @@ set_target_properties(sora_sdk_ext PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(TARGET_OS STREQUAL "macos")
   set_target_properties(sora_sdk_ext PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  target_compile_options(sora_sdk_ext
+    PRIVATE
+      "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+  )
+  target_compile_options(nanobind-static
+    PRIVATE
+      "$<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXX_INCLUDE_DIR}>"
+      "$<$<COMPILE_LANGUAGE:CXX>:-isystem${LIBCXXABI_INCLUDE_DIR}>"
+  )
 elseif(TARGET_OS STREQUAL "ubuntu")
   target_compile_options(sora_sdk_ext
     PRIVATE
