@@ -148,8 +148,8 @@ jobs:
       # Python バージョンの設定
       - run: uv python pin ${{ matrix.python_version }}
 
-      # 依存関係のインストール
-      - run: uv sync
+      # 依存関係のインストール (test グループのみ)
+      - run: uv sync --no-install-project --only-group test
 
       # Wheel ファイルのダウンロード (build.yml から呼び出された場合: 呼び出し元の artifact を使用)
       - if: inputs.from_build == true
