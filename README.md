@@ -79,6 +79,12 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 uv add sora_sdk
 ```
 
+### Raspberry Pi OS 向けパッケージ
+
+```bash
+uv add sora_sdk_rpi
+```
+
 ### NVIDIA Jetson 向けパッケージ
 
 PyPI 経由ではインストールできません。
@@ -105,8 +111,23 @@ PyPI 経由ではインストールできません。
 - macOS Ventura 14 arm64
 - Windows 11 x86_64
 - Windows Server 2025 x86_64
+- Raspberry Pi OS armv8
 
-### Jetson 向け
+### Raspberry Pi OS 向け
+
+- Raspberry Pi OS bookworm (64bit)
+  - Raspberry Pi 5
+  - Raspberry Pi 4
+  - Raspberry Pi 3
+  - Raspberry Pi 2 Model B v1.2
+  - Raspberry Pi Zero 2 W
+
+> [!CAUTION]
+>
+> - Raspberry Pi 5 は H.264 ハードウェアエンコーダーが搭載されていません
+> - Raspberry Pi 5 の H.265 ハードウェアデコーダーに対応していません
+
+### NVIDIA Jetson 向け
 
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください
