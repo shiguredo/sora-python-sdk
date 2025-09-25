@@ -279,15 +279,19 @@ jobs:
 
   build_windows:
     needs: [build_pyi] 
-    runs-on: windows-2025
-    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
+        platform:
+          - name: windows-2025_x86_64
+            target: windows_x86_64
+            runs_on: windows-2025
         python_version:
           - "3.11"
           - "3.12"
           - "3.13"
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5
@@ -304,13 +308,13 @@ jobs:
       - run: |
           uv python pin ${{ matrix.python_version }}
           uv sync
-          uv run python run.py build windows_x86_64
+          uv run python run.py build ${{ matrix.platform.target }}
           uv build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-2025_x86_64_python-${{ matrix.python_version }}
+          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist/
 
   # slack_notify_succeeded:
