@@ -4,6 +4,13 @@ import time
 import pytest
 from client import SoraClient, SoraRole
 
+from sora_sdk import (
+    SoraVideoCodecImplementation,
+    SoraVideoCodecPreference,
+    SoraVideoCodecType,
+    get_video_codec_capability,
+)
+
 pytestmark = pytest.mark.skipif(
     os.environ.get("RASPBERRY_PI") is None, reason="Raspberry Pi でのみ実行する"
 )
@@ -43,10 +50,6 @@ def test_intel_vpl_available():
                         assert c.encoder is False
                     case _:
                         pytest.fail(f"未実装の codec_type: {c.type}")
-
-
-def test_intel_vpl_key_frame_request(settings):
-    pass
 
 
 def test_raspberry_pi_sendonly(settings):
