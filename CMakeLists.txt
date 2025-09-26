@@ -9,6 +9,8 @@ cmake_policy(SET CMP0091 NEW)
 cmake_policy(SET CMP0144 NEW)
 # The FindBoost module is removed.
 cmake_policy(SET CMP0167 NEW)
+# Do not require CMAKE_CROSSCOMPILING_EMULATOR for finding Python.
+cmake_policy(SET CMP0190 OLD)
 
 if (NOT CMAKE_CROSSCOMPILING)
   find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
