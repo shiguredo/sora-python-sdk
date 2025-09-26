@@ -277,7 +277,16 @@ def _build(
         cmake_args.append(f"-DSORA_DIR={cmake_path(sora_info.sora_install_dir)}")
         cmake_args.append(f"-DOPENH264_DIR={cmake_path(os.path.join(install_dir, 'openh264'))}")
         python_version = get_python_version()
-        cmake_args.append(f"-DPython_INCLUDE_DIR={get_python_include_dir(python_version)}")
+
+        # クロスコンパイル時は rootfs 内の Python ヘッダーを使う
+        if platform.build.arch != platform.target.arch and platform.target.os in ["ubuntu", "raspberry-pi-os"]:
+            python_version_short = ".".join(python_version.split(".")[:2])
+            sysroot = os.path.join(install_dir, "rootfs")
+            python_include_dir = os.path.join(sysroot, "usr", "include", f"python{python_version_short}")
+            cmake_args.append(f"-DPython_INCLUDE_DIR={cmake_path(python_include_dir)}")
+        else:
+            cmake_args.append(f"-DPython_INCLUDE_DIR={get_python_include_dir(python_version)}")
+
         cmake_args.append(f"-DPython_EXECUTABLE={cmake_path(sys.executable)}")
 
         if platform.target.os == "ubuntu":
@@ -347,7 +356,7 @@ def _build(
                 f"-DCMAKE_SYSROOT={sysroot}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
                 f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
-                f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.10'))}",
+                # Python_ROOT_DIR は不要になった（上で Python_INCLUDE_DIR を設定済み）
                 "-DNB_SUFFIX=.cpython-310-aarch64-linux-gnu.so",
             ]
         elif platform.target.os == "raspberry-pi-os":

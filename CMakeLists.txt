@@ -17,20 +17,18 @@ if (NOT CMAKE_CROSSCOMPILING)
 endif()
 
 if (CMAKE_CROSSCOMPILING)
-  # 一時的に CMAKE_FIND_ROOT_PATH の検索モードを NEVER に設定
-  # これでローカルの Python だけを検索するようになる。
-  # ローカルの Python は x86_64 向けのライブラリだが、
-  # クロスコンパイルすること自体に問題は無かったのでローカルの Python を使用する
-  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
-  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
-  set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
+  # クロスコンパイル時は：
+  # - Python インタープリタはホストのものを使用（nanobind のパス取得用）
+  # - Python ヘッダーは run.py から Python_INCLUDE_DIR で渡される rootfs 内のものを使用
+  # - Development.Module は必要だが、ヘッダーパスは run.py から指定される
+
+  # Interpreter を検索するためホストを検索
+  set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
   find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
   # 検索モードを元に戻す
-  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
-  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
-  set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+  set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
 endif()
 
 message(STATUS "-- Python_FOUND: ${Python_FOUND}")
