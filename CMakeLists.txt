@@ -1,10 +1,14 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 4.1)
 project(sora_sdk)
 
 # Only interpret if() arguments as variables or keywords when unquoted.
 cmake_policy(SET CMP0054 NEW)
 # MSVC runtime library flags are selected by an abstraction.
 cmake_policy(SET CMP0091 NEW)
+# find_package uses upper-case <PACKAGENAME>_ROOT variables.
+cmake_policy(SET CMP0144 NEW)
+# The FindBoost module is removed.
+cmake_policy(SET CMP0167 NEW)
 
 if (NOT CMAKE_CROSSCOMPILING)
   find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
@@ -45,18 +49,22 @@ set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な�
 set(WEBRTC_INCLUDE_DIR "" CACHE PATH "WebRTC のインクルードディレクトリ")
 set(WEBRTC_LIBRARY_DIR "" CACHE PATH "WebRTC のライブラリディレクトリ")
 set(WEBRTC_LIBRARY_NAME "webrtc" CACHE STRING "WebRTC のライブラリ名")
-set(BOOST_ROOT "" CACHE PATH "Boost のルートディレクトリ")
+set(Boost_ROOT "" CACHE PATH "Boost のルートディレクトリ")
 set(SORA_DIR "" CACHE PATH "Sora のルートディレクトリ")
 
 list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})
 list(APPEND CMAKE_MODULE_PATH ${SORA_DIR}/share/cmake)
 
+# Boost を静的ライブラリとしてリンク
+# Config モードでも Boost_USE_STATIC_LIBS は有効
 set(Boost_USE_STATIC_LIBS ON)
 if(TARGET_OS STREQUAL "windows")
   set(Boost_USE_STATIC_RUNTIME ON)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS json filesystem)
+# Boost を Config モードで検索
+# CONFIG を明示的に指定して FindBoost モジュールを使わない
+find_package(Boost REQUIRED CONFIG COMPONENTS json filesystem)
 find_package(WebRTC REQUIRED)
 find_package(Sora REQUIRED)
 find_package(nanobind CONFIG REQUIRED)
