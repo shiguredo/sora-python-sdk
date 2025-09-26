@@ -110,7 +110,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
-      
+
       # Tailscale のセットアップ（self-hosted runner 以外）
       - if: ${{ runner.environment != 'self-hosted' }}
         uses: tailscale/github-action@v3
@@ -118,7 +118,7 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          use-cache: 'true'
+          use-cache: "true"
           hostname: gha-${{ github.run_id }}-${{ github.run_number }}
           version: latest
           timeout: 2m
@@ -134,7 +134,7 @@ jobs:
       - name: Setup Homebrew
         if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
         uses: Homebrew/actions/setup-homebrew@master
-      
+
       # macOS self-hosted runner: GitHub CLI インストール
       - name: Install GitHub CLI
         if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
@@ -195,18 +195,18 @@ jobs:
           uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
 
       # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
-      - name: Download OpenH264
+      - uses: shiguredo/github-actions/.github/actions/download-openh264@main
         if: ${{ runner.environment != 'self-hosted' }}
-        uses: ./.github/actions/download-openh264
-        id: download-openh264
+        id: openh264
         with:
           platform_name: ${{ matrix.platform.name }}
           openh264_version: ${{ env.OPENH264_VERSION }}
+          use-cache: true
 
       # OpenH264 パスを環境変数に設定
       - name: Set OpenH264 path
-        if: ${{ runner.environment != 'self-hosted' && steps.download-openh264.outputs.openh264_path }}
-        run: echo "OPENH264_PATH=${{ steps.download-openh264.outputs.openh264_path }}" >> $GITHUB_ENV
+        if: ${{ runner.environment != 'self-hosted' && steps.openh264.outputs.openh264_path }}
+        run: echo "OPENH264_PATH=${{ steps.openh264.outputs.openh264_path }}" >> $GITHUB_ENV
         shell: bash
 
       # プラットフォーム固有の環境変数を設定
