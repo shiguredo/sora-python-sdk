@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] CMake のバージョンを 4.1 に上げる
+  - @voluntas
 - [UPDATE] CMake 3.27 以降のポリシー警告に対応する
   - CMP0144: `<PackageName>_ROOT` 変数の命名規則に対応し、`BOOST_ROOT` を `Boost_ROOT` に変更
   - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
