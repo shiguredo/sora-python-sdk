@@ -17,12 +17,9 @@ if (NOT CMAKE_CROSSCOMPILING)
 endif()
 
 if (CMAKE_CROSSCOMPILING)
-  # クロスコンパイル時は：
-  # - Python インタープリタはホストのものを使用（nanobind のパス取得用）
-  # - Python ヘッダーは run.py から Python_INCLUDE_DIR で渡される rootfs 内のものを使用
-  # - Development.Module は必要だが、ヘッダーパスは run.py から指定される
-
-  # Interpreter を検索するためホストを検索
+  # クロスコンパイル時はホストの Python を使用する
+  # Python 拡張モジュールは Python C API を使うだけなので、
+  # x86_64 のヘッダーで ARM64 向けにビルドしても問題ない
   set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
   find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
