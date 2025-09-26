@@ -32,12 +32,12 @@ runs:
             FILENAME="libopenh264-${VERSION}-linux-arm64.8.so"
             TARGET="libopenh264.so"
             ;;
-          macos_arm64)
+          macos_arm64 | macos-*_arm64)
             URL="http://ciscobinary.openh264.org/libopenh264-${VERSION}-mac-arm64.dylib.bz2"
             FILENAME="libopenh264-${VERSION}-mac-arm64.dylib"
             TARGET="libopenh264.dylib"
             ;;
-          windows_x86_64)
+          windows_x86_64 | windows-*_x86_64)
             # Windows の場合は PowerShell を使用
             if [[ "$RUNNER_OS" == "Windows" ]]; then
               pwsh -Command "
