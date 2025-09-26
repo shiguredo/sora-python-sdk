@@ -42,18 +42,24 @@ jobs:
         platform:
           - name: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
+            wheel_platform: ubuntu-24.04_x86_64
           - name: ubuntu-22.04_x86_64
             runs_on: ubuntu-22.04
+            wheel_platform: ubuntu-22.04_x86_64
           - name: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04-arm
+            wheel_platform: ubuntu-24.04_armv8
           - name: ubuntu-22.04_armv8
             runs_on: ubuntu-22.04-arm
-          - name: macos_arm64
+            wheel_platform: ubuntu-22.04_armv8
+          - name: macos-15_arm64
             runs_on: macos-15
-          - name: windows_x86_64
+            wheel_platform: macos-15_arm64
+          - name: windows-2025_x86_64
             runs_on: windows-2025
+            wheel_platform: windows-2025_x86_64
           # Intel VPL (self-hosted runner)
-          - name: intel-vpl_x86_64
+          - name: intel-vpl
             runs_on:
               group: Self
               labels: [self-hosted, linux, x64, Intel-VPL]
@@ -74,7 +80,7 @@ jobs:
           #   # AMD AMF 用の wheel は ubuntu-24.04_x86_64 のものを使用
           #   wheel_platform: ubuntu-24.04_x86_64
           # NVIDIA Video Codec (self-hosted runner)
-          - name: nvidia-video-codec-x86_64
+          - name: nvidia-video-codec
             runs_on:
               group: Self
               labels: [self-hosted, linux, x64, NVIDIA-Video-Codec-SDK]
@@ -87,20 +93,20 @@ jobs:
           - name: apple-video-toolbox_arm64
             runs_on:
               group: Self
-              labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
+              labels: [self-hosted, macOS, ARM64]
             env_vars: |
               APPLE_VIDEO_TOOLBOX=true
             test_target: tests/test_apple_video_toolbox.py
             # Apple Video Toolbox 用の wheel は macos_arm64 のものを使用
-            wheel_platform: macos_arm64
+            wheel_platform: macos-15_arm64
           - name: raspberry-pi-os_armv8
-            package: raspberry-pi-os_armv8
             runs_on:
               group: Self
               labels: [self-hosted, linux, arm64, Raspberry-Pi]
             test_target: tests/test_raspberry_pi.py
             env_vars: |
               RASPBERRY_PI=true
+            wheel_platform: raspberry-pi-os_armv8
         python_version:
           # TODO: schedule 時には全部でテストする
           # - "3.11"
@@ -155,7 +161,7 @@ jobs:
       - if: inputs.from_build == true
         uses: actions/download-artifact@v5
         with:
-          name: ${{ matrix.platform.package || matrix.platform.name }}_python-${{ matrix.python_version }}
+          name: ${{ matrix.platform.wheel_platform }}_python-${{ matrix.python_version }}
           path: dist/
 
       # Wheel ファイルのダウンロード (直接実行の場合: 同一ブランチの最新成功ビルド artifact または GitHub Release から取得)
@@ -163,7 +169,7 @@ jobs:
         uses: ./.github/actions/download-whl
         id: download-whl
         with:
-          platform_name: ${{ matrix.platform.wheel_platform || matrix.platform.name }}
+          platform_name: ${{ matrix.platform.wheel_platform }}
           python_version: ${{ matrix.python_version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
