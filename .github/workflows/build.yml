@@ -65,7 +65,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
-      - run: uv python pin ${{ matrix.python_version }}
+          python-version: ${{ matrix.python_version }}
       - run: uv sync
       - name: Generate pyi
         run: |
@@ -145,9 +145,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
-      - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync
 
       - if: ${{ matrix.platform.arch == 'x86_64' }}
         run: |
@@ -218,9 +217,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync
       - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
           uv run python run.py build ${{ matrix.platform.target }}
           uv build
         env:
@@ -247,7 +246,7 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-    needs: [build_pyi] 
+    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
@@ -262,9 +261,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync
       - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
           uv run python run.py build ${{ matrix.platform.target }}
           uv build
         env:
@@ -278,7 +277,7 @@ jobs:
           path: "dist/"
 
   build_windows:
-    needs: [build_pyi] 
+    needs: [build_pyi]
     strategy:
       fail-fast: false
       matrix:
@@ -305,9 +304,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync
       - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
           uv run python run.py build ${{ matrix.platform.target }}
           uv build
 
@@ -340,7 +339,8 @@ jobs:
     secrets: inherit
 
   slack_notify_failed:
-    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
+    needs:
+      [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
@@ -351,7 +351,7 @@ jobs:
           SLACK_COLOR: danger
           SLACK_TITLE: "FAILED"
           SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}  
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   publish_wheel:
     if: contains(github.ref, 'tags/202')
