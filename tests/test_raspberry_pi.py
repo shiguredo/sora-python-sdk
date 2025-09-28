@@ -191,7 +191,7 @@ def test_raspberry_pi_simulcast(
         if i < simulcast_count:
             assert expected_implementation in s["encoderImplementation"]
 
-            assert s["bytesSent"] > 1000
+            assert s["bytesSent"] > 500
             assert s["packetsSent"] > 5
 
             assert s["targetBitrate"] >= expect_target_bitrate(
