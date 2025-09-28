@@ -15,6 +15,8 @@
   - @voluntas @melpon
 - [UPDATE] libwebrtc のバージョンを `m140.7339.2.2` に上げる
   - @melpon
+- [ADD] Python 3.14 の対応を追加する
+  - @voluntas
 - [ADD] `raspberry-pi-os_armv8` の対応を追加する
   - `VideoCodecImplementation.RASPI_V4L2M2M` を追加
   - `Sora.create_libcamera_source()` 関数を追加
