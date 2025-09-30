@@ -253,7 +253,7 @@ jobs:
   slack_notify_failed:
     needs: [e2e_test]
     runs-on: ubuntu-24.04
-    if: failure()
+    if: failure() && inputs.from_build != true
     steps:
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
