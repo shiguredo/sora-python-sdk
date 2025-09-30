@@ -29,7 +29,7 @@ requires = ["setuptools==80.9", "wheel==0.45.1"]
 build-backend = "setuptools.build_meta"
 
 [dependency-groups]
-dev = ["nanobind==2.9.2", "setuptools==80.9.0"]
+dev = ["nanobind==2.9.2"]
 test = ["pytest", "pytest-repeat", "pytest-xdist", "numpy", "httpx", "pyjwt"]
 lint = ["ruff", "ty"]
 
