@@ -316,9 +316,7 @@ source = { editable = "." }
 [package.dev-dependencies]
 dev = [
     { name = "nanobind" },
-    { name = "ruff" },
     { name = "setuptools" },
-    { name = "ty" },
 ]
 lint = [
     { name = "ruff" },
@@ -338,9 +336,7 @@ test = [
 [package.metadata.requires-dev]
 dev = [
     { name = "nanobind", specifier = "==2.9.2" },
-    { name = "ruff" },
     { name = "setuptools", specifier = "==80.9.0" },
-    { name = "ty" },
 ]
 lint = [
     { name = "ruff" },
