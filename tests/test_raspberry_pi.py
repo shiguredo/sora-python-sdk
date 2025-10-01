@@ -221,3 +221,46 @@ def test_raspberry_pi_simulcast(
             )
             assert s["bytesSent"] == 0
             assert s["packetsSent"] <= 2
+
+
+def test_raspberry_pi_libcamera(settings):
+    video_codec_type = "H264"
+    sendonly = SoraClient(
+        settings,
+        SoraRole.SENDONLY,
+        audio=False,
+        video=True,
+        video_codec_type=video_codec_type,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type(video_codec_type),
+                    encoder=SoraVideoCodecImplementation.RASPI_V4L2M2M,
+                ),
+            ]
+        ),
+        libcamera=True,
+    )
+    sendonly.connect(fake_video=False)
+
+    time.sleep(5)
+
+    assert sendonly.connect_message is not None
+    assert sendonly.connect_message["channel_id"] == settings.channel_id
+    assert "video" in sendonly.connect_message
+    assert sendonly.connect_message["video"]["codec_type"] == video_codec_type
+
+    sendonly_stats = sendonly.get_stats()
+
+    sendonly.disconnect()
+
+    # codec が無かったら StopIteration 例外が上がる
+    codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")
+    # H.264 が採用されているかどうか確認する
+    assert codec_stats["mimeType"] == f"video/{video_codec_type}"
+
+    # outbound-rtp が無かったら StopIteration 例外が上がる
+    outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")
+    assert outbound_rtp_stats["encoderImplementation"] == "V4L2M2M H264"
+    assert outbound_rtp_stats["bytesSent"] > 0
+    assert outbound_rtp_stats["packetsSent"] > 0

@@ -29,6 +29,8 @@
 
 - [ADD] Raspberry Pi OS armv8 向けの E2E テストを追加する
   - @voluntas
+- [ADD] libcamera のテストを追加する
+  - @voluntas
 
 ## 2025.4.0
 

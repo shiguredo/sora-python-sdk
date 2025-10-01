@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - "**.md"
       - "tests/**"
+      - ".github/workflows/e2e-test.yml"
     branches-ignore:
       - "feature/e2e-test*"
     tags:
