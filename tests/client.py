@@ -20,12 +20,12 @@ from sora_sdk import (
     SoraSignalingDirection,
     SoraSignalingErrorCode,
     SoraSignalingType,
+    SoraTrackInterface,
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
     SoraVideoCodecType,
     SoraVideoFrame,
     SoraVideoSink,
-    SoraVideoSource,
     get_video_codec_capability,
 )
 
@@ -68,6 +68,8 @@ class SoraClient:
         audio_output_frequency: int = 16000,
         video_width: int = 640,
         video_height: int = 480,
+        video_frame_rate: int = 30,
+        libcamera: bool = False,
     ):
         self._signaling_urls = settings.signaling_urls
         self._role = role.value
@@ -105,6 +107,9 @@ class SoraClient:
 
         self._video_width: int = video_width
         self._video_height: int = video_height
+        self._video_frame_rate: int = video_frame_rate
+
+        self._libcamera = libcamera
 
         if settings.libwebrtc_log is not None:
             sora_sdk.enable_libwebrtc_log(settings.libwebrtc_log)
@@ -122,8 +127,15 @@ class SoraClient:
                 self._audio_channels, self._audio_sample_rate
             )
 
-        self._video_source: Optional[SoraVideoSource] = None
-        if self._video:
+        self._video_source: Optional[SoraTrackInterface] = None
+        if libcamera and self._video:
+            self._video_source = self._sora.create_libcamera_source(
+                width=self._video_width,
+                height=self._video_height,
+                fps=self._video_frame_rate,
+                native_frame_output=False,
+            )
+        elif self._video:
             self._video_source = self._sora.create_video_source()
 
         self._audio_sink: Optional[SoraAudioSink] = None
@@ -458,6 +470,9 @@ class SoraClient:
 
         self._connected.clear()
         self._disconnected.set()
+
+        if self._libcamera or self._video_source is not None:
+            self._video_source = None
 
         if self._fake_audio_thread is not None:
             self._fake_audio_thread.join(timeout=10)
