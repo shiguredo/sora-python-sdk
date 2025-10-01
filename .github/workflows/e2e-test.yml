@@ -8,16 +8,13 @@ on:
         type: boolean
         default: false
         description: "build.yml から呼び出されたかどうか"
-  # push:
-  #   branches:
-  #     - develop
-  #     - "feature/**"
-  #   paths:
-  #     - ".github/workflows/e2e-test.yml"
-  #     - "tests/**"
-  #     # C++ SDK のアップデートしたときテストするため
-  #     - "VERSION"
-  #     - "DEPS"
+  push:
+    branches:
+      - develop
+      - "feature/**"
+    paths:
+      - ".github/workflows/e2e-test.yml"
+      - "tests/**"
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
