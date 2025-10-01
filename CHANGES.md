@@ -11,10 +11,12 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを `2025.6.0-canary.2` に上げる
-  - @voluntas @melpon
+- [UPDATE] Sora C++ SDK のバージョンを `2025.6.0-canary.4` に上げる
+  - @voluntas @melpon @torikizi
 - [UPDATE] libwebrtc のバージョンを `m140.7339.2.2` に上げる
   - @melpon
+- [UPDATE] CMake のバージョンを `4.1.2` に上げる
+  - @torikizi
 - [ADD] Python 3.14 の対応を追加する
   - @voluntas
 - [ADD] `raspberry-pi-os_armv8` の対応を追加する
