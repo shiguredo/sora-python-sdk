@@ -114,9 +114,15 @@ class SoraClient:
         if settings.libwebrtc_log is not None:
             sora_sdk.enable_libwebrtc_log(settings.libwebrtc_log)
 
-        self._sora: Sora = Sora(
-            openh264=settings.openh264_path, video_codec_preference=video_codec_preference
-        )
+        # libcamera で native_frame_output=True の時は force_i420_conversion=False にする必要がある
+        if libcamera and self._video:
+            self._sora: Sora = Sora(
+                openh264=settings.openh264_path, video_codec_preference=video_codec_preference, force_i420_conversion=False
+            )
+        else:
+            self._sora: Sora = Sora(
+                openh264=settings.openh264_path, video_codec_preference=video_codec_preference
+            )
 
         self._fake_audio_thread: Optional[threading.Thread] = None
         self._fake_video_thread: Optional[threading.Thread] = None
@@ -133,7 +139,7 @@ class SoraClient:
                 width=self._video_width,
                 height=self._video_height,
                 fps=self._video_frame_rate,
-                native_frame_output=False,
+                native_frame_output=True,
             )
         elif self._video:
             self._video_source = self._sora.create_video_source()
