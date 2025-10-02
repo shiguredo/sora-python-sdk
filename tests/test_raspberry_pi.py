@@ -240,6 +240,8 @@ def test_raspberry_pi_libcamera(settings):
             ]
         ),
         libcamera=True,
+        native_frame_output=True,
+        force_i420_conversion=False,
     )
     sendonly.connect(fake_video=False)
 
