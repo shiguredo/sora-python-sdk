@@ -11,9 +11,9 @@
 
 ## develop
 
-- [UPDATE] Sora C++ SDK のバージョンを `2025.6.0-canary.4` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.6.0-canary.5` に上げる
   - @voluntas @melpon @torikizi
-- [UPDATE] libwebrtc のバージョンを `m140.7339.2.2` に上げる
+- [UPDATE] libwebrtc のバージョンを `m141.7390.2.0` に上げる
   - @melpon
 - [UPDATE] CMake のバージョンを `4.1.2` に上げる
   - @torikizi
