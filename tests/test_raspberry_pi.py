@@ -240,6 +240,7 @@ def test_raspberry_pi_libcamera(settings):
             ]
         ),
         libcamera=True,
+        libcamera_controls=[("AfMode", "Auto")],
         native_frame_output=True,
         force_i420_conversion=False,
     )
