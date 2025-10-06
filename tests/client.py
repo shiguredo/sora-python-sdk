@@ -70,6 +70,7 @@ class SoraClient:
         video_height: int = 480,
         video_frame_rate: int = 30,
         libcamera: bool = False,
+        libcamera_controls: Optional[list[tuple[str, str]]] = None,
         native_frame_output: bool = False,
         force_i420_conversion: Optional[bool] = None,
     ):
@@ -138,6 +139,7 @@ class SoraClient:
                 height=self._video_height,
                 fps=self._video_frame_rate,
                 native_frame_output=native_frame_output,
+                controls=libcamera_controls,
             )
         elif self._video:
             self._video_source = self._sora.create_video_source()
