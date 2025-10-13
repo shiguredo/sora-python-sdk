@@ -201,7 +201,6 @@ jobs:
         if: ${{ runner.environment != 'self-hosted' }}
         id: openh264
         with:
-          platform_name: ${{ matrix.platform.name }}
           openh264_version: ${{ env.OPENH264_VERSION }}
           use-cache: true
 
