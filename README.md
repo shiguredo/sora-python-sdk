@@ -25,13 +25,17 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 ## 特徴
 
+- PyPI 経由で `uv add sora-sdk` や `pip install sora-sdk` でインストールできる
+- Raspberry Pi 向けパッケージ `sora-sdk-rpi` の提供
+  - `uv add sora-sdk-rpi` でインストールできる
+- Raspberry Pi 向けに libcamera 用の `create_libcamera_source` を提供
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
 - Windows / macOS / Linux (Ubuntu / Raspberry Pi OS) プラットフォームに対応
 - [WebRTC 統計情報](https://www.w3.org/TR/webrtc-stats/) の取得が可能
 - [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/) に対応
 - 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする [DegradationPreference](https://w3c.github.io/mst-content-hint/#degradation-preference-when-encoding) に対応
-  - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
+  - `MAINTAIN_FRAMERATE` / `MAINTAIN_RESOLUTION` / `BALANCED` が指定できる
 - 発話区間の検出が可能な VAD (Voice Activity Detection) に対応
 - Intel / Apple / NVIDIA / Raspberry Pi のハードウェアデコーダー/エンコーダーに対応
   - Apple Video Toolbox (H.264 / H.265)
@@ -56,9 +60,6 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - 映像デバイス処理に [opencv-python](https://pypi.org/project/opencv-python/) などが利用できる
 - 音声認識などの入力に受信した音声を利用できる
 - 物体検出などの入力に受信した映像を利用できる
-- `uv add sora_sdk` や `pip install sora_sdk` でインストールできる
-  - Raspberry Pi 向けのパッケージも `uv add sora_sdk_rpi` でインストールできる
-- Raspberry Pi 向けに libcamera 用の `create_libcamera_source` を提供
 - [NVIDIA Jetson JetPack SDK](https://developer.nvidia.com/embedded/jetpack) に対応
 
 ## 利用イメージ
