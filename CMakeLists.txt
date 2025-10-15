@@ -9,7 +9,9 @@ cmake_policy(SET CMP0091 NEW)
 cmake_policy(SET CMP0144 NEW)
 # The FindBoost module is removed.
 cmake_policy(SET CMP0167 NEW)
-# Do not require CMAKE_CROSSCOMPILING_EMULATOR for finding Python.
+# Modules FindPython3, FindPython2 and FindPython enforce consistency of artifacts in cross-compiling mode.
+# CMake 4.1 からクロスコンパイル時に FindPython する時に CMAKE_CROSSCOMPILING_EMULATOR を要求されてしまうが、
+# クロスコンパイル時でもホストの Python を使うためエミュレータは不要となるので OLD に設定する
 cmake_policy(SET CMP0190 OLD)
 
 if (NOT CMAKE_CROSSCOMPILING)
@@ -17,14 +19,21 @@ if (NOT CMAKE_CROSSCOMPILING)
 endif()
 
 if (CMAKE_CROSSCOMPILING)
-  # クロスコンパイル時はホストの Python を使用する
-  # Python 拡張モジュールは Python C API を使うだけなので、
-  # x86_64 のヘッダーで ARM64 向けにビルドしても問題ない
+  # 一時的に CMAKE_FIND_ROOT_PATH の検索モードを NEVER に設定
+  # これでローカルの Python だけを検索するようになる。
+  # ローカルの Python は x86_64 向けのライブラリだが、
+  # クロスコンパイルすること自体に問題は無かったのでローカルの Python を使用する
+  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
+  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
+  set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
   set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
   find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
   # 検索モードを元に戻す
+  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+  set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
   set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
 endif()
 
@@ -52,16 +61,12 @@ set(SORA_DIR "" CACHE PATH "Sora のルートディレクトリ")
 list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})
 list(APPEND CMAKE_MODULE_PATH ${SORA_DIR}/share/cmake)
 
-# Boost を静的ライブラリとしてリンク
-# Config モードでも Boost_USE_STATIC_LIBS は有効
 set(Boost_USE_STATIC_LIBS ON)
 if(TARGET_OS STREQUAL "windows")
   set(Boost_USE_STATIC_RUNTIME ON)
 endif()
 
-# Boost を Config モードで検索
-# CONFIG を明示的に指定して FindBoost モジュールを使わない
-find_package(Boost REQUIRED CONFIG COMPONENTS json filesystem)
+find_package(Boost CONFIG REQUIRED COMPONENTS json filesystem)
 find_package(WebRTC REQUIRED)
 find_package(Sora REQUIRED)
 find_package(nanobind CONFIG REQUIRED)

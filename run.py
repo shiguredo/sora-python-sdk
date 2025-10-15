@@ -347,7 +347,6 @@ def _build(
                 f"-DCMAKE_SYSROOT={sysroot}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
                 f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
-                # Jetson は Python 3.10 固定なのでそのまま残す
                 f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.10'))}",
                 "-DNB_SUFFIX=.cpython-310-aarch64-linux-gnu.so",
             ]
