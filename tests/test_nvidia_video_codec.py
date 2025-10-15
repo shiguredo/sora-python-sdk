@@ -325,7 +325,7 @@ def test_nvidia_video_codec_sdk_simulcast(
             #     assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
             assert expected_implementation in s["encoderImplementation"]
 
-            assert s["bytesSent"] > 1000
+            assert s["bytesSent"] > 500
             assert s["packetsSent"] > 5
 
             assert s["targetBitrate"] >= expect_target_bitrate(

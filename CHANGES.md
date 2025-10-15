@@ -17,10 +17,14 @@
   - CMP0144: `<PackageName>_ROOT` 変数の命名規則に対応し、`BOOST_ROOT` を `Boost_ROOT` に変更
   - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2025.6.0-canary.2` に上げる
-  - @voluntas @melpon
-- [UPDATE] libwebrtc のバージョンを `m140.7339.2.2` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.6.0-canary.7` に上げる
+  - @voluntas @melpon @torikizi
+- [UPDATE] libwebrtc のバージョンを `m141.7390.2.0` に上げる
   - @melpon
+- [UPDATE] CMake のバージョンを `4.1.2` に上げる
+  - @torikizi
+- [ADD] Python 3.14 の対応を追加する
+  - @voluntas
 - [ADD] `raspberry-pi-os_armv8` の対応を追加する
   - `VideoCodecImplementation.RASPI_V4L2M2M` を追加
   - `Sora.create_libcamera_source()` 関数を追加
@@ -32,6 +36,8 @@
 ### misc
 
 - [ADD] Raspberry Pi OS armv8 向けの E2E テストを追加する
+  - @voluntas
+- [ADD] libcamera のテストを追加する
   - @voluntas
 
 ## 2025.4.0
