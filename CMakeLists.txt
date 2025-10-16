@@ -1,10 +1,18 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 4.1)
 project(sora_sdk)
 
 # Only interpret if() arguments as variables or keywords when unquoted.
 cmake_policy(SET CMP0054 NEW)
 # MSVC runtime library flags are selected by an abstraction.
 cmake_policy(SET CMP0091 NEW)
+# find_package uses upper-case <PACKAGENAME>_ROOT variables.
+cmake_policy(SET CMP0144 NEW)
+# The FindBoost module is removed.
+cmake_policy(SET CMP0167 NEW)
+# Modules FindPython3, FindPython2 and FindPython enforce consistency of artifacts in cross-compiling mode.
+# CMake 4.1 からクロスコンパイル時に FindPython する時に CMAKE_CROSSCOMPILING_EMULATOR を要求されてしまうが、
+# クロスコンパイル時でもホストの Python を使うためエミュレータは不要となるので OLD に設定する
+cmake_policy(SET CMP0190 OLD)
 
 if (NOT CMAKE_CROSSCOMPILING)
   find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
@@ -18,6 +26,7 @@ if (CMAKE_CROSSCOMPILING)
   set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
   set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE NEVER)
+  set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
   find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
@@ -25,6 +34,7 @@ if (CMAKE_CROSSCOMPILING)
   set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
   set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+  set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
 endif()
 
 message(STATUS "-- Python_FOUND: ${Python_FOUND}")
@@ -45,7 +55,7 @@ set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な�
 set(WEBRTC_INCLUDE_DIR "" CACHE PATH "WebRTC のインクルードディレクトリ")
 set(WEBRTC_LIBRARY_DIR "" CACHE PATH "WebRTC のライブラリディレクトリ")
 set(WEBRTC_LIBRARY_NAME "webrtc" CACHE STRING "WebRTC のライブラリ名")
-set(BOOST_ROOT "" CACHE PATH "Boost のルートディレクトリ")
+set(Boost_ROOT "" CACHE PATH "Boost のルートディレクトリ")
 set(SORA_DIR "" CACHE PATH "Sora のルートディレクトリ")
 
 list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})
@@ -56,7 +66,7 @@ if(TARGET_OS STREQUAL "windows")
   set(Boost_USE_STATIC_RUNTIME ON)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS json filesystem)
+find_package(Boost CONFIG REQUIRED COMPONENTS json filesystem)
 find_package(WebRTC REQUIRED)
 find_package(Sora REQUIRED)
 find_package(nanobind CONFIG REQUIRED)
