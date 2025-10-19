@@ -351,7 +351,7 @@ def test_tc_egress_bandwidth_limit(settings):
                 (
                     stat
                     for stat in stats
-                    if stat.get("type") == "outbound-rtp" and stat.get("mediaType") == "video"
+                    if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
                 ),
                 None,
             )
