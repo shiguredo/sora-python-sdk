@@ -38,8 +38,8 @@ test = [
     "numpy",
     "httpx",
     "pyjwt",
-    # "pyroute2",
 ]
+tc = ["pyroute2"]
 lint = ["ruff", "ty"]
 
 [tool.uv]
