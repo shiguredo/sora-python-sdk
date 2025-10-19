@@ -345,12 +345,17 @@ def test_tc_egress_bandwidth_limit(settings):
             print("\nステップ 4: WebRTC 統計情報を確認")
             show_webrtc_stats(sendonly)
 
-            # targetBitrate を確認
+            # targetBitrate を確認 (video のみ)
             stats = sendonly.get_stats()
             outbound_rtp = next(
-                (stat for stat in stats if stat.get("type") == "outbound-rtp"), None
+                (
+                    stat
+                    for stat in stats
+                    if stat.get("type") == "outbound-rtp" and stat.get("mediaType") == "video"
+                ),
+                None,
             )
-            assert outbound_rtp is not None, "outbound-rtp が取得できませんでした"
+            assert outbound_rtp is not None, "outbound-rtp (video) が取得できませんでした"
             assert "targetBitrate" in outbound_rtp, "targetBitrate が存在しません"
 
             target_bitrate = outbound_rtp["targetBitrate"]
