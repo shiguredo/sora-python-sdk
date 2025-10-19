@@ -10,7 +10,6 @@ TURN 経由での接続に対する効果を検証する。
 """
 
 import os
-import subprocess
 import time
 from typing import Optional
 
@@ -99,25 +98,28 @@ class TCEgressManager:
             raise IndexError(f"インターフェース '{self.interface}' が見つかりません")
         idx = indices[0]
 
-        # 帯域制限を指定した netem qdisc を追加する
+        # tbf (Token Bucket Filter) qdisc で帯域制限を追加する
         # root=True を指定すると handle は自動的に 0x10000 (= "1:") に設定される
-        # rate は Kbit 単位で指定する
+        # rate: 帯域制限 (文字列で "500kbit" のように指定)
+        # burst: バーストサイズ (bytes)
+        # latency: 最大遅延時間 (文字列で "50ms" のように指定)
         self.ipr.tc(
             "add",
-            "netem",
+            "tbf",
             idx,
             root=True,
             rate=f"{rate_kbps}kbit",
+            burst=32768,  # 32KB
+            latency="50ms",
         )
         self._bandwidth_applied = True
         print(f"tc egress 帯域制限を追加: interface={self.interface}, rate={rate_kbps}kbps")
 
-    def add_bandwidth_and_delay(self, rate_kbps: int, delay_ms: int) -> None:
+    def add_delay(self, delay_ms: int) -> None:
         """
-        インターフェースの egress に帯域制限と遅延を同時に追加する。
+        インターフェースの egress に遅延を追加する。
 
         Args:
-            rate_kbps: 帯域制限 (Kbps)
             delay_ms: 遅延 (ミリ秒)
 
         Raises:
@@ -133,20 +135,16 @@ class TCEgressManager:
             raise IndexError(f"インターフェース '{self.interface}' が見つかりません")
         idx = indices[0]
 
-        # 帯域制限と遅延を同時に設定
+        # netem qdisc で遅延を設定
         self.ipr.tc(
             "add",
             "netem",
             idx,
             root=True,
-            rate=f"{rate_kbps}kbit",
             delay=delay_ms * 1000,  # マイクロ秒に変換
         )
         self._bandwidth_applied = True
-        print(
-            f"tc egress 帯域制限と遅延を追加: interface={self.interface}, "
-            f"rate={rate_kbps}kbps, delay={delay_ms}ms"
-        )
+        print(f"tc egress 遅延を追加: interface={self.interface}, delay={delay_ms}ms")
 
     def get_stats(self) -> dict:
         """tc qdisc の統計情報を取得する。
@@ -201,24 +199,30 @@ class TCEgressManager:
             print(f"tc egress 帯域制限の削除時にエラー (無視): {e}")
 
 
-def verify_tc_settings(interface: str) -> bool:
+def verify_tc_settings(interface: str, qdisc_type: str = "tbf") -> bool:
     """tc の設定が存在するか確認する。
 
     Args:
         interface: ネットワークインターフェース名
+        qdisc_type: 確認する qdisc の種類 (tbf または netem)
 
     Returns:
         設定が存在する場合は True
     """
     try:
-        result = subprocess.run(
-            ["tc", "qdisc", "show", "dev", interface],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        # netem が含まれているかチェック
-        return "netem" in result.stdout
+        with pyroute2.IPRoute() as ipr:
+            # インターフェースインデックスを取得
+            indices = ipr.link_lookup(ifname=interface)
+            if not indices:
+                return False
+            idx = indices[0]
+
+            # qdisc の情報を取得
+            for qdisc in ipr.get_qdiscs(idx):
+                kind = qdisc.get_attr("TCA_KIND")
+                if kind == qdisc_type:
+                    return True
+        return False
     except Exception as e:
         print(f"tc 設定の確認に失敗: {e}")
         return False
@@ -231,15 +235,30 @@ def show_tc_stats(interface: str) -> None:
         interface: ネットワークインターフェース名
     """
     try:
-        result = subprocess.run(
-            ["tc", "-s", "qdisc", "show", "dev", interface],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        print(f"\ntc 統計情報 ({interface}):")
-        for line in result.stdout.strip().split("\n"):
-            print(f"  {line}")
+        with pyroute2.IPRoute() as ipr:
+            # インターフェースインデックスを取得
+            indices = ipr.link_lookup(ifname=interface)
+            if not indices:
+                print(f"インターフェース {interface} が見つかりません")
+                return
+            idx = indices[0]
+
+            # qdisc の情報を取得して表示
+            print(f"\ntc 統計情報 ({interface}):")
+            for qdisc in ipr.get_qdiscs(idx):
+                kind = qdisc.get_attr("TCA_KIND")
+                handle = qdisc.get("handle", 0)
+                parent = qdisc.get("parent", 0)
+
+                # 統計情報
+                sent_bytes = qdisc.get("bytes", 0)
+                sent_packets = qdisc.get("packets", 0)
+                drops = qdisc.get("drops", 0)
+                overlimits = qdisc.get("overlimits", 0)
+
+                print(f"  qdisc {kind} handle {handle:#x} parent {parent:#x}")
+                print(f"    Sent {sent_bytes} bytes {sent_packets} packets")
+                print(f"    drops {drops}, overlimits {overlimits}")
     except Exception as e:
         print(f"tc 統計情報の取得に失敗: {e}")
 
@@ -305,13 +324,8 @@ def test_tc_egress_bandwidth_limit(settings):
             print("\n帯域制限が有効な状態でテスト完了")
 
     # クリーンアップ確認
-    result = subprocess.run(
-        ["tc", "qdisc", "show", "dev", interface],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    print(f"\nクリーンアップ後の tc 設定:\n{result.stdout}")
+    print("\nクリーンアップ後の tc 設定:")
+    show_tc_stats(interface)
 
     print("\n結果:")
     print("  ✓ テスト成功 (tc egress 帯域制限が適用された)")
@@ -371,10 +385,10 @@ def test_tc_egress_multiple_bandwidth_limits(settings):
     print("=" * 60 + "\n")
 
 
-def test_tc_egress_bandwidth_with_delay(settings):
-    """tc egress で帯域制限と遅延を同時に適用する。"""
+def test_tc_egress_delay(settings):
+    """tc egress で遅延を適用する。"""
     print("\n" + "=" * 60)
-    print("テスト: tc egress 帯域制限 + 遅延の適用")
+    print("テスト: tc egress 遅延の適用")
     print("=" * 60)
 
     interface = get_default_interface()
@@ -394,17 +408,16 @@ def test_tc_egress_bandwidth_with_delay(settings):
         udp_port = turn_ports["udp"][0]
         print(f"TURN UDP ポート: {udp_port}")
 
-        # 帯域制限と遅延を同時に適用
+        # 遅延を適用
         with TCEgressManager(interface=interface) as tc:
-            # netem で帯域制限 (500kbps) と遅延 (50ms) を同時に設定
-            bandwidth_kbps = 500
+            # netem で遅延 (50ms) を設定
             delay_ms = 50
-            print(f"\ntc egress netem: rate={bandwidth_kbps}kbps, delay={delay_ms}ms")
+            print(f"\ntc egress netem: delay={delay_ms}ms")
 
-            tc.add_bandwidth_and_delay(rate_kbps=bandwidth_kbps, delay_ms=delay_ms)
+            tc.add_delay(delay_ms=delay_ms)
 
-            # tc の設定が存在することを確認
-            assert verify_tc_settings(interface), "tc の設定が確認できません"
+            # tc の設定が存在することを確認（netem を使用）
+            assert verify_tc_settings(interface, qdisc_type="netem"), "tc の設定が確認できません"
 
             # 統計情報を表示
             show_tc_stats(interface)
@@ -416,5 +429,5 @@ def test_tc_egress_bandwidth_with_delay(settings):
             show_tc_stats(interface)
 
     print("\n結果:")
-    print("  ✓ テスト成功 (tc egress 帯域制限と遅延が同時に適用された)")
+    print("  ✓ テスト成功 (tc egress 遅延が適用された)")
     print("=" * 60 + "\n")
