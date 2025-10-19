@@ -145,7 +145,7 @@ jobs:
           # tc の設定には root 権限が必要なため sudo で実行
           # -E オプションで環境変数を継承
           # $(which uv) で uv のフルパスを指定（sudo 実行時に PATH が変わるため）
-          sudo -E $(which uv) run pytest tests/test_tc.py -v --durations=0
+          sudo -E $(which uv) run pytest tests/test_tc.py -v --durations=0 -s
         env:
           UV_NO_SYNC: 1
           TC: 1
