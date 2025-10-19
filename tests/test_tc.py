@@ -330,7 +330,7 @@ def test_tc_egress_bandwidth_limit(settings):
 
             # 接続を維持して帯域制限が有効な状態でテスト
             print("\nステップ 3: 帯域制限が有効な状態で接続を維持")
-            time.sleep(5)
+            time.sleep(10)
 
             # tc の統計情報を表示 (接続後)
             show_tc_stats(interface)
@@ -359,9 +359,7 @@ def test_tc_egress_bandwidth_limit(settings):
             assert "targetBitrate" in outbound_rtp, "targetBitrate が存在しません"
 
             target_bitrate = outbound_rtp["targetBitrate"]
-            print(
-                f"\n確認: targetBitrate = {target_bitrate} bps ({target_bitrate / 1000} kbps)"
-            )
+            print(f"\n確認: targetBitrate = {target_bitrate} bps ({target_bitrate / 1000} kbps)")
             print(f"期待値: {bandwidth_kbps} kbps 以下")
             # 帯域制限が効いているか確認（多少のオーバーヘッドを考慮）
             assert target_bitrate <= bandwidth_kbps * 1000 * 1.2, (
@@ -377,4 +375,3 @@ def test_tc_egress_bandwidth_limit(settings):
     print("\n結果:")
     print("  ✓ テスト成功 (tc egress 帯域制限が適用された)")
     print("=" * 60 + "\n")
-
