@@ -13,9 +13,11 @@ import os
 import time
 from typing import Optional
 
-import pyroute2
+try:
+    import pyroute2
+except ImportError:
+    pass
 import pytest
-
 from client import SoraClient, SoraRole
 
 # TC=1 環境変数が設定されている場合のみテストを実行
@@ -317,7 +319,7 @@ def test_tc_egress_bandwidth_limit(settings):
 
             # 統計情報を取得
             stats = tc.get_stats()
-            print(f"\ntc 統計情報 (IPRoute):")
+            print("\ntc 統計情報 (IPRoute):")
             for key, value in stats.items():
                 print(f"  {key}: {value}")
 
@@ -354,7 +356,7 @@ def test_tc_egress_multiple_bandwidth_limits(settings):
         # turn_ports プロパティから TURN ポートを取得
         turn_ports = client.turn_ports
 
-        print(f"\n取得した TURN ポート:")
+        print("\n取得した TURN ポート:")
         print(f"  UDP: {turn_ports['udp']}")
         print(f"  TCP: {turn_ports['tcp']}")
         print(f"  TLS: {turn_ports['tls']}")
@@ -376,7 +378,7 @@ def test_tc_egress_multiple_bandwidth_limits(settings):
 
                 # 統計情報を再度表示
                 stats = tc.get_stats()
-                print(f"tc 統計情報 (IPRoute):")
+                print("tc 統計情報 (IPRoute):")
                 for key, value in stats.items():
                     print(f"  {key}: {value}")
 
