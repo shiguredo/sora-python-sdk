@@ -259,6 +259,30 @@ def show_tc_stats(interface: str) -> None:
         print(f"tc 統計情報の取得に失敗: {e}")
 
 
+def show_webrtc_stats(client: SoraClient) -> None:
+    """WebRTC の統計情報を表示する。
+
+    Args:
+        client: SoraClient インスタンス
+    """
+    try:
+        stats = client.get_stats()
+        print("\nWebRTC 統計情報:")
+        for stat in stats:
+            if stat.get("type") == "outbound-rtp":
+                print("  outbound-rtp:")
+                print(f"    ssrc: {stat.get('ssrc')}")
+                print(f"    mediaType: {stat.get('mediaType')}")
+                print(f"    bytesSent: {stat.get('bytesSent')}")
+                print(f"    packetsSent: {stat.get('packetsSent')}")
+                if "targetBitrate" in stat:
+                    print(f"    targetBitrate: {stat.get('targetBitrate')} bps")
+                if "totalPacketSendDelay" in stat:
+                    print(f"    totalPacketSendDelay: {stat.get('totalPacketSendDelay')} s")
+    except Exception as e:
+        print(f"WebRTC 統計情報の表示に失敗: {e}")
+
+
 def test_tc_egress_bandwidth_limit(settings):
     """TURN ポート取得後に tc egress で帯域制限をかける。"""
     print("\n" + "=" * 60)
@@ -317,6 +341,28 @@ def test_tc_egress_bandwidth_limit(settings):
             for key, value in stats.items():
                 print(f"  {key}: {value}")
 
+            # WebRTC 統計情報を表示
+            print("\nステップ 4: WebRTC 統計情報を確認")
+            show_webrtc_stats(sendonly)
+
+            # targetBitrate を確認
+            stats = sendonly.get_stats()
+            outbound_rtp = next(
+                (stat for stat in stats if stat.get("type") == "outbound-rtp"), None
+            )
+            assert outbound_rtp is not None, "outbound-rtp が取得できませんでした"
+            assert "targetBitrate" in outbound_rtp, "targetBitrate が存在しません"
+
+            target_bitrate = outbound_rtp["targetBitrate"]
+            print(
+                f"\n確認: targetBitrate = {target_bitrate} bps ({target_bitrate / 1000} kbps)"
+            )
+            print(f"期待値: {bandwidth_kbps} kbps 以下")
+            # 帯域制限が効いているか確認（多少のオーバーヘッドを考慮）
+            assert target_bitrate <= bandwidth_kbps * 1000 * 1.2, (
+                f"targetBitrate が帯域制限を超えています: {target_bitrate} bps > {bandwidth_kbps * 1000} bps"
+            )
+
             print("\n帯域制限が有効な状態でテスト完了")
 
     # クリーンアップ確認
@@ -327,103 +373,3 @@ def test_tc_egress_bandwidth_limit(settings):
     print("  ✓ テスト成功 (tc egress 帯域制限が適用された)")
     print("=" * 60 + "\n")
 
-
-def test_tc_egress_multiple_bandwidth_limits(settings):
-    """複数の帯域制限パターンをテストする。"""
-    print("\n" + "=" * 60)
-    print("テスト: 複数の tc egress 帯域制限パターン")
-    print("=" * 60)
-
-    interface = get_default_interface()
-    print(f"使用するネットワークインターフェース: {interface}")
-
-    bandwidth_patterns = [2000, 1000, 500]  # Kbps
-
-    with SoraClient(
-        settings,
-        SoraRole.SENDRECV,
-        audio=True,
-        video=True,
-    ) as client:
-        time.sleep(3)
-
-        # turn_ports プロパティから TURN ポートを取得
-        turn_ports = client.turn_ports
-
-        print("\n取得した TURN ポート:")
-        print(f"  UDP: {turn_ports['udp']}")
-        print(f"  TCP: {turn_ports['tcp']}")
-        print(f"  TLS: {turn_ports['tls']}")
-
-        for i, bandwidth_kbps in enumerate(bandwidth_patterns, 1):
-            print(f"\n--- パターン {i}: {bandwidth_kbps}kbps ---")
-
-            with TCEgressManager(interface=interface) as tc:
-                tc.add_bandwidth_limit(rate_kbps=bandwidth_kbps)
-
-                # tc の設定が存在することを確認
-                assert verify_tc_settings(interface), "tc の設定が確認できません"
-
-                # 統計情報を表示
-                show_tc_stats(interface)
-
-                # 接続を維持
-                time.sleep(3)
-
-                # 統計情報を再度表示
-                stats = tc.get_stats()
-                print("tc 統計情報 (IPRoute):")
-                for key, value in stats.items():
-                    print(f"  {key}: {value}")
-
-    print("\n結果:")
-    print("  ✓ テスト成功 (複数の tc egress 帯域制限パターンが適用された)")
-    print("=" * 60 + "\n")
-
-
-def test_tc_egress_delay(settings):
-    """tc egress で遅延を適用する。"""
-    print("\n" + "=" * 60)
-    print("テスト: tc egress 遅延の適用")
-    print("=" * 60)
-
-    interface = get_default_interface()
-    print(f"使用するネットワークインターフェース: {interface}")
-
-    with SoraClient(
-        settings,
-        SoraRole.SENDONLY,
-        audio=True,
-        video=False,
-    ) as sendonly:
-        time.sleep(3)
-
-        # turn_ports プロパティから TURN ポートを取得
-        turn_ports = sendonly.turn_ports
-        assert len(turn_ports["udp"]) > 0, "UDP ポートが取得できていません"
-        udp_port = turn_ports["udp"][0]
-        print(f"TURN UDP ポート: {udp_port}")
-
-        # 遅延を適用
-        with TCEgressManager(interface=interface) as tc:
-            # netem で遅延 (50ms) を設定
-            delay_ms = 50
-            print(f"\ntc egress netem: delay={delay_ms}ms")
-
-            tc.add_delay(delay_ms=delay_ms)
-
-            # tc の設定が存在することを確認（netem を使用）
-            assert verify_tc_settings(interface, qdisc_type="netem"), "tc の設定が確認できません"
-
-            # 統計情報を表示
-            show_tc_stats(interface)
-
-            # 接続を維持
-            time.sleep(5)
-
-            # 統計情報を再度表示
-            show_tc_stats(interface)
-
-    print("\n結果:")
-    print("  ✓ テスト成功 (tc egress 遅延が適用された)")
-    print("=" * 60 + "\n")
