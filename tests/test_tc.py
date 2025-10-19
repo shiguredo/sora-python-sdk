@@ -3,20 +3,12 @@
 このテストは pyroute2 を使用して Linux の tc (traffic control) により
 ローカルインターフェースの egress (送信方向) に帯域制限を適用し、
 TURN 経由での接続に対する効果を検証する。
-
-注意: このテストはグローバルにある Sora サーバーへ接続するため、
-      tc egress (送信方向) のみを制御できる。
-      tc ingress (受信方向) はリモートサーバー側のため制御不可。
 """
 
 import os
 import time
 from typing import Optional
 
-try:
-    import pyroute2
-except ImportError:
-    pass
 import pytest
 from client import SoraClient, SoraRole
 
@@ -25,6 +17,8 @@ pytestmark = pytest.mark.skipif(
     os.getenv("TC") != "1",
     reason="TC=1 環境変数が必要",
 )
+
+pyroute2 = pytest.importorskip("pyroute2")
 
 
 def get_default_interface() -> str:
