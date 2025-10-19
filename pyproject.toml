@@ -38,7 +38,7 @@ test = [
     "numpy",
     "httpx",
     "pyjwt",
-    "pyroute2",
+    # "pyroute2",
 ]
 lint = ["ruff", "ty"]
 

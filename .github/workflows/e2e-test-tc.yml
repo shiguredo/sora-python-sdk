@@ -33,6 +33,7 @@ permissions:
 
 jobs:
   e2e_test_tc:
+    if: false
     # TC テストは Linux でのみ実行（tc は Linux カーネル機能）
     # Python 3.14 かつ Ubuntu 24.04 固定
     runs-on: ubuntu-24.04

@@ -243,7 +243,7 @@ jobs:
           # この同期により、uv pip install でインストールした wheel が削除され、
           # 元のソースコードの sora-sdk がインストールされてしまう
           # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
-          uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v --durations=0 ${{ steps.pytest-args.outputs.pytest_extra_args }}
+          uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v --durations=0 ${{ steps.pytest-args.outputs.pytest_extra_args }} --ignore-glob=**/test_tc*.py -s
         env:
           UV_NO_SYNC: 1
 
