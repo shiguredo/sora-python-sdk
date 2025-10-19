@@ -259,20 +259,19 @@ def show_tc_stats(interface: str) -> None:
         print(f"tc 統計情報の取得に失敗: {e}")
 
 
-def show_webrtc_stats(client: SoraClient) -> None:
+def show_webrtc_stats(stats: list) -> None:
     """WebRTC の統計情報を表示する。
 
     Args:
-        client: SoraClient インスタンス
+        stats: get_stats() で取得した統計情報のリスト
     """
     try:
-        stats = client.get_stats()
         print("\nWebRTC 統計情報:")
         for stat in stats:
             if stat.get("type") == "outbound-rtp":
                 print("  outbound-rtp:")
                 print(f"    ssrc: {stat.get('ssrc')}")
-                print(f"    mediaType: {stat.get('mediaType')}")
+                print(f"    kind: {stat.get('kind')}")
                 print(f"    bytesSent: {stat.get('bytesSent')}")
                 print(f"    packetsSent: {stat.get('packetsSent')}")
                 if "targetBitrate" in stat:
@@ -314,6 +313,33 @@ def test_tc_egress_bandwidth_limit(settings):
         udp_port = turn_ports["udp"][0]
         print(f"TURN UDP ポート: {udp_port}")
 
+        # 制限前の WebRTC 統計情報を確認
+        print("\n制限前の WebRTC 統計情報:")
+        time.sleep(3)
+        stats_before = sendonly.get_stats()
+        show_webrtc_stats(stats_before)
+
+        # 制限前の targetBitrate を確認 (video のみ)
+        outbound_rtp_before = next(
+            (
+                stat
+                for stat in stats_before
+                if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
+            ),
+            None,
+        )
+        assert outbound_rtp_before is not None, "outbound-rtp (video) が取得できませんでした"
+        assert "targetBitrate" in outbound_rtp_before, "targetBitrate が存在しません"
+
+        target_bitrate_before = outbound_rtp_before["targetBitrate"]
+        print(
+            f"\n制限前の targetBitrate: {target_bitrate_before} bps ({target_bitrate_before / 1000} kbps)"
+        )
+        # video_bit_rate=1000 を指定しているので、500kbps 以上あることを確認
+        assert target_bitrate_before >= 500 * 1000, (
+            f"制限前の targetBitrate が想定より低い: {target_bitrate_before} bps < 500000 bps"
+        )
+
         # tc egress で帯域制限を設定
         with TCEgressManager(interface=interface) as tc:
             # 帯域制限を設定 (500kbps)
@@ -342,11 +368,12 @@ def test_tc_egress_bandwidth_limit(settings):
                 print(f"  {key}: {value}")
 
             # WebRTC 統計情報を表示
-            print("\nステップ 4: WebRTC 統計情報を確認")
-            show_webrtc_stats(sendonly)
+            print("\nステップ 4: 制限後の WebRTC 統計情報を確認")
+            stats_after = sendonly.get_stats()
+            show_webrtc_stats(stats_after)
 
             # targetBitrate を確認 (video のみ)
-            stats = sendonly.get_stats()
+            stats = stats_after
             outbound_rtp = next(
                 (
                     stat
