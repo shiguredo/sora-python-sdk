@@ -116,7 +116,7 @@ jobs:
 
       # Tailscale のセットアップ（self-hosted runner 以外）
       - if: ${{ runner.environment != 'self-hosted' }}
-        uses: tailscale/github-action@v3
+        uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
