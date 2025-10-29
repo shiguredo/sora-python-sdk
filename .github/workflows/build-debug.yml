@@ -267,7 +267,7 @@ jobs:
           mkdir -p ../versions
           cp _install/${{ matrix.platform.name }}/llvm.version ../versions
       - name: Upload sora_sdk_ext.so
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.python.soname }}
           path: sora-python-sdk/src/sora_sdk/${{ matrix.python.soname }}
