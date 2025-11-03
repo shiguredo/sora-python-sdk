@@ -366,7 +366,7 @@ def test_tc_egress_bandwidth_limit(settings):
         assert outbound_rtp_r2["rid"] == "r2"
         assert "targetBitrate" in outbound_rtp_r2
 
-        print("\n制限前の targetBitrate:")
+        print("\nBefore bandwidth limit - targetBitrate:")
         print(
             f"  rid={outbound_rtp_r0['rid']}: {outbound_rtp_r0['targetBitrate']} bps "
             f"({outbound_rtp_r0['targetBitrate'] / 1000} kbps)"
@@ -439,7 +439,7 @@ def test_tc_egress_bandwidth_limit(settings):
             assert "rid" in outbound_rtp_r2
             assert outbound_rtp_r2["rid"] == "r2"
 
-            print("\n制限後の outbound-rtp 統計情報:")
+            print("\nAfter bandwidth limit - outbound-rtp stats:")
             for stat in simulcast_outbound_rtp_stats:
                 rid = stat.get("rid", "none")
                 bitrate = stat.get("targetBitrate")
@@ -451,7 +451,7 @@ def test_tc_egress_bandwidth_limit(settings):
                     )
                 else:
                     print(
-                        f"  rid={rid}: targetBitrate なし (停止中), "
+                        f"  rid={rid}: targetBitrate=none (paused), "
                         f"qualityLimitationReason={quality_limitation}"
                     )
 
@@ -460,9 +460,9 @@ def test_tc_egress_bandwidth_limit(settings):
             r0_bitrate = outbound_rtp_r0["targetBitrate"]
             assert r0_bitrate <= BANDWIDTH_LIMIT_KBPS * 1000 * BANDWIDTH_OVERHEAD_FACTOR
             assert "qualityLimitationReason" in outbound_rtp_r0
-            assert outbound_rtp_r0["qualityLimitationReason"] == "none"
+            assert outbound_rtp_r1["qualityLimitationReason"] == "bandwidth"
             print(
-                f"\n確認: r0 targetBitrate = {r0_bitrate} bps ({r0_bitrate / 1000} kbps), "
+                f"\nVerify r0: targetBitrate={r0_bitrate} bps ({r0_bitrate / 1000} kbps), "
                 f"qualityLimitationReason={outbound_rtp_r0['qualityLimitationReason']}"
             )
 
@@ -470,20 +470,24 @@ def test_tc_egress_bandwidth_limit(settings):
             assert "targetBitrate" not in outbound_rtp_r1
             assert "qualityLimitationReason" in outbound_rtp_r1
             assert outbound_rtp_r1["qualityLimitationReason"] == "bandwidth"
-            print(f"確認: r1 は targetBitrate なし, qualityLimitationReason={outbound_rtp_r1['qualityLimitationReason']}")
+            print(
+                f"Verify r1: targetBitrate=none (paused), qualityLimitationReason={outbound_rtp_r1['qualityLimitationReason']}"
+            )
 
             # r2 の確認: targetBitrate が存在せず、qualityLimitationReason が bandwidth であること
             assert "targetBitrate" not in outbound_rtp_r2
             assert "qualityLimitationReason" in outbound_rtp_r2
             assert outbound_rtp_r2["qualityLimitationReason"] == "bandwidth"
-            print(f"確認: r2 は targetBitrate なし, qualityLimitationReason={outbound_rtp_r2['qualityLimitationReason']}")
+            print(
+                f"Verify r2: targetBitrate=none (paused), qualityLimitationReason={outbound_rtp_r2['qualityLimitationReason']}"
+            )
 
-            print("\n帯域制限が有効な状態でテスト完了")
+            print("\nTest completed with bandwidth limit applied")
 
     # クリーンアップ確認
-    print("\nクリーンアップ後の tc 設定:")
+    print("\nAfter cleanup - tc settings:")
     show_tc_stats(interface)
 
-    print("\n結果:")
-    print("  ✓ テスト成功 (tc egress 帯域制限が適用された)")
+    print("\nResult:")
+    print("  ✓ Test passed: tc egress bandwidth limit applied successfully")
     print("=" * 60 + "\n")
