@@ -287,7 +287,7 @@ def show_webrtc_stats(stats: list) -> None:
 def test_tc_egress_bandwidth_limit(settings):
     """TURN ポート取得後に tc egress で帯域制限をかける。"""
     print("\n" + "=" * 60)
-    print("テスト: tc egress 帯域制限 (500kbps) の適用")
+    print("テスト: tc egress 帯域制限 (250kbps) の適用")
     print("=" * 60)
 
     interface = get_default_interface()
@@ -296,11 +296,11 @@ def test_tc_egress_bandwidth_limit(settings):
     with SoraClient(
         settings,
         SoraRole.SENDONLY,
-        audio=True,
+        audio=False,
         video=True,
         video_bit_rate=1000,
     ) as sendonly:
-        time.sleep(3)
+        time.sleep(10)
 
         # offer_message が受信されていることを確認
         assert sendonly.offer_message is not None
@@ -338,14 +338,14 @@ def test_tc_egress_bandwidth_limit(settings):
             f"\n制限前の targetBitrate: {target_bitrate_before} bps ({target_bitrate_before / 1000} kbps)"
         )
         # video_bit_rate=1000 を指定しているので、500kbps 以上あることを確認
-        assert target_bitrate_before >= 500 * 1000, (
+        assert target_bitrate_before >= 750 * 1000, (
             f"制限前の targetBitrate が想定より低い: {target_bitrate_before} bps < 500000 bps"
         )
 
         # tc egress で帯域制限を設定
         with TCEgressManager(interface=interface) as tc:
-            # 帯域制限を設定 (500kbps)
-            bandwidth_kbps = 500
+            bandwidth_kbps = 250
+            # 帯域制限を設定
             print(f"\nステップ 1: tc egress 帯域制限 {bandwidth_kbps}kbps を適用")
             tc.add_bandwidth_limit(rate_kbps=bandwidth_kbps)
 
