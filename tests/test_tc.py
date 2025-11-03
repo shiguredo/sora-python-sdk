@@ -112,7 +112,8 @@ class TCEgressManager:
             idx,
             root=True,
             rate=f"{rate_kbps}kbit",
-            burst=32768,  # 32KB
+            # 32KB
+            burst=32768,
             latency="50ms",
         )
         self._bandwidth_applied = True
@@ -276,9 +277,13 @@ def show_webrtc_stats(stats: list) -> None:
         print("\nWebRTC 統計情報:")
         for stat in stats:
             if stat.get("type") == "outbound-rtp":
-                print("  outbound-rtp:")
+                rid = stat.get("rid", "")
+                rid_label = f" (rid={rid})" if rid else ""
+                print(f"  outbound-rtp{rid_label}:")
                 print(f"    ssrc: {stat.get('ssrc')}")
                 print(f"    kind: {stat.get('kind')}")
+                if rid:
+                    print(f"    rid: {rid}")
                 print(f"    bytesSent: {stat.get('bytesSent')}")
                 print(f"    packetsSent: {stat.get('packetsSent')}")
                 if "targetBitrate" in stat:
@@ -324,28 +329,40 @@ def test_tc_egress_bandwidth_limit(settings):
         # 制限前の WebRTC 統計情報を確認
         print("\n制限前の WebRTC 統計情報:")
         time.sleep(3)
-        stats_before = sendonly.get_stats()
-        show_webrtc_stats(stats_before)
+        stats = sendonly.get_stats()
+        show_webrtc_stats(stats)
 
-        # 制限前の targetBitrate を確認 (video のみ)
-        outbound_rtp_before = next(
-            (
-                stat
-                for stat in stats_before
-                if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
-            ),
-            None,
+        # 制限前の targetBitrate を確認 (video の全ての outbound-rtp を取得)
+        simulcast_outbound_rtp_stats = [
+            stat
+            for stat in stats
+            if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
+        ]
+        assert len(simulcast_outbound_rtp_stats) > 0, "outbound-rtp (video) が取得できませんでした"
+
+        # rid でソート (r0, r1, r2 の順)
+        simulcast_outbound_rtp_stats.sort(key=lambda x: x.get("rid", ""))
+
+        # simulcast が有効な場合は 3 つのストリーム (r0, r1, r2) が存在するはず
+        assert len(simulcast_outbound_rtp_stats) == 3, (
+            f"simulcast のストリーム数が不正: {len(simulcast_outbound_rtp_stats)} (期待値: 3)"
         )
-        assert outbound_rtp_before is not None, "outbound-rtp (video) が取得できませんでした"
-        assert "targetBitrate" in outbound_rtp_before, "targetBitrate が存在しません"
 
-        target_bitrate_before = outbound_rtp_before["targetBitrate"]
+        print("\n制限前の targetBitrate:")
         print(
-            f"\n制限前の targetBitrate: {target_bitrate_before} bps ({target_bitrate_before / 1000} kbps)"
+            f"  rid={simulcast_outbound_rtp_stats[0].get('rid', 'none')}: {simulcast_outbound_rtp_stats[0]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[0]['targetBitrate'] / 1000} kbps)"
         )
-        # video_bit_rate を指定しているので、MIN_BITRATE_BEFORE_LIMIT_KBPS 以上あることを確認
-        assert target_bitrate_before >= MIN_BITRATE_BEFORE_LIMIT_KBPS * 1000, (
-            f"制限前の targetBitrate が想定より低い: {target_bitrate_before} bps < {MIN_BITRATE_BEFORE_LIMIT_KBPS * 1000} bps"
+        print(
+            f"  rid={simulcast_outbound_rtp_stats[1].get('rid', 'none')}: {simulcast_outbound_rtp_stats[1]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[1]['targetBitrate'] / 1000} kbps)"
+        )
+        print(
+            f"  rid={simulcast_outbound_rtp_stats[2].get('rid', 'none')}: {simulcast_outbound_rtp_stats[2]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[2]['targetBitrate'] / 1000} kbps)"
+        )
+
+        # r2 (最高画質) のビットレートが MIN_BITRATE_BEFORE_LIMIT_KBPS 以上あることを確認
+        r2_bitrate = simulcast_outbound_rtp_stats[2]["targetBitrate"]
+        assert r2_bitrate >= MIN_BITRATE_BEFORE_LIMIT_KBPS * 1000, (
+            f"制限前の r2 targetBitrate が想定より低い: {r2_bitrate} bps < {MIN_BITRATE_BEFORE_LIMIT_KBPS * 1000} bps"
         )
 
         # tc egress で帯域制限を設定
@@ -376,28 +393,52 @@ def test_tc_egress_bandwidth_limit(settings):
 
             # WebRTC 統計情報を表示
             print("\nステップ 4: 制限後の WebRTC 統計情報を確認")
-            stats_after = sendonly.get_stats()
-            show_webrtc_stats(stats_after)
+            stats = sendonly.get_stats()
+            show_webrtc_stats(stats)
 
-            # targetBitrate を確認 (video のみ)
-            stats = stats_after
-            outbound_rtp = next(
-                (
-                    stat
-                    for stat in stats
-                    if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
-                ),
-                None,
+            # targetBitrate を確認 (video の全ての outbound-rtp を取得)
+            simulcast_outbound_rtp_stats = [
+                stat
+                for stat in stats
+                if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
+            ]
+            assert len(simulcast_outbound_rtp_stats) > 0, (
+                "outbound-rtp (video) が取得できませんでした"
             )
-            assert outbound_rtp is not None, "outbound-rtp (video) が取得できませんでした"
-            assert "targetBitrate" in outbound_rtp, "targetBitrate が存在しません"
 
-            target_bitrate = outbound_rtp["targetBitrate"]
-            print(f"\n確認: targetBitrate = {target_bitrate} bps ({target_bitrate / 1000} kbps)")
+            # rid でソート (r0, r1, r2 の順)
+            simulcast_outbound_rtp_stats.sort(key=lambda x: x.get("rid", ""))
+
+            # simulcast が有効な場合は 3 つのストリーム (r0, r1, r2) が存在するはず
+            assert len(simulcast_outbound_rtp_stats) == 3, (
+                f"simulcast のストリーム数が不正: {len(simulcast_outbound_rtp_stats)} (期待値: 3)"
+            )
+
+            print("\n制限後の targetBitrate:")
+            print(
+                f"  rid={simulcast_outbound_rtp_stats[0].get('rid', 'none')}: {simulcast_outbound_rtp_stats[0]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[0]['targetBitrate'] / 1000} kbps)"
+            )
+            print(
+                f"  rid={simulcast_outbound_rtp_stats[1].get('rid', 'none')}: {simulcast_outbound_rtp_stats[1]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[1]['targetBitrate'] / 1000} kbps)"
+            )
+            print(
+                f"  rid={simulcast_outbound_rtp_stats[2].get('rid', 'none')}: {simulcast_outbound_rtp_stats[2]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[2]['targetBitrate'] / 1000} kbps)"
+            )
+
+            # 全てのストリームの targetBitrate の合計を確認
+            total_target_bitrate = (
+                simulcast_outbound_rtp_stats[0]["targetBitrate"]
+                + simulcast_outbound_rtp_stats[1]["targetBitrate"]
+                + simulcast_outbound_rtp_stats[2]["targetBitrate"]
+            )
+            print(
+                f"\n確認: 合計 targetBitrate = {total_target_bitrate} bps ({total_target_bitrate / 1000} kbps)"
+            )
             print(f"期待値: {BANDWIDTH_LIMIT_KBPS} kbps 以下")
+
             # 帯域制限が効いているか確認（多少のオーバーヘッドを考慮）
-            assert target_bitrate <= BANDWIDTH_LIMIT_KBPS * 1000 * 1.2, (
-                f"targetBitrate が帯域制限を超えています: {target_bitrate} bps > {BANDWIDTH_LIMIT_KBPS * 1000} bps"
+            assert total_target_bitrate <= BANDWIDTH_LIMIT_KBPS * 1000 * 1.2, (
+                f"合計 targetBitrate が帯域制限を超えています: {total_target_bitrate} bps > {BANDWIDTH_LIMIT_KBPS * 1000} bps"
             )
 
             print("\n帯域制限が有効な状態でテスト完了")
