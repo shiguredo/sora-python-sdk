@@ -6,18 +6,20 @@ TURN 経由での接続に対する効果を検証する。
 """
 
 import os
+import sys
 import time
 from typing import Optional
 
 import pytest
 from client import SoraClient, SoraRole
 
-# TC=1 環境変数が設定されている場合のみテストを実行
+# TC=1 環境変数が設定されており、かつ Linux 環境の場合のみテストを実行
 pytestmark = pytest.mark.skipif(
-    os.getenv("TC") != "1",
-    reason="TC=1 環境変数が必要",
+    os.getenv("TC") != "1" or sys.platform != "linux",
+    reason="TC=1 環境変数と Linux 環境が必要",
 )
 
+# pyroute2 がインストールされていない場合はスキップ
 pyroute2 = pytest.importorskip("pyroute2")
 
 
