@@ -98,7 +98,7 @@ class TCEgressManager:
 
         # tbf (Token Bucket Filter) qdisc で帯域制限を追加する
         # root=True を指定すると handle は自動的に 0x10000 (= "1:") に設定される
-        # rate: 帯域制限 (文字列で "500kbit" のように指定)
+        # rate: 帯域制限 (文字列で "750 kbit" のように指定)
         # burst: バーストサイズ (bytes)
         # latency: 最大遅延時間 (文字列で "50ms" のように指定)
         self.ipr.tc(
@@ -337,9 +337,9 @@ def test_tc_egress_bandwidth_limit(settings):
         print(
             f"\n制限前の targetBitrate: {target_bitrate_before} bps ({target_bitrate_before / 1000} kbps)"
         )
-        # video_bit_rate=1000 を指定しているので、500kbps 以上あることを確認
+        # video_bit_rate=1000 を指定しているので、750kbps 以上あることを確認
         assert target_bitrate_before >= 750 * 1000, (
-            f"制限前の targetBitrate が想定より低い: {target_bitrate_before} bps < 500000 bps"
+            f"制限前の targetBitrate が想定より低い: {target_bitrate_before} bps < 750000 bps"
         )
 
         # tc egress で帯域制限を設定
