@@ -23,9 +23,9 @@ pytestmark = pytest.mark.skipif(
 pyroute2 = pytest.importorskip("pyroute2")
 
 # テスト用の設定値
-INITIAL_BITRATE_KBPS = 1500  # 初期ビットレート (kbps)
+INITIAL_BITRATE_KBPS = 1200  # 初期ビットレート (kbps)
 BANDWIDTH_LIMIT_KBPS = 250  # 帯域制限値 (kbps)
-MIN_BITRATE_BEFORE_LIMIT_KBPS = 750  # 制限前の最小ビットレート (kbps)
+MIN_BITRATE_BEFORE_LIMIT_KBPS = 500  # 制限前の最小ビットレート (kbps)
 
 
 def get_default_interface() -> str:
@@ -309,6 +309,7 @@ def test_tc_egress_bandwidth_limit(settings):
         simulcast=True,
         audio=False,
         video=True,
+        video_codec_type="VP8",
         video_bit_rate=INITIAL_BITRATE_KBPS,
         video_width=960,
         video_height=540,
