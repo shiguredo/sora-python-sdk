@@ -310,6 +310,8 @@ def test_tc_egress_bandwidth_limit(settings):
         audio=False,
         video=True,
         video_bit_rate=INITIAL_BITRATE_KBPS,
+        video_width=960,
+        video_height=540,
     ) as sendonly:
         time.sleep(10)
 
