@@ -412,36 +412,50 @@ def test_tc_egress_bandwidth_limit(settings):
             # rid でソート (r0, r1, r2 の順)
             simulcast_outbound_rtp_stats.sort(key=lambda x: x.get("rid", ""))
 
-            # simulcast が有効な場合は 3 つのストリーム (r0, r1, r2) が存在するはず
-            assert len(simulcast_outbound_rtp_stats) == 3, (
-                f"simulcast のストリーム数が不正: {len(simulcast_outbound_rtp_stats)} (期待値: 3)"
+            print("\n制限後の outbound-rtp 統計情報:")
+            for stat in simulcast_outbound_rtp_stats:
+                rid = stat.get("rid", "none")
+                print(f"{rid} | outbound-rtp: {stats}")
+                bitrate = stat.get("targetBitrate")
+                if bitrate is not None:
+                    print(f"  rid={rid}: targetBitrate={bitrate} bps ({bitrate / 1000} kbps)")
+                else:
+                    print(f"  rid={rid}: targetBitrate なし (停止中)")
+
+            # 帯域制限により r1/r2 の targetBitrate 項目が存在しなくなる
+            # r0 のみが targetBitrate を持つことを確認
+            all_rids = [stat.get("rid") for stat in simulcast_outbound_rtp_stats]
+            active_rids = [
+                stat.get("rid") for stat in simulcast_outbound_rtp_stats if "targetBitrate" in stat
+            ]
+            print(f"\n確認: 存在する rid = {all_rids}")
+            print(f"確認: targetBitrate を持つ rid = {active_rids}")
+            print("期待値: targetBitrate を持つのは r0 のみ")
+
+            # r0 のみが targetBitrate を持つことを確認
+            assert active_rids == ["r0"], (
+                f"帯域制限後は r0 のみが targetBitrate を持つはず: {active_rids}"
             )
 
-            print("\n制限後の targetBitrate:")
-            print(
-                f"  rid={simulcast_outbound_rtp_stats[0].get('rid', 'none')}: {simulcast_outbound_rtp_stats[0]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[0]['targetBitrate'] / 1000} kbps)"
-            )
-            print(
-                f"  rid={simulcast_outbound_rtp_stats[1].get('rid', 'none')}: {simulcast_outbound_rtp_stats[1]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[1]['targetBitrate'] / 1000} kbps)"
-            )
-            print(
-                f"  rid={simulcast_outbound_rtp_stats[2].get('rid', 'none')}: {simulcast_outbound_rtp_stats[2]['targetBitrate']} bps ({simulcast_outbound_rtp_stats[2]['targetBitrate'] / 1000} kbps)"
-            )
+            # r1 と r2 が存在する場合、targetBitrate が存在しないことを確認
+            for stat in simulcast_outbound_rtp_stats:
+                rid = stat.get("rid", "")
+                if rid in ["r1", "r2"]:
+                    assert "targetBitrate" not in stat, (
+                        f"{rid} に targetBitrate が存在しています (停止しているはず)"
+                    )
+                    print(f"確認: {rid} は targetBitrate なし (停止中)")
 
-            # 全てのストリームの targetBitrate の合計を確認
-            total_target_bitrate = (
-                simulcast_outbound_rtp_stats[0]["targetBitrate"]
-                + simulcast_outbound_rtp_stats[1]["targetBitrate"]
-                + simulcast_outbound_rtp_stats[2]["targetBitrate"]
-            )
-            print(
-                f"\n確認: 合計 targetBitrate = {total_target_bitrate} bps ({total_target_bitrate / 1000} kbps)"
-            )
+            # r0 の targetBitrate が帯域制限以下であることを確認
+            r0_stat = simulcast_outbound_rtp_stats[0]
+            assert "targetBitrate" in r0_stat, "r0 に targetBitrate が存在しません"
+            r0_bitrate = r0_stat["targetBitrate"]
+            print(f"\n確認: r0 targetBitrate = {r0_bitrate} bps ({r0_bitrate / 1000} kbps)")
             print(f"期待値: {BANDWIDTH_LIMIT_KBPS} kbps 以下")
 
-            # 帯域制限が効いているか確認（多少のオーバーヘッドを考慮）
-            assert total_target_bitrate <= BANDWIDTH_LIMIT_KBPS * 1000 * 1.2, (
-                f"合計 targetBitrate が帯域制限を超えています: {total_target_bitrate} bps > {BANDWIDTH_LIMIT_KBPS * 1000} bps"
+            # 多少のオーバーヘッドを考慮
+            assert r0_bitrate <= BANDWIDTH_LIMIT_KBPS * 1000 * 1.2, (
+                f"r0 targetBitrate が帯域制限を超えています: {r0_bitrate} bps > {BANDWIDTH_LIMIT_KBPS * 1000} bps"
             )
 
             print("\n帯域制限が有効な状態でテスト完了")
