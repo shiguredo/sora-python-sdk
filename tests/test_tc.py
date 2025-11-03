@@ -22,6 +22,11 @@ pytestmark = pytest.mark.skipif(
 # pyroute2 がインストールされていない場合はスキップ
 pyroute2 = pytest.importorskip("pyroute2")
 
+# テスト用の設定値
+INITIAL_BITRATE_KBPS = 1500  # 初期ビットレート (kbps)
+BANDWIDTH_LIMIT_KBPS = 250  # 帯域制限値 (kbps)
+MIN_BITRATE_BEFORE_LIMIT_KBPS = 750  # 制限前の最小ビットレート (kbps)
+
 
 def get_default_interface() -> str:
     """デフォルトのネットワークインターフェース名を取得する。
@@ -287,7 +292,7 @@ def show_webrtc_stats(stats: list) -> None:
 def test_tc_egress_bandwidth_limit(settings):
     """TURN ポート取得後に tc egress で帯域制限をかける。"""
     print("\n" + "=" * 60)
-    print("テスト: tc egress 帯域制限 (250kbps) の適用")
+    print(f"テスト: tc egress 帯域制限 ({BANDWIDTH_LIMIT_KBPS}kbps) の適用")
     print("=" * 60)
 
     interface = get_default_interface()
@@ -296,9 +301,10 @@ def test_tc_egress_bandwidth_limit(settings):
     with SoraClient(
         settings,
         SoraRole.SENDONLY,
+        simulcast=True,
         audio=False,
         video=True,
-        video_bit_rate=1000,
+        video_bit_rate=INITIAL_BITRATE_KBPS,
     ) as sendonly:
         time.sleep(10)
 
@@ -337,17 +343,16 @@ def test_tc_egress_bandwidth_limit(settings):
         print(
             f"\n制限前の targetBitrate: {target_bitrate_before} bps ({target_bitrate_before / 1000} kbps)"
         )
-        # video_bit_rate=1000 を指定しているので、750kbps 以上あることを確認
-        assert target_bitrate_before >= 750 * 1000, (
-            f"制限前の targetBitrate が想定より低い: {target_bitrate_before} bps < 750000 bps"
+        # video_bit_rate を指定しているので、MIN_BITRATE_BEFORE_LIMIT_KBPS 以上あることを確認
+        assert target_bitrate_before >= MIN_BITRATE_BEFORE_LIMIT_KBPS * 1000, (
+            f"制限前の targetBitrate が想定より低い: {target_bitrate_before} bps < {MIN_BITRATE_BEFORE_LIMIT_KBPS * 1000} bps"
         )
 
         # tc egress で帯域制限を設定
         with TCEgressManager(interface=interface) as tc:
-            bandwidth_kbps = 250
             # 帯域制限を設定
-            print(f"\nステップ 1: tc egress 帯域制限 {bandwidth_kbps}kbps を適用")
-            tc.add_bandwidth_limit(rate_kbps=bandwidth_kbps)
+            print(f"\nステップ 1: tc egress 帯域制限 {BANDWIDTH_LIMIT_KBPS}kbps を適用")
+            tc.add_bandwidth_limit(rate_kbps=BANDWIDTH_LIMIT_KBPS)
 
             # tc の設定が存在することを確認
             print("\nステップ 2: tc 設定を確認")
@@ -389,10 +394,10 @@ def test_tc_egress_bandwidth_limit(settings):
 
             target_bitrate = outbound_rtp["targetBitrate"]
             print(f"\n確認: targetBitrate = {target_bitrate} bps ({target_bitrate / 1000} kbps)")
-            print(f"期待値: {bandwidth_kbps} kbps 以下")
+            print(f"期待値: {BANDWIDTH_LIMIT_KBPS} kbps 以下")
             # 帯域制限が効いているか確認（多少のオーバーヘッドを考慮）
-            assert target_bitrate <= bandwidth_kbps * 1000 * 1.2, (
-                f"targetBitrate が帯域制限を超えています: {target_bitrate} bps > {bandwidth_kbps * 1000} bps"
+            assert target_bitrate <= BANDWIDTH_LIMIT_KBPS * 1000 * 1.2, (
+                f"targetBitrate が帯域制限を超えています: {target_bitrate} bps > {BANDWIDTH_LIMIT_KBPS * 1000} bps"
             )
 
             print("\n帯域制限が有効な状態でテスト完了")
