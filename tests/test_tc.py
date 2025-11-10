@@ -342,21 +342,25 @@ def show_webrtc_stats(webrtc_stats: list) -> None:
     """
     try:
         print("\nWebRTC 統計情報:")
-        for stat in webrtc_stats:
-            if stat.get("type") == "outbound-rtp":
-                rid = stat.get("rid", "")
-                rid_label = f" (rid={rid})" if rid else ""
-                print(f"  outbound-rtp{rid_label}:")
-                print(f"    ssrc: {stat.get('ssrc')}")
-                print(f"    kind: {stat.get('kind')}")
-                if rid:
-                    print(f"    rid: {rid}")
-                print(f"    bytesSent: {stat.get('bytesSent')}")
-                print(f"    packetsSent: {stat.get('packetsSent')}")
-                if "targetBitrate" in stat:
-                    print(f"    targetBitrate: {stat.get('targetBitrate')} bps")
-                if "totalPacketSendDelay" in stat:
-                    print(f"    totalPacketSendDelay: {stat.get('totalPacketSendDelay')} s")
+        outbound_rtp_stats = [
+            stat for stat in webrtc_stats if stat.get("type") == "outbound-rtp"
+        ]
+        outbound_rtp_stats.sort(key=lambda x: x.get("rid", ""))
+
+        for stat in outbound_rtp_stats:
+            rid = stat.get("rid", "")
+            rid_label = f" (rid={rid})" if rid else ""
+            print(f"  outbound-rtp{rid_label}:")
+            print(f"    ssrc: {stat.get('ssrc')}")
+            print(f"    kind: {stat.get('kind')}")
+            if rid:
+                print(f"    rid: {rid}")
+            print(f"    bytesSent: {stat.get('bytesSent')}")
+            print(f"    packetsSent: {stat.get('packetsSent')}")
+            if "targetBitrate" in stat:
+                print(f"    targetBitrate: {stat.get('targetBitrate')} bps")
+            if "totalPacketSendDelay" in stat:
+                print(f"    totalPacketSendDelay: {stat.get('totalPacketSendDelay')} s")
     except Exception as e:
         print(f"WebRTC 統計情報の表示に失敗: {e}")
 
