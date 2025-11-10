@@ -327,15 +327,33 @@ def show_tc_stats(interface: str) -> None:
         print(f"tc 統計情報の取得に失敗: {e}")
 
 
-def show_webrtc_stats(stats: list) -> None:
+def get_simulcast_outbound_rtp_stats(webrtc_stats: list) -> list:
+    """simulcast の outbound-rtp 統計情報を取得してソートする。
+
+    Args:
+        webrtc_stats: get_stats() で取得した統計情報のリスト
+
+    Returns:
+        rid でソートされた outbound-rtp 統計情報のリスト
+    """
+    simulcast_stats = [
+        stat
+        for stat in webrtc_stats
+        if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
+    ]
+    simulcast_stats.sort(key=lambda x: x.get("rid", ""))
+    return simulcast_stats
+
+
+def show_webrtc_stats(webrtc_stats: list) -> None:
     """WebRTC の統計情報を表示する。
 
     Args:
-        stats: get_stats() で取得した統計情報のリスト
+        webrtc_stats: get_stats() で取得した統計情報のリスト
     """
     try:
         print("\nWebRTC 統計情報:")
-        for stat in stats:
+        for stat in webrtc_stats:
             if stat.get("type") == "outbound-rtp":
                 rid = stat.get("rid", "")
                 rid_label = f" (rid={rid})" if rid else ""
@@ -392,17 +410,11 @@ def test_tc_egress_bandwidth_limit(settings):
         # 制限前の WebRTC 統計情報を確認
         print("\n制限前の WebRTC 統計情報:")
         time.sleep(3)
-        stats = sendonly.get_stats()
-        show_webrtc_stats(stats)
+        webrtc_stats = sendonly.get_stats()
+        show_webrtc_stats(webrtc_stats)
 
         # 制限前の targetBitrate を確認 (video の全ての outbound-rtp を取得)
-        simulcast_outbound_rtp_stats = [
-            stat
-            for stat in stats
-            if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
-        ]
-        # rid でソート (r0, r1, r2 の順)
-        simulcast_outbound_rtp_stats.sort(key=lambda x: x.get("rid", ""))
+        simulcast_outbound_rtp_stats = get_simulcast_outbound_rtp_stats(webrtc_stats)
 
         # simulcast では r0/r1/r2 の 3 つのストリームが必ず存在する
         assert len(simulcast_outbound_rtp_stats) == 3
@@ -463,24 +475,18 @@ def test_tc_egress_bandwidth_limit(settings):
             show_tc_stats(interface)
 
             # 統計情報を取得
-            stats = tc.get_stats()
+            tc_stats = tc.get_stats()
             print("\ntc 統計情報 (IPRoute):")
-            for key, value in stats.items():
+            for key, value in tc_stats.items():
                 print(f"  {key}: {value}")
 
             # WebRTC 統計情報を表示
             print("\nステップ 4: 制限後の WebRTC 統計情報を確認")
-            stats = sendonly.get_stats()
-            show_webrtc_stats(stats)
+            webrtc_stats_after = sendonly.get_stats()
+            show_webrtc_stats(webrtc_stats_after)
 
             # targetBitrate を確認 (video の全ての outbound-rtp を取得)
-            simulcast_outbound_rtp_stats = [
-                stat
-                for stat in stats
-                if stat.get("type") == "outbound-rtp" and stat.get("kind") == "video"
-            ]
-            # rid でソート (r0, r1, r2 の順)
-            simulcast_outbound_rtp_stats.sort(key=lambda x: x.get("rid", ""))
+            simulcast_outbound_rtp_stats = get_simulcast_outbound_rtp_stats(webrtc_stats_after)
 
             # simulcast では r0/r1/r2 の 3 つのストリームが必ず存在する
             assert len(simulcast_outbound_rtp_stats) == 3
@@ -519,7 +525,7 @@ def test_tc_egress_bandwidth_limit(settings):
             r0_bitrate = outbound_rtp_r0["targetBitrate"]
             assert r0_bitrate <= BANDWIDTH_LIMIT_KBPS * 1000 * BANDWIDTH_OVERHEAD_FACTOR
             assert "qualityLimitationReason" in outbound_rtp_r0
-            assert outbound_rtp_r1["qualityLimitationReason"] == "bandwidth"
+            assert outbound_rtp_r0["qualityLimitationReason"] == "bandwidth"
             print(
                 f"\nVerify r0: targetBitrate={r0_bitrate} bps ({r0_bitrate / 1000} kbps), "
                 f"qualityLimitationReason={outbound_rtp_r0['qualityLimitationReason']}"
