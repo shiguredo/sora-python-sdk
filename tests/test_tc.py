@@ -166,18 +166,46 @@ class TCEgressManager:
             raise IndexError(f"インターフェース '{self.interface}' が見つかりません")
         idx = indices[0]
 
-        # tc qdisc の情報を取得する
+        # tc qdisc の情報を取得する (tbf または netem qdisc のみ)
         for qdisc in self.ipr.get_qdiscs(idx):
-            # netem qdisc の統計情報を抽出する
-            if qdisc.get_attr("TCA_OPTIONS"):
-                stats = {
-                    "sent_bytes": qdisc.get("bytes", 0),
-                    "sent_packets": qdisc.get("packets", 0),
-                    "drops": qdisc.get("drops", 0),
-                    "overlimits": qdisc.get("overlimits", 0),
-                    "requeues": qdisc.get("requeues", 0),
-                }
-                return stats
+            kind = qdisc.get_attr("TCA_KIND")
+            if kind not in ("tbf", "netem"):
+                continue
+
+            # 統計情報を取得
+            # TCA_STATS2 属性から統計情報を取得
+            stats2 = qdisc.get_attr("TCA_STATS2")
+            if stats2:
+                # TCA_STATS_BASIC から bytes と packets を取得
+                stats_basic = stats2.get_attr("TCA_STATS_BASIC")
+                sent_bytes = stats_basic.get("bytes", 0) if stats_basic else 0
+                sent_packets = stats_basic.get("packets", 0) if stats_basic else 0
+
+                # TCA_STATS_QUEUE から drops, overlimits, requeues を取得
+                stats_queue = stats2.get_attr("TCA_STATS_QUEUE")
+                if stats_queue:
+                    drops = stats_queue.get("drops", 0)
+                    overlimits = stats_queue.get("overlimits", 0)
+                    requeues = stats_queue.get("requeues", 0)
+                else:
+                    drops = 0
+                    overlimits = 0
+                    requeues = 0
+            else:
+                # フォールバック: qdisc オブジェクトから直接取得
+                sent_bytes = qdisc.get("bytes", 0)
+                sent_packets = qdisc.get("packets", 0)
+                drops = qdisc.get("drops", 0)
+                overlimits = qdisc.get("overlimits", 0)
+                requeues = qdisc.get("requeues", 0)
+
+            return {
+                "sent_bytes": sent_bytes,
+                "sent_packets": sent_packets,
+                "drops": drops,
+                "overlimits": overlimits,
+                "requeues": requeues,
+            }
 
         return {}
 
@@ -261,11 +289,33 @@ def show_tc_stats(interface: str) -> None:
                 handle = qdisc.get("handle", 0)
                 parent = qdisc.get("parent", 0)
 
-                # 統計情報
-                sent_bytes = qdisc.get("bytes", 0)
-                sent_packets = qdisc.get("packets", 0)
-                drops = qdisc.get("drops", 0)
-                overlimits = qdisc.get("overlimits", 0)
+                # 統計情報を取得
+                # TCA_STATS2 属性から統計情報を取得
+                stats2 = qdisc.get_attr("TCA_STATS2")
+                if stats2:
+                    # TCA_STATS_BASIC から bytes と packets を取得
+                    stats_basic = stats2.get_attr("TCA_STATS_BASIC")
+                    if stats_basic:
+                        sent_bytes = stats_basic.get("bytes", 0)
+                        sent_packets = stats_basic.get("packets", 0)
+                    else:
+                        sent_bytes = 0
+                        sent_packets = 0
+
+                    # TCA_STATS_QUEUE から drops と overlimits を取得
+                    stats_queue = stats2.get_attr("TCA_STATS_QUEUE")
+                    if stats_queue:
+                        drops = stats_queue.get("drops", 0)
+                        overlimits = stats_queue.get("overlimits", 0)
+                    else:
+                        drops = 0
+                        overlimits = 0
+                else:
+                    # フォールバック: qdisc オブジェクトから直接取得
+                    sent_bytes = qdisc.get("bytes", 0)
+                    sent_packets = qdisc.get("packets", 0)
+                    drops = qdisc.get("drops", 0)
+                    overlimits = qdisc.get("overlimits", 0)
 
                 print(f"  qdisc {kind} handle {handle:#x} parent {parent:#x}")
                 print(f"    Sent {sent_bytes} bytes {sent_packets} packets")
