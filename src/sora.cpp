@@ -54,6 +54,7 @@ nb::ref<SoraConnection> Sora::CreateConnection(
     std::optional<bool> spotlight,
     std::optional<int> spotlight_number,
     std::optional<std::string> simulcast_rid,
+    std::optional<std::string> simulcast_request_rid,
     std::optional<std::string> spotlight_focus_rid,
     std::optional<std::string> spotlight_unfocus_rid,
     const nb::handle& forwarding_filter,
@@ -141,6 +142,9 @@ nb::ref<SoraConnection> Sora::CreateConnection(
   }
   if (simulcast_rid) {
     config.simulcast_rid = *simulcast_rid;
+  }
+  if (simulcast_request_rid) {
+    config.simulcast_request_rid = *simulcast_request_rid;
   }
   if (spotlight_focus_rid) {
     config.spotlight_focus_rid = *spotlight_focus_rid;
