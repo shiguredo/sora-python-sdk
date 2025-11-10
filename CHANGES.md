@@ -16,14 +16,12 @@
   - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.6.0-canary.12` に上げる
+  - LIBWEBRTC_VERSIONを `m142.7444.2.0` に上げる
+  - CMAKE_VERSION を `4.1.2` に上げる
   - @voluntas @melpon @torikizi
 - [UPDATE] `simulcast_request_rid` をシグナリング接続時に指定できるようにする
   - Sora C++ SDK への追従
   - @voluntas
-- [UPDATE] libwebrtc のバージョンを `m142.7444.2.0` に上げる
-  - @melpon @torikizi
-- [UPDATE] CMake のバージョンを `4.1.2` に上げる
-  - @torikizi
 - [ADD] Python 3.14 の対応を追加する
   - @voluntas
 - [ADD] `raspberry-pi-os_armv8` の対応を追加する
