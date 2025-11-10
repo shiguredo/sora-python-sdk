@@ -248,10 +248,16 @@ def show_tc_stats(interface: str) -> None:
                 return
             idx = indices[0]
 
-            # qdisc の情報を取得して表示
+            # qdisc の情報を取得して表示 (tbf/netem のみ)
             print(f"\ntc 統計情報 ({interface}):")
+            found = False
             for qdisc in ipr.get_qdiscs(idx):
                 kind = qdisc.get_attr("TCA_KIND")
+                # tbf または netem qdisc のみを表示
+                if kind not in ("tbf", "netem"):
+                    continue
+
+                found = True
                 handle = qdisc.get("handle", 0)
                 parent = qdisc.get("parent", 0)
 
@@ -264,6 +270,9 @@ def show_tc_stats(interface: str) -> None:
                 print(f"  qdisc {kind} handle {handle:#x} parent {parent:#x}")
                 print(f"    Sent {sent_bytes} bytes {sent_packets} packets")
                 print(f"    drops {drops}, overlimits {overlimits}")
+
+            if not found:
+                print("  (tc 設定なし)")
     except Exception as e:
         print(f"tc 統計情報の取得に失敗: {e}")
 
