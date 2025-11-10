@@ -13,14 +13,14 @@ from typing import Optional
 import pytest
 from client import SoraClient, SoraRole
 
-# TC=1 環境変数が設定されており、かつ Linux 環境の場合のみテストを実行
-pytestmark = pytest.mark.skipif(
-    os.getenv("TC") != "1" or sys.platform != "linux",
-    reason="TC=1 環境変数と Linux 環境が必要",
-)
-
 # pyroute2 がインストールされていない場合はスキップ
 pyroute2 = pytest.importorskip("pyroute2")
+
+# TC=1 環境変数、Linux 環境、ルート権限のいずれかが満たされない場合はスキップ
+pytestmark = pytest.mark.skipif(
+    os.getenv("TC") != "1" or sys.platform != "linux" or os.geteuid() != 0,
+    reason="TC=1 環境変数、Linux 環境、ルート権限が必要",
+)
 
 # テスト用の設定値
 INITIAL_BITRATE_KBPS = 1200  # 初期ビットレート (kbps)
@@ -34,25 +34,24 @@ def get_default_interface() -> str:
 
     Returns:
         デフォルトルートで使用されているインターフェース名
-    """
-    try:
-        with pyroute2.IPRoute() as ipr:
-            # デフォルトルートを取得（IPv4）
-            for route in ipr.get_routes(family=2):  # AF_INET = 2
-                # dst が存在しない場合がデフォルトルート
-                if not route.get_attr("RTA_DST"):
-                    oif = route.get_attr("RTA_OIF")
-                    if oif:
-                        # インターフェース情報を取得
-                        links = ipr.get_links(oif)
-                        if links:
-                            ifname = links[0].get_attr("IFLA_IFNAME")
-                            return ifname
-    except Exception as e:
-        print(f"デフォルトインターフェースの取得に失敗: {e}")
 
-    # フォールバックとして eth0 を返す
-    return "eth0"
+    Raises:
+        RuntimeError: デフォルトインターフェースが取得できない場合
+    """
+    with pyroute2.IPRoute() as ipr:
+        # デフォルトルートを取得（IPv4）
+        for route in ipr.get_routes(family=2):
+            # dst が存在しない場合がデフォルトルート
+            if not route.get_attr("RTA_DST"):
+                oif = route.get_attr("RTA_OIF")
+                if oif:
+                    # インターフェース情報を取得
+                    links = ipr.get_links(oif)
+                    if links:
+                        ifname = links[0].get_attr("IFLA_IFNAME")
+                        return ifname
+
+    raise RuntimeError("デフォルトインターフェースが見つかりません")
 
 
 class TCEgressManager:
