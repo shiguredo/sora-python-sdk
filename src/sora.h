@@ -76,6 +76,7 @@ class Sora : public CountedPublisher {
    * @param spotlight_number (オプション)スポットライトのフォーカス数
    * @param simulcast_rid (オプション)サイマルキャストで受信したい RID
    * @param simulcast_request_rid (オプション)サイマルキャストで受信したい RID
+   * @param simulcast_rid_auto (オプション)サイマルキャスト RID の自動切り替え
    * @param spotlight_focus_rid (オプション)スポットライトでフォーカスしているときのサイマルキャスト RID
    * @param spotlight_unfocus_rid (オプション)スポットライトでフォーカスしていないときのサイマルキャスト RID
    * @param forwarding_filter (オプション)転送フィルター設定
@@ -130,6 +131,7 @@ class Sora : public CountedPublisher {
       std::optional<int> spotlight_number,
       std::optional<std::string> simulcast_rid,
       std::optional<std::string> simulcast_request_rid,
+      std::optional<bool> simulcast_rid_auto,
       std::optional<std::string> spotlight_focus_rid,
       std::optional<std::string> spotlight_unfocus_rid,
       const nb::handle& forwarding_filter,
