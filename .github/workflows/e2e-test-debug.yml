@@ -1,0 +1,130 @@
+name: e2e-test-debug
+
+on:
+  push:
+    branches:
+      - "feature/e2e-test-debug-**"
+
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.6.0
+  # デバッグ用のテスト設定
+  # TEST_FILE: テストファイル名または特定のテスト関数
+  # 例: tests/test_sora_disconnect.py::test_websocket_signaling_only_disconnect_api
+  TEST_FILE: "tests/test_sora_disconnect.py::test_websocket_signaling_only_disconnect_api"
+  TEST_COUNT: "1"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  e2e_test_debug:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      # Tailscale のセットアップ
+      - uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          use-cache: "true"
+          hostname: gha-${{ github.run_id }}-${{ github.run_number }}
+          version: latest
+          timeout: 2m
+          retry: 5
+
+      # Linux 向けの依存関係インストール
+      - run: |
+          sudo apt-get update
+          sudo apt-get -y install libx11-dev libdrm-dev libva-dev
+
+      # UV のセットアップ
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: false
+          # Python バージョンの設定
+          python-version: "3.13"
+
+      # 依存関係のインストール (test グループのみ)
+      - run: uv sync --no-install-project --only-group test
+
+      # Wheel ファイルのダウンロード (同一ブランチの最新成功ビルド artifact または GitHub Release から取得)
+      - uses: ./.github/actions/download-whl
+        id: download-whl
+        with:
+          platform_name: ubuntu-24.04_x86_64
+          python_version: "3.13"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # wheel ファイル名を取得
+      - name: Find wheel file
+        id: find-wheel
+        shell: bash
+        run: |
+          WHEEL_FILE=$(find dist -name "*.whl" | head -1)
+          if [ -z "$WHEEL_FILE" ]; then
+            echo "No wheel file found in dist/"
+            exit 1
+          fi
+          echo "wheel_file=$WHEEL_FILE" >> $GITHUB_OUTPUT
+
+      # wheel ファイルのインストール
+      - name: Install wheel package
+        run: |
+          echo "Installing wheel: ${{ steps.find-wheel.outputs.wheel_file }}"
+
+          # wheel ファイルの内容を確認
+          echo "Checking wheel contents:"
+          unzip -l "${{ steps.find-wheel.outputs.wheel_file }}" | grep -E "sora_sdk|METADATA" | head -20
+
+          # uv pip install を使う理由:
+          # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
+          # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
+          # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
+          uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
+
+      # OpenH264 ライブラリのダウンロード
+      - uses: shiguredo/github-actions/.github/actions/download-openh264@main
+        id: openh264
+        with:
+          openh264_version: ${{ env.OPENH264_VERSION }}
+          use-cache: true
+
+      # OpenH264 パスを環境変数に設定
+      - name: Set OpenH264 path
+        if: ${{ steps.openh264.outputs.openh264_path }}
+        run: echo "OPENH264_PATH=${{ steps.openh264.outputs.openh264_path }}" >> $GITHUB_ENV
+        shell: bash
+
+      # E2E テストの実行（指定回数ループ）
+      - name: Run E2E tests
+        run: |
+          # UV_NO_SYNC=1 を指定する理由:
+          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
+          # この同期により、uv pip install でインストールした wheel が削除され、
+          # 元のソースコードの sora-sdk がインストールされてしまう
+          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
+          uv run pytest ${{ env.TEST_FILE }} -v --durations=0 -n auto --count ${{ env.TEST_COUNT }}
+        env:
+          UV_NO_SYNC: 1
+
+  slack_notify_failed:
+    needs: [e2e_test_debug]
+    runs-on: ubuntu-24.04
+    if: failure()
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: "FAILED (DEBUG)"
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
