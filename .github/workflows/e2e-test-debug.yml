@@ -15,7 +15,7 @@ env:
   # TEST_FILE: テストファイル名または特定のテスト関数
   # 例: tests/test_sora_disconnect.py::test_websocket_signaling_only_disconnect_api
   TEST_FILE: "tests/test_sora_disconnect.py::test_websocket_signaling_only_disconnect_api"
-  TEST_COUNT: "1"
+  TEST_COUNT: "100"
 
 permissions:
   contents: read
