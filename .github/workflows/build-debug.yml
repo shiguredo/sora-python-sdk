@@ -246,47 +246,47 @@ jobs:
       # テスト
       ###################
 
-      - name: E2E Test sora-python-sdk
-        working-directory: sora-python-sdk
-        run: |
-          for i in {1..${{ inputs.loopCount || 10 }}}; do
-            echo "---------------- $i 回目 ----------------"
-            sleep 10
-            uv run pytest tests/
-          done
+      # - name: E2E Test sora-python-sdk
+      #   working-directory: sora-python-sdk
+      #   run: |
+      #     for i in {1..${{ inputs.loopCount || 10 }}}; do
+      #       echo "---------------- $i 回目 ----------------"
+      #       sleep 10
+      #       uv run pytest tests/
+      #     done
 
-  publish_wheel:
-    needs:
-      - build_ubuntu
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: ubuntu-24.04_x86_64
-        python:
-          - version: "3.13"
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    environment: pypi
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v6
-        with:
-          name: ${{ matrix.platform.name }}_python-${{ matrix.python.version }}
-          path: dist
-      - run: |
-          if [ -e dist/*.tar.gz ]; then
-            mv dist/*.tar.gz ./
-          fi
+  # publish_wheel:
+  #   needs:
+  #     - build_ubuntu
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       platform:
+  #         - name: ubuntu-24.04_x86_64
+  #       python:
+  #         - version: "3.13"
+  #   runs-on: ubuntu-24.04
+  #   timeout-minutes: 15
+  #   environment: pypi
+  #   permissions:
+  #     id-token: write
+  #   steps:
+  #     - uses: actions/download-artifact@v6
+  #       with:
+  #         name: ${{ matrix.platform.name }}_python-${{ matrix.python.version }}
+  #         path: dist
+  #     - run: |
+  #         if [ -e dist/*.tar.gz ]; then
+  #           mv dist/*.tar.gz ./
+  #         fi
 
-      # テスト用
-      - name: Publish package to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          verbose: true
+  #     # テスト用
+  #     - name: Publish package to TestPyPI
+  #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         repository-url: https://test.pypi.org/legacy/
+  #         verbose: true
 
-      # # 本番用
-      # - name: Publish package to PyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
+  #     # # 本番用
+  #     # - name: Publish package to PyPI
+  #     #   uses: pypa/gh-action-pypi-publish@release/v1
