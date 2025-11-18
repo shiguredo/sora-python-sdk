@@ -34,7 +34,11 @@ jobs:
       matrix:
         platform:
           - name: ubuntu-24.04_x86_64
-            runs-on: ubuntu-24.04
+            # runs-on: ubuntu-24.04
+            runs_on:
+              group: Self
+              labels: [self-hosted, linux, x64, NVIDIA-Video-Codec-SDK]
+
         python:
           # - version: "3.10"
           #   soname: sora_sdk_ext.cpython-310-x86_64-linux-gnu.so
@@ -85,27 +89,27 @@ jobs:
       # 各種セットアップ
       ###################
 
-      - name: Disk Cleanup
-        run: |
-          set -x
-          df -h
-          # sudo du -h -d1 /usr/local
-          # sudo du -h -d1 /usr/local/share
-          # sudo du -h -d1 /usr/local/lib
-          # sudo du -h -d1 /usr/share
-          RMI=`docker images -q -a`
-          if [ -n "$RMI" ]; then
-            docker rmi $RMI
-          fi
-          # 4.6G
-          sudo rm -rf /usr/local/.ghcup
-          # 1.7G
-          sudo rm -rf /usr/share/swift
-          # 1.4G
-          sudo rm -rf /usr/share/dotnet
-          # 13G
-          sudo rm -rf /usr/local/lib/android
-          df -h
+      # - name: Disk Cleanup
+      #   run: |
+      #     set -x
+      #     df -h
+      #     # sudo du -h -d1 /usr/local
+      #     # sudo du -h -d1 /usr/local/share
+      #     # sudo du -h -d1 /usr/local/lib
+      #     # sudo du -h -d1 /usr/share
+      #     RMI=`docker images -q -a`
+      #     if [ -n "$RMI" ]; then
+      #       docker rmi $RMI
+      #     fi
+      #     # 4.6G
+      #     sudo rm -rf /usr/local/.ghcup
+      #     # 1.7G
+      #     sudo rm -rf /usr/share/swift
+      #     # 1.4G
+      #     sudo rm -rf /usr/share/dotnet
+      #     # 13G
+      #     sudo rm -rf /usr/local/lib/android
+      #     df -h
       - name: Get stats
         run: |
           set -x
