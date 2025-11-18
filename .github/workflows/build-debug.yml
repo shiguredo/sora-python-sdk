@@ -48,7 +48,7 @@ jobs:
           #   soname: sora_sdk_ext.cpython-312-x86_64-linux-gnu.so
           - version: "3.13"
             soname: sora_sdk_ext.cpython-313-x86_64-linux-gnu.so
-    runs-on: ${{ matrix.platform.runs-on }}
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     steps:
       - name: buildType=${{ inputs.buildTYpe }} loopCount=${{ inputs.loopCount }} tag=${{ inputs.tag }}
         # 1 <= loopCount <= 100
