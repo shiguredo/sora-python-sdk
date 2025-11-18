@@ -228,11 +228,10 @@ jobs:
           BUILD_PROFILE: debug
 
       - name: Upload Artifact
-        working-directory: sora-python-sdk
         uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python.version }}
-          path: dist/
+          path: sora-python-sdk/dist/
 
       ###################
       # テスト
