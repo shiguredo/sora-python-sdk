@@ -198,7 +198,7 @@ jobs:
       - uses: shiguredo/github-actions/.github/actions/download-openh264@main
         id: openh264
         with:
-          openh264_version: ${{ steps.openh264.outputs.openh264_version }}
+          openh264_version: ${{ steps.version.outputs.openh264_version }}
           use-cache: true
 
       # OpenH264 パスを環境変数に設定
