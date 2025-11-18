@@ -35,7 +35,7 @@ jobs:
         platform:
           - name: ubuntu-24.04_x86_64
             # runs-on: ubuntu-24.04
-            runs_on:
+            runs-on:
               group: Self
               labels: [self-hosted, linux, x64, NVIDIA-Video-Codec-SDK]
 
