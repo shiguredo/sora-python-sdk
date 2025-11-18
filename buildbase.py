@@ -507,6 +507,48 @@ def git_get_url_and_revision(dir):
         return url, rev
 
 
+def install_file(src: str, dst: str):
+    """
+    src から dst へディレクトリまたはファイルをコピーする
+
+    1. dst が存在していたら（ファイルでもディレクトリでも）削除する
+    2. dst の親ディレクトリが存在しなかったら作成する
+    3. src を dst にコピーする
+    """
+    # 1. dst が存在していたら削除する
+    if os.path.exists(dst):
+        if os.path.isdir(dst):
+            logging.debug(f"Remove dir: {dst}")
+            shutil.rmtree(dst)
+        else:
+            logging.debug(f"Remove file: {dst}")
+            os.remove(dst)
+
+    # 2. dst の親ディレクトリが存在しなかったら作成する
+    dst_parent = os.path.dirname(dst)
+    if dst_parent and not os.path.exists(dst_parent):
+        logging.debug(f"Make dir: {dst_parent}")
+        os.makedirs(dst_parent)
+
+    # 3. src を dst にコピーする
+    if os.path.isdir(src):
+        logging.info(f"Copy dir: {src} -> {dst}")
+        shutil.copytree(src, dst)
+    else:
+        logging.info(f"Copy file: {src} -> {dst}")
+        shutil.copy2(src, dst)
+
+
+def install_file_ifexists(src: str, dst: str):
+    """
+    src ファイルが存在してたら install_file を呼び出す
+    """
+    if not os.path.exists(src):
+        logging.info(f"Source file does not exist: {src}")
+        return
+    install_file(src, dst)
+
+
 def replace_vcproj_static_runtime(project_file: str):
     # なぜか MSVC_STATIC_RUNTIME が効かずに DLL ランタイムを使ってしまうので
     # 生成されたプロジェクトに対して静的ランタイムを使うように変更する
@@ -531,7 +573,7 @@ def install_webrtc(version, source_dir, install_dir, platform: str):
 
 def build_webrtc(platform, local_webrtc_build_dir, local_webrtc_build_args, debug):
     with cd(local_webrtc_build_dir):
-        args = ["--webrtc-nobuild-ios-framework", "--webrtc-nobuild-android-aar"]
+        args = []
         if debug:
             args += ["--debug"]
 
@@ -577,6 +619,7 @@ class WebrtcInfo(NamedTuple):
     webrtc_include_dir: str
     webrtc_source_dir: Optional[str]
     webrtc_library_dir: str
+    webrtc_jar_file: str
     clang_dir: str
     libcxx_dir: str
     libcxxabi_dir: str
@@ -594,6 +637,7 @@ def get_webrtc_info(
             webrtc_include_dir=os.path.join(webrtc_install_dir, "include"),
             webrtc_source_dir=None,
             webrtc_library_dir=os.path.join(webrtc_install_dir, "lib"),
+            webrtc_jar_file=os.path.join(webrtc_install_dir, "jar", "webrtc.jar"),
             clang_dir=os.path.join(install_dir, "llvm", "clang"),
             libcxx_dir=os.path.join(install_dir, "llvm", "libcxx"),
             libcxxabi_dir=os.path.join(
@@ -615,6 +659,9 @@ def get_webrtc_info(
             webrtc_include_dir=os.path.join(webrtc_build_source_dir, "src"),
             webrtc_source_dir=os.path.join(webrtc_build_source_dir, "src"),
             webrtc_library_dir=webrtc_build_build_dir,
+            webrtc_jar_file=os.path.join(
+                webrtc_build_build_dir, "arm64-v8a", "lib.java", "sdk", "android", "libwebrtc.jar"
+            ),
             clang_dir=os.path.join(
                 webrtc_build_source_dir, "src", "third_party", "llvm-build", "Release+Asserts"
             ),
@@ -1425,6 +1472,12 @@ def install_cuda_windows(version, source_dir, build_dir, install_dir):
         url = "http://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_441.22_win10.exe"  # noqa: E501
     elif version == "11.8.0-1":
         url = "https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_522.06_windows.exe"  # noqa: E501
+    elif version == "12.6.3-1":
+        url = "https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_561.17_windows.exe"  # noqa: E501
+    elif version == "12.9.1-1":
+        url = "https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_576.57_windows.exe"  # noqa: E501
+    elif version == "13.0.1-1":
+        url = "https://developer.download.nvidia.com/compute/cuda/13.0.1/local_installers/cuda_13.0.1_windows.exe"  # noqa: E501
     else:
         raise Exception(f"Unknown CUDA version {version}")
     file = download(url, source_dir)
