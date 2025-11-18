@@ -154,22 +154,22 @@ jobs:
 
       # Ubuntu 24.04 だと libtinfo5 が見つからない問題があるので、その修正
       # ref: https://qiita.com/gengen16k/items/88cf3c18a40a94205fab
-      - name: Fix CUDA issues for Ubuntu 24.04
-        if: matrix.platform.name == 'ubuntu-24.04_x86_64'
-        run: |
-          sudo tee /etc/apt/sources.list.d/jammy.list << EOF
-          deb http://archive.ubuntu.com/ubuntu/ jammy universe
-          EOF
+      # - name: Fix CUDA issues for Ubuntu 24.04
+      #   if: matrix.platform.name == 'ubuntu-24.04_x86_64'
+      #   run: |
+      #     sudo tee /etc/apt/sources.list.d/jammy.list << EOF
+      #     deb http://archive.ubuntu.com/ubuntu/ jammy universe
+      #     EOF
 
-          sudo tee /etc/apt/preferences.d/pin-jammy <<EOF
-          Package: *
-          Pin: release n=jammy
-          Pin-Priority: -10
+      #     sudo tee /etc/apt/preferences.d/pin-jammy <<EOF
+      #     Package: *
+      #     Pin: release n=jammy
+      #     Pin-Priority: -10
 
-          Package: libtinfo5
-          Pin: release n=jammy
-          Pin-Priority: 990
-          EOF
+      #     Package: libtinfo5
+      #     Pin: release n=jammy
+      #     Pin-Priority: 990
+      #     EOF
 
       - name: Setup sora-cpp-sdk
         if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
@@ -183,12 +183,12 @@ jobs:
           sudo apt-get install -y libx11-dev libxext-dev
 
           # CUDA
-          wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb
-          sudo dpkg -i libssl1.1_1.1.0g-2ubuntu4_amd64.deb
-          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
-          sudo dpkg -i cuda-keyring_*all.deb
-          sudo apt-get update
-          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install cuda=$CUDA_VERSION
+          # wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb
+          # sudo dpkg -i libssl1.1_1.1.0g-2ubuntu4_amd64.deb
+          # wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
+          # sudo dpkg -i cuda-keyring_*all.deb
+          # sudo apt-get update
+          # DEBIAN_FRONTEND=noninteractive sudo apt-get -y install cuda=$CUDA_VERSION
 
           # Intel Media SDK のために libva-dev, libdrm-dev を入れる
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libva-dev libdrm-dev
@@ -231,7 +231,7 @@ jobs:
           set -x
           uv python pin ${{ matrix.python.version }}
           uv sync
-          uv run python run.py build ${{ inputs.buildType == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }} --local-sora-cpp-sdk-dir ../sora-cpp-sdk --local-webrtc-build-dir ../webrtc-build
+          uv run python run.py build ${{ inputs.buildType == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }} --local-sora-cpp-sdk-dir ../sora-cpp-sdk --local-webrtc-build-dir ../webrtc-build --local-sora-cpp-sdk-args=--disable-cuda
           uv build
         env:
           BUILD_PROFILE: debug
