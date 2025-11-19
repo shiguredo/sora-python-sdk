@@ -17,12 +17,6 @@ on:
         type: string
         default: develop
 
-env:
-  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
-  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
-  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
-  TEST_API_URL: ${{ secrets.TEST_API_URL }}
-
 permissions:
   contents: write
 
@@ -112,7 +106,6 @@ jobs:
           '
 
       - name: Setup sora-cpp-sdk
-        if: steps.sora-cpp-sdk-cache.outputs.cache-hit != 'true'
         working-directory: sora-cpp-sdk
         run: |
           source DEPS
@@ -122,7 +115,7 @@ jobs:
           # X11
           sudo apt-get install -y libx11-dev libxext-dev
 
-          # Intel Media SDK のために libva-dev, libdrm-dev を入れる
+          # Intel VPL のために libva-dev, libdrm-dev を入れる
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libva-dev libdrm-dev
 
           # clang-20
