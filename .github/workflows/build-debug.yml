@@ -72,11 +72,6 @@ jobs:
           repository: shiguredo/sora-cpp-sdk
           ref: ${{ inputs.cpp_sdk_ref || steps.version.outputs.sora_cpp_sdk_version }}
 
-      - name: Fix sora-cpp-sdk
-        working-directory: sora-cpp-sdk
-        run: |
-          curl -LO https://raw.githubusercontent.com/melpon/buildbase/master/buildbase.py
-
       ###################
       # 各種セットアップ
       ###################
@@ -124,10 +119,10 @@ jobs:
           # Intel VPL のために libva-dev, libdrm-dev を入れる
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libva-dev libdrm-dev
 
-          # clang-20
+          # clang
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
-          sudo ./llvm.sh 20
+          sudo ./llvm.sh $APT_INSTALL_LLVM_VERSION
 
       - name: Setup sora-python-sdk
         run: |
