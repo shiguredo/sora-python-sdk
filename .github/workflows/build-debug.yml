@@ -3,7 +3,7 @@ name: build-debug
 on:
   workflow_dispatch:
     inputs:
-      buildType:
+      build_type:
         description: "Build Type"
         required: true
         type: choice
@@ -11,11 +11,18 @@ on:
           - Debug
           - RelWithDebInfo
         default: Debug
-      pythonSdkVersion:
-        description: "Python Sdk version"
+      python_sdk_ref:
+        description: "Python SDK git ref"
         required: false
         type: string
-        default: develop
+      cpp_sdk_ref:
+        description: "C++ SDK git ref"
+        required: false
+        type: string
+      webrtc_build_ref:
+        description: "webrtc-build git ref"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -27,7 +34,7 @@ jobs:
       matrix:
         platform:
           - name: ubuntu-24.04_x86_64
-            runs-os: blacksmith-8vcpu-ubuntu-2404
+            runs-on: blacksmith-8vcpu-ubuntu-2404
         python:
           # - version: "3.10"
           #   soname: sora_sdk_ext.cpython-310-x86_64-linux-gnu.so
@@ -36,8 +43,7 @@ jobs:
           # - version: "3.12"
           #   soname: sora_sdk_ext.cpython-312-x86_64-linux-gnu.so
           - version: "3.13"
-            soname: sora_sdk_ext.cpython-313-x86_64-linux-gnu.so
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: ${{ matrix.platform.runs-on }}
     steps:
       ###################
       # 各リポジトリのソースファイルの取得
@@ -45,7 +51,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           path: sora-python-sdk
-          ref: ${{ inputs.pythonSdkVersion }}
+          ref: ${{ inputs.python_sdk_ref }}
       - name: Get versions
         id: version
         run: |
@@ -58,13 +64,13 @@ jobs:
         with:
           path: webrtc-build
           repository: shiguredo-webrtc-build/webrtc-build
-          ref: ${{ steps.version.outputs.webrtc_build_version }}
+          ref: ${{ inputs.webrtc_build_ref || steps.version.outputs.webrtc_build_version }}
 
       - uses: actions/checkout@v5
         with:
           path: sora-cpp-sdk
           repository: shiguredo/sora-cpp-sdk
-          ref: ${{ steps.version.outputs.sora_cpp_sdk_version }}
+          ref: ${{ inputs.cpp_sdk_ref || steps.version.outputs.sora_cpp_sdk_version }}
 
       - name: Fix sora-cpp-sdk
         working-directory: sora-cpp-sdk
@@ -143,10 +149,15 @@ jobs:
           set -x
           uv python pin ${{ matrix.python.version }}
           uv sync
-          uv run python run.py build ${{ inputs.buildType == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }} --local-sora-cpp-sdk-dir ../sora-cpp-sdk --local-webrtc-build-dir ../webrtc-build --local-sora-cpp-sdk-args=--disable-cuda
+          uv run python run.py build ${{ inputs.build_type == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }} --local-sora-cpp-sdk-dir ../sora-cpp-sdk --local-webrtc-build-dir ../webrtc-build --local-sora-cpp-sdk-args=--disable-cuda
+          # パッケージング
           uv build
         env:
           BUILD_PROFILE: debug
+
+      ###################
+      # アップロード
+      ###################
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v5
