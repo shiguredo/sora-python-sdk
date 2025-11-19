@@ -46,6 +46,16 @@ jobs:
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
       ###################
+      # 入力値の出力
+      ###################
+      - name: Show inputs: bt=${{ inputs.build_type }}, py=${{ inputs.python_sdk_ref }}, cpp=${{ inputs.cpp_sdk_ref }}, rtc=${{ inputs.webrtc_build_ref }}
+        run: |
+          echo "build_type: ${{ inputs.build_type }}"
+          echo "python_sdk_ref: ${{ inputs.python_sdk_ref }}"
+          echo "cpp_sdk_ref: ${{ inputs.cpp_sdk_ref }}"
+          echo "webrtc_build_ref: ${{ inputs.webrtc_build_ref }}"
+
+      ###################
       # 各リポジトリのソースファイルの取得
       ###################
       - uses: actions/checkout@v5
