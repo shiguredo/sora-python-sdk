@@ -48,7 +48,7 @@ jobs:
       ###################
       # 入力値の出力
       ###################
-      - name: Show inputs: bt=${{ inputs.build_type }}, py=${{ inputs.python_sdk_ref }}, cpp=${{ inputs.cpp_sdk_ref }}, rtc=${{ inputs.webrtc_build_ref }}
+      - name: "Show inputs: bt=${{ inputs.build_type }}, py=${{ inputs.python_sdk_ref }}, cpp=${{ inputs.cpp_sdk_ref }}, rtc=${{ inputs.webrtc_build_ref }}"
         run: |
           echo "build_type: ${{ inputs.build_type }}"
           echo "python_sdk_ref: ${{ inputs.python_sdk_ref }}"
