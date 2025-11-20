@@ -169,7 +169,8 @@ jobs:
             ${{ matrix.platform.name }} \
             --local-sora-cpp-sdk-dir ../sora-cpp-sdk \
             --local-sora-cpp-sdk-args=--disable-cuda \
-            --local-webrtc-build-dir ../webrtc-build
+            --local-webrtc-build-dir ../webrtc-build \
+            --local-webrtc-build-args=--no-history
           # パッケージング
           uv build
         env:
