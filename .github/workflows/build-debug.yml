@@ -10,6 +10,7 @@ on:
         options:
           - Debug
           - RelWithDebInfo
+          - Release
         default: Debug
       python_sdk_ref:
         description: "Python SDK git ref"
@@ -168,7 +169,12 @@ jobs:
           set -x
           uv python pin ${{ matrix.python.version }}
           uv sync
-          uv run python run.py build ${{ inputs.build_type == 'Debug' && '--debug' || '--relwithdebinfo' }} ${{ matrix.platform.name }} --local-sora-cpp-sdk-dir ../sora-cpp-sdk --local-webrtc-build-dir ../webrtc-build --local-sora-cpp-sdk-args=--disable-cuda
+          uv run python run.py build \
+            ${{ inputs.build_type == 'Debug' && '--debug' || (inputs.build_type == 'RelWithDebInfo' && '--relwithdebinfo' || '') }} \
+            ${{ matrix.platform.name }} \
+            --local-sora-cpp-sdk-dir ../sora-cpp-sdk \
+            --local-sora-cpp-sdk-args=--disable-cuda \
+            --local-webrtc-build-dir ../webrtc-build
           # パッケージング
           uv build
         env:
