@@ -83,11 +83,6 @@ jobs:
           repository: shiguredo/sora-cpp-sdk
           ref: ${{ inputs.cpp_sdk_ref || steps.version.outputs.sora_cpp_sdk_version }}
 
-      - name: Fix sora-cpp-sdk
-        working-directory: sora-cpp-sdk
-        run: |
-          curl -LO https://raw.githubusercontent.com/melpon/buildbase/master/buildbase.py
-
       ###################
       # 実際に使ったソースのバージョンを出力
       ###################
