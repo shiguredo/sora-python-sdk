@@ -88,6 +88,15 @@ jobs:
           curl -LO https://raw.githubusercontent.com/melpon/buildbase/master/buildbase.py
 
       ###################
+      # 実際に使ったソースのバージョンを出力
+      ###################
+      - name: "Show used versions"
+        run: |
+          echo "sora-python-sdk: ${{ inputs.python_sdk_ref || github.sha }} (`cd sora-python-sdk && git rev-parse HEAD`)"
+          echo "cpp_sdk_ref: ${{ inputs.cpp_sdk_ref || steps.version.outputs.sora_cpp_sdk_version }} (`cd sora-cpp-sdk && git rev-parse HEAD`)"
+          echo "webrtc_build_ref: ${{ inputs.webrtc_build_ref || steps.version.outputs.webrtc_build_version }} (`cd webrtc-build && git rev-parse HEAD`)"
+
+      ###################
       # 各種セットアップ
       ###################
 
