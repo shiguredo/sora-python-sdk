@@ -31,6 +31,9 @@
   - `VideoCodecImplementation.RASPI_V4L2M2M` を追加
   - `Sora.create_libcamera_source()` 関数を追加
   - @melpon
+- [ADD] GitHub Actions でデバッグバイナリを作る仕組みを追加する
+  - 元々存在していた `build-debug.yml` をリニューアルした
+  - @melpon
 - [FIX] macOS のビルドで使うコンパイラと標準ライブラリを libwebrtc 提供のものにする
   - m140 から libwebrtc 提供のものでビルドするように変更したため
   - @melpon
