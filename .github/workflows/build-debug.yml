@@ -59,7 +59,7 @@ jobs:
       ###################
       # 各リポジトリのソースファイルの取得
       ###################
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: sora-python-sdk
           ref: ${{ inputs.python_sdk_ref }}
@@ -71,13 +71,13 @@ jobs:
           echo "sora_cpp_sdk_version=${SORA_CPP_SDK_VERSION}" >> $GITHUB_OUTPUT
           echo "boost_version=${BOOST_VERSION}" >> $GITHUB_OUTPUT
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: webrtc-build
           repository: shiguredo-webrtc-build/webrtc-build
           ref: ${{ inputs.webrtc_build_ref || steps.version.outputs.webrtc_build_version }}
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: sora-cpp-sdk
           repository: shiguredo/sora-cpp-sdk

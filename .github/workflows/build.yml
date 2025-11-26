@@ -35,7 +35,7 @@ jobs:
     outputs:
       sdk_version: ${{ steps.version.outputs.sdk_version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           sparse-checkout: |
             VERSION
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: |
           sudo apt-get -y install libx11-dev
       - uses: astral-sh/setup-uv@v7
@@ -121,7 +121,7 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
         with:
           name: sora_sdk_${{ matrix.python_version }}
@@ -197,7 +197,7 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
         with:
           name: sora_sdk_${{ matrix.python_version }}
@@ -256,7 +256,7 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
         with:
           name: sora_sdk_${{ matrix.python_version }}
@@ -299,7 +299,7 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
         with:
           name: sora_sdk_${{ matrix.python_version }}
@@ -432,7 +432,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
