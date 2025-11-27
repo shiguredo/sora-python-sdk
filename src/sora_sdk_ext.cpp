@@ -744,7 +744,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "audio_opus_params"_a = nb::none(), "simulcast"_a = nb::none(),
            "spotlight"_a = nb::none(), "spotlight_number"_a = nb::none(),
            "simulcast_rid"_a = nb::none(), "simulcast_request_rid"_a = nb::none(),
-           "simulcast_rid_auto"_a = nb::none(), "spotlight_focus_rid"_a = nb::none(),
+           "spotlight_focus_rid"_a = nb::none(),
            "spotlight_unfocus_rid"_a = nb::none(),
            "forwarding_filter"_a = nb::none(),
            "forwarding_filters"_a = nb::none(), "data_channels"_a = nb::none(),
@@ -790,7 +790,6 @@ NB_MODULE(sora_sdk_ext, m) {
                    "spotlight_number: Optional[int] = None, "
                    "simulcast_rid: Optional[str] = None, "
                    "simulcast_request_rid: Optional[str] = None, "
-                   "simulcast_rid_auto: Optional[bool] = None, "
                    "spotlight_focus_rid: Optional[str] = None, "
                    "spotlight_unfocus_rid: Optional[str] = None, "
                    "forwarding_filter: Optional[dict] = None, "
