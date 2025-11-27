@@ -19,9 +19,6 @@
   - LIBWEBRTC_VERSIONを `m143.7499.1.0` に上げる
   - CMAKE_VERSION を `4.1.2` に上げる
   - @voluntas @melpon @torikizi
-- [UPDATE] `simulcast_rid_auto` をシグナリング接続時に指定できるようにする
-  - Sora C++ SDK への追従
-  - @voluntas
 - [UPDATE] `simulcast_request_rid` をシグナリング接続時に指定できるようにする
   - Sora C++ SDK への追従
   - @voluntas
