@@ -51,10 +51,11 @@ def install_deps(
     version = read_version_file("DEPS")
 
     # multistrap を使った sysroot の構築
-    if (
-        platform.target.os == "jetson"
-        or platform.target.os == "ubuntu"
-        and platform.target.arch == "armv8"
+    if platform.target.package_name in (
+        "ubuntu-22.04_armv8_jetson",
+        "raspberry-pi-os_armv8",
+        "ubuntu-22.04_armv8",
+        "ubuntu-24.04_armv8",
     ):
         conf = os.path.join("multistrap", f"{platform.target.package_name}.conf")
         # conf ファイルのハッシュ値をバージョンとする
@@ -90,7 +91,9 @@ def install_deps(
     webrtc_info = get_webrtc_info(webrtc_platform, local_webrtc_build_dir, install_dir, debug)
     webrtc_version = read_version_file(webrtc_info.version_file)
 
-    if platform.build.os == "ubuntu" and local_webrtc_build_dir is None:
+    if (
+        platform.build.os == "macos" or platform.build.os == "ubuntu"
+    ) and local_webrtc_build_dir is None:
         # LLVM
         tools_url = webrtc_version["WEBRTC_SRC_TOOLS_URL"]
         tools_commit = webrtc_version["WEBRTC_SRC_TOOLS_COMMIT"]
@@ -178,6 +181,7 @@ AVAILABLE_TARGETS = [
     "ubuntu-22.04_armv8",
     "ubuntu-24.04_armv8",
     "ubuntu-22.04_armv8_jetson",
+    "raspberry-pi-os_armv8",
 ]
 
 
@@ -208,6 +212,8 @@ def _get_platform(target: str) -> Platform:
         platform = Platform("ubuntu", "24.04", "armv8")
     elif target == "ubuntu-22.04_armv8_jetson":
         platform = Platform("jetson", None, "armv8", "ubuntu-22.04")
+    elif target == "raspberry-pi-os_armv8":
+        platform = Platform("raspberry-pi-os", None, "armv8")
     else:
         raise Exception(f"Unknown target {target}")
     return platform
@@ -258,8 +264,14 @@ def _build(
         cmake_args = []
         cmake_args.append(f"-DCMAKE_BUILD_TYPE={configuration}")
         cmake_args.append(f"-DTARGET_OS={platform.target.os}")
-        cmake_args.append(f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk')}")
-        cmake_args.append(f"-DBOOST_ROOT={cmake_path(sora_info.boost_install_dir)}")
+        # Raspberry Pi OS の場合は sora-sdk-rpi パッケージからバージョンを取得する
+        if platform.target.os == "raspberry-pi-os":
+            cmake_args.append(
+                f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk-rpi')}"
+            )
+        else:
+            cmake_args.append(f"-DSORA_PYTHON_SDK_VERSION={importlib.metadata.version('sora-sdk')}")
+        cmake_args.append(f"-DBoost_ROOT={cmake_path(sora_info.boost_install_dir)}")
         cmake_args.append(f"-DWEBRTC_INCLUDE_DIR={cmake_path(webrtc_info.webrtc_include_dir)}")
         cmake_args.append(f"-DWEBRTC_LIBRARY_DIR={cmake_path(webrtc_info.webrtc_library_dir)}")
         cmake_args.append(f"-DSORA_DIR={cmake_path(sora_info.sora_install_dir)}")
@@ -310,11 +322,13 @@ def _build(
             cmake_args += [
                 "-DCMAKE_SYSTEM_PROCESSOR=arm64",
                 "-DCMAKE_OSX_ARCHITECTURES=arm64",
-                "-DCMAKE_C_COMPILER=clang",
+                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
                 "-DCMAKE_C_COMPILER_TARGET=aarch64-apple-darwin",
-                "-DCMAKE_CXX_COMPILER=clang++",
+                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
                 "-DCMAKE_CXX_COMPILER_TARGET=aarch64-apple-darwin",
                 f"-DCMAKE_SYSROOT={sysroot}",
+                f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
+                f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
             ]
         elif platform.target.os == "jetson":
             sysroot = os.path.join(install_dir, "rootfs")
@@ -332,8 +346,30 @@ def _build(
                 "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
                 f"-DCMAKE_SYSROOT={sysroot}",
                 f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
+                f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
                 f"-DPython_ROOT_DIR={cmake_path(os.path.join(sysroot, 'usr', 'include', 'python3.10'))}",
                 "-DNB_SUFFIX=.cpython-310-aarch64-linux-gnu.so",
+            ]
+        elif platform.target.os == "raspberry-pi-os":
+            sysroot = os.path.join(install_dir, "rootfs")
+            python_version = get_python_version()
+            python_version_short = ".".join(python_version.split(".")[:2])
+            cmake_args += [
+                "-DCMAKE_SYSTEM_NAME=Linux",
+                "-DCMAKE_SYSTEM_PROCESSOR=aarch64",
+                f"-DCMAKE_C_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang')}",
+                "-DCMAKE_C_COMPILER_TARGET=aarch64-linux-gnu",
+                f"-DCMAKE_CXX_COMPILER={os.path.join(webrtc_info.clang_dir, 'bin', 'clang++')}",
+                "-DCMAKE_CXX_COMPILER_TARGET=aarch64-linux-gnu",
+                f"-DCMAKE_FIND_ROOT_PATH={sysroot}",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH",
+                "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
+                f"-DCMAKE_SYSROOT={sysroot}",
+                f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}",
+                f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
+                f"-DNB_SUFFIX=.cpython-{python_version_short.replace('.', '')}-aarch64-linux-gnu.so",
             ]
 
         # Windows 以外の、クロスコンパイルでない環境では pyi ファイルを生成する
@@ -381,6 +417,11 @@ def _build(
                 shutil.copyfile(
                     os.path.join(sora_build_target_dir, file), os.path.join(sora_src_dir, file)
                 )
+
+        if platform.target.os == "raspberry-pi-os":
+            # libcamerac.so を sora_sdk_ext.*.so と同じディレクトリにコピーする
+            libcamerac_so = os.path.join(sora_info.sora_install_dir, "lib", "libcamerac.so")
+            shutil.copyfile(libcamerac_so, os.path.join(sora_src_dir, "libcamerac.so"))
 
 
 def _format(

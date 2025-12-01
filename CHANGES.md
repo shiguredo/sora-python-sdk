@@ -11,6 +11,43 @@
 
 ## develop
 
+## 2025.5.0
+
+**リリース日**: 2025-12-01
+
+- [ADD] Python 3.14 の対応を追加する
+  - @voluntas
+- [ADD] Python 3.11 の対応を終了する
+  - @voluntas
+- [UPDATE] CMake 3.27 以降のポリシー警告に対応する
+  - CMP0144: `<PackageName>_ROOT` 変数の命名規則に対応し、`BOOST_ROOT` を `Boost_ROOT` に変更
+  - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2025.6.1` に上げる
+  - LIBWEBRTC_VERSIONを `m143.7499.1.0` に上げる
+  - CMAKE_VERSION を `4.1.2` に上げる
+  - @voluntas @melpon @torikizi
+- [UPDATE] `simulcast_request_rid` をシグナリング接続時に指定できるようにする
+  - Sora C++ SDK への追従
+  - @voluntas
+- [ADD] `raspberry-pi-os_armv8` の対応を追加する
+  - `VideoCodecImplementation.RASPI_V4L2M2M` を追加
+  - `Sora.create_libcamera_source()` 関数を追加
+  - @melpon
+- [ADD] GitHub Actions でデバッグバイナリを作る仕組みを追加する
+  - 元々存在していた `build-debug.yml` をリニューアルした
+  - @melpon
+- [FIX] macOS のビルドで使うコンパイラと標準ライブラリを libwebrtc 提供のものにする
+  - m140 から libwebrtc 提供のものでビルドするように変更したため
+  - @melpon
+
+### misc
+
+- [ADD] Raspberry Pi OS armv8 向けの E2E テストを追加する
+  - @voluntas
+- [ADD] libcamera のテストを追加する
+  - @voluntas
+
 ## 2025.4.0
 
 **リリース日**: 2025-09-12

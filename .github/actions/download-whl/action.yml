@@ -1,21 +1,21 @@
-name: 'Download Wheel'
-description: 'Download wheel file from build artifacts or release'
+name: "Download Wheel"
+description: "Download wheel file from build artifacts or release"
 inputs:
   platform_name:
-    description: 'Platform name (e.g. ubuntu-24.04_x86_64, macos_arm64)'
+    description: "Platform name (e.g. ubuntu-24.04_x86_64, macos_arm64)"
     required: true
   python_version:
-    description: 'Python version (e.g. 3.11, 3.12, 3.13)'
+    description: "Python version (e.g. 3.11, 3.12, 3.13)"
     required: true
   github_token:
-    description: 'GitHub token'
+    description: "GitHub token"
     required: true
 outputs:
   wheel_file:
-    description: 'Path to the downloaded wheel file'
+    description: "Path to the downloaded wheel file"
     value: ${{ steps.result.outputs.wheel_file }}
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Download artifacts or release binary
       shell: bash
@@ -28,7 +28,7 @@ runs:
           --limit=1 \
           --json databaseId \
           --jq '.[0].databaseId')
-        
+
         if [ -n "$RUN_ID" ]; then
           echo "Found successful build: $RUN_ID"
           
@@ -42,7 +42,7 @@ runs:
             RUN_ID=""
           fi
         fi
-        
+
         # artifact が取得できなかった場合は release から取得
         if [ -z "$RUN_ID" ] || [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
           echo "Downloading from release..."
@@ -69,10 +69,14 @@ runs:
               # manylinux_2_31 に固定
               WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_31_aarch64.whl"
               ;;
-            macos_arm64)
+            raspberry-pi-os_armv8)
+              # Raspberry Pi OS 用（sora_sdk_rpi prefix、manylinux_2_35）
+              WHEEL_PATTERN="sora_sdk_rpi-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_35_aarch64.whl"
+              ;;
+            macos-*_arm64)
               WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-macosx_*_arm64.whl"
               ;;
-            windows_x86_64)
+            windows-*_x86_64)
               WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-win_amd64.whl"
               ;;
             *)
@@ -89,7 +93,7 @@ runs:
         fi
       env:
         GH_TOKEN: ${{ inputs.github_token }}
-    
+
     - name: Set output
       id: result
       shell: bash

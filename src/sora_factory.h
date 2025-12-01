@@ -17,7 +17,8 @@
 class SoraFactory {
  public:
   SoraFactory(std::optional<std::string> openh264,
-              std::optional<sora::VideoCodecPreference> video_codec_preference);
+              std::optional<sora::VideoCodecPreference> video_codec_preference,
+              std::optional<bool> force_i420_conversion);
 
   webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
   GetPeerConnectionFactory() const;

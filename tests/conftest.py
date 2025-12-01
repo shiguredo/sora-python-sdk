@@ -111,11 +111,14 @@ class Settings:
 def pytest_report_header(config):
     """pytest の実行時に特定のライブラリのバージョンを追加表示"""
     # config パラメータは pytest から渡されるが、この関数では使用しない
-    try:
-        version = importlib.metadata.version("sora_sdk")
-        return f"sora_sdk: {version}"
-    except importlib.metadata.PackageNotFoundError:
-        return "sora_sdk: Not installed"
+    # Raspberry Pi OS 向けパッケージ (sora-sdk-rpi) と通常パッケージ (sora-sdk) の両方を試す
+    for package_name in ["sora-sdk-rpi", "sora-sdk"]:
+        try:
+            version = importlib.metadata.version(package_name)
+            return f"sora_sdk: {version} (from {package_name})"
+        except importlib.metadata.PackageNotFoundError:
+            continue
+    return "sora_sdk: Not installed"
 
 
 @pytest.fixture

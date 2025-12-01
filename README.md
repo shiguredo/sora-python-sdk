@@ -1,9 +1,11 @@
 # Sora Python SDK
 
 [![PyPI](https://img.shields.io/pypi/v/sora_sdk)](https://pypi.org/project/sora-sdk/)
+[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
 [![image](https://img.shields.io/pypi/pyversions/sora_sdk.svg)](https://pypi.python.org/pypi/sora_sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Actions status](https://github.com/shiguredo/sora-python-sdk/workflows/build/badge.svg)](https://github.com/shiguredo/sora-python-sdk/actions)
+[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/shiguredo)
 
 Sora Python SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp/) の Python クライアントアプリケーションを開発するためのライブラリです。[Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) をベースにしています。
 
@@ -25,27 +27,34 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 ## 特徴
 
+- PyPI 経由で `uv add sora-sdk` や `pip install sora-sdk` でインストールできる
+- Raspberry Pi 向けパッケージ `sora-sdk-rpi` の提供
+  - `uv add sora-sdk-rpi` でインストールできる
+- Raspberry Pi 向けに libcamera 用の `create_libcamera_source` を提供
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
-- Windows / macOS / Linux (Ubuntu) プラットフォームに対応
+- Windows / macOS / Linux (Ubuntu / Raspberry Pi OS) プラットフォームに対応
 - [WebRTC 統計情報](https://www.w3.org/TR/webrtc-stats/) の取得が可能
 - [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/) に対応
 - 回線が不安定になった際、解像度とフレームレートどちらを維持するかの設定をする [DegradationPreference](https://w3c.github.io/mst-content-hint/#degradation-preference-when-encoding) に対応
-  - MAINTAIN_FRAMERATE / MAINTAIN_RESOLUTION / BALANCED が指定できる
+  - `MAINTAIN_FRAMERATE` / `MAINTAIN_RESOLUTION` / `BALANCED` が指定できる
 - 発話区間の検出が可能な VAD (Voice Activity Detection) に対応
-- Intel / Apple / NVIDIA のハードウェアデコーダー/エンコーダーに対応
+- Intel / Apple / NVIDIA / Raspberry Pi のハードウェアデコーダー/エンコーダーに対応
   - Apple Video Toolbox (H.264 / H.265)
     - macOS arm64 で利用できる
-  - Intel VPL (AV1 / H.264 / H.265)
+  - Intel VPL (VP9 / AV1 / H.264 / H.265)
     - Ubuntu x86_64 / Windows x86_64 で利用できる
   - AMD AMF (VP9 /AV1 / H.264 / H.265)
     - Ubuntu x86_64 / Windows x86_64 で利用できる
     - AV1 エンコードは Windows x86_64 でのみ利用できる
     - VP9 はデコードのみ利用できる
-  - NVIDIA Video Codec SDK (VP8 / VP9 / AV1 / H.264 / H.265)
+  - NVIDIA Video Codec (VP8 / VP9 / AV1 / H.264 / H.265)
     - Ubuntu x86_64 / Windows x86_64 で利用できる
     - VP8 と VP9 はデコードのみ利用できる
   - NVIDIA Jetson JetPack SDK (AV1 / H.264 / H.265)
+  - Raspberry Pi (H.264)
+    - Raspberry Pi 4 / Raspberry Pi 3 / Raspberry Pi 2 Model B v1.2 / Raspberry Pi Zero 2 W で利用できる
+    - V4L2-M2M API を利用している
   - [各プラットフォームで利用可能な HWA への対応](https://github.com/shiguredo/sora-cpp-sdk?tab=readme-ov-file#%E7%89%B9%E5%BE%B4)
 - [OpenH264](https://github.com/cisco/openh264) を利用した H.264 のソフトウェアエンコーダー/デコーダーに対応
   - Ubuntu x86_64 / Ubuntu arm64 / Windows x86_64 / macOS arm64 で利用できる
@@ -53,7 +62,6 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - 映像デバイス処理に [opencv-python](https://pypi.org/project/opencv-python/) などが利用できる
 - 音声認識などの入力に受信した音声を利用できる
 - 物体検出などの入力に受信した映像を利用できる
-- `uv add sora_sdk` や `pip install sora_sdk` でインストール可能
 - [NVIDIA Jetson JetPack SDK](https://developer.nvidia.com/embedded/jetpack) に対応
 
 ## 利用イメージ
@@ -79,6 +87,12 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 uv add sora_sdk
 ```
 
+### Raspberry Pi OS 向けパッケージ
+
+```bash
+uv add sora_sdk_rpi
+```
+
 ### NVIDIA Jetson 向けパッケージ
 
 PyPI 経由ではインストールできません。
@@ -86,14 +100,22 @@ PyPI 経由ではインストールできません。
 
 <https://github.com/shiguredo/sora-python-sdk/releases/tag/2024.3.0-jetson-jetpack-6.0.0.0>
 
-## システム条件
+## 対応 WebRTC SFU Sora
 
-- WebRTC SFU Sora 2024.2.0 以降
-- Python 3.11 以上
+直近 2 バージョンの Sora をサポートします
+
+- Sora 2025.2.x
+- Sora 2025.1.x
 
 ## Python サポートポリシー
 
 直近の 3 バージョンの Python をサポートします。
+
+- Python 3.14
+- Python 3.13
+- Python 3.12
+
+[Scientific Python \- SPEC 0 — Minimum Supported Dependencies](https://scientific-python.org/specs/spec-0000/)
 
 ## 対応プラットフォーム
 
@@ -101,12 +123,28 @@ PyPI 経由ではインストールできません。
 - Ubuntu 24.04 LTS arm64
 - Ubuntu 22.04 LTS x86_64
 - Ubuntu 22.04 LTS arm64
+- macOS Tahoe 26 arm64
 - macOS Sequoia 15 arm64
 - macOS Ventura 14 arm64
 - Windows 11 x86_64
 - Windows Server 2025 x86_64
+- Raspberry Pi OS armv8
 
-### Jetson 向け
+### Raspberry Pi OS 向け
+
+- Raspberry Pi OS Trixie (64bit)
+  - Raspberry Pi 5
+  - Raspberry Pi 4
+  - Raspberry Pi 3
+  - Raspberry Pi 2 Model B v1.2
+  - Raspberry Pi Zero 2 W
+
+> [!CAUTION]
+>
+> - Raspberry Pi 5 は H.264 ハードウェアエンコーダーが搭載されていません
+> - Raspberry Pi 5 の H.265 ハードウェアデコーダーに対応していません
+
+### NVIDIA Jetson 向け
 
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください
@@ -132,9 +170,7 @@ PyPI 経由ではインストールできません。
 
 ### 優先実装が可能な機能一覧
 
-- Windows 11 arm64
 - Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6.1)
-- Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
 
 ## サポートについて
 

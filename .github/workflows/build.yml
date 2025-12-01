@@ -6,6 +6,8 @@ on:
     paths-ignore:
       - "**.md"
       - "tests/**"
+      - ".github/workflows/e2e-test.yml"
+      - ".github/workflows/build-debug.yml"
     branches-ignore:
       - "feature/e2e-test*"
     tags:
@@ -33,7 +35,7 @@ jobs:
     outputs:
       sdk_version: ${{ steps.version.outputs.sdk_version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           sparse-checkout: |
             VERSION
@@ -53,19 +55,19 @@ jobs:
       fail-fast: false
       matrix:
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
+          - "3.14"
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: |
           sudo apt-get -y install libx11-dev
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
-      - run: uv python pin ${{ matrix.python_version }}
+          python-version: ${{ matrix.python_version }}
       - run: uv sync
       - name: Generate pyi
         run: |
@@ -74,7 +76,7 @@ jobs:
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -104,22 +106,35 @@ jobs:
             runs_on: ubuntu-22.04
             os: ubuntu
             arch: armv8
+          - name: raspberry-pi-os_armv8
+            target: raspberry-pi-os_armv8
+            runs_on: ubuntu-24.04
+            os: raspberry-pi-os
+            arch: armv8
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
-    needs: [build_pyi] 
+          - "3.14"
+    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v6
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
+
+      # pyproject.toml の name を sora_sdk_rpi に書き換える
+      # Raspberry Pi OS armv8 向けにビルドする場合のみ
+      - name: sora_sdk_rpi
+        if: ${{ matrix.platform.name == 'raspberry-pi-os_armv8' }}
+        run: |
+          sed -e 's/^name = "sora_sdk"/name = "sora_sdk_rpi"/' -i pyproject.toml
+
       # libx11-dev は Ubuntu 24.04 の時に必要になる
       - run: |
           sudo apt-get update
@@ -129,12 +144,11 @@ jobs:
           sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
           # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
           sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
-      - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync
 
       - if: ${{ matrix.platform.arch == 'x86_64' }}
         run: |
@@ -150,60 +164,10 @@ jobs:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
-
-
-  # x86_64 でビルドした Ubuntu x86_64/arm64 向けの whl をチェックする
-  check_ubuntu_wheel:
-    strategy:
-      fail-fast: false
-      matrix:
-        # 22.04 x86_64 でクロスコンパイルした whl を 22.04 と 24.04 の x86_64/arm64 でチェックする
-        platform:
-          - name: ubuntu-22.04_x86_64
-            download_name: ubuntu-22.04_x86_64
-            runs_on: ubuntu-22.04
-            pytag: manylinux_2_31_x86_64
-          - name: ubuntu-22.04_armv8
-            download_name: ubuntu-22.04_armv8
-            runs_on: ubuntu-22.04-arm
-            pytag: manylinux_2_31_aarch64
-          - name: ubuntu-24.04_x86_64
-            download_name: ubuntu-22.04_x86_64
-            runs_on: ubuntu-24.04
-            pytag: manylinux_2_31_x86_64
-          - name: ubuntu-24.04_armv8
-            download_name: ubuntu-22.04_armv8
-            runs_on: ubuntu-24.04-arm
-            pytag: manylinux_2_31_aarch64
-        version:
-          - python: "3.11"
-            pkg: "311"
-          - python: "3.12"
-            pkg: "312"
-          - python: "3.13"
-            pkg: "313"
-    needs: [get_sdk_version, build_ubuntu]
-    runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 15
-    steps:
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: false
-      - uses: actions/download-artifact@v5
-        with:
-          name: ${{ matrix.platform.download_name }}_python-${{ matrix.version.python }}
-          path: dist/
-
-      # ここで download した whl ファイルの動作を確認する
-      - run: |
-          # 仮想環境を作成してテスト
-          uv venv --python ${{ matrix.version.python }}
-          uv pip install dist/sora_sdk-${{ needs.get_sdk_version.outputs.sdk_version }}-cp${{ matrix.version.pkg }}-cp${{ matrix.version.pkg }}-${{ matrix.platform.pytag }}.whl
-          uv run python -c "import sora_sdk; print(sora_sdk.get_video_codec_capability().to_json())"
 
   build_ubuntu_arm:
     strategy:
@@ -223,15 +187,15 @@ jobs:
             os: ubuntu
             arch: armv8
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
-    needs: [build_pyi] 
+          - "3.14"
+    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v6
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -252,12 +216,12 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
           sudo ./llvm.sh 19
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync
       - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
           uv run python run.py build ${{ matrix.platform.target }}
           uv build
         env:
@@ -281,27 +245,27 @@ jobs:
             python_host_platform: "macosx-14.0-arm64"
             archflags: "-arch arm64"
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
-    needs: [build_pyi] 
+          - "3.14"
+    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v6
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync
       - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
           uv run python run.py build ${{ matrix.platform.target }}
           uv build
         env:
@@ -309,25 +273,29 @@ jobs:
           ARCHFLAGS: ${{ matrix.platform.archflags }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
 
   build_windows:
-    needs: [build_pyi] 
-    runs-on: windows-2025
-    timeout-minutes: 15
+    needs: [build_pyi]
     strategy:
       fail-fast: false
       matrix:
+        platform:
+          - name: windows-2025_x86_64
+            target: windows_x86_64
+            runs_on: windows-2025
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
+          - "3.14"
+    runs-on: ${{ matrix.platform.runs_on }}
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v6
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -335,19 +303,19 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync
       - run: |
-          uv python pin ${{ matrix.python_version }}
-          uv sync
-          uv run python run.py build windows_x86_64
+          uv run python run.py build ${{ matrix.platform.target }}
           uv build
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: windows-2025_python-${{ matrix.python_version }}
+          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist/
 
   # slack_notify_succeeded:
@@ -365,16 +333,16 @@ jobs:
   #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   # E2E テストの実行
-  # e2e_test:
-  #   needs: [build_ubuntu, build_macos, build_windows]
-  #   uses: ./.github/workflows/e2e-test-only.yml
-  #   with:
-  #     from_build: true
-  #   secrets: inherit
+  e2e_test:
+    needs: [build_ubuntu, build_macos, build_windows]
+    uses: ./.github/workflows/e2e-test.yml
+    with:
+      from_build: true
+    secrets: inherit
 
   slack_notify_failed:
-    # needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
-    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
+    needs:
+      [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
@@ -385,7 +353,7 @@ jobs:
           SLACK_COLOR: danger
           SLACK_TITLE: "FAILED"
           SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}  
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   publish_wheel:
     if: contains(github.ref, 'tags/202')
@@ -403,18 +371,19 @@ jobs:
           - name: ubuntu-22.04_armv8
           - name: macos-15_arm64
           - name: macos-14_arm64
-          - name: windows-2025
+          - name: windows-2025_x86_64
+          - name: raspberry-pi-os_armv8
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
+          - "3.14"
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: pypi
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist
@@ -424,7 +393,7 @@ jobs:
           fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.11' }}
+        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.12' }}
 
       # テスト用
       # - name: Publish package to TestPyPI
@@ -457,49 +426,56 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.11" }
+        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.11" }
+        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.11" }
+        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-15_arm64", "python_version": "3.11" }
+        with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.11" }
+        with: { "platform": "macos-15_arm64", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2025", "python_version": "3.11" }
+        with: { "platform": "macos-14_arm64", "python_version": "3.14" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2025", "python_version": "3.12" }
+        with: { "platform": "windows-2025_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2025", "python_version": "3.13" }
+        with: { "platform": "windows-2025_x86_64", "python_version": "3.13" }
+      - uses: ./.github/actions/download
+        with: { "platform": "windows-2025_x86_64", "python_version": "3.14" }
+      - uses: ./.github/actions/download
+        with: { "platform": "raspberry-pi-os_armv8", "python_version": "3.12" }
+      - uses: ./.github/actions/download
+        with: { "platform": "raspberry-pi-os_armv8", "python_version": "3.13" }
+      - uses: ./.github/actions/download
+        with: { "platform": "raspberry-pi-os_armv8", "python_version": "3.14" }
+
       - name: Env to output
         run: |
           echo "package_paths<<EOF" >> $GITHUB_OUTPUT
