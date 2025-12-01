@@ -15,8 +15,10 @@
 
 **リリース日**: 2025-12-01
 
-このバージョンが Python 3.11 最後のリリースになります。次のリリースからは Python 3.11 を落とします。
-
+- [ADD] Python 3.14 の対応を追加する
+  - @voluntas
+- [ADD] Python 3.11 の対応を終了する
+  - @voluntas
 - [UPDATE] CMake 3.27 以降のポリシー警告に対応する
   - CMP0144: `<PackageName>_ROOT` 変数の命名規則に対応し、`BOOST_ROOT` を `Boost_ROOT` に変更
   - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
@@ -27,8 +29,6 @@
   - @voluntas @melpon @torikizi
 - [UPDATE] `simulcast_request_rid` をシグナリング接続時に指定できるようにする
   - Sora C++ SDK への追従
-  - @voluntas
-- [ADD] Python 3.14 の対応を追加する
   - @voluntas
 - [ADD] `raspberry-pi-os_armv8` の対応を追加する
   - `VideoCodecImplementation.RASPI_V4L2M2M` を追加

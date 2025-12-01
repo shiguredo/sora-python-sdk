@@ -1,6 +1,7 @@
 # Sora Python SDK
 
 [![PyPI](https://img.shields.io/pypi/v/sora_sdk)](https://pypi.org/project/sora-sdk/)
+[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
 [![image](https://img.shields.io/pypi/pyversions/sora_sdk.svg)](https://pypi.python.org/pypi/sora_sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Actions status](https://github.com/shiguredo/sora-python-sdk/workflows/build/badge.svg)](https://github.com/shiguredo/sora-python-sdk/actions)
@@ -101,8 +102,8 @@ PyPI 経由ではインストールできません。
 
 ## システム条件
 
-- WebRTC SFU Sora 2024.2.0 以降
-- Python 3.11 以上
+- WebRTC SFU Sora 2024.1.0 以降
+- Python 3.12 以上
 
 ## Python サポートポリシー
 
