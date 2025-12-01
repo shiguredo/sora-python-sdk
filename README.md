@@ -1,6 +1,7 @@
 # Sora Python SDK
 
 [![PyPI](https://img.shields.io/pypi/v/sora_sdk)](https://pypi.org/project/sora-sdk/)
+[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
 [![image](https://img.shields.io/pypi/pyversions/sora_sdk.svg)](https://pypi.python.org/pypi/sora_sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Actions status](https://github.com/shiguredo/sora-python-sdk/workflows/build/badge.svg)](https://github.com/shiguredo/sora-python-sdk/actions)
@@ -41,7 +42,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - Intel / Apple / NVIDIA / Raspberry Pi のハードウェアデコーダー/エンコーダーに対応
   - Apple Video Toolbox (H.264 / H.265)
     - macOS arm64 で利用できる
-  - Intel VPL (AV1 / H.264 / H.265)
+  - Intel VPL (VP9 / AV1 / H.264 / H.265)
     - Ubuntu x86_64 / Windows x86_64 で利用できる
   - AMD AMF (VP9 /AV1 / H.264 / H.265)
     - Ubuntu x86_64 / Windows x86_64 で利用できる
@@ -99,14 +100,22 @@ PyPI 経由ではインストールできません。
 
 <https://github.com/shiguredo/sora-python-sdk/releases/tag/2024.3.0-jetson-jetpack-6.0.0.0>
 
-## システム条件
+## 対応 WebRTC SFU Sora
 
-- WebRTC SFU Sora 2024.2.0 以降
-- Python 3.11 以上
+直近 2 バージョンの Sora をサポートします
+
+- Sora 2025.2.x
+- Sora 2025.1.x
 
 ## Python サポートポリシー
 
 直近の 3 バージョンの Python をサポートします。
+
+- Python 3.14
+- Python 3.13
+- Python 3.12
+
+[Scientific Python \- SPEC 0 — Minimum Supported Dependencies](https://scientific-python.org/specs/spec-0000/)
 
 ## 対応プラットフォーム
 
@@ -114,6 +123,7 @@ PyPI 経由ではインストールできません。
 - Ubuntu 24.04 LTS arm64
 - Ubuntu 22.04 LTS x86_64
 - Ubuntu 22.04 LTS arm64
+- macOS Tahoe 26 arm64
 - macOS Sequoia 15 arm64
 - macOS Ventura 14 arm64
 - Windows 11 x86_64
@@ -122,7 +132,7 @@ PyPI 経由ではインストールできません。
 
 ### Raspberry Pi OS 向け
 
-- Raspberry Pi OS bookworm (64bit)
+- Raspberry Pi OS Trixie (64bit)
   - Raspberry Pi 5
   - Raspberry Pi 4
   - Raspberry Pi 3
@@ -160,9 +170,7 @@ PyPI 経由ではインストールできません。
 
 ### 優先実装が可能な機能一覧
 
-- Windows 11 arm64
 - Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6.1)
-- Ubuntu 20.04 arm64 (NVIDIA Jetson JetPack SDK 5)
 
 ## サポートについて
 
