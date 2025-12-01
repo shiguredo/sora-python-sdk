@@ -15,7 +15,7 @@
   - CMP0144: `<PackageName>_ROOT` 変数の命名規則に対応し、`BOOST_ROOT` を `Boost_ROOT` に変更
   - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2025.6.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2025.6.1` に上げる
   - LIBWEBRTC_VERSIONを `m143.7499.1.0` に上げる
   - CMAKE_VERSION を `4.1.2` に上げる
   - @voluntas @melpon @torikizi
