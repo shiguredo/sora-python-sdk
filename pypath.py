@@ -7,8 +7,6 @@ import sys
 import sysconfig
 from pathlib import Path
 
-import distutils.sysconfig as du_sysconfig
-
 
 def get_python_version() -> str:
     """Get version associated with the current python interpreter.
@@ -223,7 +221,7 @@ def _guess_python_library(python_version: str):
         # returns an empty string on Linux, `du_sysconfig` is only used to
         # get the value of `LIBDIR`.
         candidate_libdirs = []
-        libdir_a = du_sysconfig.get_config_var("LIBDIR")
+        libdir_a = sysconfig.get_config_var("LIBDIR")
         assert not isinstance(libdir_a, int)
         if libdir_a is None:
             libdest = sysconfig.get_config_var("LIBDEST")

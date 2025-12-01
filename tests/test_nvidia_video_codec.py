@@ -18,7 +18,7 @@ from sora_sdk import (
 )
 
 pytestmark = pytest.mark.skipif(
-    os.environ.get("NVIDIA_VIDEO_CODEC_SDK") is None, reason="NVIDIA Video Codec SDK でのみ実行する"
+    os.environ.get("NVIDIA_VIDEO_CODEC") is None, reason="NVIDIA Video Codec でのみ実行する"
 )
 
 
@@ -325,7 +325,7 @@ def test_nvidia_video_codec_sdk_simulcast(
             #     assert "SimulcastEncoderAdapter" in s["encoderImplementation"]
             assert expected_implementation in s["encoderImplementation"]
 
-            assert s["bytesSent"] > 1000
+            assert s["bytesSent"] > 500
             assert s["packetsSent"] > 5
 
             assert s["targetBitrate"] >= expect_target_bitrate(

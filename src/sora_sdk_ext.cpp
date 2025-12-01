@@ -596,8 +596,9 @@ NB_MODULE(sora_sdk_ext, m) {
       .value("CISCO_OPENH264", sora::VideoCodecImplementation::kCiscoOpenH264)
       .value("INTEL_VPL", sora::VideoCodecImplementation::kIntelVpl)
       .value("NVIDIA_VIDEO_CODEC_SDK",
-             sora::VideoCodecImplementation::kNvidiaVideoCodecSdk)
-      .value("AMD_AMF", sora::VideoCodecImplementation::kAmdAmf);
+             sora::VideoCodecImplementation::kNvidiaVideoCodec)
+      .value("AMD_AMF", sora::VideoCodecImplementation::kAmdAmf)
+      .value("RASPI_V4L2M2M", sora::VideoCodecImplementation::kRaspiV4L2M2M);
 
   nb::enum_<webrtc::VideoCodecType>(m, "SoraVideoCodecType",
                                     nb::is_arithmetic())
@@ -724,8 +725,10 @@ NB_MODULE(sora_sdk_ext, m) {
                      p->set_self_py(po);
                    }))
       .def(nb::init<std::optional<std::string>,
-                    std::optional<sora::VideoCodecPreference>>(),
-           "openh264"_a = nb::none(), "video_codec_preference"_a = nb::none())
+                    std::optional<sora::VideoCodecPreference>,
+                    std::optional<bool>>(),
+           "openh264"_a = nb::none(), "video_codec_preference"_a = nb::none(),
+           "force_i420_conversion"_a = nb::none())
       .def("create_connection", &Sora::CreateConnection, "signaling_urls"_a,
            "role"_a, "channel_id"_a, "client_id"_a = nb::none(),
            "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),
@@ -740,7 +743,8 @@ NB_MODULE(sora_sdk_ext, m) {
            "video_h264_params"_a = nb::none(),
            "audio_opus_params"_a = nb::none(), "simulcast"_a = nb::none(),
            "spotlight"_a = nb::none(), "spotlight_number"_a = nb::none(),
-           "simulcast_rid"_a = nb::none(), "spotlight_focus_rid"_a = nb::none(),
+           "simulcast_rid"_a = nb::none(), "simulcast_request_rid"_a = nb::none(),
+           "spotlight_focus_rid"_a = nb::none(),
            "spotlight_unfocus_rid"_a = nb::none(),
            "forwarding_filter"_a = nb::none(),
            "forwarding_filters"_a = nb::none(), "data_channels"_a = nb::none(),
@@ -785,6 +789,7 @@ NB_MODULE(sora_sdk_ext, m) {
                    "spotlight: Optional[bool] = None, "
                    "spotlight_number: Optional[int] = None, "
                    "simulcast_rid: Optional[str] = None, "
+                   "simulcast_request_rid: Optional[str] = None, "
                    "spotlight_focus_rid: Optional[str] = None, "
                    "spotlight_unfocus_rid: Optional[str] = None, "
                    "forwarding_filter: Optional[dict] = None, "
@@ -811,5 +816,42 @@ NB_MODULE(sora_sdk_ext, m) {
                    ") -> SoraConnection"))
       .def("create_audio_source", &Sora::CreateAudioSource, "channels"_a,
            "sample_rate"_a)
-      .def("create_video_source", &Sora::CreateVideoSource);
+      .def("create_video_source", &Sora::CreateVideoSource)
+      .def(
+          "create_libcamera_source",
+          [](Sora* self, int width, int height, int fps,
+             bool native_frame_output, const nb::handle& controls) {
+#if USE_V4L2
+            // Python の controls (list of tuple) を C++ の vector に変換
+            std::vector<std::pair<std::string, std::string>> cpp_controls;
+            if (!controls.is_none()) {
+              nb::list control_list = nb::cast<nb::list>(controls);
+              for (size_t i = 0; i < control_list.size(); ++i) {
+                nb::tuple control_pair = nb::cast<nb::tuple>(control_list[i]);
+                if (control_pair.size() != 2) {
+                  throw nb::value_error(
+                      "Each control must be a tuple of (name, value)");
+                }
+                std::string name = nb::cast<std::string>(control_pair[0]);
+                std::string value = nb::cast<std::string>(control_pair[1]);
+                cpp_controls.push_back({name, value});
+              }
+            }
+            return self->CreateLibcameraSource(
+                width, height, fps, native_frame_output, cpp_controls);
+#else
+            throw std::runtime_error(
+                "Libcamera is not supported on this platform");
+#endif
+          },
+          "width"_a, "height"_a, "fps"_a, "native_frame_output"_a,
+          "controls"_a = nb::none(),
+          nb::sig("def create_libcamera_source("
+                  "self, "
+                  "width: int, "
+                  "height: int, "
+                  "fps: int, "
+                  "native_frame_output: bool, "
+                  "controls: Optional[list[tuple[str, str]]] = None"
+                  ") -> SoraTrackInterface"));
 }

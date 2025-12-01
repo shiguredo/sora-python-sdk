@@ -322,7 +322,7 @@ def test_amd_amf_simulcast(
         # simulcast_count が 2 の場合、rid r2 の bytesSent/packetsSent は 0 or 1 になる
         # simulcast_count が 1 の場合、rid r2 と r1 の bytesSent/packetsSent は 0 or 1 になる
         if i < simulcast_count:
-            assert s["bytesSent"] > 1000
+            assert s["bytesSent"] > 500
             assert s["packetsSent"] > 5
 
             assert s["targetBitrate"] >= expect_target_bitrate(

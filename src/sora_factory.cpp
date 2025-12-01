@@ -30,7 +30,8 @@
 
 SoraFactory::SoraFactory(
     std::optional<std::string> openh264,
-    std::optional<sora::VideoCodecPreference> video_codec_preference) {
+    std::optional<sora::VideoCodecPreference> video_codec_preference,
+    std::optional<bool> force_i420_conversion) {
   auto env = webrtc::CreateEnvironment();
   sora::SoraClientContextConfig context_config;
   context_config.video_codec_factory_config.capability_config.openh264_path =
@@ -44,6 +45,11 @@ SoraFactory::SoraFactory(
         sora::AMFContext::Create();
   }
   context_config.video_codec_factory_config.preference = video_codec_preference;
+
+  if (force_i420_conversion) {
+    context_config.video_codec_factory_config.encoder_factory_config
+        .force_i420_conversion = *force_i420_conversion;
+  }
 
   // Audio デバイスは使わない、 use_audio_device を true にしただけでデバイスを掴んでしまうので常に false
   context_config.use_audio_device = false;

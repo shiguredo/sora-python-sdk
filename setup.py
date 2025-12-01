@@ -21,6 +21,7 @@ def run_setup(build_platform, target_platform):
         version += "+debug"
 
     plat = None
+    additional_files = []
     if target_platform.os == "jetson":
         plat = "manylinux_2_17_aarch64.manylinux2014_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "armv8":
@@ -33,6 +34,9 @@ def run_setup(build_platform, target_platform):
             plat = "manylinux_2_31_x86_64"
         if target_platform.osver == "24.04":
             plat = "manylinux_2_35_x86_64"
+    elif target_platform.os == "raspberry-pi-os":
+        plat = "manylinux_2_35_aarch64"
+        additional_files += ["libcamerac.so"]
 
     class bdist_wheel(_bdist_wheel):
         def finalize_options(self):
@@ -50,7 +54,7 @@ def run_setup(build_platform, target_platform):
         packages=["sora_sdk"],
         package_dir={"": "src"},
         package_data={
-            "sora_sdk": ["sora_sdk_ext.*"],
+            "sora_sdk": ["sora_sdk_ext.*", *additional_files],
         },
         include_package_data=True,
         cmdclass={
@@ -71,6 +75,8 @@ def main():
         target_platform = PlatformTarget("ubuntu", "24.04", "armv8")
     elif target == "ubuntu-22.04_armv8_jetson":
         target_platform = PlatformTarget("jetson", None, "armv8", "ubuntu-22.04")
+    elif target == "raspberry-pi-os_armv8":
+        target_platform = PlatformTarget("raspberry-pi-os", None, "armv8")
     else:
         raise Exception(f"Unknown target {target}")
 
