@@ -55,7 +55,6 @@ jobs:
       fail-fast: false
       matrix:
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
           - "3.14"
@@ -113,7 +112,6 @@ jobs:
             os: raspberry-pi-os
             arch: armv8
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
           - "3.14"
@@ -189,7 +187,6 @@ jobs:
             os: ubuntu
             arch: armv8
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
           - "3.14"
@@ -248,7 +245,6 @@ jobs:
             python_host_platform: "macosx-14.0-arm64"
             archflags: "-arch arm64"
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
           - "3.14"
@@ -292,7 +288,6 @@ jobs:
             target: windows_x86_64
             runs_on: windows-2025
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
           - "3.14"
@@ -379,7 +374,6 @@ jobs:
           - name: windows-2025_x86_64
           - name: raspberry-pi-os_armv8
         python_version:
-          - "3.11"
           - "3.12"
           - "3.13"
           - "3.14"
@@ -399,7 +393,7 @@ jobs:
           fi
       # matrix の中で１個だけソースディストリビューション用のデータを残しておく
       - run: mv *.tar.gz dist/
-        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.11' }}
+        if: ${{ matrix.platform.name == 'macos-15_arm64' && matrix.python_version == '3.12' }}
 
       # テスト用
       # - name: Publish package to TestPyPI
@@ -434,15 +428,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.11" }
-      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.14" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
@@ -450,15 +440,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.14" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.11" }
-      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.14" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
@@ -466,15 +452,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.14" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-15_arm64", "python_version": "3.11" }
-      - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.14" }
-      - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
@@ -482,15 +464,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "macos-14_arm64", "python_version": "3.14" }
       - uses: ./.github/actions/download
-        with: { "platform": "windows-2025_x86_64", "python_version": "3.11" }
-      - uses: ./.github/actions/download
         with: { "platform": "windows-2025_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2025_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2025_x86_64", "python_version": "3.14" }
-      - uses: ./.github/actions/download
-        with: { "platform": "raspberry-pi-os_armv8", "python_version": "3.11" }
       - uses: ./.github/actions/download
         with: { "platform": "raspberry-pi-os_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
