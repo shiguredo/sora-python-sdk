@@ -1,0 +1,172 @@
+name: e2e-test-tc
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      from_build:
+        type: boolean
+        default: false
+        description: "build.yml から呼び出されたかどうか"
+  push:
+    branches:
+      - develop
+      - "feature/**"
+    paths:
+      - ".github/workflows/e2e-test-tc.yml"
+      - "tests/test_tc.py"
+  schedule:
+    # UTC の 01:00 は JST だと 10:00 。
+    # 1-5 で 月曜日から金曜日
+    - cron: "0 1 * * 1-5"
+
+env:
+  TEST_SIGNALING_URLS: ${{ secrets.TEST_SIGNALING_URLS }}
+  TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+  TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+  TEST_API_URL: ${{ secrets.TEST_API_URL }}
+  OPENH264_VERSION: 2.6.0
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  e2e_test_tc:
+    # TC テストは Linux でのみ実行（tc は Linux カーネル機能）
+    # Python 3.14 かつ Ubuntu 24.04 固定
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      # Tailscale のセットアップ
+      - uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          use-cache: "true"
+          hostname: gha-tc-${{ github.run_id }}-${{ github.run_number }}
+          version: latest
+          timeout: 2m
+          retry: 5
+
+      # Linux 向けの依存関係インストール
+      - run: |
+          sudo apt-get update
+          sudo apt-get -y install libx11-dev libdrm-dev libva-dev
+
+      # UV のセットアップ
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: false
+          # Python バージョンの設定（3.14 固定）
+          python-version: "3.14"
+
+      # 依存関係のインストール (test と tc グループ)
+      - run: uv sync --no-install-project --group test --group tc
+
+      # Wheel ファイルのダウンロード (build.yml から呼び出された場合: 呼び出し元の artifact を使用)
+      - if: inputs.from_build == true
+        uses: actions/download-artifact@v5
+        with:
+          name: ubuntu-24.04_x86_64_python-3.14
+          path: dist/
+
+      # Wheel ファイルのダウンロード (直接実行の場合: 同一ブランチの最新成功ビルド artifact または GitHub Release から取得)
+      - if: inputs.from_build != true
+        uses: ./.github/actions/download-whl
+        id: download-whl
+        with:
+          platform_name: ubuntu-24.04_x86_64
+          python_version: "3.14"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # wheel ファイル名を取得
+      - name: Find wheel file
+        id: find-wheel
+        shell: bash
+        run: |
+          WHEEL_FILE=$(find dist -name "*.whl" | head -1)
+          if [ -z "$WHEEL_FILE" ]; then
+            echo "No wheel file found in dist/"
+            exit 1
+          fi
+          echo "wheel_file=$WHEEL_FILE" >> $GITHUB_OUTPUT
+
+      # wheel ファイルのインストール
+      - name: Install wheel package
+        run: |
+          echo "Installing wheel: ${{ steps.find-wheel.outputs.wheel_file }}"
+
+          # wheel ファイルの内容を確認
+          echo "Checking wheel contents:"
+          unzip -l "${{ steps.find-wheel.outputs.wheel_file }}" | grep -E "sora_sdk|METADATA" | head -20
+
+          # uv pip install を使う理由:
+          # uv add はワークスペース依存関係の管理用で、プロジェクト名 (sora-sdk) と
+          # 同じ名前の wheel ファイルを追加しようとすると自己参照エラーになる
+          # uv pip install は仮想環境に直接インストールするため、この制限を回避できる
+          uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
+
+      # OpenH264 ライブラリのダウンロード
+      - uses: shiguredo/github-actions/.github/actions/download-openh264@main
+        id: openh264
+        with:
+          openh264_version: ${{ env.OPENH264_VERSION }}
+          use-cache: true
+
+      # OpenH264 パスを環境変数に設定
+      - name: Set OpenH264 path
+        run: echo "OPENH264_PATH=${{ steps.openh264.outputs.openh264_path }}" >> $GITHUB_ENV
+
+      # ネットワークインターフェースの確認
+      - name: Check network interface
+        run: |
+          echo "=== Network interfaces ==="
+          ip link show
+          echo ""
+          echo "=== Default route ==="
+          ip route show default
+          echo ""
+          echo "=== Current tc qdisc settings ==="
+          tc qdisc show || true
+
+      # TC E2E テストの実行（root 権限が必要）
+      - name: Run TC E2E tests
+        run: |
+          # UV_NO_SYNC=1 を指定する理由:
+          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
+          # この同期により、uv pip install でインストールした wheel が削除され、
+          # 元のソースコードの sora-sdk がインストールされてしまう
+          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
+
+          # tc の設定には root 権限が必要なため sudo で実行
+          # -E オプションで環境変数を継承
+          # $(which uv) で uv のフルパスを指定（sudo 実行時に PATH が変わるため）
+          sudo -E $(which uv) run pytest tests/test_tc.py -v --durations=0 -s
+        env:
+          UV_NO_SYNC: 1
+          TC: 1
+
+      # テスト後の tc 設定のクリーンアップ確認
+      - name: Verify tc cleanup
+        if: always()
+        run: |
+          echo "=== TC qdisc settings after test ==="
+          tc qdisc show || true
+
+  slack_notify_failed:
+    needs: [e2e_test_tc]
+    runs-on: ubuntu-24.04
+    if: failure() && inputs.from_build != true
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-python-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: "TC E2E Test FAILED"
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

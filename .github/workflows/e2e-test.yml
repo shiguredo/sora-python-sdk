@@ -15,6 +15,7 @@ on:
     paths:
       - ".github/workflows/e2e-test.yml"
       - "tests/**"
+      - "!tests/**/test_tc*"
   schedule:
     # UTC の 01:00 は JST だと 10:00 。
     # 1-5 で 月曜日から金曜日
@@ -240,7 +241,7 @@ jobs:
           # この同期により、uv pip install でインストールした wheel が削除され、
           # 元のソースコードの sora-sdk がインストールされてしまう
           # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
-          uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v --durations=0 ${{ steps.pytest-args.outputs.pytest_extra_args }}
+          uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v --durations=0 ${{ steps.pytest-args.outputs.pytest_extra_args }} --ignore-glob=**/test_tc*.py -s
         env:
           UV_NO_SYNC: 1
 

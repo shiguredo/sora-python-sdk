@@ -29,7 +29,16 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = ["nanobind==2.9.2"]
-test = ["pytest", "pytest-repeat", "pytest-xdist", "numpy", "httpx", "pyjwt"]
+test = [
+    "pytest",
+    "pytest-timeout",
+    "pytest-repeat",
+    "pytest-xdist",
+    "numpy",
+    "httpx",
+    "pyjwt",
+]
+tc = ["pyroute2"]
 lint = ["ruff", "ty"]
 
 [tool.uv]

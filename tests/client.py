@@ -328,6 +328,69 @@ class SoraClient:
         return self._close_message
 
     @property
+    def turn_ports(self) -> dict[str, list[int]]:
+        """TURN URI (RFC 7065) からポート情報を抽出する"""
+        ports_map: dict[str, list[int]] = {"udp": [], "tcp": [], "tls": []}
+        if self._offer_message is None:
+            return ports_map
+
+        config = self._offer_message.get("config")
+        if config is None:
+            return ports_map
+
+        ice_servers = config.get("iceServers", [])
+        for server in ice_servers:
+            urls = server.get("urls", [])
+            if isinstance(urls, str):
+                urls = [urls]
+            for uri in urls:
+                if not (uri.startswith("turn:") or uri.startswith("turns:")):
+                    continue
+
+                # TURN URI を手動でパースする
+                # RFC 7065: turn:host:port?transport=udp
+                # RFC 7065: turns:host:port?transport=tcp
+                is_turns = uri.startswith("turns:")
+                scheme = "turns:" if is_turns else "turn:"
+
+                # スキームを除去
+                uri_without_scheme = uri[len(scheme):]
+
+                # クエリパラメータを分離
+                query = ""
+                if "?" in uri_without_scheme:
+                    uri_without_scheme, query = uri_without_scheme.split("?", 1)
+
+                # ホストとポートを分離
+                if ":" not in uri_without_scheme:
+                    continue
+
+                # 最後のコロンでホストとポートを分割
+                host_port = uri_without_scheme.rsplit(":", 1)
+                if len(host_port) != 2:
+                    continue
+
+                try:
+                    port = int(host_port[1])
+                except ValueError:
+                    continue
+
+                # turns: の場合は tls
+                if is_turns:
+                    if port not in ports_map["tls"]:
+                        ports_map["tls"].append(port)
+                # turn: の場合は query の transport を確認
+                else:
+                    transport = "udp"  # デフォルトは udp
+                    if query:
+                        params = dict(param.split("=") for param in query.split("&") if "=" in param)
+                        transport = params.get("transport", "udp")
+                    if transport in ports_map and port not in ports_map[transport]:
+                        ports_map[transport].append(port)
+
+        return ports_map
+
+    @property
     def connected(self) -> bool:
         return self._connected.is_set()
 
