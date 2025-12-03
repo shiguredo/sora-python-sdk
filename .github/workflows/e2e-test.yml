@@ -122,6 +122,8 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: ${{ secrets.TS_TAGS }}
           ping: ${{ secrets.TEST_TS_DOMAIN }}
+          version: latest
+          use-cache: true
 
       # Linux 向けの依存関係インストール（Ubuntu のみ、self-hosted runner 以外）
       - if: ${{ contains(matrix.platform.name, 'ubuntu') && runner.environment != 'self-hosted' }}
