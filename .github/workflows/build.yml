@@ -31,7 +31,7 @@ env:
 jobs:
   # VERSION ファイルからバージョン情報を取得
   get_sdk_version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       sdk_version: ${{ steps.version.outputs.sdk_version }}
     steps:
@@ -341,8 +341,7 @@ jobs:
   #   secrets: inherit
 
   slack_notify_failed:
-    needs:
-      [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
+    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
