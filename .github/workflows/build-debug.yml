@@ -43,7 +43,9 @@ jobs:
           #   soname: sora_sdk_ext.cpython-311-x86_64-linux-gnu.so
           # - version: "3.12"
           #   soname: sora_sdk_ext.cpython-312-x86_64-linux-gnu.so
-          - version: "3.13"
+          # - version: "3.13"
+          #   soname: sora_sdk_ext.cpython-312-x86_64-linux-gnu.so
+          - version: "3.14"
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
       ###################
