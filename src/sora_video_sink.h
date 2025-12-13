@@ -3,7 +3,7 @@
 
 #include <memory>
 
-// nonobind
+// nanobind
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/shared_ptr.h>
@@ -22,26 +22,46 @@ namespace nb = nanobind;
 
 /**
  * Sora からのフレームを格納する SoraVideoFrame です。
- * 
+ *
  * on_frame_ コールバックで直接フレームデータの ndarray を返してしまうとメモリーリークしてしまうため、
  * フレームデータを Python で適切にハンドリングできるようにするために用意しました。
  */
 class SoraVideoFrame {
  public:
-  SoraVideoFrame(webrtc::scoped_refptr<webrtc::I420BufferInterface> i420_data);
+  SoraVideoFrame(webrtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer);
 
   /**
    * SoraVideoFrame 内のフレームデータへの numpy.ndarray での参照を渡します。
-   * 
+   *
+   * BGR への変換は初回呼び出し時のみ行われ、以降はキャッシュされたデータを返します。
+   *
    * @return NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    */
   nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>> Data();
+
+  /**
+   * I420 形式の Y, U, V プレーンへのビューを返します。
+   *
+   * I420BufferInterface への参照を直接返すため、コピーは発生しません。
+   *
+   * @return (Y, U, V) の 3 つの 2D ndarray のタプル
+   *         - Y: (height, width) の形状
+   *         - U: (height/2, width/2) の形状
+   *         - V: (height/2, width/2) の形状
+   */
+  nb::tuple Planes();
 
  private:
   // width や height は ndarray に情報として含まれるため、これらを別で返す関数は不要
   const int width_;
   const int height_;
-  std::unique_ptr<uint8_t> argb_data_;
+
+  // I420 バッファの参照を保持（ゼロコピー）
+  webrtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer_;
+
+  // BGR データ（遅延生成）
+  mutable std::unique_ptr<uint8_t[]> bgr_data_;
+  mutable bool bgr_converted_ = false;
 };
 
 /**

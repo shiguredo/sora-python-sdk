@@ -11,6 +11,10 @@
 
 ## develop
 
+- [ADD] `SoraVideoFrame` に `planes()` メソッドを追加する
+  - I420 形式の Y, U, V プレーンを直接取得できるようになる
+  - webcodecs-py の `VideoFrame.planes()` と同様のインターフェース
+  - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.7.0-canary.0` に上げる
   - WEBRTC_BUILD_VERSION を `m144.7559.0.0` に上げる
   - CMAKE_VERSION を `4.1.3` に上げる

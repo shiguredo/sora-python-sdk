@@ -484,7 +484,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("analyze", &SoraVAD::Analyze, "frame"_a);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
-      .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);
+      .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference)
+      .def("planes", &SoraVideoFrame::Planes);
 
   nb::class_<SoraVideoSinkImpl>(m, "SoraVideoSinkImpl",
                                 nb::type_slots(video_sink_slots))

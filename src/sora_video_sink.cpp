@@ -10,26 +10,62 @@
 #include "sora_call.h"
 
 SoraVideoFrame::SoraVideoFrame(
-    webrtc::scoped_refptr<webrtc::I420BufferInterface> i420_data)
-    : width_(i420_data->width()), height_(i420_data->height()) {
-  /**
-   * データを取り出す際に Python 側で自由に FourCC を指定できる形にするのも手ですが、
-   * その場合は関数を呼び出すたびに変換が走るので GIL を長く保持してしまいます。
-   * また、複数回呼び出された際に毎回変換を行いパフォーマンスが悪化してしまうので、
-   * ここで numpy の形式である 24BG に変換することとしました。
-   */
-  argb_data_ = std::unique_ptr<uint8_t>(new uint8_t[width_ * height_ * 3]);
-  libyuv::ConvertFromI420(
-      i420_data->DataY(), i420_data->StrideY(), i420_data->DataU(),
-      i420_data->StrideU(), i420_data->DataV(), i420_data->StrideV(),
-      argb_data_.get(), width_ * 3, width_, height_, libyuv::FOURCC_24BG);
+    webrtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer)
+    : width_(i420_buffer->width()),
+      height_(i420_buffer->height()),
+      i420_buffer_(i420_buffer),
+      bgr_converted_(false) {
+  // I420 バッファの参照を保持するだけで、変換は遅延実行する
 }
 
 nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>> SoraVideoFrame::Data() {
+  if (!bgr_converted_) {
+    /**
+     * データを取り出す際に Python 側で自由に FourCC を指定できる形にするのも手ですが、
+     * その場合は関数を呼び出すたびに変換が走るので GIL を長く保持してしまいます。
+     * また、複数回呼び出された際に毎回変換を行いパフォーマンスが悪化してしまうので、
+     * ここで numpy の形式である 24BG に変換することとしました。
+     */
+    bgr_data_ = std::make_unique<uint8_t[]>(width_ * height_ * 3);
+    libyuv::ConvertFromI420(
+        i420_buffer_->DataY(), i420_buffer_->StrideY(), i420_buffer_->DataU(),
+        i420_buffer_->StrideU(), i420_buffer_->DataV(), i420_buffer_->StrideV(),
+        bgr_data_.get(), width_ * 3, width_, height_, libyuv::FOURCC_24BG);
+    bgr_converted_ = true;
+  }
   size_t shape[3] = {static_cast<size_t>(height_), static_cast<size_t>(width_),
                      3};
   return nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>>(
-      argb_data_.get(), 3, shape, nb::handle());
+      bgr_data_.get(), 3, shape, nb::handle());
+}
+
+nb::tuple SoraVideoFrame::Planes() {
+  int uv_width = width_ / 2;
+  int uv_height = height_ / 2;
+
+  // Y プレーン（stride 付き）
+  size_t y_shape[2] = {static_cast<size_t>(height_),
+                       static_cast<size_t>(width_)};
+  int64_t y_strides[2] = {i420_buffer_->StrideY(), 1};
+  auto y_plane = nb::ndarray<nb::numpy, uint8_t>(
+      const_cast<uint8_t*>(i420_buffer_->DataY()), 2, y_shape, nb::handle(),
+      y_strides);
+
+  // U プレーン（stride 付き）
+  size_t uv_shape[2] = {static_cast<size_t>(uv_height),
+                        static_cast<size_t>(uv_width)};
+  int64_t u_strides[2] = {i420_buffer_->StrideU(), 1};
+  auto u_plane = nb::ndarray<nb::numpy, uint8_t>(
+      const_cast<uint8_t*>(i420_buffer_->DataU()), 2, uv_shape, nb::handle(),
+      u_strides);
+
+  // V プレーン（stride 付き）
+  int64_t v_strides[2] = {i420_buffer_->StrideV(), 1};
+  auto v_plane = nb::ndarray<nb::numpy, uint8_t>(
+      const_cast<uint8_t*>(i420_buffer_->DataV()), 2, uv_shape, nb::handle(),
+      v_strides);
+
+  return nb::make_tuple(y_plane, u_plane, v_plane);
 }
 
 SoraVideoSinkImpl::SoraVideoSinkImpl(nb::ref<SoraTrackInterface> track)
