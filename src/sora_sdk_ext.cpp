@@ -741,6 +741,7 @@ NB_MODULE(sora_sdk_ext, m) {
            "audio_bit_rate"_a = nb::none(), "video_vp9_params"_a = nb::none(),
            "video_av1_params"_a = nb::none(),
            "video_h264_params"_a = nb::none(),
+           "video_h265_params"_a = nb::none(),
            "audio_opus_params"_a = nb::none(), "simulcast"_a = nb::none(),
            "spotlight"_a = nb::none(), "spotlight_number"_a = nb::none(),
            "simulcast_rid"_a = nb::none(), "simulcast_request_rid"_a = nb::none(),
@@ -784,6 +785,7 @@ NB_MODULE(sora_sdk_ext, m) {
                    "video_vp9_params: Optional[dict] = None, "
                    "video_av1_params: Optional[dict] = None, "
                    "video_h264_params: Optional[dict] = None, "
+                   "video_h265_params: Optional[dict] = None, "
                    "audio_opus_params: Optional[dict] = None, "
                    "simulcast: Optional[bool] = None, "
                    "spotlight: Optional[bool] = None, "

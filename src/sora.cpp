@@ -49,6 +49,7 @@ nb::ref<SoraConnection> Sora::CreateConnection(
     const nb::handle& video_vp9_params,
     const nb::handle& video_av1_params,
     const nb::handle& video_h264_params,
+    const nb::handle& video_h265_params,
     const nb::handle& audio_opus_params,
     std::optional<bool> simulcast,
     std::optional<bool> spotlight,
@@ -121,6 +122,10 @@ nb::ref<SoraConnection> Sora::CreateConnection(
   if (video_h264_params) {
     config.video_h264_params = ConvertJsonValue(
         video_h264_params, "Invalid JSON value in video_h264_params");
+  }
+  if (video_h265_params) {
+    config.video_h265_params = ConvertJsonValue(
+        video_h265_params, "Invalid JSON value in video_h265_params");
   }
   if (audio_opus_params) {
     config.audio_opus_params = ConvertJsonValue(
