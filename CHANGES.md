@@ -11,6 +11,12 @@
 
 ## develop
 
+- [UPDATE] wheel を `~=0.46` に上げる
+  - `0.46.x` を許可する
+  - @voluntas
+- [UPDATE] setuptools を `~=80.10` に上げる
+  - `80.10.x` を許可する
+  - @voluntas
 - [UPDATE] nanobind を `2.11.0` に上げる
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.1.0` に上げる
