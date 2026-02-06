@@ -31,7 +31,7 @@ sink はそれぞれ track が必要で参照を保持する必要がある
 """
 
 
-class SoraAudioSink(SoraAudioSinkImpl):
+class SoraAudioSink(SoraAudioSinkImpl):  # noqa: F405
     def __init__(self, track, output_frequency, output_channels):
         super().__init__(track, output_frequency, output_channels)
         self.__track = track
@@ -41,7 +41,7 @@ class SoraAudioSink(SoraAudioSinkImpl):
         del self.__track
 
 
-class SoraAudioStreamSink(SoraAudioStreamSinkImpl):
+class SoraAudioStreamSink(SoraAudioStreamSinkImpl):  # noqa: F405
     def __init__(self, track, output_frequency, output_channels):
         super().__init__(track, output_frequency, output_channels)
         self.__track = track
@@ -51,7 +51,7 @@ class SoraAudioStreamSink(SoraAudioStreamSinkImpl):
         del self.__track
 
 
-class SoraVideoSink(SoraVideoSinkImpl):
+class SoraVideoSink(SoraVideoSinkImpl):  # noqa: F405
     def __init__(self, track):
         super().__init__(track)
         self.__track = track
