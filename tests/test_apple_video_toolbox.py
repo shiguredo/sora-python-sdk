@@ -312,15 +312,15 @@ def test_apple_video_toolbox_simulcast_authz_scale_resolution_to(
 
     assert (
         sendonly.offer_message["encodings"][0]["scaleResolutionDownTo"]["maxWidth"]
-        == simulcast_encodings[0]["scaleResolutionDownTo"]["maxWidth"]
+        == simulcast_encodings[0]["scaleResolutionDownTo"]["maxWidth"]  # ty: ignore[invalid-argument-type, not-subscriptable]
     )
     assert (
         sendonly.offer_message["encodings"][1]["scaleResolutionDownTo"]["maxWidth"]
-        == simulcast_encodings[1]["scaleResolutionDownTo"]["maxWidth"]
+        == simulcast_encodings[1]["scaleResolutionDownTo"]["maxWidth"]  # ty: ignore[invalid-argument-type, not-subscriptable]
     )
     assert (
         sendonly.offer_message["encodings"][2]["scaleResolutionDownTo"]["maxWidth"]
-        == simulcast_encodings[2]["scaleResolutionDownTo"]["maxWidth"]
+        == simulcast_encodings[2]["scaleResolutionDownTo"]["maxWidth"]  # ty: ignore[invalid-argument-type, not-subscriptable]
     )
 
     assert (

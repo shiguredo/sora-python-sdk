@@ -26,6 +26,7 @@ from sora_sdk import (
     SoraVideoCodecType,
     SoraVideoFrame,
     SoraVideoSink,
+    SoraVideoSource,
     get_video_codec_capability,
 )
 
@@ -132,7 +133,7 @@ class SoraClient:
                 self._audio_channels, self._audio_sample_rate
             )
 
-        self._video_source: Optional[SoraTrackInterface] = None
+        self._video_source: Optional[SoraVideoSource | SoraTrackInterface] = None
         if libcamera and self._video:
             self._video_source = self._sora.create_libcamera_source(
                 width=self._video_width,
@@ -381,6 +382,7 @@ class SoraClient:
                     )
 
                 random_image = generate_random_image()
+                assert isinstance(self._video_source, SoraVideoSource)
                 self._video_source.on_captured(random_image)
 
     def _on_signaling_message(
