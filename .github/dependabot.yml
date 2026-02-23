@@ -16,7 +16,6 @@ updates:
       - dependency-name: "actions/upload-artifact"
       - dependency-name: "actions/download-artifact"
       - dependency-name: "actions/cache"
-      - dependency-name: "rtCamp/action-slack-notify"
       - dependency-name: "pypa/gh-action-pypi-publish"
       - dependency-name: "anthropics/claude-code-action"
       - dependency-name: "shiguredo/github-actions"

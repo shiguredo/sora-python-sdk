@@ -24,6 +24,11 @@
   - CMAKE_VERSION を `4.2.1` に上げる
   - @torikizi
 
+### misc
+
+- [UPDATE] Slack 通知を `rtCamp/action-slack-notify` から `shiguredo/github-actions/slack-notify` に切り替える
+  - @voluntas
+
 ## 2025.5.2
 
 **リリース日**: 2025-12-22
