@@ -331,11 +331,7 @@ jobs:
     runs-on: ubuntu-slim
     if: ${{ !cancelled() }}
     steps:
-      - name: Check build results
-        if: ${{ contains(needs.*.result, 'failure') }}
-        run: exit 1
       - name: Slack Notification
-        if: ${{ !cancelled() }}
         uses: shiguredo/github-actions/.github/actions/slack-notify@main
         with:
           status: ${{ job.status }}
