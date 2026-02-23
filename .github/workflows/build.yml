@@ -331,10 +331,14 @@ jobs:
     runs-on: ubuntu-slim
     if: ${{ !cancelled() }}
     steps:
+      - name: Check build results
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
       - name: Slack Notification
+        if: ${{ !cancelled() }}
         uses: shiguredo/github-actions/.github/actions/slack-notify@main
         with:
-          status: ${{ (contains(needs.*.result, 'failure')) && 'failure' || 'success' }}
+          status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           slack_channel: sora-python-sdk
           notify_mode: failure_and_fixed
@@ -396,7 +400,7 @@ jobs:
         if: failure()
         uses: shiguredo/github-actions/.github/actions/slack-notify@main
         with:
-          status: failure
+          status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           slack_channel: sora-python-sdk
           notify_mode: all
@@ -496,7 +500,7 @@ jobs:
         if: failure()
         uses: shiguredo/github-actions/.github/actions/slack-notify@main
         with:
-          status: failure
+          status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           slack_channel: sora-python-sdk
           notify_mode: all
