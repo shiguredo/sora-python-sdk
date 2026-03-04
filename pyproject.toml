@@ -29,7 +29,7 @@ Discord = "https://discord.gg/shiguredo"
 
 [dependency-groups]
 dev = [
-    "nanobind==2.11.0",
+    "nanobind==2.12.0",
     { include-group = "test" },
     { include-group = "lint" },
 ]
