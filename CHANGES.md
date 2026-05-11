@@ -24,6 +24,10 @@
   - CMAKE_VERSION を `4.3.2` に上げる
   - BOOST_VERSION を `1.91.0` に上げる
   - @torikizi
+- [UPDATE] libwebrtc m148 で `ArrayView` が C++ 標準の `std::span` に移行したため追従する
+  - 参考リンク : libwebrtc の `ArrayView` 移行の issue
+    - https://issuetracker.google.com/issues/439801349
+  - @torikizi
 
 ### misc
 
