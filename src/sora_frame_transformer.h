@@ -1,6 +1,7 @@
 #ifndef SORA_TRANSFORMER_H_
 #define SORA_TRANSFORMER_H_
 
+#include <span>
 #include <unordered_map>
 
 // nonobind
@@ -135,7 +136,7 @@ class SoraTransformableFrame {
       nb::ndarray<const uint8_t, nb::shape<-1>, nb::c_contig, nb::device::cpu>
           data) {
     frame_->SetData(
-        webrtc::ArrayView<const uint8_t>(data.data(), data.shape(0)));
+        std::span<const uint8_t>(data.data(), data.shape(0)));
   }
   const uint8_t GetPayloadType() const { return frame_->GetPayloadType(); }
   const uint32_t GetSsrc() const { return frame_->GetSsrc(); }
