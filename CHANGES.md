@@ -19,8 +19,8 @@
   - @voluntas
 - [UPDATE] nanobind を `2.12.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.10` に上げる
-  - WEBRTC_BUILD_VERSION を `m148.7778.4.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.11` に上げる
+  - WEBRTC_BUILD_VERSION を `m149.7827.0.0` に上げる
   - CMAKE_VERSION を `4.3.2` に上げる
   - BOOST_VERSION を `1.91.0` に上げる
   - macOS ビルドで Boost.Asio の `std::atomic::wait` 利用を無効化する
