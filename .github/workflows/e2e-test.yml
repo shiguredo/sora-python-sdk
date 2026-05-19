@@ -112,11 +112,11 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       # Tailscale のセットアップ（self-hosted runner 以外）
       - if: ${{ runner.environment != 'self-hosted' }}
-        uses: tailscale/github-action@v4
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4.1.2
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
@@ -134,7 +134,7 @@ jobs:
       # macOS self-hosted runner: Homebrew セットアップ
       - name: Setup Homebrew
         if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@8eb7f2efa6ab636da09aef605b497fd5b8a7587d # master
 
       # macOS self-hosted runner: GitHub CLI インストール
       - name: Install GitHub CLI
@@ -142,7 +142,7 @@ jobs:
         run: brew install gh
 
       # UV のセットアップ
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: false
           # Python バージョンの設定
@@ -153,7 +153,7 @@ jobs:
 
       # Wheel ファイルのダウンロード (build.yml から呼び出された場合: 呼び出し元の artifact を使用)
       - if: inputs.from_build == true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ matrix.platform.wheel_platform }}_python-${{ matrix.python_version }}
           path: dist/
@@ -195,7 +195,7 @@ jobs:
           uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
 
       # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
-      - uses: shiguredo/github-actions/.github/actions/download-openh264@main
+      - uses: shiguredo/github-actions/.github/actions/download-openh264@145407fb88527b7068762db72480c1f55715e0b1 # main
         if: ${{ runner.environment != 'self-hosted' }}
         id: openh264
         with:
@@ -250,7 +250,7 @@ jobs:
     if: ${{ !cancelled() && inputs.from_build != true }}
     steps:
       - name: Slack Notification
-        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        uses: shiguredo/github-actions/.github/actions/slack-notify@145407fb88527b7068762db72480c1f55715e0b1 # main
         with:
           status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
