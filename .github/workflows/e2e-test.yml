@@ -195,7 +195,7 @@ jobs:
           uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
 
       # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
-      - uses: shiguredo/github-actions/.github/actions/download-openh264@145407fb88527b7068762db72480c1f55715e0b1 # main
+      - uses: shiguredo/github-actions/.github/actions/download-openh264@main
         if: ${{ runner.environment != 'self-hosted' }}
         id: openh264
         with:
@@ -250,7 +250,7 @@ jobs:
     if: ${{ !cancelled() && inputs.from_build != true }}
     steps:
       - name: Slack Notification
-        uses: shiguredo/github-actions/.github/actions/slack-notify@145407fb88527b7068762db72480c1f55715e0b1 # main
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main
         with:
           status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
