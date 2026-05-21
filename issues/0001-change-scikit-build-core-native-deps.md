@@ -2,695 +2,259 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Completed: -
 - Model: Composer 2.5
 - Branch: feature/change-scikit-build-core-native-deps
 
 ## 目的
 
-build backend を setuptools から scikit-build-core に切替え、 ubuntu-24.04 x86_64 host で `uv build --wheel` 一発で wheel を生成し、 install 後の最小 pytest が通る状態にする。 WebRTC / Sora C++ SDK / Boost / OpenH264 / LLVM (clang バイナリ + libcxx + libcxxabi ヘッダ) の取得を `run.py` / `buildbase.py` から CMake configure 時取得に移し、 `run.py build` を経由せず scikit-build-core 経路だけで完結させる。
+build backend を `setuptools.build_meta` から `scikit_build_core.build` に切替え、 ubuntu-24.04 x86_64 host で `uv build --wheel` 一発で wheel を生成して install 後の最小 pytest が通る状態にする。 WebRTC / Sora C++ SDK / Boost / OpenH264 / LLVM (libwebrtc 同梱 clang + libcxx + libcxxabi ヘッダ) の取得を `run.py` / `buildbase.py` 経路から CMake configure 時取得 (`cmake/scripts/fetch_deps.cmake`) に移す。 取得物の構成・ヘッダコピー処理・既存ターゲット定義は維持し、 取得手段だけ移植する。
 
-## 設計の前提（プロジェクト全体の新方針）
+## 優先度根拠
 
-- ビルド環境は **ubuntu-24.04 x86_64 host のみ** に集約する
-- Linux arm64 (`ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` / `ubuntu-22.04_armv8_jetson` / `raspberry-pi-os_armv8`) は ubuntu-24.04 x86_64 host からの **sysroot クロスコンパイル** に統一し、 arm64 native runner (`ubuntu-22.04-arm` / `ubuntu-24.04-arm`) は廃止する
-- macOS (arm64) / Windows (x86_64) は **それぞれの OS で native build** を維持する（cross-compile しない）
-- clang は **libwebrtc 同梱 clang バイナリを継続使用** する（`buildbase.py:install_llvm` の `clang/scripts/update.py` 取得を CMake 側に完全移植する）。 system `clang-19` への切替えは行わない
+- 後続 issue (0002 〜 0007) が本 issue の成果物 (`cmake/scripts/fetch_deps.cmake` / `_deps/` レイアウト / scikit-build-core overrides 構造) を前提に組まれている。
+- 二段ビルド (`run.py build` → `uv build`) と `build_pyi` artifact 経路が CI 信頼性を下げている。
+- 既存の `setup.py:bdist_wheel.get_tag` ハードコード platform tag や `run.py:268-273` 経由の `importlib.metadata.version` による C++ マクロ注入はトラブル源で、 次の依存更新前に整理しておきたい。
 
 ## スコープ
 
 含む:
 
-- `pyproject.toml` の build backend を scikit-build-core に切替える
-- `setup.py` を削除する
-- `CMakeLists.txt` の更新と `cmake/scripts/fetch_deps.cmake` 新設
-- ubuntu-24.04 x86_64 host で WebRTC / Sora C++ SDK / Boost / OpenH264 / LLVM (clang + libcxx + libcxxabi) を CMake configure 時取得（ `buildbase.py:install_llvm` の `clang/scripts/update.py` 経由 clang バイナリ取得を含む）
-- `src/sora.cpp:216, 223` の `BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION)` を `SORA_PYTHON_SDK_VERSION` の直接連結に書き換える（マクロ定義をクォート付き文字列リテラルに変更するため）
-- ubuntu-24.04 x86_64 native での `uv build --wheel` 成功と `pytest tests/test_version.py` 完走
-- CI で 0001 の経路（ ubuntu-24.04 x86_64 only ）が動くよう、他 platform job を `if: false` で一時 disable し、 `build_ubuntu` matrix から ubuntu-24.04_x86_64 以外を `exclude` する
+- `pyproject.toml` の build backend を `scikit_build_core.build` に切替える。
+- `setup.py` を削除する。
+- `CMakeLists.txt` の更新と `cmake/scripts/fetch_deps.cmake` 新設。
+- WebRTC / Sora / Boost / OpenH264 / LLVM を CMake configure 時に取得する。
+- `src/sora.cpp:215-216, 222-223` の `BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION)` を `SORA_PYTHON_SDK_VERSION` 直接連結に書き換える。 あわせて同 2 箇所の `Sora Unity SDK` リテラルを `Sora Python SDK` に直す。
+- ubuntu-24.04 x86_64 native で `uv build --wheel` 成功 + `pytest tests/test_version.py` 完走。
+- CI は ubuntu-24.04 x86_64 のみ動かす。 他 platform job と `build_pyi` / `e2e_test` / build-debug.yml / e2e-test.yml は `if: false` で一時停止する。 `build_ubuntu` matrix から `ubuntu-24.04_x86_64` 以外を `exclude` する。
 
 含まない（別 issue で扱う）:
 
-- macOS arm64 native（ 0002 ）
-- Linux arm64 cross-compile (ubuntu armv8) from ubuntu-24.04 x86_64 host（ 0003 ）
-- Linux arm64 cross-compile (jetson / raspberry-pi-os) from ubuntu-24.04 x86_64 host（ 0004 ）
-- Windows x86_64 native（ 0005 ）
-- レガシーファイル（ `buildbase.py` / `run.py` / `pypath.py` / `MANIFEST.in` / `DEPS` ）削除、 `build_pyi` job 完全削除、 `build_ubuntu_arm` job 完全削除、 `e2e_test` 復活、 `auditwheel repair --strip --only-plat` による `manylinux_2_35_x86_64` タグ付与、依存アーカイブの sha256 検証（ 0006 ）
-- 開発者向け Makefile（ 0007 ）
-- pytest E2E マーカー再設計（別 issue 。 0001 では `pytest tests/test_version.py` のみ）
+- macOS arm64 (0002) / Linux arm64 cross (0003 ubuntu armv8, 0004 jetson + raspberry-pi-os) / Windows (0005)。
+- レガシーファイル削除、 `build_pyi` / `build_ubuntu_arm` 完全削除、 `e2e_test` 復活、 `auditwheel repair` による manylinux タグ付与、 sha256 検証 (0006)。
+- Makefile (0007)。
+- pytest E2E マーカー再設計（別 issue）。
+- `BUILD_PROFILE=debug` 時の C++ マクロへの `+debug` 連結。 既存 `setup.py:19-21` は `setup()` の `version` 引数経由で dist-info にも +debug を入れていたが、 scikit-build-core の `metadata.version` provider は VERSION ファイル直読みで +debug を載せられない。 C++ 側だけ +debug を付けると `__version__` と User-Agent が不一致になるため、 +debug 連結自体を導入しない。 文字列レベルの debug 区別が必要なら 0006 で build-debug.yml の scikit-build-core 経路化と合わせて再設計する。
+- `MANIFEST.in` の削除（参照されない状態にするのみ。 削除は 0006）。
 
 ## 現状
 
-- `pyproject.toml` の build backend は `setuptools.build_meta`
-- `run.py build` が `buildbase.py` 経由で deps を `_install/<target>/` に取得し、 `cmake` を手動実行して `.so` を `src/sora_sdk/` にコピーする
-- `setup.py:32-36, 46-49` の `bdist_wheel.get_tag()` が ubuntu-24.04 x86_64 で `manylinux_2_35_x86_64` を強制する
-- `CMakeLists.txt:54-59` で CACHE 宣言されているのは `TARGET_OS` / `WEBRTC_INCLUDE_DIR` / `WEBRTC_LIBRARY_DIR` / `WEBRTC_LIBRARY_NAME` / `Boost_ROOT` / `SORA_DIR` の 6 個のみ。 `OPENH264_DIR` / `LIBCXX_INCLUDE_DIR` / `LIBCXXABI_INCLUDE_DIR` / `SORA_PYTHON_SDK_VERSION` / `SORA_GEN_PYI` は CACHE 宣言を持たず、 `run.py` 経由の `-D` 注入で自動 CACHE 化される運用
-- ubuntu ターゲット（ `TARGET_OS=ubuntu` ）では `CMakeLists.txt:132-143` の `elseif(TARGET_OS STREQUAL "ubuntu")` ブランチで `-nostdinc++ -isystem${LIBCXX_INCLUDE_DIR}` が `sora_sdk_ext` と `nanobind-static` 両方に付き、 `CMakeLists.txt:193-199` の `if (NOT TARGET_OS STREQUAL "windows")` で `${OPENH264_DIR}/include` のインクルードと `dynamic_h264_*.cpp` のコンパイルが要求される
-- ubuntu-24.04 x86_64 native は `run.py:293-297` の `else` 節で **libwebrtc 同梱 clang バイナリ** （ `webrtc_info.clang_dir = ${install_dir}/llvm/clang` 、 `buildbase.py:641, 1187-1211` ）を `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` に渡す。 libcxx / libcxxabi ヘッダは `run.py:298-301` で `${install_dir}/llvm/libcxx/include` と `${webrtc}/include/third_party/libc++abi/src/include` を `-D` で渡している
-- `src/sora.cpp:216` と `:223` のみが `BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION)` を使う（ `grep -rn 'BOOST_PP_STRINGIZE\|SORA_PYTHON_SDK_VERSION' src/` で確認済み）
-- `.github/workflows/build.yml` の `build_ubuntu` / `build_ubuntu_arm` / `build_macos` / `build_windows` 各 job は `uv run python run.py build <target>` の直後に `uv build` を実行する 2 段構成。 `build_pyi` は ubuntu-24.04 x86_64 で `run.py build` を呼んで `src/sora_sdk/sora_sdk_ext.pyi` を生成し artifact 化、各 platform job で download / cp する経路を持つ
-
-### 既存レイアウトと 0001 後のレイアウト対応
-
-| 既存 (`run.py` 経路) | 0001 後 (`uv build` 経路) |
-| --- | --- |
-| `_install/ubuntu-24.04_x86_64/webrtc/` | `_deps/ubuntu-24.04_x86_64/webrtc/` |
-| `_install/ubuntu-24.04_x86_64/sora/` | `_deps/ubuntu-24.04_x86_64/sora/` |
-| `_install/ubuntu-24.04_x86_64/boost/` | `_deps/ubuntu-24.04_x86_64/boost/` |
-| `_install/ubuntu-24.04_x86_64/openh264/` | `_deps/ubuntu-24.04_x86_64/openh264/` |
-| `_install/ubuntu-24.04_x86_64/llvm/clang/` | `_deps/llvm/x86_64-Linux-24.04/clang/` |
-| `_install/ubuntu-24.04_x86_64/llvm/libcxx/` | `_deps/llvm/x86_64-Linux-24.04/libcxx/` |
-
-WebRTC / Sora / Boost / OpenH264 は target ごとに分離する（クロス対応で arm64 アーカイブと x86_64 アーカイブが混在しないように）。 LLVM は **host 単位** で分離する（クロス時もホスト側 LLVM を使うため、 0003 / 0004 で同じ LLVM ディレクトリを共有する）。
+- build backend は `setuptools.build_meta`。 `uv run python run.py build <target>` が `_install/<target>/` に deps を取得し cmake を手動実行して `.so` を `src/sora_sdk/` にコピー、 後段 `uv build` が `setup.py:bdist_wheel.get_tag()` でハードコード platform tag (`manylinux_2_35_x86_64` 等) を付ける二段構成。
+- `build_pyi` job が ubuntu-24.04 x86_64 で `.pyi` / `py.typed` を生成し artifact 化、 各 platform job が download / cp する経路。
+- `CMakeLists.txt:54-59` の CACHE は 6 個。 `OPENH264_DIR` / `LIBCXX_INCLUDE_DIR` / `LIBCXXABI_INCLUDE_DIR` / `SORA_PYTHON_SDK_VERSION` / `SORA_GEN_PYI` は run.py 経由の `-D` 注入で自動 CACHE 化。
+- `src/sora.cpp:216, :223` のみが `BOOST_PP_STRINGIZE` を使い、 解決は Boost / WebRTC の transitive include に偶発依存している。 `Sora Unity SDK` リテラルは `src/sora.cpp:215` の 1 箇所のみ（`grep -rn "Sora Unity SDK" src/` で確認）。
 
 ## 設計方針
 
-### build backend と pyproject.toml
+### レイアウト
 
-`pyproject.toml` を以下の通り変更する。
-
-- `[build-system]` を `requires = ["scikit-build-core>=0.11.3", "nanobind==2.12.0"]` / `build-backend = "scikit_build_core.build"` に切替える。 CMake / Ninja は scikit-build-core 経由で PyPI 取得（ webcodecs-py と同方針）
-- `[dependency-groups] dev` から `nanobind==2.12.0` を削除する（ `[build-system]` 側に集約してバージョンずれを防ぐ）
-- `[tool.scikit-build]` に `minimum-version = "0.11.3"` / `build-dir = "_build/{wheel_tag}"` を設定する。 `{wheel_tag}` で Python ABI ごとに build dir を分離し、 `CMakeCache.txt` 内の `Python_INCLUDE_DIR` キャッシュ干渉を防ぐ。 `_deps/` は Python 非依存のため Python ABI を含めず `SORA_PYTHON_SDK_PLATFORM` 単位で共有する
-- `[tool.scikit-build.cmake] version = ">=4.2"` （ `pip index versions cmake` で PyPI 4.2.x が提供されることを確認済み。 既存 `DEPS` の `CMAKE_VERSION=4.3.2` よりやや緩めて将来の PyPI 提供ずれに耐える）
-- `[tool.scikit-build.ninja] version = ">=1.13"`
-- `[tool.scikit-build.wheel]` に `packages = ["src/sora_sdk"]` と `exclude = ["sora_sdk_ext.pyi", "py.typed", "sora_sdk_ext.*.so", "sora_sdk_ext.*.pyd"]` 。 scikit-build-core は `packages` 内相対パスを `pathspec.GitIgnoreSpec` で照合するため、 `src/sora_sdk/` プレフィックス無しのファイル名のみで指定する。 source tree 側に残るビルド成果物が `install(FILES)` 出力と二重コピーされる問題を防ぐ
-- `[tool.scikit-build.metadata.version]` に `provider = "scikit_build_core.metadata.regex"` / `input = "VERSION"` / `regex = "(?P<value>\\S+)"` を設定する。 scikit-build-core は `re.search` ベースで先頭一致するためアンカー不要。 `VERSION` は ASCII 1 行 + 改行で `\\S+` が安全に動く
-- `[tool.scikit-build.cmake.define]` に `TARGET_OS = "ubuntu"` を設定する。 `CMakeLists.txt:132-143` の ubuntu ブランチと `:193-199` の OpenH264 / `dynamic_h264_*.cpp` 取り込みを有効化するため。 0002 / 0005 で macOS / windows を追加する際は `[[tool.scikit-build.overrides]]` で上書きする
-- `[[tool.scikit-build.overrides]]` で `if.env.BUILD_PROFILE = "^debug$"` のとき `cmake.build-type = "Debug"` 。 scikit-build-core の `if.env.<NAME>` は `re.search` 仕様のため `^...$` でアンカー必須
-- `[tool.scikit-build.wheel] install-dir` は明示せず空文字デフォルト（ platlib = site-packages 起点）にする。 CMake 側 `install(... DESTINATION sora_sdk)` で site-packages/sora_sdk/ に配置し、 `wheel.packages = ["src/sora_sdk"]` がコピーする site-packages/sora_sdk/ と同一ディレクトリにマージする。 `wheel.install-dir = "sora_sdk"` + `install(DESTINATION .)` という別解もあるが、 wheel.packages と CMake install の出力先表現を揃えて grep しやすくするため前者を採る
-- `[tool.uv]` には触らない。 `uv sync` は scikit-build-core 経由でプロジェクト本体を install する（editable install への切替は 0007 ）。 `[tool.uv.pip] exclude-newer = "7 days"` は `scikit-build-core>=0.11.3` （ 2026-04 リリース）と `nanobind==2.12.0` （ 2025-12 リリース）ともに 7 日以上経過しているため緩和不要
-
-### deps.json
-
-リポジトリ直下に `deps.json` を新設する。
-
-```json
-{
-  "webrtc": {
-    "version": "m149.7827.0.0",
-    "url_template": "https://github.com/shiguredo-webrtc-build/webrtc-build/releases/download/{version}/webrtc.{platform}.tar.gz",
-    "strip_components": 1
-  },
-  "sora_cpp_sdk": {
-    "version": "2026.2.0-canary.11",
-    "url_template": "https://github.com/shiguredo/sora-cpp-sdk/releases/download/{version}/sora-cpp-sdk-{version}_{platform}.tar.gz",
-    "strip_components": 1
-  },
-  "boost": {
-    "version": "1.91.0",
-    "url_template": "https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/boost-{version}_sora-cpp-sdk-{sora_version}_{platform}.tar.gz",
-    "strip_components": 1
-  },
-  "openh264": {
-    "version": "v2.6.0",
-    "git": "https://github.com/cisco/openh264.git"
-  }
-}
-```
-
-- `{sora_version}` プレースホルダは boost テンプレートでのみ使う（ Boost リリースは Sora C++ SDK の release ページに同梱されるため）
-- `strip_components` は 0001 実装時に実機で次のコマンドで確認し最終値を確定する（暫定 `1` ）:
-  - `curl -sL <url> | tar tzf - | head -5` で WebRTC / Sora / Boost のトップディレクトリを確認
-  - `curl -sL <webrtc-url> | tar tzf - | grep "include/third_party/libc++abi/src/include/__cxxabi_config.h"` で `LIBCXXABI_INCLUDE_DIR` 末尾の存在を確認
-- `openh264.version` は git tag 名（ `v` プレフィックス有）を保持する。 `.github/workflows/build.yml:29` の `OPENH264_VERSION: 2.6.0` （ `v` 無し）は E2E ランタイム `.so` 用の別経路の値で 0001 では触らない（統一は 0006 ）
-- 依存アーカイブの sha256 検証は 0006 で導入する
-
-### platform 判定
-
-`CMakeLists.txt` で `SORA_PYTHON_SDK_PLATFORM` cache 変数を導入する（ Sora C++ SDK 側 `SORA_*` 変数との衝突を避けるためプロジェクト固有 prefix ）。
-
-- 未指定時は次の手順で算出:
-  1. `file(READ /etc/os-release OS_RELEASE)`
-  2. `string(REGEX MATCH "(^|\n)ID=([^\n]+)" _ "${OS_RELEASE}")` で `ID` を抽出。 `ubuntu` 以外なら `message(FATAL_ERROR "scikit-build-core migration phase 1 supports ubuntu only; got '${ID}'")`
-  3. `string(REGEX MATCH "(^|\n)VERSION_ID=\"?([^\"\n]+)\"?" _ "${OS_RELEASE}")` で `VERSION_ID` を抽出（クォート有無両対応）。 `_SORA_UBUNTU_VERSION_ID` に保持
-  4. `${CMAKE_HOST_SYSTEM_PROCESSOR}` から arch を取得
-  5. 組み立て: `ubuntu-${_SORA_UBUNTU_VERSION_ID}_${arch}`
-  6. `ubuntu-24.04_x86_64` 以外なら `message(FATAL_ERROR "scikit-build-core migration phase 1 supports ubuntu-24.04_x86_64 only; got '${SORA_PYTHON_SDK_PLATFORM}'. Other platforms will be added in subsequent migration phases (0002 macOS / 0003 ubuntu arm64 cross / 0004 jetson rpi cross / 0005 Windows).")`
-- `lsb_release` には依存しない（ ubuntu container でデフォルト未インストールのため）
-
-### fetch_deps.cmake
-
-`cmake/scripts/fetch_deps.cmake` を新設し、 `CMakeLists.txt` から `include()` で呼ぶ。
-
-入力契約（呼び出し前に設定済み）:
-
-- `SORA_PYTHON_SDK_PLATFORM` （例 `ubuntu-24.04_x86_64` ）
-- `_SORA_UBUNTU_VERSION_ID` （例 `24.04` 。 `SORA_PYTHON_SDK_PLATFORM` 算出時に併設）
-- `DEPS_ROOT` （例 `${PROJECT_ROOT}/_deps` ）
-- `Python_EXECUTABLE` （ scikit-build-core が自動で設定）
-
-出力契約: 取得成功時に以下のキャッシュ変数を `set(... CACHE PATH "" FORCE)` で確定する。 既存 CACHE 宣言を持つ `SORA_DIR` / `Boost_ROOT` / `WEBRTC_INCLUDE_DIR` / `WEBRTC_LIBRARY_DIR` は上書き、 `OPENH264_DIR` / `LIBCXX_INCLUDE_DIR` / `LIBCXXABI_INCLUDE_DIR` / `_SORA_CLANG_DIR` は新規 CACHE 作成。
-
-| 変数 | 値（ `SORA_PYTHON_SDK_PLATFORM = ubuntu-24.04_x86_64` 例） |
+| 既存（`run.py` 経路） | 本 issue 後（`uv build` 経路） |
 | --- | --- |
-| `SORA_DIR` | `${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/sora` |
-| `Boost_ROOT` | `${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/boost` |
-| `WEBRTC_INCLUDE_DIR` | `${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/webrtc/include` |
-| `WEBRTC_LIBRARY_DIR` | `${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/webrtc/lib` |
-| `OPENH264_DIR` | `${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/openh264` |
-| `LIBCXX_INCLUDE_DIR` | `${DEPS_ROOT}/llvm/${LLVM_HOST_KEY}/libcxx/include` |
-| `LIBCXXABI_INCLUDE_DIR` | `${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/webrtc/include/third_party/libc++abi/src/include` |
-| `_SORA_CLANG_DIR` | `${DEPS_ROOT}/llvm/${LLVM_HOST_KEY}/clang` （ host 側 clang バイナリのインストール先、 `CMakeLists.txt` から `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` を指定するときに使う） |
+| `_install/<target>/{webrtc,sora,boost,openh264}` | `_deps/<platform>/{webrtc,sora,boost,openh264}` |
+| `_install/<target>/llvm/{clang,libcxx}` | `_deps/llvm/<host_key>/{clang,libcxx}` |
 
-`LLVM_HOST_KEY = ${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME}-${_SORA_UBUNTU_VERSION_ID}` （例 `x86_64-Linux-24.04` ）。 0003 / 0004 のクロスコンパイル時もホスト側 LLVM を共有するため host 単位でキャッシュし、 glibc 互換性のため ubuntu バージョンも host キーに含める。
-
-`LIBCXXABI_INCLUDE_DIR` の末尾 `/include` について: `buildbase.py:643-645` の `get_webrtc_info` は `libcxxabi_dir` を `<webrtc>/include/third_party/libc++abi/src` までに留めており、 `run.py:300` で `os.path.join(webrtc_info.libcxxabi_dir, 'include')` として末尾 `/include` を付与して `-DLIBCXXABI_INCLUDE_DIR` に渡している。 `fetch_deps.cmake` 側は二段組を持たないので最終値を直接 `…/include` まで含めて CACHE する。 `…/libc++abi/src/include/__cxxabi_config.h` の所在を直接示す。
-
-### fetch_deps.cmake のヘルパ関数
-
-```cmake
-# _sora_git_shallow(<url> <ref> <dest>)
-# git shallow clone のみ。stamp 書き込みは呼び出し側。
-#
-# buildbase.py:413-420 git_clone_shallow と同等の実装にする
-# (git init + git fetch --depth=1 origin <hash> + git reset --hard FETCH_HEAD)。
-# `git clone --depth 1 --branch <commit-sha>` は raw commit SHA を --branch に渡せず
-# GitHub の uploadpack.allowReachableSHA1InWant 設定に依存して reject されるケースがあるため使わない。
-function(_sora_git_shallow url ref dest)
-  file(MAKE_DIRECTORY "${dest}")
-  set(_attempt 0)
-  set(_max_attempts 3)
-  while(_attempt LESS _max_attempts)
-    math(EXPR _attempt "${_attempt} + 1")
-    execute_process(
-      COMMAND git init
-      WORKING_DIRECTORY "${dest}"
-      RESULT_VARIABLE _r1)
-    if(NOT _r1 EQUAL 0)
-      continue()
-    endif()
-    execute_process(
-      COMMAND git remote add origin "${url}"
-      WORKING_DIRECTORY "${dest}"
-      RESULT_VARIABLE _r2)
-    execute_process(
-      COMMAND git fetch --depth 1 origin "${ref}"
-      WORKING_DIRECTORY "${dest}"
-      RESULT_VARIABLE _r3)
-    if(_r3 EQUAL 0)
-      execute_process(
-        COMMAND git reset --hard FETCH_HEAD
-        WORKING_DIRECTORY "${dest}"
-        RESULT_VARIABLE _r4)
-      if(_r4 EQUAL 0)
-        return()
-      endif()
-    endif()
-    file(REMOVE_RECURSE "${dest}")
-    file(MAKE_DIRECTORY "${dest}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 2)
-  endwhile()
-  message(FATAL_ERROR
-    "Failed to git fetch ${url} at ${ref} after ${_max_attempts} retries. "
-    "Check network connectivity or HTTPS_PROXY environment variable.")
-endfunction()
-
-# _sora_fetch_archive(<name> <url> <stamp_path> <dest_dir> <strip_components>)
-# ダウンロード + tar xzf + stamp 書き込み。
-# name はログメッセージ用と一時アーカイブファイル名用。
-# stamp 書き込みは展開成功後に行う(buildbase.py:251-270 versioned デコレータと同順序)。
-function(_sora_fetch_archive name url stamp_path dest_dir strip_components)
-  # stamp ヒット判定
-  if(EXISTS "${stamp_path}")
-    file(READ "${stamp_path}" _existing_stamp)
-    string(STRIP "${_existing_stamp}" _existing_stamp)
-    if("${_existing_stamp}" STREQUAL "${url}")
-      message(STATUS "Sora deps: ${name} cache hit (${url})")
-      return()
-    endif()
-  endif()
-
-  message(STATUS "Sora deps: fetching ${name} from ${url}")
-  file(REMOVE_RECURSE "${dest_dir}")
-  file(MAKE_DIRECTORY "${dest_dir}")
-  get_filename_component(_archive_dir "${stamp_path}" DIRECTORY)
-  file(MAKE_DIRECTORY "${_archive_dir}/.archives")
-  set(_archive "${_archive_dir}/.archives/${name}.tar.gz")
-
-  set(_attempt 0)
-  set(_max_attempts 3)
-  set(_success FALSE)
-  while(_attempt LESS _max_attempts)
-    math(EXPR _attempt "${_attempt} + 1")
-    file(REMOVE "${_archive}")
-    file(DOWNLOAD "${url}" "${_archive}"
-      TLS_VERIFY ON
-      SHOW_PROGRESS
-      INACTIVITY_TIMEOUT 120
-      STATUS _dl_status)
-    list(GET _dl_status 0 _dl_code)
-    if(_dl_code EQUAL 0)
-      set(_success TRUE)
-      break()
-    endif()
-    list(GET _dl_status 1 _dl_msg)
-    message(WARNING "Sora deps: download ${name} failed (${_dl_code}: ${_dl_msg}), retrying")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 2)
-  endwhile()
-  if(NOT _success)
-    message(FATAL_ERROR
-      "Failed to download ${name} from ${url} after ${_max_attempts} retries. "
-      "Check network connectivity or HTTPS_PROXY environment variable.")
-  endif()
-
-  # file(ARCHIVE_EXTRACT) には strip 機能が無いため tar コマンドを使う
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf "${_archive}" --strip-components=${strip_components}
-    WORKING_DIRECTORY "${dest_dir}"
-    RESULT_VARIABLE _extract_result)
-  if(NOT _extract_result EQUAL 0)
-    file(REMOVE_RECURSE "${dest_dir}")
-    message(FATAL_ERROR "Failed to extract ${name} archive: ${_archive}")
-  endif()
-
-  # stamp は展開成功後に書き込む
-  get_filename_component(_stamp_parent "${stamp_path}" DIRECTORY)
-  file(MAKE_DIRECTORY "${_stamp_parent}")
-  file(WRITE "${stamp_path}" "${url}")
-endfunction()
-
-# _sora_fetch_openh264(<version> <git_url> <dest> <stamp_path>)
-function(_sora_fetch_openh264 version git_url dest stamp_path)
-  if(EXISTS "${stamp_path}")
-    file(READ "${stamp_path}" _existing_stamp)
-    string(STRIP "${_existing_stamp}" _existing_stamp)
-    if("${_existing_stamp}" STREQUAL "${version}")
-      message(STATUS "Sora deps: openh264 cache hit (${version})")
-      return()
-    endif()
-  endif()
-
-  # 実 fetch 時のみ make の存在を確認する。キャッシュヒット時は make 不在環境でも止めない
-  find_program(_SORA_MAKE_EXECUTABLE make)
-  if(NOT _SORA_MAKE_EXECUTABLE)
-    message(FATAL_ERROR
-      "OpenH264 header installation requires 'make'. "
-      "On Debian/Ubuntu: run 'apt-get install build-essential'.")
-  endif()
-
-  message(STATUS "Sora deps: fetching openh264 ${version} from ${git_url}")
-  file(REMOVE_RECURSE "${dest}")
-  get_filename_component(_src "${dest}" DIRECTORY)
-  set(_src "${_src}/.openh264-src")
-  file(REMOVE_RECURSE "${_src}")
-  _sora_git_shallow("${git_url}" "${version}" "${_src}")
-
-  file(MAKE_DIRECTORY "${dest}")
-  execute_process(
-    COMMAND "${_SORA_MAKE_EXECUTABLE}" -C "${_src}" install-headers "PREFIX=${dest}"
-    RESULT_VARIABLE _make_result)
-  if(NOT _make_result EQUAL 0)
-    message(FATAL_ERROR "Failed to install openh264 headers (make install-headers PREFIX=${dest})")
-  endif()
-
-  file(REMOVE_RECURSE "${_src}")
-  get_filename_component(_stamp_parent "${stamp_path}" DIRECTORY)
-  file(MAKE_DIRECTORY "${_stamp_parent}")
-  file(WRITE "${stamp_path}" "${version}")
-endfunction()
-
-# _sora_fetch_llvm(<webrtc_install_dir> <dest_root> <stamp_path>)
-# buildbase.py:1187-1233 install_llvm 完全移植版。
-# - WebRTC アーカイブ内 VERSIONS ファイルから 6 つの KEY を読む
-# - tools / libcxx / buildtools を shallow clone
-# - tools/clang/scripts/update.py で host 用 clang バイナリを <dest_root>/clang/ に取得
-# - buildtools/third_party/libc++/__config_site と __assertion_handler を libcxx/include/ にコピー
-function(_sora_fetch_llvm webrtc_install_dir dest_root stamp_path)
-  set(_versions_file "${webrtc_install_dir}/VERSIONS")
-  if(NOT EXISTS "${_versions_file}")
-    message(FATAL_ERROR "WebRTC VERSIONS file not found: ${_versions_file}")
-  endif()
-  file(READ "${_versions_file}" _versions_content)
-
-  foreach(_key
-      WEBRTC_SRC_TOOLS_URL WEBRTC_SRC_TOOLS_COMMIT
-      WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_URL WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT
-      WEBRTC_SRC_BUILDTOOLS_URL WEBRTC_SRC_BUILDTOOLS_COMMIT)
-    # KEY="value" / KEY=value 両対応。行頭アンカーで他 KEY の partial match を避ける。
-    # buildbase.py:238-239 の `b.strip('"')` と等価
-    if(_versions_content MATCHES "(^|\n)${_key}=\"?([^\"\n]+)\"?")
-      set(_${_key} "${CMAKE_MATCH_2}")
-    else()
-      message(FATAL_ERROR "Key ${_key} not found in ${_versions_file}")
-    endif()
-  endforeach()
-
-  set(_stamp_value
-    "${_WEBRTC_SRC_TOOLS_URL}.${_WEBRTC_SRC_TOOLS_COMMIT}.${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_URL}.${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT}.${_WEBRTC_SRC_BUILDTOOLS_URL}.${_WEBRTC_SRC_BUILDTOOLS_COMMIT}")
-
-  if(EXISTS "${stamp_path}")
-    file(READ "${stamp_path}" _existing_stamp)
-    string(STRIP "${_existing_stamp}" _existing_stamp)
-    if("${_existing_stamp}" STREQUAL "${_stamp_value}")
-      message(STATUS "Sora deps: llvm cache hit")
-      return()
-    endif()
-  endif()
-
-  message(STATUS "Sora deps: fetching llvm (clang + libcxx + libcxxabi headers)")
-  file(REMOVE_RECURSE "${dest_root}/clang" "${dest_root}/libcxx" "${dest_root}/buildtools" "${dest_root}/tools")
-
-  # tools: clang/scripts/update.py を保持する
-  _sora_git_shallow("${_WEBRTC_SRC_TOOLS_URL}" "${_WEBRTC_SRC_TOOLS_COMMIT}" "${dest_root}/tools")
-
-  # clang バイナリの取得 (buildbase.py:1204-1211 と同等)
-  execute_process(
-    COMMAND "${Python_EXECUTABLE}"
-      "${dest_root}/tools/clang/scripts/update.py"
-      "--output-dir" "${dest_root}/clang"
-    RESULT_VARIABLE _update_result)
-  if(NOT _update_result EQUAL 0)
-    message(FATAL_ERROR "clang/scripts/update.py failed (output-dir=${dest_root}/clang)")
-  endif()
-
-  # libcxx: ヘッダソース
-  _sora_git_shallow("${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_URL}" "${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT}" "${dest_root}/libcxx")
-
-  # buildtools: __config_site / __assertion_handler を取り出すためだけに clone
-  _sora_git_shallow("${_WEBRTC_SRC_BUILDTOOLS_URL}" "${_WEBRTC_SRC_BUILDTOOLS_COMMIT}" "${dest_root}/buildtools")
-  # buildbase.py:1218-1219 の git reset --hard と同じ保険。
-  # FETCH_HEAD が稀に commit と一致しないケースを救済する
-  execute_process(
-    COMMAND git reset --hard "${_WEBRTC_SRC_BUILDTOOLS_COMMIT}"
-    WORKING_DIRECTORY "${dest_root}/buildtools"
-    RESULT_VARIABLE _reset_result)
-  if(NOT _reset_result EQUAL 0)
-    message(WARNING "buildtools git reset --hard ${_WEBRTC_SRC_BUILDTOOLS_COMMIT} failed (continuing)")
-  endif()
-
-  # buildbase.py:1220-1232 と同じコピー
-  configure_file(
-    "${dest_root}/buildtools/third_party/libc++/__config_site"
-    "${dest_root}/libcxx/include/__config_site"
-    COPYONLY)
-  configure_file(
-    "${dest_root}/buildtools/third_party/libc++/__assertion_handler"
-    "${dest_root}/libcxx/include/__assertion_handler"
-    COPYONLY)
-
-  # tools / buildtools は __config_site / __assertion_handler / clang バイナリ取得が済んだので削除して容量を節約
-  file(REMOVE_RECURSE "${dest_root}/tools" "${dest_root}/buildtools")
-
-  get_filename_component(_stamp_parent "${stamp_path}" DIRECTORY)
-  file(MAKE_DIRECTORY "${_stamp_parent}")
-  file(WRITE "${stamp_path}" "${_stamp_value}")
-endfunction()
-```
-
-メインスクリプト（ `fetch_deps.cmake` 末尾）:
-
-```cmake
-# deps.json を読み解く
-file(READ "${CMAKE_SOURCE_DIR}/deps.json" _DEPS_JSON)
-string(JSON _WEBRTC_VERSION GET "${_DEPS_JSON}" webrtc version)
-string(JSON _WEBRTC_URL_TEMPLATE GET "${_DEPS_JSON}" webrtc url_template)
-string(JSON _WEBRTC_STRIP GET "${_DEPS_JSON}" webrtc strip_components)
-string(JSON _SORA_VERSION GET "${_DEPS_JSON}" sora_cpp_sdk version)
-string(JSON _SORA_URL_TEMPLATE GET "${_DEPS_JSON}" sora_cpp_sdk url_template)
-string(JSON _SORA_STRIP GET "${_DEPS_JSON}" sora_cpp_sdk strip_components)
-string(JSON _BOOST_VERSION GET "${_DEPS_JSON}" boost version)
-string(JSON _BOOST_URL_TEMPLATE GET "${_DEPS_JSON}" boost url_template)
-string(JSON _BOOST_STRIP GET "${_DEPS_JSON}" boost strip_components)
-string(JSON _OPENH264_VERSION GET "${_DEPS_JSON}" openh264 version)
-string(JSON _OPENH264_GIT GET "${_DEPS_JSON}" openh264 git)
-
-# URL テンプレート展開: 長い placeholder から先に置換する。
-# {sora_version} は文字列として {version} を内包するため、{version} を先に置換すると
-# {sora_version} 内の {version} 部分が誤置換される(例: boost テンプレートの
-# `boost-{version}_sora-cpp-sdk-{sora_version}_…` で {version} を先に展開すると
-# `…sora-cpp-sdk-{1.91.0}_…` に化ける)。
-macro(_sora_expand_url out template version sora_version platform)
-  set(${out} "${template}")
-  string(REPLACE "{sora_version}" "${sora_version}" ${out} "${${out}}")
-  string(REPLACE "{version}" "${version}" ${out} "${${out}}")
-  string(REPLACE "{platform}" "${platform}" ${out} "${${out}}")
-endmacro()
-
-set(_PLATFORM_ROOT "${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}")
-set(_STAMPS_ROOT "${_PLATFORM_ROOT}/.stamps")
-set(_LLVM_HOST_KEY "${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME}-${_SORA_UBUNTU_VERSION_ID}")
-set(_LLVM_ROOT "${DEPS_ROOT}/llvm/${_LLVM_HOST_KEY}")
-set(_LLVM_STAMPS_ROOT "${_LLVM_ROOT}/.stamps")
-
-_sora_expand_url(_WEBRTC_URL "${_WEBRTC_URL_TEMPLATE}" "${_WEBRTC_VERSION}" "" "${SORA_PYTHON_SDK_PLATFORM}")
-_sora_fetch_archive(webrtc "${_WEBRTC_URL}" "${_STAMPS_ROOT}/webrtc" "${_PLATFORM_ROOT}/webrtc" ${_WEBRTC_STRIP})
-
-_sora_expand_url(_SORA_URL "${_SORA_URL_TEMPLATE}" "${_SORA_VERSION}" "" "${SORA_PYTHON_SDK_PLATFORM}")
-_sora_fetch_archive(sora "${_SORA_URL}" "${_STAMPS_ROOT}/sora" "${_PLATFORM_ROOT}/sora" ${_SORA_STRIP})
-
-_sora_expand_url(_BOOST_URL "${_BOOST_URL_TEMPLATE}" "${_BOOST_VERSION}" "${_SORA_VERSION}" "${SORA_PYTHON_SDK_PLATFORM}")
-_sora_fetch_archive(boost "${_BOOST_URL}" "${_STAMPS_ROOT}/boost" "${_PLATFORM_ROOT}/boost" ${_BOOST_STRIP})
-
-_sora_fetch_openh264("${_OPENH264_VERSION}" "${_OPENH264_GIT}" "${_PLATFORM_ROOT}/openh264" "${_STAMPS_ROOT}/openh264")
-
-_sora_fetch_llvm("${_PLATFORM_ROOT}/webrtc" "${_LLVM_ROOT}" "${_LLVM_STAMPS_ROOT}/llvm")
-
-# 7 + 1 変数を CACHE に確定
-set(SORA_DIR              "${_PLATFORM_ROOT}/sora"     CACHE PATH "" FORCE)
-set(Boost_ROOT            "${_PLATFORM_ROOT}/boost"    CACHE PATH "" FORCE)
-set(WEBRTC_INCLUDE_DIR    "${_PLATFORM_ROOT}/webrtc/include" CACHE PATH "" FORCE)
-set(WEBRTC_LIBRARY_DIR    "${_PLATFORM_ROOT}/webrtc/lib"     CACHE PATH "" FORCE)
-set(OPENH264_DIR          "${_PLATFORM_ROOT}/openh264"       CACHE PATH "" FORCE)
-set(LIBCXX_INCLUDE_DIR    "${_LLVM_ROOT}/libcxx/include"     CACHE PATH "" FORCE)
-set(LIBCXXABI_INCLUDE_DIR "${_PLATFORM_ROOT}/webrtc/include/third_party/libc++abi/src/include" CACHE PATH "" FORCE)
-set(_SORA_CLANG_DIR       "${_LLVM_ROOT}/clang"              CACHE PATH "" FORCE)
-```
-
-### バージョン注入
-
-- `CMakeLists.txt` で `file(READ ${CMAKE_CURRENT_SOURCE_DIR}/VERSION VERSION_RAW)` + `string(STRIP "${VERSION_RAW}" SORA_PYTHON_SDK_VERSION)` で値を取得する
-- `if(DEFINED ENV{BUILD_PROFILE} AND "$ENV{BUILD_PROFILE}" STREQUAL "debug")` のとき `set(SORA_PYTHON_SDK_VERSION "${SORA_PYTHON_SDK_VERSION}+debug")` で末尾連結する
-- `target_compile_definitions(sora_sdk_ext PRIVATE "SORA_PYTHON_SDK_VERSION=\"${SORA_PYTHON_SDK_VERSION}\"")` のように引数全体をダブルクォートで包み内側はバックスラッシュエスケープする形に変える（ `-D` 組み立て時の引数分割を防ぎ、 `+` を含むトークンを伝播させる）
-- `src/sora.cpp:216, 223` の `BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION)` を `SORA_PYTHON_SDK_VERSION` の直接連結に書き換える（マクロ展開結果が C 文字列リテラルになるため）
-- `[tool.scikit-build.metadata.version]` 経由の Python 側 `__version__` には `+debug` は付かない。 C++ 側 `SORA_PYTHON_SDK_VERSION` のみが `+debug` 付きになる。 これは `setup.py:19-21` の現状挙動と同じ。 `tests/test_version.py` は `__version__` と VERSION ファイル文字列を比較するため、 `BUILD_PROFILE=debug` でも test は通る
-- 既存 `run.py:268-273` の `importlib.metadata.version('sora-sdk' or 'sora-sdk-rpi')` 経由のバージョン注入は捨てる。 `sora-sdk-rpi` パッケージ名分岐は 0004 で wheel 名を切り替える際に `[[tool.scikit-build.overrides]]` または別経路で扱う（ 0001 のスコープ外）
-
-### CMakeLists.txt の変更
-
-- `CMakeLists.txt:54` の `set(TARGET_OS "" CACHE STRING ...)` の直後に `set(SORA_GEN_PYI ON CACHE BOOL "Generate .pyi stub")` を追加する。 既存 `run.py:376-380` は Windows native とクロスコンパイル時に `SORA_GEN_PYI=OFF` を渡しており、 0001 は ubuntu-24.04 x86_64 native のみ対応で ON が妥当。 0003 (jetson / ubuntu armv8 cross) / 0004 (rpi) / 0005 (Windows native) では `[[tool.scikit-build.overrides]]` で `cmake.define.SORA_GEN_PYI = "OFF"` を渡して上書きする
-- `SORA_PYTHON_SDK_PLATFORM` cache 変数を導入し、未設定時は `/etc/os-release` から自動算出する
-- `include(cmake/scripts/fetch_deps.cmake)` を `CMakeLists.txt:60` （既存空行）に挿入する。 これにより L59 の `set(SORA_DIR "" CACHE PATH ...)` と L61 の `list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})` の間で `fetch_deps.cmake` が呼ばれ、 末尾の `set(... CACHE PATH "" FORCE)` で `find_package(Boost CONFIG)` / `find_package(WebRTC)` / `find_package(Sora)` が新パスで解決される
-- `include(fetch_deps.cmake)` 直後に `if(NOT CMAKE_C_COMPILER)` ガードで `set(CMAKE_C_COMPILER "${_SORA_CLANG_DIR}/bin/clang" CACHE FILEPATH "" FORCE)` / `set(CMAKE_CXX_COMPILER "${_SORA_CLANG_DIR}/bin/clang++" CACHE FILEPATH "" FORCE)` を設定する。 `project()` より後だと既に compiler が確定しているため、 `CMakeLists.txt` 冒頭（ `project()` 前）で `fetch_deps.cmake` を `include` する必要がある。 具体的な挿入順序は「解決方法」を参照
-- `target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION=${SORA_PYTHON_SDK_VERSION})` （ `CMakeLists.txt:106` ）を `target_compile_definitions(sora_sdk_ext PRIVATE "SORA_PYTHON_SDK_VERSION=\"${SORA_PYTHON_SDK_VERSION}\"")` に変更する
-- `install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)` （ `CMakeLists.txt:204` ）を `install(TARGETS sora_sdk_ext LIBRARY DESTINATION sora_sdk)` に変更する
-- `install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")` （ `CMakeLists.txt:206` ）を `install(FILES ${CMAKE_CURRENT_BINARY_DIR}/py.typed ${CMAKE_CURRENT_BINARY_DIR}/sora_sdk_ext.pyi DESTINATION sora_sdk)` に変更する。 `py.typed` と `sora_sdk_ext.pyi` は `nanobind_add_stub` の `MARKER_FILE py.typed` / `OUTPUT sora_sdk_ext.pyi` 指定で `${CMAKE_CURRENT_BINARY_DIR}` 直下に生成される。 `src/sora_sdk/py.typed` は git tracked ではないため clean checkout の CI runner では存在せず、 source tree 側から install してはならない。 `if (SORA_GEN_PYI)` / `endif()` ガード自体（ L205, L207 ）は変更しない
-
-### wheel
-
-- 0001 で生成する wheel の platform tag は `linux_x86_64` （ scikit-build-core デフォルト）。 `manylinux_2_35_x86_64` への変換は 0006 で `auditwheel repair --strip --only-plat` を別ステップで実施する
-- ルート `.gitignore` に `/_deps` を追加する（既存に `/_build` と `src/sora_sdk/*.so` 等は登録済み）
-
-### CI 影響
-
-`.github/workflows/build.yml` を 0001 と同じ PR で以下のように変更する。 詳細は「解決方法」を参照。
-
-- `build_pyi` job 全体に `if: false` を追加する（ 0001 完了後は scikit-build-core が wheel 内に pyi を直接同梱するため不要。 完全削除は 0006 ）
-- `build_ubuntu` job の `needs: [build_pyi]` から `build_pyi` を削除し、 `build_pyi` artifact の download と cp ステップを削除する
-- `build_ubuntu` matrix から `ubuntu-22.04_x86_64` / `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` / `raspberry-pi-os_armv8` の 4 entry を `exclude:` で除外する（ `ubuntu-24.04_x86_64` のみを残す）
-- `build_ubuntu_arm` / `build_macos` / `build_windows` job 全体に `if: false` を追加する（ `build_ubuntu_arm` は新方針で 0006 で完全削除予定。 `build_macos` は 0002 で、 `build_windows` は 0005 で復活）
-- `e2e_test` job 全体に `if: false` を追加する。 `./.github/workflows/e2e-test.yml` 側は disable する platform の artifact 名を hardcode 参照しているため復活させると 404 で失敗する。 0006 で対応する
-- `slack_notify` job の `needs:` から `build_ubuntu_arm` / `build_macos` / `build_windows` を一時的に削除する。 GitHub Actions の `if: ${{ !cancelled() }}` 仕様で skip された upstream に依存していると常時 success 扱いになり Slack 通知のシグナルが壊れるため
-- `publish_wheel` / `create-release` は upstream の `build_macos` / `build_windows` が skip されることで GitHub Actions 仕様により自動的に skip される。 加えて `publish_wheel` matrix / `create-release` の `actions/download` 呼び出し列は disable 対象 platform を hardcode 参照しており、 0001 期間中に成功する `ubuntu-24.04_x86_64` の artifact を拾う entry が存在しないため、 仮に手動で needs を外しても release は不完全になる。 0001 完了から 0002 / 0003 / 0004 / 0005 完了までの期間は **タグを打たない運用** を 0001 PR description にチェックボックスとして明記する
-- branch protection との整合: 必須チェックに `build_ubuntu_arm` / `build_macos` / `build_windows` / `build_pyi` / `e2e_test` の job が含まれていると 0001 マージが詰まる。 PR 作成時に `gh api repos/shiguredo/sora-python-sdk/branches/develop/protection --jq '.required_status_checks.contexts'` で確認し、 disable 対象が含まれていれば branch protection を一時的に編集して除外する。 確認結果と編集内容は PR description のチェックリストに記載する（ issue 完了条件には含めない）
-
-### pytest
-
-- 0001 完了時点で通すのは `pytest tests/test_version.py` のみ
-- `tests/test_version.py` は `os.path.dirname(os.path.dirname(__file__))` で `<repo>/VERSION` を参照し、 `sora_sdk.__version__` と比較する
-- 加えて wheel に同梱された `sora_sdk_ext.*.so` が import / load 可能かを動作確認する（「完了条件」参照）
-
-## 完了条件
-
-- `ubuntu-24.04_x86_64` + Python 3.12 / 3.13 / 3.14 で `uv build --wheel` が成功する（ `uv python pin <ver> && uv venv && uv build --wheel` で個別に検証）
-- 生成された wheel の中身を `python -m zipfile -l dist/*.whl` で確認すると `sora_sdk/sora_sdk_ext.cpython-*-linux-gnu.so` / `sora_sdk/sora_sdk_ext.pyi` / `sora_sdk/py.typed` / Python ソースが含まれている（ wheel タグは `cp312-cp312-linux_x86_64` 等）
-- `setup.py` を削除し、 build backend が `scikit_build_core.build` に切り替わっている
-- WebRTC / Sora / Boost / OpenH264 / LLVM (clang + libcxx + libcxxabi) の取得が CMake configure 内で完結する
-- 次の手順で動作確認が成功する:
-  1. `uv venv`
-  2. `uv sync --no-install-project` （ `--no-install-project` を付けないと `uv sync` 段階で scikit-build-core によるフルビルドが走り、 `uv build --wheel` で重複ビルドになる）
-  3. `uv build --wheel`
-  4. `uv pip install --force-reinstall dist/*.whl`
-  5. `uv run --no-sync pytest tests/test_version.py` が成功する（ `--no-sync` を付けないと `uv run` が暗黙的に `uv sync` を呼んで dist の wheel を再ビルドで上書きする）
-  6. `uv run --no-sync python -c "from sora_sdk import sora_sdk_ext; print(sora_sdk_ext.__file__)"` が `site-packages/sora_sdk/sora_sdk_ext.cpython-*-linux-gnu.so` を出力する（ ImportError / undefined symbol が出ない）
-  7. `uv run --no-sync python -c "import sora_sdk; print(sora_sdk.Sora)"` がクラスを返す（動的リンクの解決まで含めて成功する）
-- `BUILD_PROFILE=debug uv build --wheel` でも上記が成功する。 `BUILD_PROFILE=debug uv build --wheel 2>&1 | tee /tmp/build.log` の出力に `grep -E '"SORA_PYTHON_SDK_VERSION=.*\+debug"' /tmp/build.log` で 1 行以上 hit する（ `target_compile_definitions` 由来の `-D"SORA_PYTHON_SDK_VERSION=\"X.Y.Z+debug\""` がコンパイル コマンドラインに現れる）
-- `_build/` / `_deps/` が 2 回目以降の `uv build --wheel` で再 DL されない（ `_deps/<platform>/.stamps/*` と `_deps/llvm/<host_key>/.stamps/llvm` のタイムスタンプ未更新を確認）
-- CI で `build_ubuntu` の `ubuntu-24.04_x86_64` entry が green になり、 0001 で disable した他 job は skip 表示される
-
-## 解決方法
+`<platform>` は `SORA_PYTHON_SDK_PLATFORM` （本 issue では `ubuntu-24.04_x86_64` のみ）。 `<host_key>` は `${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME}` （例 `x86_64-Linux`、 0002 で `arm64-Darwin`、 0005 で `x86_64-Windows`）。 Chromium 由来 clang バイナリは ubuntu バージョン違いで切替えないので host key に ubuntu バージョンを含めない。
 
 ### pyproject.toml
 
-`[build-system]` を以下に置換する。
-
-```toml
-[build-system]
-requires = ["scikit-build-core>=0.11.3", "nanobind==2.12.0"]
-build-backend = "scikit_build_core.build"
-```
-
-`[project]` / `[project.urls]` / 既存 `[dependency-groups]` 等は維持する。 `[dependency-groups] dev` から `nanobind==2.12.0` を削除する。
-
-末尾に以下のセクション群を追加する。
-
-```toml
-[tool.scikit-build]
-minimum-version = "0.11.3"
-build-dir = "_build/{wheel_tag}"
-
-[tool.scikit-build.cmake]
-version = ">=4.2"
-
-[tool.scikit-build.ninja]
-version = ">=1.13"
-
-[tool.scikit-build.wheel]
-packages = ["src/sora_sdk"]
-exclude = ["sora_sdk_ext.pyi", "py.typed", "sora_sdk_ext.*.so", "sora_sdk_ext.*.pyd"]
-
-[tool.scikit-build.metadata.version]
-provider = "scikit_build_core.metadata.regex"
-input = "VERSION"
-regex = "(?P<value>\\S+)"
-
-[tool.scikit-build.cmake.define]
-TARGET_OS = "ubuntu"
-
-[[tool.scikit-build.overrides]]
-if.env.BUILD_PROFILE = "^debug$"
-cmake.build-type = "Debug"
-```
+- `[build-system]` を `requires = ["scikit-build-core>=0.11.3", "nanobind==2.12.0"]` / `build-backend = "scikit_build_core.build"` に置換する。
+- `[dependency-groups] dev` から `nanobind==2.12.0` を削除する（`src/` / `tests/` 内に `import nanobind` は無い）。
+- `[tool.scikit-build]`: `minimum-version = "0.11.3"` / `build-dir = "_build/{wheel_tag}"`（Python ABI ごとに build-dir 分離し `CMakeCache.txt` の `Python_INCLUDE_DIR` キャッシュ干渉を防ぐ）。
+- `[tool.scikit-build.cmake] version = ">=4.2"` / `[tool.scikit-build.ninja] version = ">=1.13"`。 `cmake_minimum_required(VERSION 4.1)` は変更しない（4.2 で要求を満たすので矛盾なし）。
+- `[tool.scikit-build.cmake.define]`: `TARGET_OS = "ubuntu"` のみ。 fetch スクリプトの include は `CMakeLists.txt` 側で行う（後述）。
+- `[tool.scikit-build.wheel] packages = ["src/sora_sdk"]` のみ。 **`wheel.exclude` は使わない**。 `wheel.exclude` は wheel build dir 全体走査でも評価されるため `*.so` 等の平坦パターンは CMake install 出力まで除外してしまう。 ローカル `src/sora_sdk/sora_sdk_ext.*.so` の混入は `.gitignore`（既に `src/sora_sdk/*.so` 等を含む）と、 packages コピー時の `target_path.is_file()` skip ガードで防ぐ。
+- `install-dir` は明示せず空文字デフォルト。 CMake `install(... DESTINATION sora_sdk)` と `wheel.packages` 由来コピーが `site-packages/sora_sdk/` で同居する。
+- `[tool.scikit-build.metadata.version]`: `provider = "scikit_build_core.metadata.regex"` / `input = "VERSION"` / `regex = "(?P<value>\\S+)"`。
+- `[tool.uv]` / `[tool.uv.pip]` は触らない。
 
 ### deps.json
 
-リポジトリ直下に「設計方針 → deps.json」セクションの JSON を新設する。
+リポジトリ直下に新設する。 JSON 構造:
 
-### cmake/scripts/fetch_deps.cmake
+- `webrtc.version` / `webrtc.url_template` （`{version}` / `{platform}` プレースホルダ） / `webrtc.strip_components`。
+- `sora_cpp_sdk.version` / `.url_template` / `.strip_components`。
+- `boost.version` / `.url_template` （boost 用に `{sora_version}` も使う。 Boost は Sora C++ SDK の release ページに同梱されるため） / `.strip_components`。
+- `openh264.version` （`v` プレフィックス付き tag 名） / `openh264.git` （リポジトリ URL）。
 
-「設計方針 → fetch_deps.cmake のヘルパ関数」と「メインスクリプト」の CMake コードを `cmake/scripts/fetch_deps.cmake` に保存する。
+`strip_components` の実値、 `LIBCXXABI_INCLUDE_DIR` 末尾 `/include/__cxxabi_config.h` の所在は実装時に `curl -sL <url> | tar tzf - | head -5` で確認して確定する。 拡張子 (`.zip`) 対応は 0005、 sha256 検証は 0006 で導入する。
 
-### CMakeLists.txt
+### fetch_deps.cmake の include 経路
 
-L1 から L72 までを以下のような流れに書き換える（行番号は変更後の目安）:
+`cmake/scripts/fetch_deps.cmake` を新設し、 `CMakeLists.txt` の `project()` 命令の **直前** に次を書く:
 
-1. `cmake_minimum_required(VERSION 4.1)` （既存維持）
-2. `cmake_policy` 群（既存維持）
-3. `SORA_PYTHON_SDK_PLATFORM` cache 変数を新規宣言し、未指定時は `/etc/os-release` から自動算出する
-4. `DEPS_ROOT` を `${CMAKE_SOURCE_DIR}/_deps` に確定する
-5. `set(SORA_DIR "" CACHE PATH ...)` / `set(Boost_ROOT "" CACHE PATH ...)` 等の既存 CACHE 宣言（ L54-59 ）を維持する
-6. `set(SORA_GEN_PYI ON CACHE BOOL "Generate .pyi stub")` を `set(TARGET_OS ...)` （ L54 ）の直後に追加する
-7. `find_package(Python ...)` 群（既存 L17-47 ）の **直後、 `project()` の前** に `include(cmake/scripts/fetch_deps.cmake)` を呼ぶ。 ただし `project()` より前で `Python_EXECUTABLE` を解決するには工夫が必要。 具体的には:
-   - `project(sora_sdk)` の前に「 ubuntu-24.04 x86_64 only / `SORA_PYTHON_SDK_PLATFORM` 算出 / `fetch_deps.cmake` include 」を実行する
-   - `fetch_deps.cmake` で `find_package(Python REQUIRED COMPONENTS Interpreter)` を `_sora_fetch_llvm` 直前で呼ぶ（ scikit-build-core は `Python_EXECUTABLE` を環境変数経由でも渡してくるため、 まず `if(NOT Python_EXECUTABLE) find_package(Python ...) endif()` でガードする）
-   - `fetch_deps.cmake` の末尾で `set(CMAKE_C_COMPILER "${_SORA_CLANG_DIR}/bin/clang" CACHE FILEPATH "" FORCE)` / `set(CMAKE_CXX_COMPILER "${_SORA_CLANG_DIR}/bin/clang++" CACHE FILEPATH "" FORCE)` を設定する
-   - その後で `project(sora_sdk)` を呼ぶ。 これで compiler が `_SORA_CLANG_DIR/bin/clang(++)` で確定する
-8. `list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})` / `list(APPEND CMAKE_MODULE_PATH ${SORA_DIR}/share/cmake)` （既存 L61-62 ）を維持する
-9. `file(READ ${CMAKE_CURRENT_SOURCE_DIR}/VERSION VERSION_RAW)` + `string(STRIP "${VERSION_RAW}" SORA_PYTHON_SDK_VERSION)` を追加する。 `if(DEFINED ENV{BUILD_PROFILE} AND "$ENV{BUILD_PROFILE}" STREQUAL "debug") set(SORA_PYTHON_SDK_VERSION "${SORA_PYTHON_SDK_VERSION}+debug") endif()` で `+debug` 連結
-10. `find_package(Boost CONFIG)` / `find_package(WebRTC)` / `find_package(Sora)` / `find_package(nanobind CONFIG)` （既存 L69-72 ）を維持する
-11. `nanobind_add_module` / `nanobind_add_stub` （既存 L78-104 ）を維持する
-12. `target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION=${SORA_PYTHON_SDK_VERSION})` （ L106 ）を `target_compile_definitions(sora_sdk_ext PRIVATE "SORA_PYTHON_SDK_VERSION=\"${SORA_PYTHON_SDK_VERSION}\"")` に変更する
-13. `set_target_properties` / `if(TARGET_OS ...)` 群（既存 L108-190 ）を維持する
-14. OpenH264 / dynamic_h264 部分（既存 L193-199 ）を維持する
-15. `target_link_libraries` （既存 L201-202 ）を維持する
-16. `install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)` （ L204 ）を `install(TARGETS sora_sdk_ext LIBRARY DESTINATION sora_sdk)` に変更する
-17. `if (SORA_GEN_PYI)` （ L205 ）と `endif()` （ L207 ）は維持する。 中の `install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")` （ L206 ）を `install(FILES ${CMAKE_CURRENT_BINARY_DIR}/py.typed ${CMAKE_CURRENT_BINARY_DIR}/sora_sdk_ext.pyi DESTINATION sora_sdk)` に変更する
-
-`cmake_policy(SET CMP0190 OLD)` （ L15 ）も既存維持する。
-
-### src/sora.cpp
-
-L210-225 周辺を以下のように変更する。
-
-変更前（ L211-217 ）:
-
-```cpp
-  if (user_agent) {
-    config.user_agent = std::optional<std::string>(*user_agent);
-  } else {
-    // 無指定時はデフォルトの User-Agent を設定する
-    config.user_agent = std::optional<std::string>(
-        "Mozilla 5.0 (Sora Unity SDK/" BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION) ")");
-  }
+```cmake
+list(APPEND CMAKE_PROJECT_TOP_LEVEL_INCLUDES "${CMAKE_CURRENT_LIST_DIR}/cmake/scripts/fetch_deps.cmake")
 ```
 
-変更後:
+CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化前）に実行される。 `${CMAKE_CURRENT_LIST_DIR}` で絶対パス化されるため scikit-build-core の build-dir に依存しない。 `pyproject.toml` から `CMAKE_PROJECT_TOP_LEVEL_INCLUDES` は渡さない（相対パス解決の保証が無いため）。
 
-```cpp
-  if (user_agent) {
-    config.user_agent = std::optional<std::string>(*user_agent);
-  } else {
-    // 無指定時はデフォルトの User-Agent を設定する
-    config.user_agent = std::optional<std::string>(
-        "Mozilla 5.0 (Sora Unity SDK/" SORA_PYTHON_SDK_VERSION ")");
-  }
-```
+### fetch_deps.cmake の入出力契約
 
-変更前（ L222-223 ）:
+入力（呼び出し前に確定済み）:
 
-```cpp
-  config.sora_client =
-      "Sora Python SDK " BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION);
-```
+- `Python_EXECUTABLE`: scikit-build-core が `_build/{wheel_tag}/CMakeInit.txt` 経由 (`CACHE PATH "" FORCE`) で渡してくる。 fetch_deps.cmake 冒頭で `if(NOT Python_EXECUTABLE) message(FATAL_ERROR ...) endif()` でガードする。 `python_hints` デフォルト true 前提（本 issue では変更しない）。
+- `CMAKE_HOST_SYSTEM_PROCESSOR` / `CMAKE_HOST_SYSTEM_NAME`: `project()` 内呼び出しなので確定済み。
+- `SORA_PYTHON_SDK_PLATFORM`: 未設定なら本スクリプトが `/etc/os-release` から算出する（後述）。
 
-変更後:
+出力（取得成功時に `set(... CACHE PATH "" FORCE)` で確定する変数）:
 
-```cpp
-  config.sora_client =
-      "Sora Python SDK " SORA_PYTHON_SDK_VERSION;
-```
+| 変数 | 値（`ubuntu-24.04_x86_64` 例） |
+| --- | --- |
+| `SORA_DIR` | `${DEPS_ROOT}/<platform>/sora` |
+| `Boost_ROOT` | `${DEPS_ROOT}/<platform>/boost` |
+| `WEBRTC_INCLUDE_DIR` | `${DEPS_ROOT}/<platform>/webrtc/include` |
+| `WEBRTC_LIBRARY_DIR` | `${DEPS_ROOT}/<platform>/webrtc/lib` |
+| `OPENH264_DIR` | `${DEPS_ROOT}/<platform>/openh264` |
+| `LIBCXX_INCLUDE_DIR` | `${DEPS_ROOT}/llvm/<host_key>/libcxx/include` |
+| `LIBCXXABI_INCLUDE_DIR` | `${DEPS_ROOT}/<platform>/webrtc/include/third_party/libc++abi/src/include` |
+| `_SORA_CLANG_DIR` | `${DEPS_ROOT}/llvm/<host_key>/clang` |
 
-`src/sora.cpp` 冒頭に `boost/preprocessor/stringize.hpp` の直接 include は無く `sora.h` 経由で取り込まれているため、 include 文の変更は不要。
+`DEPS_ROOT = ${CMAKE_SOURCE_DIR}/_deps`。 `_SORA_CLANG_DIR` は 0002 / 0005 が参照する想定で 0001 から出力契約に含める。
 
-### .github/workflows/build.yml
+`CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` は LLVM fetch 完了後に `_SORA_CLANG_DIR/bin/clang(++)` を期待値とし、 `if(NOT CMAKE_C_COMPILER STREQUAL "<expected>")` ガード付きで `set(... CACHE FILEPATH "" FORCE)` する（同じ値を連続 FORCE すると CMake が cache invalidation エラーを出すため）。
 
-- `build_pyi` job （ L53 ）の `jobs.build_pyi` 直下に `if: false` を追加する
-- `build_ubuntu` job （ L84 ）の `needs: [build_pyi]` （ L118 ）から `build_pyi` を削除する（ `needs:` 行を完全削除）
-- `build_ubuntu` job の matrix に `exclude:` ブロックを追加して以下 4 entry を除外する:
-  - `{ platform: { name: ubuntu-22.04_x86_64 } }`
-  - `{ platform: { name: ubuntu-22.04_armv8 } }`
-  - `{ platform: { name: ubuntu-24.04_armv8 } }`
-  - `{ platform: { name: raspberry-pi-os_armv8 } }`
-- `build_ubuntu` job の `download-artifact name: sora_sdk_${python_version}` ステップ（ L123-126 ）と `cp sora_sdk/py.typed src/sora_sdk/py.typed` + `cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi` ステップ（ L127-129 ）を削除する
-- `build_ubuntu` job の `uv run python run.py build ${{ matrix.platform.target }}` 行（ L155 / L161 ）を削除し、 `uv build` だけを残す
-- `build_ubuntu_arm` job （ L172 ） / `build_macos` job （ L230 ） / `build_windows` job （ L281 ）の各 `jobs.<name>` 直下に `if: false` を追加する
-- `e2e_test` job （ L322 ）の `jobs.e2e_test` 直下に `if: false` を追加する
-- `slack_notify` job （ L329 ）の `needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]` から `build_ubuntu_arm` / `build_macos` / `build_windows` を削除し、 `needs: [build_ubuntu]` のみにする
-- `publish_wheel` / `create-release` は触らない（ upstream skip で自動的に skip される）
+### fetch_deps.cmake のメインスクリプト
 
-### .gitignore
+順序:
 
-ルート `.gitignore` に `/_deps` を追加する。
+1. `Python_EXECUTABLE` の存在ガード。
+2. `SORA_PYTHON_SDK_PLATFORM` 自動検出（未設定時のみ）+ 許容リスト検証（本 issue は `ubuntu-24.04_x86_64` のみ。 ユーザが明示的に `-DSORA_PYTHON_SDK_PLATFORM=...` を渡しても許容リストでチェックしバイパスは認めない）。
+3. `${DEPS_ROOT}` を `file(MAKE_DIRECTORY)`、 `file(LOCK "${DEPS_ROOT}/.fetch.lock" GUARD PROCESS TIMEOUT 1800)` で排他取得（複数 Python ABI 並列ビルド時の `_deps/<platform>/` への同時書き込み回避。 CMake 3.5+ で提供。 process 終了で自動 release）。
+4. deps.json を `file(READ)` + `string(JSON GET)` で読む。 URL テンプレート展開は `{sora_version}` → `{version}` → `{platform}` の順（boost テンプレート内 `{sora_version}` に含まれる `{version}` が誤置換されるのを防ぐ）。
+5. webrtc → sora → boost → openh264 → llvm の順に取得（LLVM が `webrtc/VERSIONS` を参照するため webrtc を先に確定させる）。
+6. 出力契約の表の 8 変数を CACHE FORCE 設定 + `CMAKE_C/CXX_COMPILER` をガード経由で FORCE 設定。
 
-### setup.py
+### 各取得関数（散文契約）
 
-リポジトリ直下から削除する。
+- `_sora_fetch_archive(name url stamp_path dest_dir strip_components)` （末尾に `cmake_parse_arguments(_arg "" "SHA256" "" ${ARGN})` で `SHA256` キーワード引数の受け口を 0001 段階で用意する。 本 issue では値を渡さず、 0006 で sha256 検証導入時に値が渡される）:
+  - stamp 内容が `url` と一致したら skip。
+  - skip しない場合は `dest_dir` を REMOVE_RECURSE してから `${_archive_dir}/.archives/${name}.tar.gz` に `file(DOWNLOAD ... INACTIVITY_TIMEOUT 120 TIMEOUT 1800 STATUS _status)`。 status code 0 以外なら部分ファイルを `file(REMOVE)` 、 1 秒スリープでリトライ、 3 回までで FATAL_ERROR。
+  - `${CMAKE_COMMAND} -E tar xzf ... --strip-components=<n>` で展開。 失敗時は `dest_dir` を削除して FATAL_ERROR。
+  - 展開成功後に stamp を書く（親ディレクトリは事前に `file(MAKE_DIRECTORY)`）。
+- `_sora_git_shallow(url ref dest)`: `dest` を REMOVE_RECURSE + MAKE_DIRECTORY 後、 `git init` → `git remote add origin` → `git fetch --depth=1 origin <ref>` → `git reset --hard FETCH_HEAD` を順に実行（3 回までリトライ）。 `git clone --depth 1 --branch <sha>` は GitHub の `uploadpack.allowReachableSHA1InWant` 設定依存で raw SHA を拒否されるため使わない。
+- `_sora_fetch_openh264(version git_url dest stamp_path)`: stamp が `version` と一致したら skip。 skip しない場合は `find_program(_SORA_MAKE_EXECUTABLE make NO_CACHE)` で make を解決し（不在なら `apt-get install build-essential` を促す FATAL_ERROR）、 `_sora_git_shallow` で clone した一時 src で `make -C <src> install-headers PREFIX=<dest>` を実行、 src を削除して stamp を書く。
+- `_sora_fetch_llvm(webrtc_install_dir dest_root stamp_path)`: `webrtc_install_dir/VERSIONS` から次の 6 キーを抽出する: `WEBRTC_SRC_TOOLS_URL`、 `WEBRTC_SRC_TOOLS_COMMIT`、 `WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_URL`、 `WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT`、 `WEBRTC_SRC_BUILDTOOLS_URL`、 `WEBRTC_SRC_BUILDTOOLS_COMMIT`。 VERSIONS は `KEY=value` / `KEY="value"` 両形式が混在するため、 `string(REPLACE "\n" ";")` でリスト化後 `foreach` + `MATCHES "^${_key}=\"?([^\"]+)\"?$"` で取り出す。 stamp は 6 値の連結。
+  - skip しない場合は `dest_root/{clang,libcxx,buildtools,tools}` を REMOVE_RECURSE し、 `_sora_git_shallow` で tools / libcxx / buildtools を clone。
+  - `${Python_EXECUTABLE}` で `${dest_root}/tools/clang/scripts/update.py --output-dir ${dest_root}/clang` を実行（`WORKING_DIRECTORY ${dest_root}/tools` を明示）。
+  - `buildtools/third_party/libc++/__config_site` と `__assertion_handler` を `libcxx/include/` に `configure_file(... COPYONLY)` でコピー。
+  - tools / buildtools を削除、 stamp を書く。
 
-### 触らないファイル
+### SORA_PYTHON_SDK_PLATFORM の自動検出
 
-- `run.py` / `buildbase.py` / `pypath.py` / `MANIFEST.in` / `DEPS` は触らない（削除は 0006 ）
-- これらは scikit-build-core 経路（ `uv build` ） からは参照されない。 `run.py format` 等の開発用途は残る
+`SORA_PYTHON_SDK_PLATFORM` 未設定時のみ実行する:
+
+1. `CMAKE_HOST_SYSTEM_NAME` が `Linux` でなければ FATAL_ERROR（0002 / 0005 で許容拡張）。
+2. `/etc/os-release` を `file(READ)` し、 `string(REPLACE "\n" ";")` + `foreach` で `ID` / `VERSION_ID` を抽出（`lsb_release` には依存しない）。 `ID != ubuntu` なら FATAL_ERROR。
+3. `set(SORA_PYTHON_SDK_PLATFORM "ubuntu-${VERSION_ID}_${CMAKE_HOST_SYSTEM_PROCESSOR}" CACHE STRING "" FORCE)` で確定。
+4. 許容リスト（本 issue は `ubuntu-24.04_x86_64` のみ）に含まれなければ FATAL_ERROR。
+
+### CMakeLists.txt の変更点
+
+- 既存 `cmake_minimum_required` / `cmake_policy` / `project(sora_sdk)` / `find_package(Python)` の順序は変えない。
+- `project(sora_sdk)` の直前に `list(APPEND CMAKE_PROJECT_TOP_LEVEL_INCLUDES "${CMAKE_CURRENT_LIST_DIR}/cmake/scripts/fetch_deps.cmake")` を追加。
+- 既存 `:54-59` の CACHE 宣言 6 個に加えて、 `OPENH264_DIR` / `LIBCXX_INCLUDE_DIR` / `LIBCXXABI_INCLUDE_DIR` の CACHE PATH 宣言と、 `SORA_PYTHON_SDK_PLATFORM` の CACHE STRING 宣言を追加（`fetch_deps.cmake` から FORCE 設定される受け口）。
+- `set(SORA_GEN_PYI ON CACHE BOOL "Generate .pyi stub")` を `set(TARGET_OS ...)` 直後に追加。 0003 / 0004 / 0005 は `build-dir = _build/{wheel_tag}` で fresh configure になるため `-DSORA_GEN_PYI=OFF` が後で渡されればそのまま反映される。
+- `target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION=${SORA_PYTHON_SDK_VERSION})` （`:106`）を `target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION="${SORA_PYTHON_SDK_VERSION}")` に変更（CMake 標準のイディオム。 外側クォート無し）。
+- `install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)` （`:204`）を `... DESTINATION sora_sdk` に変更。
+- `install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")` （`:206`）を `install(FILES ${CMAKE_CURRENT_BINARY_DIR}/py.typed ${CMAKE_CURRENT_BINARY_DIR}/sora_sdk_ext.pyi DESTINATION sora_sdk)` に変更（既存 `nanobind_add_stub` (`:96-103`) は `OUTPUT_PATH` 未指定で `CMAKE_CURRENT_BINARY_DIR` 直下に書き出すため）。 `if (SORA_GEN_PYI)` ガードは維持。
+
+### バージョン注入と src/sora.cpp
+
+- `CMakeLists.txt` で `file(READ VERSION _RAW)` + `string(STRIP)` で `SORA_PYTHON_SDK_VERSION` を取得し、 上記 `target_compile_definitions` で C 文字列リテラルとして渡す。
+- `src/sora.cpp:215-216` を `"Mozilla 5.0 (Sora Python SDK/" SORA_PYTHON_SDK_VERSION ")"` に変更（Unity → Python の文言修正含む）。
+- `src/sora.cpp:222-223` を `"Sora Python SDK " SORA_PYTHON_SDK_VERSION` に変更（`BOOST_PP_STRINGIZE` を外すのみ）。
+- 既存 `run.py:268-273` の `importlib.metadata.version` 経由のバージョン注入は捨てる。 `sora-sdk-rpi` パッケージ名の切替は 0004 で扱う。
+
+### wheel と CI
+
+- 生成 wheel の platform tag は `linux_x86_64`（scikit-build-core デフォルト）。 PyPI 公開不可だが本 issue 〜 0005 期間は PyPI publish を凍結する（`publish_wheel` / `create-release` は `tags/202*` 条件付きなので tag を打たない運用で対応。 PR description のチェックリストで管理）。 manylinux 化は 0006。
+- `_PYTHON_HOST_PLATFORM` は native では不要（クロス時 0003 / 0004 で導入）。
+- ルート `.gitignore` に `/_deps` を追加。
+
+`.github/workflows/build.yml`:
+
+- `build_pyi` / `build_ubuntu_arm` / `build_macos` / `build_windows` / `e2e_test` の各 job に `if: false`。
+- `build_ubuntu` job の `needs: [build_pyi]` 削除、 `download-artifact` step と `cp sora_sdk/py.typed ...` step を削除。 既存 x86_64 用 step (`if: matrix.platform.arch == 'x86_64'`) の `uv run python run.py build ...` を削除し `uv build --wheel` のみを残す（既存 `uv build` から sdist 生成も止める）。 armv8 step / multistrap install step は matrix exclude で動かないので残置（0003 で復活）。
+- `build_ubuntu` matrix に `exclude:` を追加し `name` キー一致で 4 entry 除外:
+  ```yaml
+  exclude:
+    - platform: { name: ubuntu-22.04_x86_64 }
+    - platform: { name: ubuntu-22.04_armv8 }
+    - platform: { name: ubuntu-24.04_armv8 }
+    - platform: { name: raspberry-pi-os_armv8 }
+  ```
+  GitHub Actions の exclude は指定キーがすべて一致する組み合わせを除外する。 `platform.name` のみ指定で当該 platform × python_version 3 種すべてが除外され、 残るのは `ubuntu-24.04_x86_64` × py 3.12 / 3.13 / 3.14。
+- `slack_notify.needs` を `[build_ubuntu]` のみに変更（disable された job への依存を外す。 0002 / 0005 で再追加、 0006 で `build_ubuntu_arm` は削除確定）。
+- `publish_wheel` / `create-release` は変更しない（tag 起動条件付き）。
+
+`.github/workflows/build-debug.yml`: 唯一の `build_ubuntu` job に `if: false`。 ローカルで debug build を試す開発者は `uv build --wheel -C cmake.build-type=Debug` 等を直接実行する（0006 で scikit-build-core 経路へ完全移行）。
+
+`.github/workflows/e2e-test.yml`: 独立トリガ (`push` / `schedule`) で動くため、 配下の全 job （`jobs:` 配下のすべて、 `slack_notify` 含む）に `if: false` を追加（0006 で復活）。
+
+## 完了条件
+
+- ubuntu-24.04_x86_64 + Python 3.12 / 3.13 / 3.14 で `uv build --wheel` が成功する（ローカル直列で 3 通り、 CI matrix の 3 並列でも green）。
+- 生成 wheel タグが `cp3XY-cp3XY-linux_x86_64`、 `python -m zipfile -l dist/*.whl` 出力に `sora_sdk/sora_sdk_ext.cpython-*-linux-gnu.so` / `sora_sdk_ext.pyi` / `py.typed` / Python ソースが含まれる。 dist-info の Version が `VERSION` ファイルと一致。
+- `find _build -name sora_sdk_ext.pyi` で pyi の実位置が `_build/<wheel_tag>/sora_sdk_ext.pyi` 直下。
+- `ls _deps/ubuntu-24.04_x86_64/webrtc/include/third_party/libc++abi/src/include/__cxxabi_config.h` が存在する。
+- ローカル `src/sora_sdk/sora_sdk_ext.cpython-*-linux-gnu.so` を残したまま `uv build --wheel` しても、 wheel 内の `.so` は CMake install 由来のみ。
+- `setup.py` が削除され、 build backend が `scikit_build_core.build` に切替わっている。
+- 動作確認:
+  1. `uv venv`
+  2. `uv sync --no-install-project`（`--no-install-project` 必須）
+  3. `uv build --wheel`
+  4. `uv pip install --force-reinstall dist/*.whl`
+  5. `uv run --no-sync pytest tests/test_version.py` 成功
+  6. `uv run --no-sync python -c "from sora_sdk import sora_sdk_ext; print(sora_sdk_ext.__file__)"` で site-packages 配下の `.so` を出力
+  7. `uv run --no-sync python -c "import sora_sdk; s = sora_sdk.Sora(); print(s)"` がインスタンス生成に成功
+- 同じ Python ABI で 2 回目の `uv build --wheel` を実行すると `_deps/<platform>/.stamps/*` と `_deps/llvm/<host_key>/.stamps/llvm` の mtime が変化しない。
+- CI で `build_ubuntu` の `ubuntu-24.04_x86_64` × 3 Python が green、 disable した job 群が skip 表示。
+- `src/sora.cpp:215` のリテラルが `Mozilla 5.0 (Sora Python SDK/...)`。
+
+## 解決方法
+
+各セクションは「設計方針」の決定に従い最小差分で適用する。 個別ファイル:
+
+- **pyproject.toml**: `[build-system]` 置換、 末尾に `[tool.scikit-build]` 系セクション追記、 `[dependency-groups] dev` から `nanobind==2.12.0` のみ削除。
+- **deps.json**: 「設計方針 → deps.json」の構造で新設。
+- **cmake/scripts/fetch_deps.cmake**: 「設計方針 → fetch_deps.cmake の入出力契約 / メインスクリプト / 各取得関数 / SORA_PYTHON_SDK_PLATFORM 自動検出」を満たすよう新設。
+- **CMakeLists.txt**: 「設計方針 → CMakeLists.txt の変更点」の差分適用。
+- **src/sora.cpp**: `:215-216` と `:222-223` の 2 箇所を「設計方針 → バージョン注入と src/sora.cpp」の通り書き換える。
+- **setup.py**: 削除。
+- **MANIFEST.in**: 触らない（参照されない状態で残す。 削除は 0006）。 本 issue 〜 0006 期間は `uv build --sdist` を実行しない運用とする。
+- **.gitignore**: 末尾 `/smallproj` 行の直前に `/_deps` を追加。
+- **.github/workflows/{build,build-debug,e2e-test}.yml**: 「設計方針 → wheel と CI」の指示に従い `if: false` / `needs` 削減 / matrix exclude / step 削除 / x86_64 step を `uv build --wheel` 化。
 
 ### CHANGES.md
 
-`## develop` セクション **先頭** に以下を追加する（既存規約 CHANGE → ADD → UPDATE → FIX 順）:
+`## develop` セクションの整理:
+
+- 既存 `[UPDATE] wheel を ~=0.46 に上げる` / `[UPDATE] setuptools を ~=82.0 に上げる` の 2 エントリは削除する（`[build-system] requires` から両者が消えるため）。
+- 既存 `[UPDATE] Sora C++ SDK のバージョンを 2026.2.0-canary.11 に上げる` 配下のサブ箇条はすべて触らない（`[UPDATE] CMAKE_VERSION を 4.3.2 に上げる` サブ箇条の削除は 0006）。
+- 追加（`[CHANGE] → [FIX]` の順）:
 
 ```
 - [CHANGE] build backend を setuptools から scikit-build-core に切り替える
   - @voluntas
+- [FIX] User-Agent と sora_client の文字列を `Sora Unity SDK` から `Sora Python SDK` に直す
+  - @voluntas
 ```
-
-既存 `[UPDATE] setuptools を ~=82.0 に上げる` / `[UPDATE] wheel を ~=0.46 に上げる` エントリの削除は 0006 で `[build-system] requires` から setuptools / wheel が完全に消えるタイミングでまとめて扱う（ 0001 単独では `[CHANGE]` を追加するに留める）。
 
 移行期間中の CI 一時 disable や `setup.py` 削除等の実装詳細はリリースノートに含めない。
 
 ## ロールバック
 
-0001 マージ後に develop 上で不具合が発覚した場合の手順:
+revert は `fetch_deps.cmake` の根本設計（`CMAKE_PROJECT_TOP_LEVEL_INCLUDES` 経路 / `file(LOCK)` 設計 / wheel.packages と CMake install の同居挙動 / ABI ごと build-dir 分離）に起因する不具合で追加コミットでは修正できない場合に選ぶ。 個別関数や設定値レベル（リトライ条件 / VERSIONS 抽出 regex / stamp 一致判定 / `.gitignore` 追加項目）は revert ではなく追加コミットで前進させる。
 
-1. `git revert -m 1 <merge-commit>` で revert PR を作成する
-2. revert PR の CI 確認ポイント:
-   - `build_pyi` job が復活して green になる
-   - `build_ubuntu_arm` / `build_macos` / `build_windows` / `e2e_test` の `if: false` が解除される
-   - `build_ubuntu` matrix の `exclude:` が削除される
-3. revert 後、 `git show HEAD~1 -- setup.py` で `setup.py` の内容が完全復元されているか確認する
-4. forward fix を選ぶ判断基準: CI green の disable 対象が 1 platform のみで、 `setup.py` を残す必要が無いことが確認できる場合は revert ではなく追加の修正コミットで対応する
+手順: `git revert -m 1 <merge-commit>` で revert PR を作成し、 disable した job 群（`build_pyi` / `build_ubuntu_arm` / `build_macos` / `build_windows` / `e2e_test` / build-debug.yml / e2e-test.yml）が active に戻って green になることを CI で確認する。 `_deps/` キャッシュは残留しても無害。
+
+## 参照（一次資料）
+
+実装時に挙動の根拠が必要なら次を参照する:
+
+- `scikit_build_core/cmake.py:163-176, 230-241` — `init_cache` の `CMakeInit.txt` 書き出しと `-D` 引数構築。
+- `scikit_build_core/builder/builder.py:275-294` — `python_hints` 経由の `Python_EXECUTABLE` / `PYTHON_EXECUTABLE` / `Python3_EXECUTABLE` 注入。
+- `scikit_build_core/build/_pathutil.py:67` — `packages_to_file_mapping` の `target_path.is_file()` skip ガード。
+- `scikit_build_core/build/_wheelfile.py:151-186` — wheel build dir 全走査時の `wheel.exclude` 適用。
+- `scikit_build_core/build/_file_processor.py:34-108` — `each_unignored_file` の `.gitignore` 評価。
+- `nanobind/cmake/nanobind-config.cmake:620-732` — `nanobind_add_stub` の `add_custom_command(OUTPUT ... WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})`。
