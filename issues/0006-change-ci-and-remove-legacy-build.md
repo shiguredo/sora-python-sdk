@@ -18,7 +18,7 @@ Medium。機能移行自体は 0001〜0005 で完了する。0006 はクリー�
 - `.github/workflows/build.yml` は全 job で `run.py build` → `uv build` の 2 段階
 - `build_pyi` job は x86_64 ネイティブで pyi を生成し artifact 配布
 - `build_ubuntu_arm` はネイティブ arm runner での検証用（compiler は clang-19）
-- `DEPS` ファイルが残る（0001 で `deps.json` へ移行済み想定）
+- `DEPS` ファイルが残る（0001 で `deps.json` へ移行済み想定。`CMAKE_VERSION` は移行対象外で削除する）
 - `MANIFEST.in` が sdist 用に `buildbase.py` / `run.py` を含める
 
 ## 設計方針
@@ -28,6 +28,7 @@ Medium。機能移行自体は 0001〜0005 で完了する。0006 はクリー�
 - 全 platform job で `uv build --wheel` のみ呼ぶ
 - `run.py build` / `setup.py` / `buildbase.py` / `pypath.py` / `MANIFEST.in` / `DEPS` を削除する
 - `.github/actions/download-whl` の wheel パターンが scikit-build-core 出力と一致するか確認する
+- `buildbase.py` の `install_cmake` と `run.py` の cmake PATH 追加を削除する（CMake は PyPI / scikit-build-core 管理）
 
 ## 完了条件
 
