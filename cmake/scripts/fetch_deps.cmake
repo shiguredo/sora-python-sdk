@@ -112,10 +112,17 @@ function(_sora_fetch_archive name url stamp_path dest_dir strip)
       "fetch_deps: failed to download ${name} from ${url} after ${_max_attempts} attempts (last error: ${_last_msg})")
   endif()
 
+  # CMake 4.x の `cmake -E tar` は --strip-components を解釈しないため、
+  # 0001 でサポートするホスト (ubuntu) に同梱されている system tar を使う。
+  find_program(TAR_EXECUTABLE tar)
+  if(NOT TAR_EXECUTABLE)
+    message(FATAL_ERROR
+      "fetch_deps: 'tar' is required to extract ${name} but was not found in PATH.")
+  endif()
   file(REMOVE_RECURSE "${dest_dir}")
   file(MAKE_DIRECTORY "${dest_dir}")
   execute_process(
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "${_archive}" --strip-components=${strip}
+    COMMAND "${TAR_EXECUTABLE}" xzf "${_archive}" --strip-components=${strip}
     WORKING_DIRECTORY "${dest_dir}"
     RESULT_VARIABLE _extract_rc
     OUTPUT_VARIABLE _extract_out
