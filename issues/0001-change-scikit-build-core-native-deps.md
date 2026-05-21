@@ -129,7 +129,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 - `_sora_fetch_archive(name url stamp_path dest_dir strip_components)` （末尾に `cmake_parse_arguments(_arg "" "SHA256" "" ${ARGN})` で `SHA256` キーワード引数の受け口を 0001 段階で用意する。 本 issue では値を渡さず、 0006 で sha256 検証導入時に値が渡される）:
   - stamp 内容が `url` と一致したら skip。
   - skip しない場合は `dest_dir` を REMOVE_RECURSE してから `${_archive_dir}/.archives/${name}.tar.gz` に `file(DOWNLOAD ... INACTIVITY_TIMEOUT 120 TIMEOUT 1800 STATUS _status)`。 status code 0 以外なら部分ファイルを `file(REMOVE)` 、 1 秒スリープでリトライ、 3 回までで FATAL_ERROR。
-  - `${CMAKE_COMMAND} -E tar xzf ... --strip-components=<n>` で展開。 失敗時は `dest_dir` を削除して FATAL_ERROR。
+  - 展開は **system `tar`** で行う (`find_program(NAMES tar NO_CACHE)` + `tar -xzf <archive> --strip-components=<n> -C <dest>`)。 CMake の `cmake -E tar` は `--strip-components` を **サポートしていない** ため使えない（ubuntu 24.04 / Windows 10+ / macOS 11+ いずれも system `tar` が同梱されている前提）。 失敗時は `dest_dir` を削除して FATAL_ERROR。
   - 展開成功後に stamp を書く（親ディレクトリは事前に `file(MAKE_DIRECTORY)`）。
 - `_sora_git_shallow(url ref dest)`: `dest` を REMOVE_RECURSE + MAKE_DIRECTORY 後、 `git init` → `git remote add origin` → `git fetch --depth=1 origin <ref>` → `git reset --hard FETCH_HEAD` を順に実行（3 回までリトライ）。 `git clone --depth 1 --branch <sha>` は GitHub の `uploadpack.allowReachableSHA1InWant` 設定依存で raw SHA を拒否されるため使わない。
 - `_sora_fetch_openh264(version git_url dest stamp_path)`: stamp が `version` と一致したら skip。 skip しない場合は `find_program(_SORA_MAKE_EXECUTABLE make NO_CACHE)` で make を解決し（不在なら `apt-get install build-essential` を促す FATAL_ERROR）、 `_sora_git_shallow` で clone した一時 src で `make -C <src> install-headers PREFIX=<dest>` を実行、 src を削除して stamp を書く。
@@ -155,6 +155,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 - 既存 `:54-59` の CACHE 宣言 6 個に加えて、 `OPENH264_DIR` / `LIBCXX_INCLUDE_DIR` / `LIBCXXABI_INCLUDE_DIR` の CACHE PATH 宣言と、 `SORA_PYTHON_SDK_PLATFORM` の CACHE STRING 宣言を追加（`fetch_deps.cmake` から FORCE 設定される受け口）。
 - `set(SORA_GEN_PYI ON CACHE BOOL "Generate .pyi stub")` を `set(TARGET_OS ...)` 直後に追加。 0003 / 0004 / 0005 は `build-dir = _build/{wheel_tag}` で fresh configure になるため `-DSORA_GEN_PYI=OFF` が後で渡されればそのまま反映される。
 - `target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION=${SORA_PYTHON_SDK_VERSION})` （`:106`）を `target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION="${SORA_PYTHON_SDK_VERSION}")` に変更（CMake 標準のイディオム。 外側クォート無し）。
+- `set_target_properties(sora_sdk_ext PROPERTIES CXX_SCAN_FOR_MODULES OFF)` と `set_target_properties(nanobind-static PROPERTIES CXX_SCAN_FOR_MODULES OFF)` を `set_target_properties(... CXX_STANDARD 20)` の直後に追加する。 CMake 3.28+ は `CXX_STANDARD 20` の対象に対して C++20 module 依存スキャン (`clang-scan-deps`) を自動有効化するが、 libwebrtc 同梱 clang バイナリには `clang-scan-deps` が含まれず、 Sora C++ SDK 側も C++20 module を使っていないため OFF にする。
 - `install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)` （`:204`）を `... DESTINATION sora_sdk` に変更。
 - `install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")` （`:206`）を `install(FILES ${CMAKE_CURRENT_BINARY_DIR}/py.typed ${CMAKE_CURRENT_BINARY_DIR}/sora_sdk_ext.pyi DESTINATION sora_sdk)` に変更（既存 `nanobind_add_stub` (`:96-103`) は `OUTPUT_PATH` 未指定で `CMAKE_CURRENT_BINARY_DIR` 直下に書き出すため）。 `if (SORA_GEN_PYI)` ガードは維持。
 

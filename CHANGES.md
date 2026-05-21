@@ -11,13 +11,11 @@
 
 ## develop
 
-- [UPDATE] wheel を `~=0.46` に上げる
-  - `0.46.x` を許可する
-  - @voluntas
-- [UPDATE] setuptools を `~=82.0` に上げる
-  - `82.0.x` を許可する
+- [CHANGE] build backend を setuptools から scikit-build-core に切り替える
   - @voluntas
 - [UPDATE] nanobind を `2.12.0` に上げる
+  - @voluntas
+- [FIX] User-Agent と sora_client の文字列を `Sora Unity SDK` から `Sora Python SDK` に直す
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.11` に上げる
   - WEBRTC_BUILD_VERSION を `m149.7827.0.0` に上げる
