@@ -1,4 +1,52 @@
 cmake_minimum_required(VERSION 4.1)
+
+# project() より前に platform 判定 + deps fetch + CMAKE_C/CXX_COMPILER 設定を行う。
+# CMAKE_C/CXX_COMPILER は project() 後では変更不可なため、ここで設定する必要がある。
+# 0001 では ubuntu-24.04 x86_64 ネイティブビルドのみサポートし、
+# libwebrtc 同梱の clang バイナリを使う (buildbase.py:install_llvm の方針)。
+# 他 platform は 0002〜0005 で順次対応する。
+set(SORA_PYTHON_SDK_PLATFORM "" CACHE STRING "Sora Python SDK の platform 識別子 (例: ubuntu-24.04_x86_64)")
+
+if(NOT EXISTS "/etc/os-release")
+  message(FATAL_ERROR
+    "Sora Python SDK requires /etc/os-release on the build host; not found.")
+endif()
+file(READ "/etc/os-release" _SORA_OS_RELEASE)
+
+string(REGEX MATCH "(^|\n)ID=\"?([^\"\n]+)\"?" _ "${_SORA_OS_RELEASE}")
+if(NOT CMAKE_MATCH_2)
+  message(FATAL_ERROR "Sora Python SDK failed to parse ID from /etc/os-release.")
+endif()
+set(_SORA_OS_ID "${CMAKE_MATCH_2}")
+if(NOT _SORA_OS_ID STREQUAL "ubuntu")
+  message(FATAL_ERROR "Sora Python SDK currently supports ubuntu only; got '${_SORA_OS_ID}'.")
+endif()
+
+string(REGEX MATCH "(^|\n)VERSION_ID=\"?([^\"\n]+)\"?" _ "${_SORA_OS_RELEASE}")
+if(NOT CMAKE_MATCH_2)
+  message(FATAL_ERROR "Sora Python SDK failed to parse VERSION_ID from /etc/os-release.")
+endif()
+set(_SORA_UBUNTU_VERSION_ID "${CMAKE_MATCH_2}")
+
+if(NOT SORA_PYTHON_SDK_PLATFORM)
+  set(SORA_PYTHON_SDK_PLATFORM
+    "ubuntu-${_SORA_UBUNTU_VERSION_ID}_${CMAKE_HOST_SYSTEM_PROCESSOR}"
+    CACHE STRING "" FORCE)
+endif()
+if(NOT SORA_PYTHON_SDK_PLATFORM STREQUAL "ubuntu-24.04_x86_64")
+  message(FATAL_ERROR
+    "Sora Python SDK currently supports ubuntu-24.04_x86_64 only; "
+    "got '${SORA_PYTHON_SDK_PLATFORM}'.")
+endif()
+
+set(TARGET_OS "ubuntu")
+set(DEPS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/_deps")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/scripts/fetch_deps.cmake")
+
+# libwebrtc 同梱の clang バイナリを使う (project() 前に設定必須)
+set(CMAKE_C_COMPILER   "${SORA_LLVM_CLANG_DIR}/bin/clang")
+set(CMAKE_CXX_COMPILER "${SORA_LLVM_CLANG_DIR}/bin/clang++")
+
 project(sora_sdk)
 
 # Only interpret if() arguments as variables or keywords when unquoted.
@@ -57,51 +105,6 @@ set(WEBRTC_LIBRARY_DIR "" CACHE PATH "WebRTC のライブラリディレクト�
 set(WEBRTC_LIBRARY_NAME "webrtc" CACHE STRING "WebRTC のライブラリ名")
 set(Boost_ROOT "" CACHE PATH "Boost のルートディレクトリ")
 set(SORA_DIR "" CACHE PATH "Sora のルートディレクトリ")
-
-# scikit-build-core 経由のビルドで WebRTC / Sora C++ SDK / Boost / OpenH264 と
-# libc++ / libc++abi ヘッダを CMake configure 時に取得する。
-# 0001 では ubuntu-24.04 x86_64 ネイティブビルドのみサポートし、
-# 他 platform は 0002〜0005 で順次対応する。
-set(SORA_PYTHON_SDK_PLATFORM "" CACHE STRING "Sora Python SDK の platform 識別子 (例: ubuntu-24.04_x86_64)")
-
-if(NOT EXISTS "/etc/os-release")
-  message(FATAL_ERROR
-    "Sora Python SDK requires /etc/os-release on the build host; not found.")
-endif()
-file(READ "/etc/os-release" _SORA_OS_RELEASE)
-
-string(REGEX MATCH "(^|\n)ID=\"?([^\"\n]+)\"?" _ "${_SORA_OS_RELEASE}")
-if(NOT CMAKE_MATCH_2)
-  message(FATAL_ERROR "Sora Python SDK failed to parse ID from /etc/os-release.")
-endif()
-set(_SORA_OS_ID "${CMAKE_MATCH_2}")
-if(NOT _SORA_OS_ID STREQUAL "ubuntu")
-  message(FATAL_ERROR "Sora Python SDK currently supports ubuntu only; got '${_SORA_OS_ID}'.")
-endif()
-
-string(REGEX MATCH "(^|\n)VERSION_ID=\"?([^\"\n]+)\"?" _ "${_SORA_OS_RELEASE}")
-if(NOT CMAKE_MATCH_2)
-  message(FATAL_ERROR "Sora Python SDK failed to parse VERSION_ID from /etc/os-release.")
-endif()
-set(_SORA_UBUNTU_VERSION_ID "${CMAKE_MATCH_2}")
-
-if(NOT SORA_PYTHON_SDK_PLATFORM)
-  set(SORA_PYTHON_SDK_PLATFORM
-    "ubuntu-${_SORA_UBUNTU_VERSION_ID}_${CMAKE_HOST_SYSTEM_PROCESSOR}"
-    CACHE STRING "" FORCE)
-endif()
-if(NOT SORA_PYTHON_SDK_PLATFORM STREQUAL "ubuntu-24.04_x86_64")
-  message(FATAL_ERROR
-    "Sora Python SDK currently supports ubuntu-24.04_x86_64 only; "
-    "got '${SORA_PYTHON_SDK_PLATFORM}'.")
-endif()
-
-# 0001 では ubuntu のみサポート。OpenH264 / libc++ 設定の分岐に必要な TARGET_OS は
-# SORA_PYTHON_SDK_PLATFORM から派生させる。CACHE では公開しない。
-set(TARGET_OS "ubuntu")
-
-set(DEPS_ROOT "${PROJECT_SOURCE_DIR}/_deps")
-include("${PROJECT_SOURCE_DIR}/cmake/scripts/fetch_deps.cmake")
 
 # VERSION ファイルから SDK バージョンを取得する。BUILD_PROFILE=debug の場合は
 # C++ 側に渡す文字列のみ +debug を末尾に連結する (Python 側 __version__ は素のまま)。

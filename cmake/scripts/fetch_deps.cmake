@@ -15,6 +15,7 @@
 #   - OPENH264_DIR
 #   - LIBCXX_INCLUDE_DIR
 #   - LIBCXXABI_INCLUDE_DIR
+#   - SORA_LLVM_CLANG_DIR (libwebrtc 同梱 clang バイナリの配置先 /bin/clang を含むディレクトリ)
 #
 # 副作用:
 #   - ${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/{webrtc,sora,boost,openh264} に展開
@@ -227,8 +228,11 @@ function(_sora_fetch_openh264 version git_url dest stamp_path)
 endfunction()
 
 # WebRTC アーカイブ展開済みディレクトリから VERSIONS を読み、
-# 同梱 libcxx と buildtools を git shallow clone し、
-# __config_site と __assertion_handler を libcxx 側 include に配置する。
+# buildbase.py:install_llvm と同じ手順で
+#  - tools を git shallow clone し clang/scripts/update.py で同梱 clang バイナリを配置
+#  - libcxx と buildtools を git shallow clone
+#  - buildtools の __config_site と __assertion_handler を libcxx/include に配置
+# を実行する。出力 dest 配下に tools/, clang/, libcxx/, buildtools/ を作る。
 function(_sora_fetch_llvm webrtc_install_dir dest stamp_path)
   set(_versions_file "${webrtc_install_dir}/VERSIONS")
   if(NOT EXISTS "${_versions_file}")
@@ -237,6 +241,8 @@ function(_sora_fetch_llvm webrtc_install_dir dest stamp_path)
   file(READ "${_versions_file}" _versions_raw)
 
   foreach(_key
+      WEBRTC_SRC_TOOLS_URL
+      WEBRTC_SRC_TOOLS_COMMIT
       WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_URL
       WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT
       WEBRTC_SRC_BUILDTOOLS_URL
@@ -249,18 +255,45 @@ function(_sora_fetch_llvm webrtc_install_dir dest stamp_path)
   endforeach()
 
   set(_expected
-    "${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_URL}.${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT}.${_WEBRTC_SRC_BUILDTOOLS_URL}.${_WEBRTC_SRC_BUILDTOOLS_COMMIT}")
+    "${_WEBRTC_SRC_TOOLS_URL}.${_WEBRTC_SRC_TOOLS_COMMIT}.${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_URL}.${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT}.${_WEBRTC_SRC_BUILDTOOLS_URL}.${_WEBRTC_SRC_BUILDTOOLS_COMMIT}")
   _sora_stamp_matches(_hit "${stamp_path}" "${_expected}")
   if(_hit)
     message(STATUS "fetch_deps: llvm cache hit")
     return()
   endif()
 
+  find_program(_SORA_PYTHON3 python3)
+  if(NOT _SORA_PYTHON3)
+    message(FATAL_ERROR "fetch_deps: 'python3' is required to run clang/scripts/update.py but was not found in PATH.")
+  endif()
+
   file(REMOVE_RECURSE "${dest}")
-  set(_libcxx_dest    "${dest}/libcxx")
+  set(_tools_dest      "${dest}/tools")
+  set(_libcxx_dest     "${dest}/libcxx")
   set(_buildtools_dest "${dest}/buildtools")
+  set(_clang_dest      "${dest}/clang")
+
+  _sora_git_shallow("${_WEBRTC_SRC_TOOLS_URL}"                  "${_WEBRTC_SRC_TOOLS_COMMIT}"                  "${_tools_dest}")
   _sora_git_shallow("${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_URL}" "${_WEBRTC_SRC_THIRD_PARTY_LIBCXX_SRC_COMMIT}" "${_libcxx_dest}")
   _sora_git_shallow("${_WEBRTC_SRC_BUILDTOOLS_URL}"             "${_WEBRTC_SRC_BUILDTOOLS_COMMIT}"             "${_buildtools_dest}")
+
+  # tools 配下の clang/scripts/update.py で libwebrtc 同梱 clang バイナリを配置する
+  set(_update_py "${_tools_dest}/clang/scripts/update.py")
+  if(NOT EXISTS "${_update_py}")
+    message(FATAL_ERROR "fetch_deps: ${_update_py} not found in tools")
+  endif()
+  file(MAKE_DIRECTORY "${_clang_dest}")
+  message(STATUS "fetch_deps: running clang/scripts/update.py --output-dir ${_clang_dest}")
+  execute_process(
+    COMMAND "${_SORA_PYTHON3}" "${_update_py}" --output-dir "${_clang_dest}"
+    RESULT_VARIABLE _rc
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE  _err
+  )
+  if(NOT _rc EQUAL 0)
+    message(FATAL_ERROR
+      "fetch_deps: clang/scripts/update.py failed (rc=${_rc})\nstdout: ${_out}\nstderr: ${_err}")
+  endif()
 
   set(_config_site "${_buildtools_dest}/third_party/libc++/__config_site")
   set(_assertion_handler "${_buildtools_dest}/third_party/libc++/__assertion_handler")
@@ -339,3 +372,5 @@ set(LIBCXX_INCLUDE_DIR    "${_SORA_LLVM_DIR}/libcxx/include"
     CACHE PATH "libc++ include dir (fetched by fetch_deps.cmake)" FORCE)
 set(LIBCXXABI_INCLUDE_DIR "${_SORA_WEBRTC_DEST}/include/third_party/libc++abi/src/include"
     CACHE PATH "libc++abi include dir (fetched by fetch_deps.cmake)" FORCE)
+set(SORA_LLVM_CLANG_DIR   "${_SORA_LLVM_DIR}/clang"
+    CACHE PATH "libwebrtc-bundled clang install dir (contains bin/clang) (fetched by fetch_deps.cmake)" FORCE)
