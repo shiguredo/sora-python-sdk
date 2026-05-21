@@ -18,15 +18,17 @@ High。以降の issue（クロスコンパイル、CI 切替）すべての前�
 - `run.py build` が `buildbase.py` 経由で deps を `_install/<target>/` に取得し、cmake を手動実行して `.so` を `src/sora_sdk/` にコピーする
 - `uv build` が `setup.py` / setuptools でコピー済み `.so` を wheel 化するだけ
 - deps バージョンは `DEPS` ファイル、platform 文字列は `get_webrtc_platform()` で target 基準に決定
+- `buildbase.py` の `install_cmake` が `DEPS` の `CMAKE_VERSION` を使い CMake を自前 DL している
 - nanobind は `dependency-groups.dev` にあり、build-system は setuptools
 
 ## 設計方針
 
 - [webcodecs-py](https://github.com/shiguredo/webcodecs-py) の構成を参考にする
 - `pyproject.toml` の build backend を `scikit_build_core.build` に変更する
-- `deps.json` を新設し、WebRTC / Sora / Boost / OpenH264 のバージョンを定義する（既存 `DEPS` から移行）
+- `deps.json` を新設し、WebRTC / Sora / Boost / OpenH264 のバージョンを定義する（既存 `DEPS` から移行。**CMake は含めない**）
 - CMake の `ExternalProject` で WebRTC / Sora / Boost を `_deps/${SORA_PLATFORM}/` に DL + 展開する
 - webcodecs-py と同様 `build-dir = "_build/{wheel_tag}"`、`wheel.packages = ["src/sora_sdk"]` とする
+- **CMake は自前ビルド / DL しない**。PyPI の `cmake` パッケージを `[build-system] requires` に入れ、scikit-build-core が管理する CMake 4.2 以上を使う（`cmake_minimum_required(VERSION 4.2)`、`[tool.scikit-build.cmake] version = ">=4.2"`）。`DEPS` の `CMAKE_VERSION` と `buildbase.py` の `install_cmake` は 0006 で削除する
 - バージョンは `VERSION` ファイルから dynamic metadata で読む
 - この issue では **ubuntu-24.04_x86_64 ネイティブのみ** を対象とする
 - LLVM / OpenH264 / multistrap rootfs は 0002 / 0003 に委ねる（0001 では libwebrtc 付属 clang が不要な範囲、または最小限の stub）
@@ -41,9 +43,10 @@ High。以降の issue（クロスコンパイル、CI 切替）すべての前�
 
 ## 解決方法
 
-- `pyproject.toml` に `[build-system]` / `[tool.scikit-build]` / `[tool.scikit-build.metadata.version]` を追加する
-- `deps.json` を追加する
-- `CMakeLists.txt` に `_deps/` レイアウト、`ExternalProject` による WebRTC / Sora / Boost 取得、`install(TARGETS sora_sdk_ext LIBRARY DESTINATION sora_sdk)` を実装する
+- `pyproject.toml` の `[build-system] requires` に `scikit-build-core`、`nanobind`、`cmake` を追加する
+- `[tool.scikit-build]` / `[tool.scikit-build.cmake] version = ">=4.2"` / `[tool.scikit-build.metadata.version]` を追加する
+- `deps.json` を追加する（WebRTC / Sora / Boost / OpenH264 のみ。CMake は書かない）
+- `CMakeLists.txt` の `cmake_minimum_required` を `4.2` に上げ、`_deps/` レイアウト、`ExternalProject` による WebRTC / Sora / Boost 取得、`install(TARGETS sora_sdk_ext LIBRARY DESTINATION sora_sdk)` を実装する
 - `SORA_PLATFORM` cache 変数を導入し、x86_64 ネイティブでは `ubuntu-24.04_x86_64` 等を渡す
 - `run.py` の `build` サブコマンド内 cmake 実行・成果物コピーを削除する（0006 でファイル自体を削除）
 - `CHANGES.md` に `[CHANGE]` を追記する
