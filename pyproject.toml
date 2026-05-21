@@ -1,43 +1,43 @@
+[project]
+name = "sora_sdk"
+description = "WebRTC SFU Sora Python SDK"
+readme = "README.md"
+requires-python = ">= 3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
+classifiers = [
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: C++",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dynamic = ["version"]
+
+[project.urls]
+Discord = "https://discord.gg/shiguredo"
+Documentation = "https://sora-python-sdk.shiguredo.jp"
+Source = "https://github.com/shiguredo/sora-python-sdk"
+
+[dependency-groups]
+dev = [
+  "nanobind==2.12.0",
+  { include-group = "lint" },
+  { include-group = "test" },
+]
+lint = ["ruff", "ty"]
+test = ["httpx", "numpy", "pyjwt", "pytest", "pytest-repeat", "pytest-xdist"]
+
 [build-system]
 requires = ["setuptools~=82.0", "wheel~=0.46"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "sora_sdk"
-authors = [{ name = "Shiguredo Inc.", email = "contact+pypi@shiguredo.jp" }]
-dynamic = ["version"]
-description = "WebRTC SFU Sora Python SDK"
-readme = "README.md"
-license = "Apache-2.0"
-license-files = ["LICENSE"]
-classifiers = [
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Programming Language :: C++",
-    "Operating System :: MacOS :: MacOS X",
-    "Operating System :: POSIX :: Linux",
-    "Operating System :: Microsoft :: Windows",
-]
-requires-python = ">= 3.12"
-
-[project.urls]
-Source = "https://github.com/shiguredo/sora-python-sdk"
-Documentation = "https://sora-python-sdk.shiguredo.jp"
-Discord = "https://discord.gg/shiguredo"
-
-[dependency-groups]
-dev = [
-    "nanobind==2.12.0",
-    { include-group = "test" },
-    { include-group = "lint" },
-]
-test = ["pytest", "pytest-repeat", "pytest-xdist", "numpy", "httpx", "pyjwt"]
-lint = ["ruff", "ty"]
-
-[tool.uv]
-python-preference = "only-managed"
+[tool.pytest.ini_options]
+xfail_strict = true
 
 [tool.ruff]
 target-version = "py312"
@@ -46,5 +46,8 @@ line-length = 100
 [tool.ty.src]
 include = ["src", "tests"]
 
-[tool.pytest.ini_options]
-xfail_strict = true
+[tool.uv]
+python-preference = "only-managed"
+
+[tool.uv.pip]
+exclude-newer = "7 days"
