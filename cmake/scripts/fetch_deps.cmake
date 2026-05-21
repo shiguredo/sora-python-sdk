@@ -138,6 +138,11 @@ function(_sora_fetch_archive name url stamp_path dest_dir strip)
 endfunction()
 
 function(_sora_git_shallow url ref dest)
+  # commit SHA を ref に取りたいが、`git clone --depth 1 --branch <sha>` は
+  # Gerrit 系サーバー (chromium.googlesource.com 等) でサポートされていない。
+  # buildbase.py:git_clone_shallow と同じく
+  # git init + remote add + fetch --depth 1 <ref> + reset --hard FETCH_HEAD
+  # の手順を取ることで commit SHA / tag / branch のいずれの ref でも動かす。
   file(REMOVE_RECURSE "${dest}")
   get_filename_component(_parent "${dest}" DIRECTORY)
   file(MAKE_DIRECTORY "${_parent}")
@@ -148,24 +153,43 @@ function(_sora_git_shallow url ref dest)
   set(_last_err "")
   while(NOT _success AND _attempt LESS _max_attempts)
     math(EXPR _attempt "${_attempt} + 1")
-    message(STATUS "fetch_deps: git shallow clone ${url}@${ref} (attempt ${_attempt}/${_max_attempts})")
-    execute_process(
-      COMMAND git clone --depth 1 --branch "${ref}" "${url}" "${dest}"
-      RESULT_VARIABLE _rc
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE  _err
-    )
-    if(_rc EQUAL 0)
+    message(STATUS "fetch_deps: git shallow fetch ${url}@${ref} (attempt ${_attempt}/${_max_attempts})")
+
+    file(MAKE_DIRECTORY "${dest}")
+    set(_step_failed FALSE)
+    set(_step_err "")
+
+    foreach(_step
+        "init"
+        "remote;add;origin;${url}"
+        "fetch;--depth=1;origin;${ref}"
+        "reset;--hard;FETCH_HEAD")
+      string(REPLACE ";" " " _step_label "${_step}")
+      execute_process(
+        COMMAND git ${_step}
+        WORKING_DIRECTORY "${dest}"
+        RESULT_VARIABLE _rc
+        OUTPUT_VARIABLE _out
+        ERROR_VARIABLE  _err
+      )
+      if(NOT _rc EQUAL 0)
+        set(_step_failed TRUE)
+        set(_step_err "git ${_step_label} failed (rc=${_rc}): ${_err}")
+        break()
+      endif()
+    endforeach()
+
+    if(NOT _step_failed)
       set(_success TRUE)
     else()
-      set(_last_err "${_err}")
-      message(WARNING "fetch_deps: git clone failed (rc=${_rc}) for ${url}@${ref}\nstderr: ${_err}")
+      set(_last_err "${_step_err}")
+      message(WARNING "fetch_deps: git shallow fetch failed for ${url}@${ref}\n${_step_err}")
       file(REMOVE_RECURSE "${dest}")
     endif()
   endwhile()
   if(NOT _success)
     message(FATAL_ERROR
-      "fetch_deps: failed to git clone ${url}@${ref} after ${_max_attempts} attempts (last stderr: ${_last_err})")
+      "fetch_deps: failed to git shallow fetch ${url}@${ref} after ${_max_attempts} attempts (last error: ${_last_err})")
   endif()
 endfunction()
 
