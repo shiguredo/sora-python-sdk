@@ -4,8 +4,9 @@
 #
 # 入力契約 (呼び出し側で設定済みであること):
 #   - SORA_PYTHON_SDK_PLATFORM       : 例 "ubuntu-24.04_x86_64"
-#   - DEPS_ROOT                      : 例 "${PROJECT_SOURCE_DIR}/_deps"
+#   - DEPS_ROOT                      : 例 "${CMAKE_CURRENT_SOURCE_DIR}/_deps"
 #   - _SORA_UBUNTU_VERSION_ID        : 例 "24.04"
+#   - _SORA_HOST_PROCESSOR           : 例 "x86_64" (uname -m の値)
 #
 # 出力契約 (スクリプト末尾で CACHE PATH ... FORCE で上書き):
 #   - SORA_DIR
@@ -317,8 +318,9 @@ set(_SORA_BOOST_DEST    "${_SORA_PLATFORM_DIR}/boost")
 set(_SORA_OPENH264_DEST "${_SORA_PLATFORM_DIR}/openh264")
 
 # glibc 互換性のため LLVM 取得キャッシュには ubuntu VERSION_ID も含める。
-# 0002 以降で他 OS 対応する際はホスト OS 識別子の組み立てを必ず見直すこと。
-set(_SORA_LLVM_HOST_KEY   "${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME}-${_SORA_UBUNTU_VERSION_ID}")
+# 0001 では ubuntu のみサポート。0002 以降で他 OS 対応する際はホスト OS 識別子の組み立てを必ず見直すこと。
+# CMAKE_HOST_SYSTEM_* は project() 前で呼ばれると空のため、引数で渡された値を使う。
+set(_SORA_LLVM_HOST_KEY   "${_SORA_HOST_PROCESSOR}-ubuntu-${_SORA_UBUNTU_VERSION_ID}")
 set(_SORA_LLVM_DIR        "${DEPS_ROOT}/llvm/${_SORA_LLVM_HOST_KEY}")
 set(_SORA_LLVM_STAMPS_DIR "${_SORA_LLVM_DIR}/.stamps")
 
