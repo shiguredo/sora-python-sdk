@@ -1,0 +1,21 @@
+{
+  "webrtc": {
+    "version": "m149.7827.0.0",
+    "url_template": "https://github.com/shiguredo-webrtc-build/webrtc-build/releases/download/{version}/webrtc.{platform}.tar.gz",
+    "strip_components": 1
+  },
+  "sora_cpp_sdk": {
+    "version": "2026.2.0-canary.11",
+    "url_template": "https://github.com/shiguredo/sora-cpp-sdk/releases/download/{version}/sora-cpp-sdk-{version}_{platform}.tar.gz",
+    "strip_components": 1
+  },
+  "boost": {
+    "version": "1.91.0",
+    "url_template": "https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/boost-{version}_sora-cpp-sdk-{sora_version}_{platform}.tar.gz",
+    "strip_components": 1
+  },
+  "openh264": {
+    "version": "v2.6.0",
+    "git": "https://github.com/cisco/openh264.git"
+  }
+}

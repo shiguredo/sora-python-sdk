@@ -51,12 +51,65 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
 list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 
-set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な値は windows, macos, ubuntu")
+set(SORA_GEN_PYI ON CACHE BOOL ".pyi スタブを生成するか")
 set(WEBRTC_INCLUDE_DIR "" CACHE PATH "WebRTC のインクルードディレクトリ")
 set(WEBRTC_LIBRARY_DIR "" CACHE PATH "WebRTC のライブラリディレクトリ")
 set(WEBRTC_LIBRARY_NAME "webrtc" CACHE STRING "WebRTC のライブラリ名")
 set(Boost_ROOT "" CACHE PATH "Boost のルートディレクトリ")
 set(SORA_DIR "" CACHE PATH "Sora のルートディレクトリ")
+
+# scikit-build-core 経由のビルドで WebRTC / Sora C++ SDK / Boost / OpenH264 と
+# libc++ / libc++abi ヘッダを CMake configure 時に取得する。
+# 0001 では ubuntu-24.04 x86_64 ネイティブビルドのみサポートし、
+# 他 platform は 0002〜0005 で順次対応する。
+set(SORA_PYTHON_SDK_PLATFORM "" CACHE STRING "Sora Python SDK の platform 識別子 (例: ubuntu-24.04_x86_64)")
+
+if(NOT EXISTS "/etc/os-release")
+  message(FATAL_ERROR
+    "Sora Python SDK requires /etc/os-release on the build host; not found.")
+endif()
+file(READ "/etc/os-release" _SORA_OS_RELEASE)
+
+string(REGEX MATCH "(^|\n)ID=\"?([^\"\n]+)\"?" _ "${_SORA_OS_RELEASE}")
+if(NOT CMAKE_MATCH_2)
+  message(FATAL_ERROR "Sora Python SDK failed to parse ID from /etc/os-release.")
+endif()
+set(_SORA_OS_ID "${CMAKE_MATCH_2}")
+if(NOT _SORA_OS_ID STREQUAL "ubuntu")
+  message(FATAL_ERROR "Sora Python SDK currently supports ubuntu only; got '${_SORA_OS_ID}'.")
+endif()
+
+string(REGEX MATCH "(^|\n)VERSION_ID=\"?([^\"\n]+)\"?" _ "${_SORA_OS_RELEASE}")
+if(NOT CMAKE_MATCH_2)
+  message(FATAL_ERROR "Sora Python SDK failed to parse VERSION_ID from /etc/os-release.")
+endif()
+set(_SORA_UBUNTU_VERSION_ID "${CMAKE_MATCH_2}")
+
+if(NOT SORA_PYTHON_SDK_PLATFORM)
+  set(SORA_PYTHON_SDK_PLATFORM
+    "ubuntu-${_SORA_UBUNTU_VERSION_ID}_${CMAKE_HOST_SYSTEM_PROCESSOR}"
+    CACHE STRING "" FORCE)
+endif()
+if(NOT SORA_PYTHON_SDK_PLATFORM STREQUAL "ubuntu-24.04_x86_64")
+  message(FATAL_ERROR
+    "Sora Python SDK currently supports ubuntu-24.04_x86_64 only; "
+    "got '${SORA_PYTHON_SDK_PLATFORM}'.")
+endif()
+
+# 0001 では ubuntu のみサポート。OpenH264 / libc++ 設定の分岐に必要な TARGET_OS は
+# SORA_PYTHON_SDK_PLATFORM から派生させる。CACHE では公開しない。
+set(TARGET_OS "ubuntu")
+
+set(DEPS_ROOT "${PROJECT_SOURCE_DIR}/_deps")
+include("${PROJECT_SOURCE_DIR}/cmake/scripts/fetch_deps.cmake")
+
+# VERSION ファイルから SDK バージョンを取得する。BUILD_PROFILE=debug の場合は
+# C++ 側に渡す文字列のみ +debug を末尾に連結する (Python 側 __version__ は素のまま)。
+file(READ "${PROJECT_SOURCE_DIR}/VERSION" _SORA_VERSION_RAW)
+string(STRIP "${_SORA_VERSION_RAW}" SORA_PYTHON_SDK_VERSION)
+if(DEFINED ENV{BUILD_PROFILE} AND "$ENV{BUILD_PROFILE}" STREQUAL "debug")
+  set(SORA_PYTHON_SDK_VERSION "${SORA_PYTHON_SDK_VERSION}+debug")
+endif()
 
 list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})
 list(APPEND CMAKE_MODULE_PATH ${SORA_DIR}/share/cmake)
@@ -103,7 +156,7 @@ if (SORA_GEN_PYI)
   )
 endif()
 
-target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION=${SORA_PYTHON_SDK_VERSION})
+target_compile_definitions(sora_sdk_ext PRIVATE "SORA_PYTHON_SDK_VERSION=\"${SORA_PYTHON_SDK_VERSION}\"")
 
 set_target_properties(sora_sdk_ext PROPERTIES CXX_STANDARD 20 C_STANDARD 20)
 set_target_properties(sora_sdk_ext PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -201,7 +254,10 @@ endif()
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 target_link_libraries(nanobind-static PRIVATE Sora::sora)
 
-install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)
+install(TARGETS sora_sdk_ext LIBRARY DESTINATION sora_sdk)
 if (SORA_GEN_PYI)
-  install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")
+  install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/py.typed"
+    "${CMAKE_CURRENT_BINARY_DIR}/sora_sdk_ext.pyi"
+    DESTINATION sora_sdk)
 endif()

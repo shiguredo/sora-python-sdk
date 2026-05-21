@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Completed: 2026-05-21
 - Model: Composer 2.5
 - Branch: feature/change-scikit-build-core-native-deps
 
@@ -228,7 +229,7 @@ deps.json は `file(READ ...)` + `string(JSON GET ...)` で解析。URL テン�
   - `[tool.scikit-build]` に `minimum-version = "0.11.3"` / `build-dir = "_build/{wheel_tag}"`
   - `[tool.scikit-build.cmake]` に `version = ">=4.3"`（PyPI 提供状況に応じて降格）
   - `[tool.scikit-build.ninja]` に `version = ">=1.13"`
-  - `[tool.scikit-build.wheel]` に `packages = ["src/sora_sdk"]` と `exclude = ["src/sora_sdk/sora_sdk_ext.pyi", "src/sora_sdk/py.typed", "src/sora_sdk/sora_sdk_ext.*.so", "src/sora_sdk/sora_sdk_ext.*.pyd"]`
+  - `[tool.scikit-build.wheel]` に `packages = ["src/sora_sdk"]` と `exclude = ["sora_sdk_ext.pyi", "py.typed", "sora_sdk_ext.*.so"]` (パスは packages のパッケージルートからの相対。Windows disable 期間中の `.pyd` exclude は 0005 で追加)
   - `[tool.scikit-build.metadata.version]` に `provider = "scikit_build_core.metadata.regex"` / `input = "VERSION"` / `regex = "(?P<value>\\S+)"`
   - `[[tool.scikit-build.overrides]]` で `if.env.BUILD_PROFILE = "^debug$"` のとき `cmake.build-type = "Debug"`
   - `[dependency-groups] dev` から `nanobind==2.12.0` を削除
@@ -249,11 +250,23 @@ deps.json は `file(READ ...)` + `string(JSON GET ...)` で解析。URL テン�
 - `setup.py` を削除（本 issue で完了）
 - `run.py` / `buildbase.py` / `pypath.py` / `MANIFEST.in` / `DEPS` は触らない（削除は 0006）
 - `.github/workflows/build.yml`
-  - `build_pyi` job 全体に `if: false` を追加（または job ごと削除）
-  - 各 platform job の「`build_pyi` artifact ダウンロード」「`cp src/sora_sdk/py.typed sora_sdk/` 等」のステップを削除
-  - `build_ubuntu` matrix から `ubuntu-22.04_x86_64` / `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` を exclude
-  - `build_ubuntu_arm` / `build_macos` / `build_windows` job 全体に `if: false` を追加
+  - `build_pyi` job 全体を削除する (0006 を待たず 0001 で完全削除。`if: false` で残すと将来 `if: false` を外した瞬間に download-artifact が 404 で落ちる死罠になるため)
+  - 各 platform job の `build_pyi` artifact download / cp ステップと `needs: [build_pyi]` を削除
+  - `build_ubuntu` matrix から `ubuntu-22.04_x86_64` / `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` / `raspberry-pi-os_armv8` を exclude (raspberry-pi-os も 0001 スコープ外のため)
+  - `build_ubuntu_arm` / `build_macos` / `build_windows` / `e2e_test` job 全体に `if: false` を追加
+  - `build_ubuntu` の x86_64 entry に `uv pip install --force-reinstall dist/*.whl` + `uv run --no-sync pytest tests/test_version.py` ステップを追加し、CI で完了条件を検証する
 - `CHANGES.md`
   - `## develop` セクション **先頭** に `- [CHANGE] build backend を setuptools から scikit-build-core に切り替える` + 2 文字インデントで `- @voluntas` を追加（CHANGE → ADD → UPDATE → FIX 順）
   - 既存 `[UPDATE] setuptools を ~=82.0 に上げる` / `[UPDATE] wheel を ~=0.46 に上げる` エントリは setuptools / wheel が `[build-system] requires` から削除されることで実質意味を失うため、同時に削除する
   - 移行期間中の CI 一時 disable や `setup.py` 削除等の実装詳細はリリースノートに含めない
+
+### 実装メモ
+
+- PyPI 提供確認 (2026-05-21): `cmake==4.3.2` / `ninja==1.13.0` ともに利用可能で、設計方針記載の `version` レンジで採用可
+- `scikit-build-core==0.11.3` (2025-05-16) / `nanobind==2.12.0` (2026-02-25) は `[tool.uv.pip] exclude-newer = "7 days"` の影響を受けない (緩和不要)
+- deps アーカイブの `strip_components` を実機確認した結果、WebRTC / Sora C++ SDK / Boost いずれも `1` で OK
+- `TARGET_OS` は CACHE 宣言を削除し、自動算出ロジック直後に `set(TARGET_OS "ubuntu")` で派生させる方式に変更 (CACHE と通常変数の二重状態を避ける)
+- `pyproject.toml` の `build-dir = "_build/{wheel_tag}-{build_type}"` として Debug / Release で build ツリーを分離した (Debug ビルド後に Release 再ビルドする際の CMakeCache 汚染を防ぐ)
+- `pyproject.toml` の `metadata.version.regex` に行アンカーを付与し、将来 VERSION ファイルに別形式が追記されても誤抽出しないようにした
+- 本 PR は実装のみローカル完結。完了条件 (`uv build --wheel` 成功 + 生成 wheel install + `pytest tests/test_version.py` 通過) は ubuntu-24.04 x86_64 CI runner 側で `build_ubuntu` job 内のステップとして検証する
+- 残課題: `LLVM_HOST_KEY` は ubuntu 専用の組み立てになっているため、0002 (macOS) / 0005 (Windows) で復活させる際はホスト OS 別の組み立てに必ず修正する

@@ -25,7 +25,6 @@ Source = "https://github.com/shiguredo/sora-python-sdk"
 
 [dependency-groups]
 dev = [
-  "nanobind==2.12.0",
   { include-group = "lint" },
   { include-group = "test" },
 ]
@@ -33,8 +32,40 @@ lint = ["ruff", "ty"]
 test = ["httpx", "numpy", "pyjwt", "pytest", "pytest-repeat", "pytest-xdist"]
 
 [build-system]
-requires = ["setuptools~=82.0", "wheel~=0.46"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.11.3", "nanobind==2.12.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+# scikit-build-core のリリースごとの deprecation 影響を凍結するため固定する
+minimum-version = "0.11.3"
+# build_type を含めないと Debug ビルド後に Release 再ビルドする際に CMakeCache が混在する
+build-dir = "_build/{wheel_tag}-{build_type}"
+
+[tool.scikit-build.cmake]
+version = ">=4.3"
+
+[tool.scikit-build.ninja]
+version = ">=1.13"
+
+[tool.scikit-build.wheel]
+packages = ["src/sora_sdk"]
+# packages 内のパッケージルートからの相対パスで、source tree に残るビルド成果物が
+# install(FILES) の出力と二重コピーされるのを防ぐ
+exclude = [
+  "sora_sdk_ext.pyi",
+  "py.typed",
+  "sora_sdk_ext.*.so",
+]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "VERSION"
+# VERSION ファイル全体が単一の非空白トークンであることを前提に行アンカーで縛る
+regex = "^(?P<value>\\S+)$"
+
+[[tool.scikit-build.overrides]]
+if.env.BUILD_PROFILE = "^debug$"
+cmake.build-type = "Debug"
 
 [tool.pytest.ini_options]
 xfail_strict = true

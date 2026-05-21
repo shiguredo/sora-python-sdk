@@ -46,41 +46,7 @@ jobs:
           echo "sdk_version=$SDK_VERSION" >> $GITHUB_OUTPUT
           echo "SDK Version: $SDK_VERSION"
 
-  # まず pyi を生成する
-  # クロスコンパイル環境だと pyi が生成できないので、
-  # １箇所で pyi を生成してアーティファクトにアップロードして、
-  # それを各ビルドで利用する形にする。
-  build_pyi:
-    strategy:
-      fail-fast: false
-      matrix:
-        python_version:
-          - "3.12"
-          - "3.13"
-          - "3.14"
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - run: |
-          sudo apt-get -y install libx11-dev
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          enable-cache: false
-          python-version: ${{ matrix.python_version }}
-      - run: uv sync
-      - name: Generate pyi
-        run: |
-          uv run python run.py build ubuntu-24.04_x86_64
-          mkdir sora_sdk/
-          cp src/sora_sdk/py.typed sora_sdk/
-          cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
-      - name: Upload Artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-
+  # 0001 から build_pyi は廃止。scikit-build-core が wheel に pyi を直接同梱する。
   build_ubuntu:
     strategy:
       fail-fast: false
@@ -115,53 +81,37 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
-    needs: [build_pyi]
+        # 0001 では ubuntu-24.04_x86_64 のみサポート。残る 4 entry は 0002〜0005 で順次復活させる
+        exclude:
+          - platform: { name: ubuntu-22.04_x86_64 }
+          - platform: { name: ubuntu-24.04_armv8 }
+          - platform: { name: ubuntu-22.04_armv8 }
+          - platform: { name: raspberry-pi-os_armv8 }
     runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 15
+    # 初回 deps ダウンロード分を見込んで余裕を持たせる
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-      - run: |
-          cp sora_sdk/py.typed src/sora_sdk/py.typed
-          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-
-      # pyproject.toml の name を sora_sdk_rpi に書き換える
-      # Raspberry Pi OS armv8 向けにビルドする場合のみ
-      - name: sora_sdk_rpi
-        if: ${{ matrix.platform.name == 'raspberry-pi-os_armv8' }}
-        run: |
-          sed -e 's/^name = "sora_sdk"/name = "sora_sdk_rpi"/' -i pyproject.toml
 
       # libx11-dev は Ubuntu 24.04 の時に必要になる
       - run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev
-      - if: ${{ matrix.platform.arch == 'armv8' }}
-        run: |
-          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
-      - run: uv sync
+      # scikit-build-core が build-isolation 内でフルビルドを走らせるため、
+      # uv sync 段階でのプロジェクト本体ビルドは抑止する。
+      - run: uv sync --no-install-project
 
-      - if: ${{ matrix.platform.arch == 'x86_64' }}
-        run: |
-          uv run python run.py build ${{ matrix.platform.target }}
-          uv build
+      - run: uv build --wheel
 
-      # Ubuntu armv8 向け
-      - if: ${{ matrix.platform.arch == 'armv8' }}
+      # issue 0001 完了条件のフロー: install + 最小 pytest
+      - name: Install wheel and run minimal pytest
         run: |
-          uv run python run.py build ${{ matrix.platform.target }}
-          uv build
-        env:
-          SORA_SDK_TARGET: ${{ matrix.platform.target }}
+          uv pip install --force-reinstall dist/*.whl
+          uv run --no-sync pytest tests/test_version.py -v
 
       - name: Upload Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -170,6 +120,8 @@ jobs:
           path: "dist/"
 
   build_ubuntu_arm:
+    # 0001 では disable する。0003 (ubuntu ARM クロスコンパイル) で復活させる。
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -190,18 +142,10 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
-    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-      - run: |
-          cp sora_sdk/py.typed src/sora_sdk/py.typed
-          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
       # libx11-dev は Ubuntu 24.04 の時に必要になる模様
       - run: |
           sudo apt-get update
@@ -228,6 +172,8 @@ jobs:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
   build_macos:
+    # 0001 では disable する。0002 (macOS ネイティブ) で復活させる。
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -248,18 +194,10 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
-    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-      - run: |
-          cp sora_sdk/py.typed src/sora_sdk/py.typed
-          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: false
@@ -279,7 +217,8 @@ jobs:
           path: "dist/"
 
   build_windows:
-    needs: [build_pyi]
+    # 0001 では disable する。0005 (Windows ネイティブ) で復活させる。
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -295,14 +234,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-
-      - run: |
-          cp sora_sdk/py.typed src/sora_sdk/py.typed
-          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: false
@@ -319,7 +250,10 @@ jobs:
           path: dist/
 
   # E2E テストの実行
+  # 0001 では disable する。matrix 内で disable された platform の artifact を
+  # hardcode 参照しているため、現状では復活させるのが困難。0002〜0005 で復活させる。
   e2e_test:
+    if: false
     needs: [build_ubuntu, build_macos, build_windows]
     uses: ./.github/workflows/e2e-test.yml
     with:
