@@ -134,7 +134,7 @@ jobs:
       # macOS self-hosted runner: Homebrew セットアップ
       - name: Setup Homebrew
         if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
-        uses: Homebrew/actions/setup-homebrew@8eb7f2efa6ab636da09aef605b497fd5b8a7587d # master
+        uses: Homebrew/actions/setup-homebrew@dfde531ec35b04b9b7bd9b2ef461ff8dda482b42 # master
 
       # macOS self-hosted runner: GitHub CLI インストール
       - name: Install GitHub CLI
@@ -195,7 +195,7 @@ jobs:
           uv pip install "${{ steps.find-wheel.outputs.wheel_file }}"
 
       # OpenH264 ライブラリのダウンロード（GitHub-hosted runner のみ）
-      - uses: shiguredo/github-actions/.github/actions/download-openh264@main
+      - uses: shiguredo/github-actions/.github/actions/download-openh264@main # main
         if: ${{ runner.environment != 'self-hosted' }}
         id: openh264
         with:
@@ -250,7 +250,7 @@ jobs:
     if: ${{ !cancelled() && inputs.from_build != true }}
     steps:
       - name: Slack Notification
-        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main # main
         with:
           status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
