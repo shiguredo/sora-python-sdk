@@ -37,6 +37,8 @@
 
 - [UPDATE] Slack 通知を `rtCamp/action-slack-notify` から `shiguredo/github-actions/slack-notify` に切り替える
   - @voluntas
+- [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP"]` を追加する
+  - @voluntas
 
 ## 2025.5.2
 
