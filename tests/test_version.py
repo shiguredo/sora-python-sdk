@@ -1,4 +1,5 @@
 import os
+
 import sora_sdk
 
 
@@ -10,7 +11,7 @@ def test_version():
 
     # VERSION ファイルの内容と一致することを確認
     version_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "VERSION")
-    with open(version_file, "r") as f:
+    with open(version_file) as f:
         expected_version = f.read().strip()
 
     assert sora_sdk.__version__ == expected_version

@@ -43,6 +43,9 @@ xfail_strict = true
 target-version = "py312"
 line-length = 100
 
+[tool.ruff.lint]
+extend-select = ["I", "UP"]
+
 [tool.ty.src]
 include = ["src", "tests"]
 

@@ -1,11 +1,10 @@
 import argparse
 import subprocess
-from typing import Optional
 
 
 # ファイルを読み込み、バージョンを更新
-def update_version(file_path: str, dry_run: bool) -> Optional[str]:
-    with open(file_path, "r", encoding="utf-8") as f:
+def update_version(file_path: str, dry_run: bool) -> str | None:
+    with open(file_path, encoding="utf-8") as f:
         current_version: str = f.read().strip()
 
     # バージョンが .devX を持っている場合の更新
@@ -86,7 +85,7 @@ def main() -> None:
     version_file_path: str = "VERSION"
 
     # バージョン更新
-    new_version: Optional[str] = update_version(version_file_path, args.dry_run)
+    new_version: str | None = update_version(version_file_path, args.dry_run)
 
     if not new_version:
         return  # ユーザーが確認をキャンセルした場合、処理を中断

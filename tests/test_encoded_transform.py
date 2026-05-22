@@ -2,7 +2,7 @@ import json
 import threading
 import time
 from threading import Event
-from typing import Any, Optional
+from typing import Any
 
 import numpy
 from conftest import Settings
@@ -58,15 +58,15 @@ class SendonlyEncodedTransform:
 
         self._sora = Sora()
 
-        self._fake_audio_thread: Optional[threading.Thread] = None
-        self._fake_video_thread: Optional[threading.Thread] = None
+        self._fake_audio_thread: threading.Thread | None = None
+        self._fake_video_thread: threading.Thread | None = None
 
-        self._audio_source: Optional[SoraAudioSource] = None
+        self._audio_source: SoraAudioSource | None = None
         self._audio_source = self._sora.create_audio_source(
             self._audio_channels, self._audio_sample_rate
         )
 
-        self._video_source: Optional[SoraVideoSource] = None
+        self._video_source: SoraVideoSource | None = None
         self._video_source = self._sora.create_video_source()
 
         # Audio 向けの Encoded Transformer

@@ -7,7 +7,6 @@ import os
 import shlex
 import shutil
 import sys
-from typing import List, Optional
 
 from buildbase import (
     Platform,
@@ -43,10 +42,10 @@ def install_deps(
     build_dir,
     install_dir,
     debug,
-    local_webrtc_build_dir: Optional[str],
-    local_webrtc_build_args: List[str],
-    local_sora_cpp_sdk_dir: Optional[str],
-    local_sora_cpp_sdk_args: List[str],
+    local_webrtc_build_dir: str | None,
+    local_webrtc_build_args: list[str],
+    local_sora_cpp_sdk_dir: str | None,
+    local_sora_cpp_sdk_args: list[str],
 ):
     version = read_version_file("DEPS")
 
@@ -185,7 +184,7 @@ AVAILABLE_TARGETS = [
 ]
 
 
-def _find_clang_binary(name: str) -> Optional[str]:
+def _find_clang_binary(name: str) -> str | None:
     if shutil.which(name) is not None:
         return name
     else:
@@ -223,10 +222,10 @@ def _build(
     target: str,
     debug: bool,
     relwithdebinfo: bool,
-    local_webrtc_build_dir: Optional[str],
-    local_webrtc_build_args: List[str],
-    local_sora_cpp_sdk_dir: Optional[str],
-    local_sora_cpp_sdk_args: List[str],
+    local_webrtc_build_dir: str | None,
+    local_webrtc_build_args: list[str],
+    local_sora_cpp_sdk_dir: str | None,
+    local_sora_cpp_sdk_args: list[str],
 ):
     platform = _get_platform(target)
 
@@ -425,7 +424,7 @@ def _build(
 
 
 def _format(
-    clang_format_path: Optional[str] = None,
+    clang_format_path: str | None = None,
     skip_clang_format: bool = False,
     skip_ruff: bool = False,
 ):
