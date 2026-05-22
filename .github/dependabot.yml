@@ -10,6 +10,8 @@ updates:
     schedule:
       interval: "weekly"
     target-branch: develop
+    cooldown:
+      default-days: 7
     allow:
       - dependency-name: "actions/checkout"
       - dependency-name: "astral-sh/setup-uv"
@@ -27,3 +29,5 @@ updates:
     schedule:
       interval: "weekly"
     target-branch: develop
+    cooldown:
+      default-days: 7
