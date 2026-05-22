@@ -45,11 +45,6 @@ line-length = 100
 
 [tool.ruff.lint]
 extend-select = ["I", "UP", "PT"]
-ignore = [
-    "PT015",
-    "PT016",
-    "PT018",
-]
 
 [tool.ty.src]
 include = ["src", "tests"]
