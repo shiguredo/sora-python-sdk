@@ -13,7 +13,7 @@ ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` 向�
 
 - ビルド環境は ubuntu-24.04 x86_64 host のみ
 - Linux arm64 (`ubuntu-22.04_armv8` / `ubuntu-24.04_armv8`) は x86_64 host からの **sysroot クロスコンパイル**
-- arm64 native runner (`ubuntu-22.04-arm` / `ubuntu-24.04-arm`) は廃止。 既存 `build_ubuntu_arm` job は 0001 で `if: false` 、 0006 で完全削除
+- arm64 native runner (`ubuntu-22.04-arm` / `ubuntu-24.04-arm`) は廃止。 既存 `build_ubuntu_arm` job は 0001 で `if: false` 、 0007 で完全削除
 - libwebrtc 同梱 clang バイナリは 0001 で `_sora_fetch_llvm` が host = `x86_64-Linux-24.04` 用に取得済み。 cross-compile では同じバイナリに `-target aarch64-linux-gnu` を渡す
 
 ## スコープ
@@ -32,12 +32,12 @@ ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` 向�
 
 含まない（別 issue で扱う）:
 
-- jetson / Raspberry Pi OS 向けクロスコンパイル（ 0004 ）
-- macOS / Windows native （ 0002 / 0005 ）
-- pyi / py.typed の wheel 同梱経路（ 0006 で `build_pyi` 廃止後の代替経路として整理）
-- PyPI publish 用 manylinux 検証 (`auditwheel show`) と publish job 復活（ 0006 ）
-- `ubuntu-22.04_x86_64` の再有効化（ 0006 ）
-- `build_ubuntu_arm` （ native arm64 runner ）の再有効化（新方針で廃止のため復活なし。 0006 で完全削除）
+- jetson / Raspberry Pi OS 向けクロスコンパイル（ 0005 ）
+- macOS / Windows native （ 0003 / 0006 ）
+- pyi / py.typed の wheel 同梱経路（ 0007 で `build_pyi` 廃止後の代替経路として整理）
+- PyPI publish 用 manylinux 検証 (`auditwheel show`) と publish job 復活（ 0007 ）
+- `ubuntu-22.04_x86_64` の再有効化（ 0007 ）
+- `build_ubuntu_arm` （ native arm64 runner ）の再有効化（新方針で廃止のため復活なし。 0007 で完全削除）
 
 ## 現状
 
@@ -51,7 +51,7 @@ ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` 向�
 - manylinux タグ番号の根拠（既存 `setup.py:27-31` を踏襲）:
   - 22.04 → `manylinux_2_31` （ Ubuntu 20.04 / Debian 11 互換）
   - 24.04 → `manylinux_2_35` （ Ubuntu 22.04 互換）
-  - 実シンボル検証は 0006 で `auditwheel show` を導入して確認する
+  - 実シンボル検証は 0007 で `auditwheel show` を導入して確認する
 - 0001 で `SORA_PYTHON_SDK_PLATFORM` は `/etc/os-release` から自動検出される設計（ ubuntu 24.04 x86_64 のみ受け入れ）。 cross 時に `SORA_SDK_TARGET` 環境変数を見て自動検出をスキップする分岐を本 issue で追加する
 - 0001 で `_SORA_CLANG_DIR = ${DEPS_ROOT}/llvm/${LLVM_HOST_KEY}/clang` が `fetch_deps.cmake` 経由で確定する（ cross 時もホスト側 clang を使うためそのまま流用）
 
@@ -82,7 +82,7 @@ toolchain ファイルでは `CMAKE_SYSROOT` / `CMAKE_FIND_ROOT_PATH` / `CMAKE_C
 2. `/usr/sbin/multistrap` の `AllowInsecureRepositories=true` パッチを冪等に適用（既に当たっていれば skip ）
 3. `multistrap --no-auth -a arm64 -d <rootfs_dir> -f <conf>` を実行
 4. `<rootfs_dir>` 内の絶対パス symlink を相対パスに置き換える（ `buildbase.py:install_rootfs` L1079-1100 と同等）
-5. JetPack 6 系 symlink workaround（ `buildbase.py:install_rootfs` L1102-1118 ）は 0004 で扱うため本 issue では実装しない
+5. JetPack 6 系 symlink workaround（ `buildbase.py:install_rootfs` L1102-1118 ）は 0005 で扱うため本 issue では実装しない
 
 ### fetch_deps.cmake の cross 対応
 
@@ -237,7 +237,7 @@ cross-compile 用ステップ:
 
 既存 native x86_64 step の `uv build` 行は維持する。
 
-`build_ubuntu_arm` job (既存 L172-228) は 0001 の `if: false` のまま据え置く（ 0006 で完全削除）。 `slack_notify` には `build_ubuntu_arm` を戻さない（新方針で完全廃止のため）。
+`build_ubuntu_arm` job (既存 L172-228) は 0001 の `if: false` のまま据え置く（ 0007 で完全削除）。 `slack_notify` には `build_ubuntu_arm` を戻さない（新方針で完全廃止のため）。
 
 ## 完了条件
 
@@ -247,7 +247,7 @@ cross-compile 用ステップ:
 - 2 回目以降の cross build で `_deps/ubuntu-22.04_armv8/{webrtc,sora,boost,openh264}` / `_deps/ubuntu-22.04_armv8/rootfs` が再生成されない
 - CI で `build_ubuntu` matrix の armv8 entry 全 6 件（ 22.04 × 3 Python + 24.04 × 3 Python ）が green
 - `slack_notify` job は `needs: [build_ubuntu]` のまま動作する（ matrix 内の追加 entry も自動的に対象になる）
-- pytest 動作確認はクロスのため実行しない。 0006 で `auditwheel show` 確認に置き換える
+- pytest 動作確認はクロスのため実行しない。 0007 で `auditwheel show` 確認に置き換える
 
 ## 解決方法
 
@@ -265,7 +265,7 @@ cross-compile 用ステップ:
 
 ### pyproject.toml
 
-「設計方針 → pyproject.toml の cross override」の 6 件 override を末尾に追記する。 0001 / 0002 の override は維持する。
+「設計方針 → pyproject.toml の cross override」の 6 件 override を末尾に追記する。 0001 / 0003 の override は維持する。
 
 ### CMakeLists.txt
 
@@ -273,7 +273,7 @@ cross-compile 用ステップ:
 
 ### .github/workflows/build.yml
 
-- `build_ubuntu.strategy.matrix.exclude` から `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` の 2 entry を削除する（ 0001 で追加した 4 entry のうち 2 entry を残す: `ubuntu-22.04_x86_64` と `raspberry-pi-os_armv8` は 0006 / 0004 で扱うので残す）
+- `build_ubuntu.strategy.matrix.exclude` から `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` の 2 entry を削除する（ 0001 で追加した 4 entry のうち 2 entry を残す: `ubuntu-22.04_x86_64` と `raspberry-pi-os_armv8` は 0007 / 0005 で扱うので残す）
 - cross-compile 用ステップ（ multistrap install + `SORA_SDK_TARGET` + `_PYTHON_HOST_PLATFORM` 付き `uv build --wheel` ）を `build_ubuntu` job に追加する。 native x86_64 step との `if:` 分岐を明示する
 
 ### CHANGES.md
@@ -285,13 +285,13 @@ cross-compile 用ステップ:
   - @voluntas
 ```
 
-旧 `build_ubuntu_arm` （ native arm64 runner ）廃止の旨は 0006 でまとめて記載する。
+旧 `build_ubuntu_arm` （ native arm64 runner ）廃止の旨は 0007 でまとめて記載する。
 
 ## ロールバック
 
-0003 マージ後、 armv8 wheel が壊れた場合の手順:
+0004 マージ後、 armv8 wheel が壊れた場合の手順:
 
 1. `git revert -m 1 <merge-commit>` で revert PR を作成
 2. revert 後、 `build_ubuntu` matrix から armv8 entry が消えて `exclude:` に戻ること、 `multistrap` install step が消えることを確認
-3. armv8 wheel publish が止まる（ 0006 の `publish_wheel` 復活までは 0001 / 0002 / 0005 完了でも publish は止まっている前提なので影響は限定的）
+3. armv8 wheel publish が止まる（ 0007 の `publish_wheel` 復活までは 0001 / 0003 / 0006 完了でも publish は止まっている前提なので影響は限定的）
 4. forward fix を選ぶ判断: cross-compile ステップ単位（ multistrap / fetch_deps / toolchain ） の単一不具合なら追加コミットで対応する

@@ -7,11 +7,11 @@
 
 ## 目的
 
-webcodecs-py と同様に `Makefile` をリポジトリルートに追加し、 開発者が `make develop` / `make wheel` / `make format` / `make clean` で scikit-build-core 経路のビルド / editable install / フォーマット / クリーンアップを行えるようにする。 0006 で `run.py` を削除するため、 `run.py format` の代替を `make format` で提供する。
+webcodecs-py と同様に `Makefile` をリポジトリルートに追加し、 開発者が `make develop` / `make wheel` / `make format` / `make clean` で scikit-build-core 経路のビルド / editable install / フォーマット / クリーンアップを行えるようにする。 0007 で `run.py` を削除するため、 `run.py format` の代替を `make format` で提供する。
 
 ## 設計の前提
 
-0006 で `run.py` 削除と入れ替わるため、 0006 着手の前に 0007 を完了させて `make format` 代替を用意するか、 0006 PR 内で `run.py format` を一時的に残して 0007 完了後に削除するか、 どちらでも可。 デフォルト順序は **0007 → 0006** とする（依存方向が明示的）。
+0007 で `run.py` 削除と入れ替わるため、 0007 着手の前に 0008 を完了させて `make format` 代替を用意するか、 0007 PR 内で `run.py format` を一時的に残して 0008 完了後に削除するか、 どちらでも可。 デフォルト順序は **0008 → 0007** とする（依存方向が明示的）。
 
 ## スコープ
 
@@ -38,7 +38,7 @@ webcodecs-py と同様に `Makefile` をリポジトリルートに追加し、 
 - `run.py:427-457` `_format` 関数で `clang-format -i src/**/*.cpp src/**/*.h` + `uv run ruff format` を実行する
 - `run.py` 経由で開発者は `uv run python run.py format` を呼ぶ運用
 - webcodecs-py の `Makefile` （ `/Users/voluntas/shiguredo/webcodecs-py/Makefile` ）を参考にする
-- `uv sync` は scikit-build-core 経由でプロジェクト本体を install する（ 0001 で確認済み）。 `make develop` の `uv pip install --no-build-isolation -e .` との重複ビルドが起きないかを 0007 実装時に検証する
+- `uv sync` は scikit-build-core 経由でプロジェクト本体を install する（ 0001 で確認済み）。 `make develop` の `uv pip install --no-build-isolation -e .` との重複ビルドが起きないかを 0008 実装時に検証する
 
 ## 設計方針
 
@@ -82,7 +82,7 @@ distclean: clean
 - 案 A: `uv sync --no-install-project` で project 本体を skip し、 dev グループのみ install。 続けて `uv pip install --no-build-isolation -e .` で editable のみビルドする
 - 案 B: `uv sync` のみで終わらせ、 editable は別途宣言する（ 0001 では editable install していない）
 
-0001 で `uv build --wheel` ベースの動作確認は済んでいるが、 editable install の挙動は 0007 が初出。 案 A を採る:
+0001 で `uv build --wheel` ベースの動作確認は済んでいるが、 editable install の挙動は 0008 が初出。 案 A を採る:
 
 ```makefile
 develop:
@@ -122,8 +122,8 @@ develop:
 
 ## ロールバック
 
-0007 マージ後に Makefile に問題が発覚した場合:
+0008 マージ後に Makefile に問題が発覚した場合:
 
 1. `git revert -m 1 <merge-commit>` で revert PR を作成
 2. revert 後、 `Makefile` が削除される
-3. 0006 が先にマージ済みなら `run.py format` は既に削除済みのため、 開発者は再び手打ちで format することになる。 forward fix を選んで個別ターゲットの修正コミットを優先する
+3. 0007 が先にマージ済みなら `run.py format` は既に削除済みのため、 開発者は再び手打ちで format することになる。 forward fix を選んで個別ターゲットの修正コミットを優先する

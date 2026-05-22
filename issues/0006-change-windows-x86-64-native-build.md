@@ -32,10 +32,10 @@
 
 含まない（別 issue で扱う）:
 
-- macOS arm64 native （ 0002 ）
-- Linux arm64 cross-compile （ 0003 / 0004 ）
-- レガシーファイル削除（ 0006 ）
-- Makefile （ 0007 ）
+- macOS arm64 native （ 0003 ）
+- Linux arm64 cross-compile （ 0004 / 0005 ）
+- レガシーファイル削除（ 0007 ）
+- Makefile （ 0008 ）
 - ローカル dev 用 CMake option（ `SORA_LOCAL_WEBRTC_BUILD_DIR` 等。別途新 issue で扱う）
 - Windows x86 (32-bit) （プロジェクトでサポート対象外）
 - Windows arm64 （プロジェクトでサポート対象外）
@@ -147,7 +147,7 @@ if(NOT WIN32)
 endif()
 ```
 
-Windows では `_SORA_CLANG_DIR` を設定しない。 `CMakeLists.txt` 側で `if(NOT WIN32 AND _SORA_CLANG_DIR)` ガードで `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` を設定するように 0001 の指示を修正する（ 0005 polish に含める）。
+Windows では `_SORA_CLANG_DIR` を設定しない。 `CMakeLists.txt` 側で `if(NOT WIN32 AND _SORA_CLANG_DIR)` ガードで `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` を設定するように 0001 の指示を修正する（ 0006 polish に含める）。
 
 ### TARGET_OS の Windows 上書き
 
@@ -256,7 +256,7 @@ cmake.define.SORA_GEN_PYI = "OFF"
 
 ## ロールバック
 
-0005 マージ後に Windows build で問題が発覚した場合:
+0006 マージ後に Windows build で問題が発覚した場合:
 
 1. `git revert -m 1 <merge-commit>` で revert PR を作成
 2. revert 後、 `build_windows` job が再び `if: false` に戻り skip されることを確認

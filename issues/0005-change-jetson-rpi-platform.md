@@ -7,21 +7,21 @@
 
 ## 目的
 
-ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8_jetson` と `raspberry-pi-os_armv8` 向け wheel を `uv build --wheel` で生成できる経路を 0001 / 0003 で確立した scikit-build-core + `fetch_deps.cmake` + `install_rootfs.sh` 構成で実装する。 Raspberry Pi OS 向けは `sora_sdk_rpi` というパッケージ名で publish するため、 `pyproject.toml` の `project.name` を CI step で sed 切替する経路を維持する。
+ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8_jetson` と `raspberry-pi-os_armv8` 向け wheel を `uv build --wheel` で生成できる経路を 0001 / 0004 で確立した scikit-build-core + `fetch_deps.cmake` + `install_rootfs.sh` 構成で実装する。 Raspberry Pi OS 向けは `sora_sdk_rpi` というパッケージ名で publish するため、 `pyproject.toml` の `project.name` を CI step で sed 切替する経路を維持する。
 
 ## 設計の前提（プロジェクト全体の新方針からの該当部）
 
 - ビルド環境は ubuntu-24.04 x86_64 host のみ
 - jetson / raspberry-pi-os は x86_64 host からの sysroot クロスコンパイル
-- arm64 native runner は廃止（ 0001 で `build_ubuntu_arm` は `if: false` 、 0006 で完全削除）
+- arm64 native runner は廃止（ 0001 で `build_ubuntu_arm` は `if: false` 、 0007 で完全削除）
 - libwebrtc 同梱 clang は 0001 で取得済み（ host = `x86_64-Linux-24.04` ）。 cross 時はそれに `-target aarch64-linux-gnu` を渡す
 
 ## スコープ
 
 含む:
 
-- `cmake/toolchains/jetson-aarch64-cross.cmake` と `cmake/toolchains/raspberry-pi-os-aarch64-cross.cmake` を新設する（ 0003 の `ubuntu-aarch64-cross.cmake` を参考。 jetson は Tegra / NVIDIA ライブラリパスを `target_link_directories` で追加する必要があるため別 toolchain ）
-- 0003 で新設した `cmake/scripts/install_rootfs.sh` を jetson / RPi conf でも呼ぶ（ multistrap conf は既存 `multistrap/ubuntu-22.04_armv8_jetson.conf` / `multistrap/raspberry-pi-os_armv8.conf` をそのまま流用）
+- `cmake/toolchains/jetson-aarch64-cross.cmake` と `cmake/toolchains/raspberry-pi-os-aarch64-cross.cmake` を新設する（ 0004 の `ubuntu-aarch64-cross.cmake` を参考。 jetson は Tegra / NVIDIA ライブラリパスを `target_link_directories` で追加する必要があるため別 toolchain ）
+- 0004 で新設した `cmake/scripts/install_rootfs.sh` を jetson / RPi conf でも呼ぶ（ multistrap conf は既存 `multistrap/ubuntu-22.04_armv8_jetson.conf` / `multistrap/raspberry-pi-os_armv8.conf` をそのまま流用）
 - `install_rootfs.sh` に jetson 系の `libnvbuf_fdmap.so` symlink 補完処理（ `buildbase.py:1101-1117` ）を追加する。 RPi では不要
 - `fetch_deps.cmake` の `_sora_fetch_rootfs` 呼び出しを jetson / RPi 判定で拡張する
 - `[[tool.scikit-build.overrides]]` で `SORA_SDK_TARGET=ubuntu-22.04_armv8_jetson` × Python 3.10 のみ、 `raspberry-pi-os_armv8` × Python 3.12 / 3.13 / 3.14 の override を追加する（ jetson の Python は L4T r36 同梱の Python 3.10 固定）
@@ -30,7 +30,7 @@ ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8_jetson` と `raspberry-pi-os
   - RPi: `wheel tags --remove --platform-tag manylinux_2_35_aarch64 dist/sora_sdk_rpi-*-cp3XY-*.whl` （ Debian bookworm の glibc 互換ライン。 既存 `setup.py:38` ）
 - RPi 向け `pyproject.toml` の package name を `sora_sdk_rpi` に切り替える経路:
   - scikit-build-core の `[[tool.scikit-build.overrides]] metadata.<field>` は PEP 621 `dynamic` field の provider を指定する hook で、 `project.name` は PEP 621 で dynamic 不可。 scikit-build-core 経由で `name` を override する手段は存在しないことが確定済み
-  - 既存 CI が採用する `sed -i 's/name = "sora_sdk"/name = "sora_sdk_rpi"/' pyproject.toml` 経路を継続採用する。 0001 / 0003 の「 `run.py build` を呼ばない方針」とは矛盾しない（ sed は `uv build --wheel` の直前 step として走る）
+  - 既存 CI が採用する `sed -i 's/name = "sora_sdk"/name = "sora_sdk_rpi"/' pyproject.toml` 経路を継続採用する。 0001 / 0004 の「 `run.py build` を呼ばない方針」とは矛盾しない（ sed は `uv build --wheel` の直前 step として走る）
   - sed step は `build_ubuntu` matrix の `if: matrix.platform.name == 'raspberry-pi-os_armv8'` ガードで RPi entry のみで実行する
 - RPi wheel に `libcamerac.so` を同梱する。 Sora C++ SDK の RPi 用 archive に `libcamerac.so` が含まれているため、 CMake `install(FILES ${SORA_DIR}/lib/libcamerac.so DESTINATION sora_sdk)` で wheel 内 `sora_sdk/` に置き、 ランタイムで `RPATH=$ORIGIN` 経由でロードできるようにする
 - `Sora` クラスのバージョン取得経路（既存 `run.py:268-271` で RPi は `importlib.metadata.version('sora-sdk-rpi')` を使う）を CMake 側で再実装する。 新経路では `SORA_PYTHON_SDK_VERSION` は `VERSION` ファイル直読みで両ターゲット同値（ PyPI dist-info 名が異なるだけで C++ マクロは同じ）
@@ -41,11 +41,11 @@ ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8_jetson` と `raspberry-pi-os
 
 含まない（別 issue で扱う）:
 
-- 0003 で扱う ubuntu armv8 クロスコンパイル本体
-- macOS / Windows ネイティブビルド（ 0002 / 0005 ）
-- pyi / py.typed の wheel 同梱経路（ 0006 ）
-- PyPI publish 用 manylinux 検証（ 0006 ）
-- ネイティブ jetson / ネイティブ RPi runner での E2E テスト復活（ 0006 / E2E test issue で扱う）
+- 0004 で扱う ubuntu armv8 クロスコンパイル本体
+- macOS / Windows ネイティブビルド（ 0003 / 0006 ）
+- pyi / py.typed の wheel 同梱経路（ 0007 ）
+- PyPI publish 用 manylinux 検証（ 0007 ）
+- ネイティブ jetson / ネイティブ RPi runner での E2E テスト復活（ 0007 / E2E test issue で扱う）
 - `Sora C++ SDK` 内 `libcamerac.so` を別経路で追加取得すること（既に Sora アーカイブに含まれる前提）
 
 ## 現状
@@ -138,12 +138,12 @@ elseif(SORA_PYTHON_SDK_PLATFORM STREQUAL "raspberry-pi-os_armv8")
 endif()
 ```
 
-`_sora_fetch_rootfs` の 4 番目引数（オプション `JETSON` ）は 0003 で導入したシグネチャに追加する:
+`_sora_fetch_rootfs` の 4 番目引数（オプション `JETSON` ）は 0004 で導入したシグネチャに追加する:
 
 ```cmake
 function(_sora_fetch_rootfs rootfs_dir conf stamp_path)
   cmake_parse_arguments(_arg "JETSON" "" "" ${ARGN})
-  # ... 0003 の処理 ...
+  # ... 0004 の処理 ...
   # install_rootfs.sh 呼び出し時に JETSON フラグを渡す
   set(_jetson_arg "")
   if(_arg_JETSON)
@@ -270,7 +270,7 @@ cross 用ステップ拡張:
 
 ### cmake/scripts/install_rootfs.sh
 
-「設計方針 → install_rootfs.sh の jetson 対応」の `--jetson` フラグと `libnvbuf_fdmap.so` symlink 補完を追加する。 RPi は 0003 のシンプル版で動作する。
+「設計方針 → install_rootfs.sh の jetson 対応」の `--jetson` フラグと `libnvbuf_fdmap.so` symlink 補完を追加する。 RPi は 0004 のシンプル版で動作する。
 
 ### cmake/scripts/fetch_deps.cmake
 
@@ -305,9 +305,9 @@ cross 用ステップ拡張:
 
 ## ロールバック
 
-0004 マージ後に jetson / RPi wheel が壊れた場合:
+0005 マージ後に jetson / RPi wheel が壊れた場合:
 
 1. `git revert -m 1 <merge-commit>` で revert PR を作成
 2. revert 後、 `build_ubuntu` matrix から jetson / RPi entry が消えるか確認
 3. `_deps/ubuntu-22.04_armv8_jetson/` / `_deps/raspberry-pi-os_armv8/` 配下のキャッシュは残っても問題ない（次回 build まで参照されない）
-4. PyPI 上の `sora-sdk-rpi` パッケージ publish が止まる（ 0006 の publish 復活までは止まっている前提のため影響は限定的）
+4. PyPI 上の `sora-sdk-rpi` パッケージ publish が止まる（ 0007 の publish 復活までは止まっている前提のため影響は限定的）

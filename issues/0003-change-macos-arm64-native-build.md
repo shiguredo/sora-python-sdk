@@ -29,11 +29,11 @@
 
 含まない（別 issue で扱う）:
 
-- Linux arm64 cross-compile (ubuntu armv8) （ 0003 ）
-- Linux arm64 cross-compile (jetson / rpi) （ 0004 ）
-- Windows x86_64 native （ 0005 ）
-- レガシーファイル削除（ 0006 ）
-- Makefile （ 0007 ）
+- Linux arm64 cross-compile (ubuntu armv8) （ 0004 ）
+- Linux arm64 cross-compile (jetson / rpi) （ 0005 ）
+- Windows x86_64 native （ 0006 ）
+- レガシーファイル削除（ 0007 ）
+- Makefile （ 0008 ）
 - `build_macos` matrix の macOS バージョン拡充（既存 `macos-15_arm64` / `macos-14_arm64` を維持する）
 - macOS x86_64 native （プロジェクトでサポート対象外。 macOS arm64 のみ）
 
@@ -82,7 +82,7 @@ else()
 endif()
 ```
 
-`SORA_PYTHON_SDK_PLATFORM` 許容リストは `ubuntu-24.04_x86_64` / `macos_arm64` の 2 つになる。 0003 で `ubuntu-22.04_x86_64` を host として許容するか判断する（クロス build に 24.04 host のみ使うなら追加不要）。
+`SORA_PYTHON_SDK_PLATFORM` 許容リストは `ubuntu-24.04_x86_64` / `macos_arm64` の 2 つになる。 0004 で `ubuntu-22.04_x86_64` を host として許容するか判断する（クロス build に 24.04 host のみ使うなら追加不要）。
 
 `LLVM_HOST_KEY` の組み立ては:
 
@@ -140,7 +140,7 @@ cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
 - Sora C++ SDK: `sora-cpp-sdk-2026.2.0-canary.11_macos_arm64.tar.gz`
 - Boost: `boost-1.91.0_sora-cpp-sdk-2026.2.0-canary.11_macos_arm64.tar.gz`
 
-0002 実装時に `curl -sL <url> | tar tzf - | head -5` で各 macOS アーカイブの strip_components を確認する。 ubuntu と同じく暫定 `1` で開始する。
+0003 実装時に `curl -sL <url> | tar tzf - | head -5` で各 macOS アーカイブの strip_components を確認する。 ubuntu と同じく暫定 `1` で開始する。
 
 ### OpenH264 ヘッダ取得
 
@@ -163,7 +163,7 @@ message(FATAL_ERROR
 
 ### pyproject.toml の override 整理
 
-0001 の `[tool.scikit-build.cmake.define] TARGET_OS = "ubuntu"` は **デフォルト値** として残し、 macOS override が打ち消す形にする。 Windows native (0005) も同様に `[[tool.scikit-build.overrides]]` で `TARGET_OS = "windows"` を上書きする予定。
+0001 の `[tool.scikit-build.cmake.define] TARGET_OS = "ubuntu"` は **デフォルト値** として残し、 macOS override が打ち消す形にする。 Windows native (0006) も同様に `[[tool.scikit-build.overrides]]` で `TARGET_OS = "windows"` を上書きする予定。
 
 scikit-build-core の override 適用順は `if.<key>` の評価で順次適用される（先勝ち優先ではなく後勝ち優先）。 ubuntu host 上では `if.platform-system = "darwin"` が false になり、 `TARGET_OS` はデフォルト `ubuntu` のまま残る。 macOS host 上では override が match して `TARGET_OS = "macos"` に切替わる。
 
@@ -188,7 +188,7 @@ scikit-build-core の override 適用順は `if.<key>` の評価で順次適用�
 
 ### cmake/scripts/fetch_deps.cmake
 
-`SORA_PYTHON_SDK_PLATFORM` 算出と `LLVM_HOST_KEY` 算出を「設計方針 → SORA_PYTHON_SDK_PLATFORM 算出の macOS 対応」のコード形に書き換える。 既存 FATAL_ERROR メッセージは「 ubuntu-24.04_x86_64 / macos_arm64 only 」に拡張する。 0003 / 0004 / 0005 で順次追加。
+`SORA_PYTHON_SDK_PLATFORM` 算出と `LLVM_HOST_KEY` 算出を「設計方針 → SORA_PYTHON_SDK_PLATFORM 算出の macOS 対応」のコード形に書き換える。 既存 FATAL_ERROR メッセージは「 ubuntu-24.04_x86_64 / macos_arm64 only 」に拡張する。 0004 / 0005 / 0006 で順次追加。
 
 ### pyproject.toml
 
@@ -233,9 +233,9 @@ cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
 
 ## ロールバック
 
-0002 マージ後に macOS native build で問題が発覚した場合:
+0003 マージ後に macOS native build で問題が発覚した場合:
 
 1. `git revert -m 1 <merge-commit>` で revert PR を作成する
 2. revert 後、 `build_macos` job が再び `if: false` に戻り skip されるか確認する
 3. `pyproject.toml` の macOS override セクションが消えるか確認する
-4. 0001 + 0003 + 0004 + 0005 の進捗状況に応じて、 macOS だけ別途修正コミットで forward fix するか判断する
+4. 0001 + 0004 + 0005 + 0006 の進捗状況に応じて、 macOS だけ別途修正コミットで forward fix するか判断する
