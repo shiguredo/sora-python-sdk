@@ -293,6 +293,7 @@ int connection_tp_clear(PyObject* self) {
   conn->on_notify_ = nullptr;
   conn->on_push_ = nullptr;
   conn->on_message_ = nullptr;
+  conn->on_rpc_ = nullptr;
   conn->on_switched_ = nullptr;
   conn->on_track_ = nullptr;
   conn->on_data_channel_ = nullptr;
