@@ -35,6 +35,10 @@
 - [FIX] `SoraConnection::OnPush` が GIL を取得せずに Python コールバックを呼んでいた問題を修正する
   - GIL 非保持の内部スレッドから Python C API を呼ぶ未定義動作であり、参照カウント競合によるメモリ破壊で `push` 受信時にプロセスが SIGSEGV でクラッシュしうる問題があった
   - @sile
+- [FIX] `SoraConnection` の `connection_tp_clear` が `on_rpc_` を解放していなかった問題を修正する
+  - `connection_tp_traverse` は `on_rpc_` を `Py_VISIT` で GC に報告しているのに `connection_tp_clear` が解放しておらず、traverse/clear が非対称で CPython の循環 GC の契約に反していた
+  - `on_rpc` ハンドラを含む参照循環を循環 GC が断ち切れず接続オブジェクトのグラフ全体がリークしうる問題があった
+  - @sile
 
 ### misc
 
