@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-27
+- Completed: 2026-06-01
 - Model: Opus 4.7
 - Branch: feature/fix-video-decoder-factory-data-race-abort
 
@@ -83,4 +84,14 @@ Sora サーバや E2E 基盤は必須ではない。本質は「1 つの `SoraVi
 
 ## 解決方法
 
-未着手。
+依存先の sora-cpp-sdk 側で修正された。コミット `04ec12fe`「SoraVideo(Encoder|Decoder)Factory の formats_ 並行アクセスによる abort を修正する (#325)」で、本 issue の設計方針「案 1 (推奨)」がそのまま実装されている。
+
+- `SoraVideoDecoderFactory` / `SoraVideoEncoderFactory` の `mutable std::vector<std::vector<webrtc::SdpVideoFormat>> formats_` メンバを削除。
+- decoder/encoder ごとの対応フォーマット算出を無名名前空間の `GetSupportedFormatsForConfig()` ヘルパーに切り出し、`GetSupportedFormats()` と `Create()` の双方がその場で再計算する形に変更。共有可変状態が消え、`GetSupportedFormats` (signaling thread) と `Create` (decoder thread) の `formats_` data race が根絶された。
+
+この修正は sora-cpp-sdk `2026.2.0-canary.13` に含まれ、本リポジトリの `DEPS` の `SORA_CPP_SDK_VERSION` を `2026.2.0-canary.13` に更新したことで取り込まれた。
+
+### 未実施の完了条件について
+
+- マルチスレッド再現テスト (設計方針 B) は追加しない。根本修正が依存ライブラリ側で完結しており、当リポジトリ単体で abort 経路を安定再現させるテストの実装コストが見合わないため。
+- `CHANGES.md` への独立した `[FIX]` 追記は行わない。Sora C++ SDK のバージョン更新 (`2026.2.0-canary.13`) 対応に内包される修正とみなすため。
