@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-29
+- Polished: 2026-06-01
 - Model: Opus 4.8
 - Branch: feature/fix-on-rpc-missing-tp-clear
 
@@ -17,8 +18,7 @@ Medium とする。
 
 - 帰結はメモリリークであり、クラッシュや未定義動作ではない。プロセスを巻き込んで落ちることはなく回復可能 (プロセス再起動でリセット)。この点で crash 系の issue (`0008` / `0009`) より致命度は低い。
 - traverse が報告する参照を clear が解放しないのは GC 契約違反であり、他の 10 個のコールバックは全て `tp_clear` で解放している。`on_rpc_` だけが例外。
-- リークが顕在化するかは参照循環の形に依存する。`connection.on_rpc = self.handler` で `self` が接続を保持するような循環は `self` 側の `__dict__` クリアで断ち切れてリークしないことが多いが、接続オブジェクトの `tp_clear` を通してしか断ち切れない循環ではリークし、接続グラフ全体 (トラック・ソース・native の `SoraConnection` を含む) が回収されない。コールバックに接続を参照するハンドラを渡すのは一般的なパターンであり、長時間稼働・多数接続のアプリで累積しうる。
-- 利用側に GC 連携を直す手段はない。
+- 実際にリークするのは「接続オブジェクトの `tp_clear` を通してしか断ち切れない参照循環」に限られ (機序は「根本原因」を参照)、発生条件は限定的である。ただし顕在化した場合は接続グラフ全体 (トラック・ソース・native の `SoraConnection` を含む) が回収されず、長時間稼働・多数接続のアプリで累積しうる。
 - 修正は他の 10 個のコールバックが既に `tp_clear` で実施している 1 行 (`conn->on_rpc_ = nullptr;`) の追加のみ。実証済みのパターンでリグレッションリスクは低い。
 
 ## 現状
@@ -38,18 +38,11 @@ CPython の循環 GC の契約は次のとおり。
 
 `on_rpc_` は traverse で報告されるが clear で解放されないため、`on_rpc` ハンドラが接続オブジェクトとの参照循環に含まれ、かつその循環が接続オブジェクトの `tp_clear` を通してしか断ち切れない場合、GC は循環を検出できても断ち切れない。結果として循環に含まれるオブジェクト (接続オブジェクト、ハンドラ、それらが推移的に保持するトラック・ソース・native オブジェクト) がプロセス終了まで回収されない。
 
-なお、traverse が報告するのに clear が解放しない非対称は「安全側だがリークしうる」方向である (逆方向の「traverse が報告しない参照を clear が解放する」は早期解放によるクラッシュを招きうる)。本件はクラッシュには至らずリークに留まる。
+### 経緯 (意図的な除外ではない)
 
-### 経緯
+`tp_clear` は `ecc4d3a`「tp_clear を入れる」で導入され、その時点では `on_rpc` は未追加で 10 個のコールバックを扱っていた。`on_rpc` を追加した `04636a8`「rpc ラベルに対応する」(2025-05-28) の diff では、同一コミット内で `tp_traverse` への `Py_VISIT` と `def_rw("on_rpc")` は追加されたのに、`connection_tp_clear` への `nullptr` 代入だけが欠落している。git 全履歴を通じて `on_rpc_ = nullptr` が `connection_tp_clear` に現れたことは一度もない。
 
-`on_rpc` (および `on_rpc_`) は他のコールバックより後に追加されたが、`tp_traverse` への `Py_VISIT` が入った一方で `tp_clear` への `nullptr` 代入が漏れた。git 全履歴で `on_rpc_ = nullptr` が `connection_tp_clear` に現れたことは一度もない。`on_rpc_` を `tp_clear` から除外する設計上の理由は存在せず、本件は追加漏れである。
-
-git 履歴による裏付け (調査結果)。
-
-- `tp_clear` 自体は `ecc4d3a`「tp_clear を入れる」で導入され、その時点では `on_rpc` はまだ存在せず 10 個のコールバックを扱っていた。
-- `on_rpc` を追加した `04636a8`「rpc ラベルに対応する」(2025-05-28) の diff では、同一コミット内で `tp_traverse` への `Py_VISIT` と `def_rw("on_rpc")` の 2 箇所は追加されているのに、`connection_tp_clear` への `nullptr` 代入だけが欠落している。typical なコピペ漏れであり、意図的な除外ではないことが確認できた。
-- `on_rpc_` は他の 10 個のコールバックと完全に同種である。`src/sora_connection.h:147-156` の全 11 個はいずれも Python callable を保持する `std::function` で、すべて `def_rw` で設定可能な属性として公開されている。型・公開方法・GC 参加のいずれにおいても `on_rpc_` だけを別扱いする根拠はない。
-- `on_rpc_` を解放する経路は他に存在しない。出現箇所は設定 (`def_rw`)・呼び出し (`src/sora_connection.cpp:223-224`)・`tp_traverse` の 3 つだけで、デストラクタや切断処理などで `nullptr` 化している事実もない。「clear 以外で解放しているから省いた」という可能性も否定される。
+`on_rpc_` を `tp_clear` から意図的に除外する理由は存在しない。`on_rpc_` は他の 10 個と同種のコールバック (Python callable を保持する `std::function`、`def_rw` で公開。全 11 個が `src/sora_connection.h:144-156` に定義) であり、別扱いする根拠はない。また `on_rpc_` を解放する経路は他に無い (出現箇所は `def_rw`・呼び出し `src/sora_connection.cpp:223`・`tp_traverse` のみで、デストラクタや切断処理での `nullptr` 化も無い)。以上より本件は追加漏れである。
 
 ### 利用側で回避できるか
 
@@ -88,13 +81,11 @@ int connection_tp_clear(PyObject* self) {
 
 基本方針は「コード検査による traverse/clear の対称性確認」を正当性の根拠とする (`0009` と同様)。`connection_tp_traverse` が `Py_VISIT` するコールバック集合と `connection_tp_clear` が `nullptr` 代入するコールバック集合が完全に一致することを確認する。
 
-リグレッションテストの実現可能性を調査した結果、以下が判明した。
+リグレッションテストは作成しない。実現可能性を調査した結果、堅牢なテストの作成コストが見合わないと判断したため。根拠は以下。
 
-- 留意点 (b)「生成に実 Sora サーバが必要か」は解消される。`Sora::CreateConnection` (`src/sora.cpp:31-`) は `SoraConnection` オブジェクトを構築するだけで、実際の接続は別の `connect()` で行われる。ダミーの `signaling_urls` / `role` / `channel_id` を渡して `create_connection` するだけならサーバは不要 (モック・スタブも不要)。
-- 留意点 (a)「循環が接続オブジェクトの `tp_clear` を通してしか断ち切れない形」が本質的な難所として残る。CPython の循環 GC は到達不能な循環の clear 可能な全メンバに対して `tp_clear` を呼ぶため、循環内に接続オブジェクト以外で clear 可能なオブジェクトが 1 つでもあると、そこで循環が断たれて修正前でも回収され、差が出ない (偽陰性)。Python 3.13.7 で実測したところ、`__dict__` を持つインスタンス・`__slots__` のみのインスタンス・クロージャ (`__defaults__`)・tuple 経由のいずれの循環も全て回収された (普通の Python オブジェクトはほぼ全て自分の clear で自分の参照を切れるため)。
-- バグを顕在化させるには、接続オブジェクト以外の参加者を全て clear 不可 (実効的な `tp_clear` を持たない) にして、唯一の breaker を接続オブジェクトにする必要がある。例として `conn.on_rpc = (conn,).count` のように「immutable な tuple を `__self__` に持つビルトインメソッド」を介して循環を組むと、tuple もビルトインメソッドも `tp_clear` を持たないため接続オブジェクトだけが breaker になり、修正前は回収されず修正後は回収される差を観測できる (検出は `weakref` + `gc.collect()`)。
-- ただしこの手法は CPython の内部仕様 (tuple / ビルトインメソッドが `tp_clear` を持たないこと) に依存する技巧的な作りで、`on_rpc` の本来の型 (`Callable[[bytes], None]`) を逸脱したハック (`tuple.count` を割り当てる) を含み、保守性が低い。また接続オブジェクトの nanobind 型が `weakref` を公開しているかは要確認。
-- 以上より、堅牢なリグレッションテストの作成コストに見合わないと判断し、本 issue では作成しない。正当性はコード検査による対称性確認で担保する。
+- 接続オブジェクトの生成自体はサーバ無しで可能。`Sora::CreateConnection` (`src/sora.cpp`) は `conn->Init(config)` 経由で `sora::SoraSignaling::Create` までは実行するが、実際のネットワーク接続は `Connect()` で初めて行われる。ダミーの `signaling_urls` / `role` / `channel_id` を渡して `create_connection` するだけならサーバ実体は不要 (モック・スタブも不要)。
+- 本質的な難所は「参照循環を、接続オブジェクトの `tp_clear` を通してしか断ち切れない形に組む」必要がある点。CPython の循環 GC は到達不能な循環の clear 可能な全メンバに `tp_clear` を呼ぶため、循環内に接続オブジェクト以外で clear 可能なオブジェクトが 1 つでもあると、そこで循環が断たれて修正前でも回収され差が出ない (偽陰性)。Python 3.13.7 で実測したところ、通常の `__dict__` / `__slots__` インスタンス・クロージャ・tuple 経由のいずれの循環も全て回収された。
+- 差を観測するには接続オブジェクト以外の全参加者を clear 不可にする必要があり、`conn.on_rpc = (conn,).count` のような CPython 内部仕様 (tuple やビルトインメソッドが `tp_clear` を持たないこと) に依存する技巧的な作りになる。`on_rpc` の本来の型 (`Callable[[bytes], None]`) を逸脱するハックを含み保守性が低いため採用しない。
 
 ## 完了条件
 
