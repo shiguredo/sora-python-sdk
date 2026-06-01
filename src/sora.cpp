@@ -2,6 +2,9 @@
 
 #include "sora.h"
 
+// Boost
+#include <boost/preprocessor/stringize.hpp>
+
 // WebRTC
 #include <rtc_base/crypto_random.h>
 
