@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-29
 - Polished: 2026-06-01
+- Completed: 2026-06-01
 - Model: Opus 4.8
 - Branch: feature/fix-on-rpc-missing-tp-clear
 
@@ -95,4 +96,6 @@ int connection_tp_clear(PyObject* self) {
 
 ## 解決方法
 
-未着手。
+`src/sora_sdk_ext.cpp` の `connection_tp_clear` に `conn->on_rpc_ = nullptr;` を 1 行追加し、`on_message_` と `on_switched_` の間に挿入した。これにより `connection_tp_traverse` が `Py_VISIT` するコールバック集合と `connection_tp_clear` が `nullptr` 代入するコールバック集合が完全に一致し、traverse/clear の対称性が回復した。
+
+`CHANGES.md` の `## develop` に `[FIX]` エントリを担当者行付きで追記した。
