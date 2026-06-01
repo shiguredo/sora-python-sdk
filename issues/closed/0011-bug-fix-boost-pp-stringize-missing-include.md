@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-06-01
+- Completed: 2026-06-01
 - Model: Opus 4.8
 - Branch: feature/fix-boost-pp-stringize-missing-include
 
@@ -75,4 +76,6 @@ Sora C++ SDK のコミット `9867f49e`「deadline_timer の代わりに steady_
 
 ## 解決方法
 
-未着手。
+`src/sora.cpp` に `#include <boost/preprocessor/stringize.hpp>` を明示的に追加した。`// Boost` グループとして標準ヘッダと `// WebRTC` グループの間に配置した。これにより `BOOST_PP_STRINGIZE` の定義を Sora C++ SDK の推移 include に依存せず、利用するマクロの定義元を直接 include する形に改めた。
+
+`CHANGES.md` への追記は不要と判断した。Sora C++ SDK のバージョン更新 (`2026.2.0-canary.13`) 対応の一環としてビルドを通すための変更であり、独立した変更履歴として残す必要がないため。
