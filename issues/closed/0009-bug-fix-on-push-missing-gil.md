@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-29
 - Polished: 2026-05-29
+- Completed: 2026-06-01
 - Model: Opus 4.8
 - Branch: feature/fix-on-push-missing-gil
 
@@ -90,4 +91,15 @@ void SoraConnection::OnPush(std::string text) {
 
 ## 解決方法
 
-未着手。
+`src/sora_connection.cpp` の `SoraConnection::OnPush` の関数先頭 (`if` の外) に `gil_scoped_acquire acq;` を 1 行追加し、Python を呼ぶ他のコールバックと同じ GIL 取得規約に揃えた。
+
+```cpp
+void SoraConnection::OnPush(std::string text) {
+  gil_scoped_acquire acq;
+  if (on_push_) {
+    call_python(on_push_, text);
+  }
+}
+```
+
+あわせて `CHANGES.md` の `## develop` に `[FIX]` エントリを追記した。

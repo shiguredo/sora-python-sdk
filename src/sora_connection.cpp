@@ -206,6 +206,7 @@ void SoraConnection::OnNotify(std::string text) {
 }
 
 void SoraConnection::OnPush(std::string text) {
+  gil_scoped_acquire acq;
   if (on_push_) {
     call_python(on_push_, text);
   }

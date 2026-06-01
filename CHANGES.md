@@ -32,6 +32,9 @@
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
     - https://issuetracker.google.com/issues/439801349
   - @torikizi
+- [FIX] `SoraConnection::OnPush` が GIL を取得せずに Python コールバックを呼んでいた問題を修正する
+  - GIL 非保持の内部スレッドから Python C API を呼ぶ未定義動作であり、参照カウント競合によるメモリ破壊で `push` 受信時にプロセスが SIGSEGV でクラッシュしうる問題があった
+  - @sile
 
 ### misc
 
