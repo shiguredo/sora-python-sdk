@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-02
+- Polished: 2026-06-02
 - Model: Opus 4.8
 - Branch: feature/fix-audio-sink-read-holds-gil
 
@@ -9,14 +10,14 @@
 
 `SoraAudioSink.read()` は内部で `SoraAudioSinkImpl::Read`
 (`src/sora_audio_sink.cpp:137`) を呼び、指定フレーム数が貯まるまで
-`std::condition_variable::wait_for` で待機する。この待機中、`Read` は GIL
-(Python のグローバルインタプリタロック) を一切解放しない。
+`std::condition_variable::wait_for` で待機する。この待機を `buffer_mtx_` を握った
+まま行い、かつ GIL (Python のグローバルインタプリタロック) を解放しない。
 
-その結果、`read(timeout=T)` を呼んだスレッドは、データが届かなければ最大 T 秒
-間 GIL を握ったままブロックする。GIL は同一プロセスで同時に一つのスレッドし
-か保持できないため、その間、同一プロセス内の他の Python 実行 (別接続のシグナ
-リング処理、コールバック、ユーザーが同居させている HTTP サーバ等) が T 秒間
-すべて停止する。
+その結果、`read(timeout=T)` を呼んだスレッドは、データが指定フレーム数に達しなけ
+れば最大 T 秒間 GIL を握ったままブロックする。GIL は同一プロセスで同時に一つの
+スレッドしか保持できないため、その間、同一プロセス内の他のすべての Python 実行
+(別接続のシグナリング処理、コールバック、ユーザーが同居させている HTTP サーバ等)
+が停止する。
 
 本 issue はこの待機中の GIL 保持を解消し、`Read` のブロック中も他の Python ス
 レッドが進行できるようにする。
@@ -25,178 +26,181 @@
 
 Medium とする。
 
-- `read()` を `timeout` 付きで呼び、かつ同一プロセスで他の Python 処理を並行さ
-  せている構成では、データ未達のたびに最大 `timeout` 秒の全 Python 停止が確定
-  的に発生する。とりわけ複数接続を 1 プロセスに同居させる構成や、`read` と同
-  居する in-process のサーバ・タイマーを持つ構成で顕在化する。
-- クラッシュではなく「他スレッドの遅延・飢餓」として現れるため致命度は High に
-  満たないが、`read()` は本 SDK の音声取得の主要 API であり、影響範囲は広い。
-- 本件の発見契機は E2E テストの flaky 化である。`read(timeout=5)` の待機中に同
-  一プロセスのシグナリング (別接続の re-answer 生成) が GIL 待ちで進まず、その
-  接続の音声が `read` のタイムアウトに連動して遅延し、結果として `read` 自体も
-  失敗する、という連鎖が観測された。`timeout` を伸ばすと GIL 保持時間も伸び、
-  飢餓が悪化するため、`timeout` 調整では解決しない。
-- 修正は本 SDK 内の `Read` 実装に閉じ、API・シグネチャ・挙動 (戻り値) は不変。
-  同種の GIL 解放パターンは本リポジトリに既存実装がある (後述) ため、リグレッ
-  ションリスクは低い。
+- `read()` を `timeout` 付きで呼び、同一プロセスで他の Python 処理を並行させてい
+  る構成では、データ未達のたびに最大 `timeout` 秒の全 Python 停止が確定的に発生
+  する。とりわけ複数接続を 1 プロセスに同居させる構成や、`read` と同居する
+  in-process のサーバ・タイマーを持つ構成で顕在化する。
+- `read()` は本 SDK の音声取得の主要 API であり影響範囲は広い。発見契機は E2E
+  テストの flaky 化で、`read` の待機中に同一プロセスのシグナリング (別接続の
+  re-answer 生成) が GIL 待ちで進まず、その接続の音声が `read` のタイムアウトに
+  連動して遅延し、`read` 自体も失敗する連鎖が観測された。`timeout` を伸ばすと
+  GIL 保持時間も伸びて飢餓が悪化するため、`timeout` 調整では解決しない。
+- High としない理由: プロセスのクラッシュやメモリ破壊ではなく、他スレッドの遅延
+  ・飢餓に留まる (機能不全ではあるが回復可能)。修正は本 SDK 内の `Read` 実装に
+  閉じ、API・シグネチャ・挙動 (戻り値) は不変で、リグレッションリスクは限定的。
 
 ## 現状
 
 ### 根本原因
 
 `SoraAudioSinkImpl::Read` は `buffer_mtx_` を `std::unique_lock` で取得した
-まま、`std::condition_variable::wait_for` で待機する
-(`src/sora_audio_sink.cpp:137-155`)。
+まま `std::condition_variable::wait_for` で待機するが
+(`src/sora_audio_sink.cpp:137-155`)、待機の前後で GIL を解放しない。`Read` は
+Python から GIL を保持して入場するため、待機中もずっと GIL を握り続ける。待機を
+抜ける契機 (データ到着・タイムアウト・シグナル) まで他の Python スレッドは進めず、
+`read(timeout=T)` がタイムアウトで抜ける最悪ケースではこれが最大 T 秒継続する。
 
-```cpp
-nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
-  std::unique_lock<std::mutex> lock(buffer_mtx_);
+### 並行モデル: producer は GIL 非保持の WebRTC スレッド
 
-  size_t num_of_samples;
-  if (frames > 0) {
-    // フレーム数のリクエストがある場合はリクエスト分が貯まるまで待つ
-    if (!buffer_cond_.wait_for(
-            lock,
-            std::chrono::nanoseconds(/* timeout 換算 */),
-            [&] {
-              return (number_of_channels_ > 0 &&
-                      buffer_.size() >= frames * number_of_channels_) ||
-                     PyErr_CheckSignals() != 0;
-            })) {
-      return nb::make_tuple(false, nb::none());
-    }
-    ...
-```
+この修正の難所は、`buffer_` の producer と consumer で GIL の保持状況が異なる点
+にある。
 
-- `Read` は Python から呼ばれる関数なので、入口では GIL を保持している。
-  `wait_for` の前後で GIL を解放する処理が無いため、待機中もずっと GIL を保持し
-  続ける。
-- predicate が `PyErr_CheckSignals()` を呼んでいる。これは GIL 保持が前提の
-  Python C API であり、「Ctrl-C 等のシグナルで待機を中断できるようにする」ため
-  に置かれている。単純に `wait_for` の手前で GIL を解放すると、この predicate
-  が GIL 非保持で Python C API を呼ぶことになり、別の未定義動作を招く。した
-  がって「待機中だけ GIL を解放し、predicate 評価時に GIL を取り直す」必要が
-  ある。
-- `buffer_cond_` は `std::condition_variable` 型 (`src/sora_audio_sink.h`) で、
-  GIL を mutex として直接扱えない。
+- consumer (`Read`): Python から呼ばれ GIL を保持して入場する。
+- producer (`OnData` → `AppendData`, `src/sora_audio_sink.cpp:51-135`):
+  `webrtc::AudioTrackSinkInterface::OnData` のコールバックで、**GIL を保持しない
+  WebRTC オーディオスレッド**から呼ばれる。そのため `buffer_` /
+  `number_of_channels_` は GIL ではなく `buffer_mtx_` で保護されている
+  (`AppendData` は `buffer_mtx_` を取得して `buffer_` を更新し
+  `buffer_cond_.notify_all()` する, `:106-126`)。
 
-待機中に GIL を保持したままだと、同一プロセスで GIL を必要とする他のすべての
-Python スレッドは、`Read` がデータ到着・タイムアウト・シグナルのいずれかで
-`wait_for` を抜けて GIL を手放すまで進めない。`read(timeout=T)` がタイムアウト
-で抜ける最悪ケースでは、これが最大 T 秒間継続する。
+したがって `Read` の predicate (`:148-151`) は `PyErr_CheckSignals()` (GIL が必要)
+と `buffer_.size()` / `number_of_channels_` (`buffer_mtx_` が必要) を同一式で評価
+する。**predicate 評価時には GIL と `buffer_mtx_` の両方が必要**である。
 
-### 本リポジトリに既存の正解パターン
-
-本リポジトリには「condition variable の待機中に GIL を解放し、再取得時に
-GIL を取り直す」ための仕組みが既にある。
-
-- `src/gil.h` の `GILLock`: `lock()` で `PyEval_RestoreThread` (GIL 取得)、
-  `unlock()` で `PyEval_SaveThread` (GIL 解放) を行う、`BasicLockable` 準拠の
-  アダプタ。`std::condition_variable_any` の待機対象として使うと、待機の前後で
-  自動的に GIL を解放・再取得できる。`Py_Finalize` 中の起床も考慮済み。
-- `src/sora_video_source.cpp:64-66` が実例。`std::condition_variable_any`
-  (`src/sora_video_source.h:103` の `queue_cond_`) を `GILLock` で待つことで、
-  フレーム待機中に GIL を解放している。
-
-`SoraAudioSinkImpl::Read` はこのパターンを踏襲していない (待機対象が
-`std::mutex` + `std::condition_variable` のまま) のが現状の差分である。
-
-### 利用側で回避できるか
-
-回避できない。GIL の保持・解放は `Read` の C++ 実装に属し、`read()` の呼び出し
-側から制御する API は無い。利用側は `frames` と `timeout` を渡せるだけで、待機
-中に GIL を握り続けるか否かには関与できない。`read` を専用プロセスに隔離すれば
-他の Python 処理への影響は避けられるが、それは API としての回避策ではなく構成上
-の制約の押し付けである。
+なお `src/sora_video_source.cpp:63-79` も待機中に `GILLock` で GIL を解放するが、
+そこは producer (`OnCaptured`) も Python (GIL 保持) から呼ばれ、共有データを GIL
+だけで保護している。本件は producer が GIL 非保持の WebRTC スレッドであるため
+GIL をデータロックに使えず、`GILLock` だけで待つ単純パターンは流用できない。
+GIL と `buffer_mtx_` の二つのロックを協調させる必要がある。
 
 ## 設計方針
 
-`Read` の待機を `GILLock` + `std::condition_variable_any` 化し、`wait_for` の
-待機中だけ GIL を解放する。`src/sora_video_source.cpp` の既存パターンに揃える。
+`buffer_cond_` を `std::condition_variable_any` 化し、待機中に GIL と
+`buffer_mtx_` の両方を解放・再取得する「合成ロック」を `wait_for` に渡す。
 
-- `src/sora_audio_sink.h` の `buffer_cond_` を
-  `std::condition_variable` から `std::condition_variable_any` に変更する。
-  `AppendData` 側の `notify_all` (`src/sora_audio_sink.cpp:125`) は型に依らず
-  同じ呼び出しで動く。
-- `Read` 内の待機を、`buffer_mtx_` ではなく `GILLock` を介して待つ形にする。
-  これにより `wait_for` がスレッドをブロックして待つ間は GIL が解放され、
-  起床して predicate を評価する瞬間には GIL が取得済みになる。
-  predicate 内の `PyErr_CheckSignals()` は GIL 保持下で評価されるため、シグナル
-  による中断という既存の挙動はそのまま維持される。
-- バッファ (`buffer_`)・フォーマット (`number_of_channels_` 等) を共有保護して
-  いる `buffer_mtx_` と、GIL の二つのロック関係を破綻させないこと。
-  `AppendData` は `buffer_mtx_` を取得して `buffer_` を更新し `notify_all` する。
-  `Read` がバッファを読む区間 (`src/sora_audio_sink.cpp:171-185`) は引き続き
-  `buffer_mtx_` による排他が必要である。待機の GIL 解放化にあたり、この
-  バッファ保護が緩まないよう実装すること (具体的な lock 構成は実装時に確定する。
-  GIL 解放と `buffer_mtx_` 解放の順序、起床後のバッファ再確認を含めて、データ
-  競合と取りこぼしが起きないことを確認する)。
-- `frames == 0` の分岐 (`src/sora_audio_sink.cpp:163-169`) は待機しないので、
-  GIL 保持の問題は無い。ただし `buffer_` へアクセスするため `buffer_mtx_` に
-  よる排他は維持する。
-- Python から見える `read()` の API・シグネチャ・戻り値・タイムアウト挙動・
-  シグナル中断挙動はいずれも変えない。後方互換性に影響はない。
-- 本リポジトリ単独で完結する。外部依存の変更は不要。
+### 具体構成
 
-### 同種の確認対象
+1. `src/sora_audio_sink.h:95` の `buffer_cond_` を `std::condition_variable` から
+   `std::condition_variable_any` に変更する。`AppendData` 側の `notify_all`
+   (`src/sora_audio_sink.cpp:125`) は型に依らず同じ呼び出しで動く。
+2. GIL と `buffer_mtx_` を束ねる `BasicLockable` 準拠の合成ロックを用意する。GIL
+   側は `src/gil.h` の `GILLock` をメンバとして内包して再利用する (`GILLock` の
+   初期状態 `state_ == nullptr` は「GIL 保持中」を意味し、GIL 保持で入場する
+   `Read` と整合するため追加初期化は不要)。合成ロックは `GILLock` の終了処理中
+   (`Py_IsInitialized() == false`) の挙動をそのまま引き継ぐ (`sora_video_source.cpp`
+   等で既に使われている `GILLock` と同じ挙動)。設置場所は `gil.h` あるいは
+   `sora_audio_sink` 近傍とする。
+   - `lock()`: GIL 取得 → `buffer_mtx_` ロック
+   - `unlock()`: `buffer_mtx_` アンロック → GIL 解放
+3. `condition_variable_any::wait_for(合成ロック, timeout, predicate)` により、
+   ブロック中は合成ロックが `unlock()` され GIL と `buffer_mtx_` が両方解放される
+   (他の Python スレッドが進行でき、WebRTC スレッドの `AppendData` も
+   `buffer_mtx_` を取得して append できる)。起床して predicate を評価する瞬間には
+   `lock()` 済みで両方を保持し、`PyErr_CheckSignals()` は GIL 下、`buffer_.size()`
+   は `buffer_mtx_` 下で安全に評価される (シグナル中断の既存挙動も維持される)。
 
-同じ「待機中 GIL 保持」が `src/sora_audio_stream_sink.cpp` 等の他の sink にも
-無いかを併せて確認する。`Read` 相当の待機 API を持ち同じ問題を抱えるものがあれ
-ば、本 issue の対象に含めるか別 issue として切り出すかを判断する (まずは本 issue
-で `SoraAudioSinkImpl::Read` を確実に直すことを優先する)。
+### GIL を解放する範囲は待機中のみ
 
-### テスト方針
+`Read` は GIL 保持で入場し、GIL を解放するのは `wait_for` のブロック中だけであ
+る。待機後のバッファ読み出し区間 (`:171-185`) は `nb::ndarray` / `nb::capsule` の
+構築という Python C API を含むため GIL 必須であり、ここと `frames == 0` 分岐
+(`:163-169`) は GIL を保持したまま (`buffer_mtx_` も保持して) 実行する。実装時に
+「全経路で GIL を解放する」と誤って読み出し区間の GIL を落とさないこと。
 
-本バグは「`read()` 待機中の GIL 保持」であり、メディアが流れる必要は無い。
-バッファが空のまま `wait_for` がブロックするだけで確定的に再現するため、レース
-を踏ませる必要がなく、**決定的 (非 flaky) なテスト**にできる。以下の構成で
-`tests/` に再現テストを追加する。
+### ロック順序
 
-#### 前提: sink は単体生成できない (実接続が必要)
+`Read` のロック順序は GIL → `buffer_mtx_`、解放は逆順になる。`condition_variable_any`
+は notify 時も起床時も内部 mutex を保持したまま `buffer_mtx_` / GIL を取りに行か
+ない (`notify_all` は内部 mutex を取得即解放してから通知し、起床時は内部 mutex を
+解放してから合成ロックを再取得する) ため、`buffer_mtx_` ・ GIL ・内部 mutex の
+3 者間に循環待ちは生じない。`AppendData` も通常パスで GIL に触れないため GIL が
+からむ反転は無い。
+
+例外として `AppendData` は `buffer_mtx_` 保持中に `call_python(on_format_, ...)`
+(`:115`) を呼ぶ経路があるが、`on_format_` / `on_data_` はヘッダに「廃止予定」と
+明記され既定で未設定であり、本 issue のスコープ外とする (この経路が抱える GIL
+非保持の Python C API 呼び出しは別途扱う)。
+
+### 他の sink はスコープ外 (確認済み)
+
+GIL を保持したままブロックする待機 API は、`src/` 全体で
+`SoraAudioSinkImpl::Read` のみである (`wait_for` / `condition_variable` を全
+`src/` で確認)。`src/sora_audio_stream_sink.cpp` はコールバック駆動で待機 API を
+持たず、`src/sora_video_source.cpp` / `src/sora_connection.cpp` の待機は既に
+`GILLock` + `std::condition_variable_any` で GIL を解放している。よって本 issue
+の対象は `SoraAudioSinkImpl::Read` に閉じる。
+
+### 後方互換
+
+Python から見える `read()` の API・シグネチャ・戻り値・タイムアウト挙動・シグナル
+中断挙動はいずれも変えない。`src/sora_sdk_ext.cpp:446` のバインドも変更不要。
+外部依存の変更も不要で、本リポジトリ単独で完結する。
+
+## テスト方針
+
+producer がメディアを流していても、`read` が要求する `frames` を満たさない限り
+`wait_for` がブロックして GIL を握り続けるため、**決定的 (非 flaky) なテスト**に
+できる。レースを踏ませる必要はない。
+
+### 前提: sink は単体生成できず 2 接続構成が必要
 
 `SoraAudioSink` のコンストラクタは `track` (`SoraTrackInterface`) を要求し
-(`src/sora_sdk_ext.cpp:443`、`src/sora_sdk/__init__.py:34`)、この track は接続の
-`on_track` コールバック経由でしか得られない。track を単体生成する公開 API は
-無いため、sink を単体で作ることはできず、実 Sora 接続を 1 本張る必要がある。
-`tests/` は元々実サーバ前提 (`tests/conftest.py` の `TEST_SIGNALING_URLS` 等)
-で、`tests/client.py` の `_on_track` (`:500-507`) が audio track から
-`SoraAudioSink` を生成する既存ハーネスをそのまま流用できる
-(`tests/test_sendonly_recvonly.py` 等が同型)。
+(`src/sora_sdk_ext.cpp:443`、`src/sora_sdk/__init__.py:34`)、track はリモートの
+`on_track` 経由でしか得られない。recvonly 単独では送信相手がいないので track が
+来ない。よって `tests/test_sendonly_recvonly.py` と同型の 2 接続構成を用いる。
 
-#### 再現テストの構成
+- sendonly クライアントを `fake_audio=True` で接続して音声を流す
+  (`tests/client.py` の `connect(fake_audio=True)`, `:237`)。
+- 別途 recvonly クライアントを接続し、その `_on_track` (`tests/client.py:500-507`)
+  で `self._audio_sink` に `SoraAudioSink` が生成される。recvonly の出力サンプリン
+  グレートは `tests/client.py` の既定 16000 Hz・1 ch (`:68-69`)。
 
-1. 既存ハーネスで接続を張り、`on_track` 経由で audio sink を 1 個得る。
-2. 別スレッドで、タイムアウト内に絶対に満たされない大きな `frames` を指定して
-   `sink.read(frames=<巨大>, timeout=T)` を呼ぶ。バッファが空のまま `wait_for`
-   が T 秒ブロックすることを保証する。
-3. メインスレッドで軽い Python 処理をループしてハートビートカウンタを進め、その
-   T 秒間にカウンタがどれだけ進んだかを計測する。
-4. アサート: その T 秒間にメインスレッドが進んだこと (カウンタが十分に増えた
-   こと)。
-   - 修正前: `Read` が C レベルで GIL を握ったまま `wait_for` するため CPython
-     の GIL 切り替えが起きず、メインスレッドは T 秒間飢餓してカウンタがほぼ
-     進まない → fail。
-   - 修正後: 待機中に GIL が解放され、メインスレッドが進む → pass。
-   - しきい値は余裕を持たせる (例: T 秒間にカウンタが N 回以上進むこと)。GIL
-     保持の有無で進捗が「ほぼ 0」対「多数」と明確に分かれるため、環境差で誤判定
-     しにくい。
+`_audio_sink` は private 属性で読み出しヘルパが無いため、テストからは
+`recvonly._audio_sink` を直接参照する。`on_track` は非同期で呼ばれるので、
+`recvonly._audio_sink is not None` になるまで timeout 付きでポーリングして待つ。
+
+### 再現テストの構成
+
+1. 上記 2 接続を確立し、recvonly 側の `_audio_sink` を取得する。
+2. 別スレッドで、タイムアウト内に満たされない大きな `frames` を指定して
+   `sink.read(frames=16000 * 3600, timeout=T)` を呼ぶ (既定 16000 Hz では 1 時間分
+   で、T 秒では到達せず `wait_for` が T 秒ブロックする)。T は例えば 2 秒。
+3. メインスレッドでハートビートを計測する。例: `while 経過 < T: counter += 1;
+   time.sleep(0.01)`。`read` が GIL を握っている間はメインスレッドが `time.sleep`
+   から復帰しても GIL 再取得待ちで進めず `counter` が伸びない。
+4. アサート: T 秒間に `counter` が十分進んだこと。修正前は `read` スレッドが GIL
+   を握ったまま `wait_for` するためメインスレッドが飢餓し `counter` がほぼ伸びず
+   fail、修正後は待機中に GIL が解放され進むので pass。閾値は余裕を持たせる
+   (T=2 秒・interval=0.01 秒なら理想は約 200。例えば `counter > 50` を pass 条件に
+   すれば GIL 保持の有無で「ほぼ 0」対「100 超」と明確に分かれ、環境差で誤判定し
+   にくい)。
+5. 後始末: `read` スレッドは T 秒で自然に返るので、メインスレッドで
+   `read_thread.join(timeout=T + α)` してから両クライアントを disconnect する
+   (read がブロック中に disconnect すると sink 破棄と read スレッドが競合するため、
+   join を先に行う)。
+
+補足:
 
 - モックやスタブは使わない (CLAUDE.md)。実接続・実 sink・実スレッドで再現する。
-- シグナル中断 (`PyErr_CheckSignals`) の挙動が維持されることも確認する。
+- 「修正前は fail」を同一ブランチで確認する手順: `buffer_cond_` の型変更を含む
+  `src/sora_audio_sink.{h,cpp}` の修正は再ビルドが必要なため、テスト追加コミット
+  と修正コミットを分け、テスト追加コミット (修正前) の時点でビルド・テストして
+  fail を記録し、続く修正コミットで pass を確認する。
+- シグナル中断 (`PyErr_CheckSignals`) の挙動維持は、Python テストから決定的に
+  シグナルを踏ませるのが難しいため、自動テストではなくコードレビューで確認する。
 
 ## 完了条件
 
-- `SoraAudioSinkImpl::Read` の待機 (`wait_for`) 中に GIL が解放され、起床後の
-  predicate 評価時には GIL が取得済みであること (`src/gil.h` の `GILLock` と
-  `std::condition_variable_any` を用いる)。
+- `SoraAudioSinkImpl::Read` の待機中に GIL が解放され、他の Python スレッドが進行
+  できること (上記再現テストで確認)。
 - `read()` の API・戻り値・タイムアウト挙動・シグナル中断挙動が従来どおりである
   こと。
-- `buffer_mtx_` によるバッファ・フォーマットの排他保護が緩んでおらず、
-  `AppendData` と `Read` の間でデータ競合・取りこぼしが無いこと。
+- `AppendData` と `Read` の間で `buffer_` のデータ競合・取りこぼし・デッドロックが
+  無いこと。読み出し区間と `frames == 0` 分岐の GIL 保持が維持されていること。
 - ビルドが通り、既存テストが全て通ること。
 - 「`read(timeout=T)` の待機中にメインスレッドの Python が進める」ことを検証する
-  決定的な再現テストを `tests/` に追加していること (「テスト方針」の構成)。修正前
-  は fail し、修正後は pass することを確認していること。
+  決定的な再現テストを `tests/` に追加し、修正前は fail・修正後は pass することを
+  確認していること。
 - `CHANGES.md` の `## develop` に `[FIX]` エントリを担当者行付きで追記している
   こと (CLAUDE.md の種別順・書式に従う)。
 
