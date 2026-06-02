@@ -7,6 +7,7 @@
 #include <api/audio/channel_layout.h>
 #include <modules/audio_mixer/audio_frame_manipulator.h>
 
+#include "gil.h"
 #include "sora_call.h"
 
 SoraAudioSinkImpl::SoraAudioSinkImpl(nb::ref<SoraTrackInterface> track,
@@ -135,7 +136,12 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
 }
 
 nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
-  std::unique_lock<std::mutex> lock(buffer_mtx_);
+  // Read は GIL を保持して入場する。待機中に GIL を解放しないと、待機中ずっと
+  // GIL を握り同一プロセスの他の Python スレッドを飢餓させてしまう。
+  // GIL と buffer_mtx_ を束ねた合成ロックで condition_variable_any を待つことで、
+  // 待機 (ブロック) 中は両方を解放し、predicate 評価時とバッファ読み出し時には
+  // 両方を保持する。
+  GILMutexLock lock(buffer_mtx_);
 
   size_t num_of_samples;
   if (frames > 0) {
@@ -157,7 +163,7 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
       // Signals で wait を抜けた時は返す
       return nb::make_tuple(false, nb::none());
     }
-    // std::condition_variable::wait_for の待機中に number_of_channels_ が更新される可能性があるため、
+    // wait_for の待機中に number_of_channels_ が更新される可能性があるため、
     // 起床後に num_of_samples を計算する必要がある
     num_of_samples = frames * number_of_channels_;
   } else {

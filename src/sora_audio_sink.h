@@ -92,7 +92,9 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
   std::unique_ptr<webrtc::AudioFrame> audio_frame_;
   webrtc::PushResampler<int16_t> resampler_;
   std::mutex buffer_mtx_;
-  std::condition_variable buffer_cond_;
+  // Read の待機中に GIL と buffer_mtx_ の両方を解放するため、GILMutexLock を
+  // 待機対象にできる condition_variable_any を使う
+  std::condition_variable_any buffer_cond_;
   webrtc::BufferT<int16_t> buffer_;
   int sample_rate_;
   size_t number_of_channels_;
