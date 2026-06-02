@@ -27,8 +27,12 @@ def test_audio_sink_read_does_not_block_other_threads(settings):
     修正前: read() が待機中ずっと GIL を保持するため、メインスレッドが GIL 再取得
     待ちで飢餓し、カウンタがほぼ伸びない (fail)。
     修正後: 待機中に GIL が解放され、メインスレッドが進んでカウンタが伸びる (pass)。
+
+    なお read() が即座に返ってしまうと「待機中の GIL 挙動」を検証できないため、
+    測定区間を通して read() がブロックし続けていたこと (read スレッドが生存して
+    いること) も併せて検証し、再現テストとしての妥当性を担保する。
     """
-    read_timeout_s = 5.0
+    read_timeout_s = 10.0
     measure_duration_s = 2.0
     heartbeat_interval_s = 0.01
 
@@ -41,6 +45,8 @@ def test_audio_sink_read_does_not_block_other_threads(settings):
     recvonly.connect()
 
     read_thread = None
+    # read スレッドの状態を共有する
+    state: dict = {"started": False, "finished": False, "exc": None, "elapsed": None}
     try:
         # recvonly 側の on_track で生成される audio sink を取得する
         audio_sink = _wait_audio_sink(recvonly)
@@ -51,11 +57,23 @@ def test_audio_sink_read_does_not_block_other_threads(settings):
         huge_frames = 16000 * 3600
 
         def read_worker():
-            # 戻り値は使わない。read_timeout_s 秒待機してタイムアウトで返る
-            audio_sink.read(frames=huge_frames, timeout=read_timeout_s)
+            state["started"] = True
+            t0 = time.monotonic()
+            try:
+                # 戻り値は使わない。read_timeout_s 秒待機してタイムアウトで返る
+                audio_sink.read(frames=huge_frames, timeout=read_timeout_s)
+            except BaseException as e:
+                state["exc"] = e
+            finally:
+                state["elapsed"] = time.monotonic() - t0
+                state["finished"] = True
 
         read_thread = threading.Thread(target=read_worker, daemon=True)
         read_thread.start()
+
+        # read_worker が read() の呼び出しに入るまで待つ
+        while not state["started"]:
+            time.sleep(0.001)
 
         # メインスレッドでハートビートを計測する。
         # read() が GIL を握っている間は time.sleep から復帰しても GIL 再取得待ちで
@@ -65,6 +83,23 @@ def test_audio_sink_read_does_not_block_other_threads(settings):
         while time.monotonic() - start < measure_duration_s:
             counter += 1
             time.sleep(heartbeat_interval_s)
+
+        # 測定区間の終了時点で read スレッドがまだブロックしているか
+        read_alive_at_end = read_thread.is_alive()
+
+        # 失敗時に原因を特定できるよう診断情報を出す (pytest は失敗時のみ表示する)
+        print(
+            f"counter={counter}, read_alive_at_end={read_alive_at_end}, "
+            f"read_finished={state['finished']}, read_elapsed={state['elapsed']}, "
+            f"read_exc={state['exc']!r}"
+        )
+
+        # read() が測定区間を通してブロックし続けていたことを担保する。
+        # 即座に返っていた場合は GIL 挙動を検証できておらず、再現テストとして無効。
+        assert read_alive_at_end, (
+            "read() が測定区間中にブロックし続けていない (即座に返った疑い)。"
+            f"read_elapsed={state['elapsed']}, read_exc={state['exc']!r}"
+        )
 
         # 理想は measure_duration_s / heartbeat_interval_s = 約 200 回。
         # GIL 保持の有無で「ほぼ 0」対「100 超」と明確に分かれるため、
