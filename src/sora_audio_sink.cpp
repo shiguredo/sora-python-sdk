@@ -136,11 +136,12 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
 }
 
 nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
-  // Read は GIL を保持して入場する。待機中に GIL を解放しないと、待機中ずっと
-  // GIL を握り同一プロセスの他の Python スレッドを飢餓させてしまう。
-  // GIL と buffer_mtx_ を束ねた合成ロックで condition_variable_any を待つことで、
-  // 待機 (ブロック) 中は両方を解放し、predicate 評価時とバッファ読み出し時には
-  // 両方を保持する。
+  // 前提として、Read は呼び出された時点で GIL を保持している。
+  // このまま下の wait_for の待機中もずっと GIL を握り続けると、同一プロセスの
+  // 他の Python スレッドを最大 timeout 秒飢餓させてしまう。
+  // そこで GILMutexLock を使う。これは待機中に GIL と buffer_mtx_ の両方を解放し、
+  // 起床時に両方を取り直すため、待機中も他の Python スレッドが進める (仕組みの
+  // 詳細は gil.h の GILMutexLock のコメントを参照)。
   GILMutexLock lock(buffer_mtx_);
 
   size_t num_of_samples;
