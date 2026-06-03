@@ -87,6 +87,13 @@ def test_audio_sink_read_does_not_block_other_threads(settings):
         # read スレッドの完了を待ち、ブロック時間を確定させる
         read_thread.join(timeout=read_timeout_s + 5.0)
 
+        # join がタイムアウトした (スレッドが返らない) 異常を専用メッセージで弾く。
+        # ここで確認しないと state["elapsed"] が None のまま下の妥当性 assert に流れ、
+        # 「read が即座に返った」と誤診断される。
+        assert not read_thread.is_alive(), (
+            f"read スレッドが {read_timeout_s + 5.0} 秒以内に終了しなかった"
+        )
+
         # 失敗時に原因を特定できるよう診断情報を出す (pytest は失敗時のみ表示する)
         print(
             f"max_stall_s={max_stall_s:.3f}, samples={len(timestamps)}, "
