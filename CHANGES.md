@@ -42,8 +42,7 @@
   - `on_rpc` ハンドラを含む参照循環を循環 GC が断ち切れず接続オブジェクトのグラフ全体がリークしうる問題があった
   - @sile
 - [FIX] `SoraAudioSink.read()` が待機中に GIL を解放していなかった問題を修正する
-  - `read()` は内部の `wait_for` でデータを待つ間ずっと GIL を保持しており、`read(timeout=T)` がブロックする間、同一プロセスの他の Python スレッドが最大 T 秒間停止していた
-  - GIL と `buffer_mtx_` を束ねた合成ロックで `condition_variable_any` を待つようにし、待機中は両方を解放するよう修正した
+  - `read()` はデータを待つ間ずっと GIL を保持しており、`read(timeout=T)` がブロックする間、同一プロセスの他の Python スレッドが最大 T 秒間停止していた
   - @sile
 
 ### misc
