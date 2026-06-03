@@ -71,21 +71,39 @@ if (PyErr_CheckSignals() != 0) {
 ```
 
 `PyErr_CheckSignals()` の戻り値が 0 以外になるのは、保留シグナルのハンドラが Python
-例外を送出したとき (-1 を返し、エラー指示子がセットされる)。このとき現状コードは
-`(False, None)` を正常 return するため、**エラー指示子がセットされたまま C++ 関数が
-正常終了する**。これは Python C API の規約 (「エラー指示子がセットされた状態で正常値を
-返してはならない」) に反する。
+例外を送出したとき (-1 を返し、エラー指示子がセットされる)。
 
-意図としては「シグナルで待機を中断したら `read()` をタイムアウト同様に `(False, None)`
-で返す」ことだったと思われるが、シグナルハンドラが送出した例外 (KeyboardInterrupt 等)
-は本来呼び出し側へ伝播すべきであり、握り潰すのは不適切。
+実際の不具合の流れはより厄介で、`PyErr_CheckSignals()` が冪等でないことに起因する。
 
-### 補足: nanobind の挙動確認が必要
+1. predicate 内の `PyErr_CheckSignals()` が SIGINT を処理して KeyboardInterrupt を
+   セットし -1 を返す。同時に内部の "tripped" フラグがクリアされる。predicate は真を
+   返して `wait_for` を抜ける。
+2. 待機後の 2 回目 `PyErr_CheckSignals()` は、tripped フラグが既にクリア済みのため
+   **0 を返す**。そのため `if (PyErr_CheckSignals() != 0)` の分岐に入らず、エラー指示子を
+   セットしたまま通常の読み出し経路へ進み、最終的に `(true, output)` を返してしまう。
 
-エラー指示子をセットしたまま nb::tuple を返したとき、nanobind が実際にどう振る舞うか
-(例外を伝播するのか、SystemError 等に化けるのか、エラー指示子が残るのか) は本リポジトリ
-のコードからは断定できない。修正方針を決める前に、nanobind のバージョン
-(`CHANGES.md` 記載の `2.12.0`) での挙動を確認すること。
+いずれにせよ **エラー指示子がセットされたまま C++ 関数が non-null を返す**点が問題で、
+これは Python C API の規約 (「エラー指示子がセットされた状態で正常値を返してはならない」)
+に反する。シグナルハンドラが送出した例外 (KeyboardInterrupt 等) は本来呼び出し側へ
+伝播すべきであり、握り潰すのは不適切。
+
+### 補足: nanobind の挙動確認 (確認済み)
+
+nanobind `2.12.0` のソース (`src/error.cpp` / `src/nb_func.cpp`) を確認した結果は以下。
+
+- `throw nb::python_error();` は正しく機能する。`python_error` のコンストラクタは
+  `PyErr_GetRaisedException()` (Python 3.12+) でエラー指示子を吸い出してクリアし、
+  関数ディスパッチャ (`nb_func.cpp` の `catch (python_error &e) { e.restore(); }`) が
+  `PyErr_SetRaisedException()` で復元して `result == nullptr` で返すため、Python 側へ
+  正しく例外が伝播する。
+- 現状バグ (エラー指示子をセットしたまま non-null の tuple を返す) では、ディスパッチャ
+  は戻り値変換が成功すると tuple をそのまま返しエラー指示子をチェックしない。このため
+  CPython の `_Py_CheckFunctionResult` が
+  `SystemError: ... returned a result with an exception set` を送出する。issue が推測して
+  いた「SystemError 等に化ける」が裏付けられた。
+- `GILMutexLock` (issue 0012 で導入) 保持中に throw しても、そのデストラクタは mutex のみ
+  解放し GIL は保持したまま巻き戻るため、ディスパッチャに届く時点で GIL も保持されており
+  整合する。
 
 ### 関連
 
@@ -95,17 +113,32 @@ if (PyErr_CheckSignals() != 0) {
 
 ## 設計方針
 
-`PyErr_CheckSignals()` が 0 以外を返した (= 例外がセットされた) 場合は、`(False, None)`
-を返すのではなく、セットされた Python 例外を**伝播する**。nanobind では
-`throw nb::python_error();` で「現在セットされているエラー指示子」を C++ 例外として
-送出でき、これが Python 側へ正しく伝播する想定。
+シグナルでエラー指示子がセットされた場合は、`(False, None)` を返すのではなく、
+セットされた Python 例外を**伝播する**。nanobind では `throw nb::python_error();` で
+「現在セットされているエラー指示子」を C++ 例外として送出でき、これが Python 側へ
+正しく伝播する (上記「補足」で確認済み)。
 
-- predicate 内では例外を投げず (predicate から throw すると `wait_for` の途中で
-  スタックを巻き戻すことになり扱いが難しい)、predicate は従来どおり真を返して
-  `wait_for` を抜け、待機後の明示チェックで `PyErr_CheckSignals()` を再評価して
-  伝播する形に寄せる。タイムアウト経路 (`wait_for` が false 復帰) では従来どおり
-  `(False, None)` を返す。
-- 具体的なコードは nanobind の挙動確認 (上記「補足」) を踏まえて確定する。
+- predicate 内では例外を投げない (predicate から throw すると `wait_for` の途中で
+  スタックを巻き戻すことになり扱いが難しい)。predicate は従来どおり真を返して
+  `wait_for` を抜ける。
+- 待機後の明示チェックは `PyErr_CheckSignals()` の戻り値ではなく **`PyErr_Occurred()`**
+  で判定する。理由: `PyErr_CheckSignals()` は冪等ではない。predicate 内の
+  `PyErr_CheckSignals()` が保留シグナルを処理した時点で内部の "tripped" フラグが
+  クリアされるため、待機後に `PyErr_CheckSignals()` を再度呼んでも 0 を返してしまい、
+  predicate でセットされたエラー指示子を検出できない (現状バグの実際の挙動でもある)。
+  `PyErr_Occurred()` はエラー指示子の有無を見るだけで冪等なため、predicate が立てた
+  例外を確実に拾える。
+
+```cpp
+// wait_for を抜けた後 (タイムアウトでない)。predicate 内の PyErr_CheckSignals() が
+// シグナル例外をセットしていれば、それを握り潰さず伝播する。
+if (PyErr_Occurred()) {
+  throw nb::python_error();
+}
+```
+
+- 通常経路 (バッファ充足で抜けた場合) はエラー指示子が無いため throw されず従来どおり。
+- タイムアウト経路 (`wait_for` が false 復帰) は従来どおり `(False, None)` を返す。
 
 ## 完了条件
 
