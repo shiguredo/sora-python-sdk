@@ -2,6 +2,7 @@
 #define GIL_H_
 
 // Python.h は他のヘッダより先に include する必要がある
+// https://docs.python.org/3/c-api/intro.html#include-files
 #include <Python.h>
 
 #include <mutex>
