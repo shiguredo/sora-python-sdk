@@ -56,10 +56,9 @@ def test_audio_sink_read_does_not_block_other_threads(settings):
         # recvonly 側の on_track で生成される audio sink を取得する
         audio_sink = _wait_audio_sink(recvonly)
 
-        # recvonly の出力サンプリングレートは既定 16000 Hz・1 ch。
-        # 16000 サンプル/秒なので 16000 * 3600 は 1 時間分にあたり、
-        # read_timeout_s 秒では到達せず read() は待機し続ける。
-        huge_frames = 16000 * 3600
+        # sink の出力サンプリングレートぶんの 3600 秒 (1 時間) 分を要求する。
+        # read_timeout_s 秒では到底到達しないため read() は待機し続ける。
+        huge_frames = recvonly._audio_output_frequency * 3600
 
         def read_worker():
             t0 = time.monotonic()
