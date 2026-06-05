@@ -157,12 +157,9 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
                   buffer_.size() >= frames * number_of_channels_) ||
                  PyErr_CheckSignals() != 0;
         });
-    // wait_for を抜けた理由に関わらず、predicate 内の PyErr_CheckSignals() が
-    // シグナルハンドラの送出した例外をセットしていれば、握り潰さず伝播する。
-    // PyErr_CheckSignals() は冪等でないため、ここで再度呼んでも predicate が
-    // すでに処理したシグナルは検出できない。エラー指示子の有無を冪等に確認できる
-    // PyErr_Occurred() で判定する。タイムアウト判定より前に置き、タイムアウト
-    // 直前にシグナルが処理されエラー指示子が残るケースも取りこぼさないようにする。
+    // 待機を抜けた後にエラー指示子が立っていれば握り潰さず伝播する。predicate が
+    // 呼んだ PyErr_CheckSignals() は冪等でなく再呼び出しでは検出できないため、冪等な
+    // PyErr_Occurred() で判定する。タイムアウト判定より前に置き取りこぼさないようにする。
     if (PyErr_Occurred()) {
       throw nb::python_error();
     }
