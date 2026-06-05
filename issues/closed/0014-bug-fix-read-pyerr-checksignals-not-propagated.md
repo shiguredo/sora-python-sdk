@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-06-03
 - Polished: 2026-06-03
+- Completed: 2026-06-05
 - Model: Opus 4.8
 - Branch: feature/fix-read-pyerr-checksignals-not-propagated
 
@@ -212,8 +213,43 @@ if (!ready) {
 
 ## 関連 issue
 
-- `issues/0012-bug-fix-audio-sink-read-holds-gil.md` (PR #293。現時点では未マージで `issues/`
-  直下。マージ完了で `issues/closed/` へ移動予定): 本問題の発見契機。`Read` の待機まわりと
-  `GILMutexLock` を導入する。
+- `issues/closed/0012-bug-fix-audio-sink-read-holds-gil.md` (PR #293 でマージ済み): 本問題の
+  発見契機。`Read` の待機まわりと `GILMutexLock` を導入した。
 - `issues/closed/0009-bug-fix-on-push-missing-gil.md`: Read / コールバック周辺の Python C API
   規約に関する修正の先例。
+
+## 解決方法
+
+設計方針どおり、`Read` の待機を抜けた後に `PyErr_Occurred()` でエラー指示子の有無を冪等に
+判定し、セットされていれば `throw nb::python_error();` で Python 例外を伝播するよう修正した。
+これによりシグナルハンドラが送出した例外 (Ctrl-C による KeyboardInterrupt 等) を握り潰さず
+呼び出し側へ伝播し、あわせてシグナルで待機を抜けた際のバッファ外アクセス (メモリ破壊) も塞いだ。
+
+- `src/sora_audio_sink.cpp` の `Read` で `wait_for` の戻り値を `bool ready` に受け、待機後に
+  `if (PyErr_Occurred()) throw nb::python_error();` を `if (!ready)` のタイムアウト判定より前に
+  置いた。従来の `if (PyErr_CheckSignals() != 0)` 戻り値判定は、predicate (待機条件) 内で既に
+  シグナルを処理済みのため 2 回目の呼び出しが 0 を返し例外を取りこぼしていた
+  (`PyErr_CheckSignals()` は非冪等)。エラー指示子の有無を冪等に見る `PyErr_Occurred()` に
+  置き換えて確実に拾う。
+- predicate は従来どおり真を返して `wait_for` を抜け、throw は predicate の外 (待機後) で行う。
+  throw 時は `GILMutexLock` のデストラクタが `buffer_mtx_` のみ解放し GIL を保持したまま巻き戻る
+  ため、nanobind のディスパッチャに GIL 保持で届き Python 側へ正しく伝播する。
+- 副次効果として、シグナルで predicate が真になった場合に要求フレーム数へ未充足のまま読み出し
+  経路へ進み、`memcpy` のバッファ外読み出しと `buffer_.size() - num_of_samples` の `size_t`
+  アンダーフローでメモリ破壊に至る経路を、throw により読み出し前に脱出して塞いだ。
+- `read()` の API・シグネチャ・戻り値型は不変。正常系 (タイムアウトで `(false, None)` を返す /
+  データ取得) の挙動も不変。
+- `CHANGES.md` の `## develop` に `[FIX]` エントリを追記した。
+- あわせてコメントの可読性を整理し、コードコメントの "predicate" を「待機条件」に統一した
+  (`src/gil.h` / `src/sora_audio_sink.cpp`)。
+
+### テストについて
+
+シグナル例外伝播の自動テストは追加しなかった。本問題はメインスレッドで `read()` を呼び、その
+待機中にシグナルを受けた場合のみ発火する (`PyErr_CheckSignals()` は非メインスレッドでは何もせず
+0 を返す CPython 仕様による)。安定した自動テストを書く手段が無いため (メインスレッドの SIGINT は
+pytest / pytest-xdist のシグナル処理と干渉する、sink 取得が実 Sora サーバを要する、
+`xfail_strict=True` で不安定テストの退避もできない)、正当性の確認はコード検査・ビルド通過・
+nanobind 2.12.0 のソース (`error.cpp` / `nb_func.cpp`) での伝播経路確認に置いた。既存テスト
+`tests/test_audio_sink_read_gil.py` は `read()` をワーカースレッドで実行するため本修正の影響を
+受けず、タイムアウト時の `(false, None)` 返却も不変であることを確認した。
