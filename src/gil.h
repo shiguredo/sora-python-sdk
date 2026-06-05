@@ -1,7 +1,11 @@
 #ifndef GIL_H_
 #define GIL_H_
 
+// Python.h は他のヘッダより先に include する必要がある
+// https://docs.python.org/3/c-api/intro.html#include-files
 #include <Python.h>
+
+#include <mutex>
 
 // nanobind::gil_scoped_acquire は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
 // 挙動を考えていないので、自前で用意する
@@ -72,6 +76,46 @@ struct GILLock {
     state_ = PyEval_SaveThread();
   }
   PyThreadState* state_ = nullptr;
+};
+
+// GIL と std::mutex を束ねて std::condition_variable_any に渡すための合成ロック。
+//
+// 「GIL を保持して入場し、待機中だけ GIL と mutex の両方を解放したい」場面で使う。
+// condition_variable_any は待機のブロック中に unlock() を、起床時に lock() を呼ぶ
+// ため、これにより待機中は GIL と mutex の両方が解放され、predicate 評価時には
+// 両方が取得済みになる。
+//
+// 前提・約束:
+// - 呼び出し側が GIL を保持した状態で構築すること。コンストラクタは mutex のみ
+//   取得し (GIL には触れない)、両者あわせて待機に渡せる locked 状態になる。
+// - lock() は GIL 取得 → mutex ロック、unlock() は mutex アンロック → GIL 解放の
+//   順で行う。GIL を取得してから mutex を取るロック順序を一貫させる。
+// - 破棄時は mutex のみ解放し、GIL の状態は呼び出し側に委ねる (GIL を保持したまま
+//   return する関数で使うため、ここで GIL を解放しない)。
+//   condition_variable_any は待機から戻る際にロックを取得済みにするため、破棄時は
+//   常に mutex を保持している。
+struct GILMutexLock {
+ public:
+  explicit GILMutexLock(std::mutex& mtx) : mtx_(mtx) { mtx_.lock(); }
+  ~GILMutexLock() { mtx_.unlock(); }
+
+  GILMutexLock(const GILMutexLock&) = delete;
+  GILMutexLock& operator=(const GILMutexLock&) = delete;
+  GILMutexLock(GILMutexLock&&) = delete;
+  GILMutexLock& operator=(GILMutexLock&&) = delete;
+
+  void lock() {
+    gil_.lock();
+    mtx_.lock();
+  }
+  void unlock() {
+    mtx_.unlock();
+    gil_.unlock();
+  }
+
+ private:
+  GILLock gil_;
+  std::mutex& mtx_;
 };
 
 #endif

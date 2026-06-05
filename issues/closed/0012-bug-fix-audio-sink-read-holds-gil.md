@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-06-02
 - Polished: 2026-06-02
+- Completed: 2026-06-03
 - Model: Opus 4.8
 - Branch: feature/fix-audio-sink-read-holds-gil
 
@@ -206,4 +207,31 @@ producer がメディアを流していても、`read` が要求する `frames` 
 
 ## 解決方法
 
-(対応後に記載する)
+設計方針どおり、`Read` の待機を GIL と `buffer_mtx_` を束ねた合成ロック +
+`condition_variable_any` 化して、待機中に両方を解放するよう修正した。
+
+- `src/gil.h` に合成ロック `GILMutexLock` を追加した。`std::mutex` を参照で受け取り、
+  `lock()` は GIL 取得 → mutex ロック、`unlock()` は mutex アンロック → GIL 解放を行う
+  `BasicLockable`。呼び出し側が GIL を保持した状態で構築し、コンストラクタは mutex のみ
+  取得する。デストラクタは mutex のみ解放し GIL は呼び出し側に委ねる (GIL を保持したまま
+  return する `Read` 向け)。GIL の取得・解放には既存の `GILLock` を内包して再利用した。
+- `src/sora_audio_sink.h` の `buffer_cond_` を `std::condition_variable` から
+  `std::condition_variable_any` に変更した (合成ロックを待機対象にできるようにするため)。
+- `src/sora_audio_sink.cpp` の `Read` で、`buffer_mtx_` の `std::unique_lock` を
+  `GILMutexLock` に置き換えた。これにより `wait_for` のブロック中は GIL と `buffer_mtx_`
+  の両方が解放され、predicate 評価時とバッファ読み出し区間では両方を保持する。読み出し
+  区間 (`nb::ndarray` / `nb::capsule` 構築) は GIL 必須のため、GIL の解放は待機中のみに
+  限定している。`read()` の API・戻り値・タイムアウト・シグナル中断挙動は不変。
+- 再現テスト `tests/test_audio_sink_read_gil.py` を追加した。sendonly (fake_audio) +
+  recvonly の 2 接続で audio sink を得て、別スレッドで巨大フレーム数の `read()` を待機させ、
+  メインスレッドの最大停止時間 (`max_stall_s`) を計測する。修正前は GIL 保持でメインが
+  飢餓し `max_stall_s` が read のブロック時間付近まで伸びて fail、修正後は GIL 解放で
+  収まり pass する。CI 全プラットフォームで修正前 fail・修正後 pass を確認した。
+- `CHANGES.md` の `## develop` に `[FIX]` エントリを追記した。
+
+### 切り出した別 issue
+
+- `on_format_` / `on_data_` を `AppendData` が GIL 非保持で呼ぶ未定義動作は本 issue の
+  スコープ外として `issues/pending/0013-bug-fix-append-data-callback-missing-gil.md` に分離。
+- シグナル割り込み時に `PyErr_CheckSignals()` がセットした例外を握り潰す問題は
+  `issues/0014-bug-fix-read-pyerr-checksignals-not-propagated.md` に分離。
