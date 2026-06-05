@@ -157,14 +157,14 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
                   buffer_.size() >= frames * number_of_channels_) ||
                  PyErr_CheckSignals() != 0;
         });
-    // 待機を抜けた後にエラー指示子が立っていれば握り潰さず伝播する。predicate が
+    // 待機を抜けた後にエラー指示子が立っていれば握り潰さず伝播する。待機条件で
     // 呼んだ PyErr_CheckSignals() は冪等でなく再呼び出しでは検出できないため、冪等な
     // PyErr_Occurred() で判定する。タイムアウト判定より前に置き取りこぼさないようにする。
     if (PyErr_Occurred()) {
       throw nb::python_error();
     }
     if (!ready) {
-      // タイムアウトで返す
+      // 要求フレーム数が貯まらないままタイムアウトしたので (false, None) を返す
       return nb::make_tuple(false, nb::none());
     }
     // wait_for の待機中に number_of_channels_ が更新される可能性があるため、
