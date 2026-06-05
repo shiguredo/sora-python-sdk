@@ -44,6 +44,10 @@
 - [FIX] `SoraAudioSink.read()` が待機中に GIL を解放していなかった問題を修正する
   - `read()` はデータを待つ間ずっと GIL を保持しており、`read(timeout=T)` がブロックする間、同一プロセスの他の Python スレッドが最大 T 秒間停止していた
   - @sile
+- [FIX] `SoraAudioSink.read()` がシグナル割り込み時に Python 例外を握り潰していた問題を修正する
+  - メインスレッドで `read()` の待機中に Ctrl-C (SIGINT) を送ると、シグナルハンドラが送出した KeyboardInterrupt 等を呼び出し側へ伝播せず、エラー指示子をセットしたまま正常値を返しており、Python C API の規約に違反していた
+  - エラー指示子をセットしたまま読み出し経路へ進むため、バッファ外アクセスによるメモリ破壊も誘発しうる問題があった
+  - @sile
 
 ### misc
 

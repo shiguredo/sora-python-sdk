@@ -147,21 +147,27 @@ nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
   size_t num_of_samples;
   if (frames > 0) {
     // フレーム数のリクエストがある場合はリクエスト分が貯まるまで待つ
-    if (!buffer_cond_.wait_for(
-            lock,
-            std::chrono::nanoseconds(
-                // Python の流儀に合わせて秒を float で受け取っているので換算
-                (int64_t)((double)timeout * 1000. * 1000. * 1000.)),
-            [&] {
-              return (number_of_channels_ > 0 &&
-                      buffer_.size() >= frames * number_of_channels_) ||
-                     PyErr_CheckSignals() != 0;
-            })) {
-      // タイムアウトで返す
-      return nb::make_tuple(false, nb::none());
+    bool ready = buffer_cond_.wait_for(
+        lock,
+        std::chrono::nanoseconds(
+            // Python の流儀に合わせて秒を float で受け取っているので換算
+            (int64_t)((double)timeout * 1000. * 1000. * 1000.)),
+        [&] {
+          return (number_of_channels_ > 0 &&
+                  buffer_.size() >= frames * number_of_channels_) ||
+                 PyErr_CheckSignals() != 0;
+        });
+    // wait_for を抜けた理由に関わらず、predicate 内の PyErr_CheckSignals() が
+    // シグナルハンドラの送出した例外をセットしていれば、握り潰さず伝播する。
+    // PyErr_CheckSignals() は冪等でないため、ここで再度呼んでも predicate が
+    // すでに処理したシグナルは検出できない。エラー指示子の有無を冪等に確認できる
+    // PyErr_Occurred() で判定する。タイムアウト判定より前に置き、タイムアウト
+    // 直前にシグナルが処理されエラー指示子が残るケースも取りこぼさないようにする。
+    if (PyErr_Occurred()) {
+      throw nb::python_error();
     }
-    if (PyErr_CheckSignals() != 0) {
-      // Signals で wait を抜けた時は返す
+    if (!ready) {
+      // タイムアウトで返す
       return nb::make_tuple(false, nb::none());
     }
     // wait_for の待機中に number_of_channels_ が更新される可能性があるため、
