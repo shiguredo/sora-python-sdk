@@ -19,8 +19,8 @@
   - @voluntas
 - [UPDATE] nanobind を `2.12.0` に上げる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.13` に上げる
-  - WEBRTC_BUILD_VERSION を `m149.7827.0.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.14` に上げる
+  - WEBRTC_BUILD_VERSION を `m150.7871.0.0` に上げる
   - CMAKE_VERSION を `4.3.2` に上げる
   - BOOST_VERSION を `1.91.0` に上げる
   - @torikizi
