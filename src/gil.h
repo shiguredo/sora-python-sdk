@@ -82,7 +82,7 @@ struct GILLock {
 //
 // 「GIL を保持して入場し、待機中だけ GIL と mutex の両方を解放したい」場面で使う。
 // condition_variable_any は待機のブロック中に unlock() を、起床時に lock() を呼ぶ
-// ため、これにより待機中は GIL と mutex の両方が解放され、predicate 評価時には
+// ため、これにより待機中は GIL と mutex の両方が解放され、待機条件の評価時には
 // 両方が取得済みになる。
 //
 // 前提・約束:
