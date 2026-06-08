@@ -2,9 +2,10 @@ import json
 import queue
 import threading
 import time
+from collections.abc import Callable
 from enum import Enum
 from threading import Event
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy
 from conftest import Settings
@@ -42,27 +43,27 @@ class SoraClient:
         self,
         settings: Settings,
         role: SoraRole,
-        simulcast: Optional[bool] = None,
-        spotlight: Optional[bool] = None,
+        simulcast: bool | None = None,
+        spotlight: bool | None = None,
         metadata: dict[str, str] | None = None,
         jwt_private_claims: dict[str, Any] | None = None,
-        audio: Optional[bool] = None,
-        audio_codec_type: Optional[str] = None,
-        audio_opus_params: Optional[dict[str, Any]] = None,
-        video: Optional[bool] = None,
-        video_codec_type: Optional[str] = None,
-        video_bit_rate: Optional[int] = None,
-        data_channel_signaling: Optional[bool] = None,
-        ignore_disconnect_websocket: Optional[bool] = None,
-        data_channels: Optional[list[dict[str, Any]]] = None,
-        forwarding_filter: Optional[dict[str, Any]] = None,
-        forwarding_filters: Optional[list[dict[str, Any]]] = None,
-        client_key: Optional[bytes] = None,
-        client_cert: Optional[bytes] = None,
-        ca_cert: Optional[bytes] = None,
-        degradation_preference: Optional[SoraDegradationPreference] = None,
-        user_agent: Optional[str] = None,
-        video_codec_preference: Optional[SoraVideoCodecPreference] = None,
+        audio: bool | None = None,
+        audio_codec_type: str | None = None,
+        audio_opus_params: dict[str, Any] | None = None,
+        video: bool | None = None,
+        video_codec_type: str | None = None,
+        video_bit_rate: int | None = None,
+        data_channel_signaling: bool | None = None,
+        ignore_disconnect_websocket: bool | None = None,
+        data_channels: list[dict[str, Any]] | None = None,
+        forwarding_filter: dict[str, Any] | None = None,
+        forwarding_filters: list[dict[str, Any]] | None = None,
+        client_key: bytes | None = None,
+        client_cert: bytes | None = None,
+        ca_cert: bytes | None = None,
+        degradation_preference: SoraDegradationPreference | None = None,
+        user_agent: str | None = None,
+        video_codec_preference: SoraVideoCodecPreference | None = None,
         audio_channels: int = 1,
         audio_sample_rate: int = 16000,
         audio_output_channels: int = 1,
@@ -71,9 +72,9 @@ class SoraClient:
         video_height: int = 480,
         video_frame_rate: int = 30,
         libcamera: bool = False,
-        libcamera_controls: Optional[list[tuple[str, str]]] = None,
+        libcamera_controls: list[tuple[str, str]] | None = None,
         native_frame_output: bool = False,
-        force_i420_conversion: Optional[bool] = None,
+        force_i420_conversion: bool | None = None,
     ):
         self._signaling_urls = settings.signaling_urls
         self._role = role.value
@@ -124,16 +125,16 @@ class SoraClient:
             force_i420_conversion=force_i420_conversion,
         )
 
-        self._fake_audio_thread: Optional[threading.Thread] = None
-        self._fake_video_thread: Optional[threading.Thread] = None
+        self._fake_audio_thread: threading.Thread | None = None
+        self._fake_video_thread: threading.Thread | None = None
 
-        self._audio_source: Optional[SoraAudioSource] = None
+        self._audio_source: SoraAudioSource | None = None
         if self._audio:
             self._audio_source = self._sora.create_audio_source(
                 self._audio_channels, self._audio_sample_rate
             )
 
-        self._video_source: Optional[SoraVideoSource | SoraTrackInterface] = None
+        self._video_source: SoraVideoSource | SoraTrackInterface | None = None
         if libcamera and self._video:
             self._video_source = self._sora.create_libcamera_source(
                 width=self._video_width,
@@ -145,8 +146,8 @@ class SoraClient:
         elif self._video:
             self._video_source = self._sora.create_video_source()
 
-        self._audio_sink: Optional[SoraAudioSink] = None
-        self._video_sink: Optional[SoraVideoSink] = None
+        self._audio_sink: SoraAudioSink | None = None
+        self._video_sink: SoraVideoSink | None = None
 
         self._data_channel_ready_events: dict[str, Event] = {}
         self._messaging_recv_queues: dict[str, queue.Queue] = {}
@@ -178,39 +179,39 @@ class SoraClient:
         )
 
         # "type": "offer" のパラメータ
-        self._offer_data_channel_signaling: Optional[bool] = None
-        self._offer_data_channels: Optional[list[dict[str, Any]]] = None
+        self._offer_data_channel_signaling: bool | None = None
+        self._offer_data_channels: list[dict[str, Any]] | None = None
 
         # "type": "switched" のパラメータ
-        self._ignore_disconnect_websocket: Optional[bool] = None
+        self._ignore_disconnect_websocket: bool | None = None
 
-        self._connection_id: Optional[str] = None
+        self._connection_id: str | None = None
 
         # state
         self._connected: Event = Event()
         self._switched: bool = False
         self._ws_close: bool = False
-        self._ws_close_code: Optional[int] = None
-        self._ws_close_reason: Optional[str] = None
+        self._ws_close_code: int | None = None
+        self._ws_close_reason: str | None = None
         self._disconnected: Event = Event()
 
         self._notify_queue: queue.Queue = queue.Queue()
 
-        self._disconnect_error_code: Optional[int] = None
-        self._disconnect_error_message: Optional[str] = None
+        self._disconnect_error_code: int | None = None
+        self._disconnect_error_message: str | None = None
 
         self._default_connection_timeout_s: float = 10.0
 
         # signaling message
-        self._connect_message: Optional[dict[str, Any]] = None
-        self._redirect_message: Optional[dict[str, Any]] = None
-        self._offer_message: Optional[dict[str, Any]] = None
-        self._answer_message: Optional[dict[str, Any]] = None
+        self._connect_message: dict[str, Any] | None = None
+        self._redirect_message: dict[str, Any] | None = None
+        self._offer_message: dict[str, Any] | None = None
+        self._answer_message: dict[str, Any] | None = None
         self._candidate_messages: list[dict[str, Any]] = []
         self._re_offer_messages: list[dict[str, Any]] = []
         self._re_answer_messages: list[dict[str, Any]] = []
-        self._disconnect_message: Optional[dict[str, Any]] = None
-        self._close_message: Optional[dict[str, Any]] = None
+        self._disconnect_message: dict[str, Any] | None = None
+        self._close_message: dict[str, Any] | None = None
 
         # callback
         self._connection.on_signaling_message = self._on_signaling_message
@@ -289,23 +290,23 @@ class SoraClient:
         return self._metadata
 
     @property
-    def connection_id(self) -> Optional[str]:
+    def connection_id(self) -> str | None:
         return self._connection_id
 
     @property
-    def connect_message(self) -> Optional[dict[str, Any]]:
+    def connect_message(self) -> dict[str, Any] | None:
         return self._connect_message
 
     @property
-    def redirect_message(self) -> Optional[dict[str, Any]]:
+    def redirect_message(self) -> dict[str, Any] | None:
         return self._redirect_message
 
     @property
-    def offer_message(self) -> Optional[dict[str, Any]]:
+    def offer_message(self) -> dict[str, Any] | None:
         return self._offer_message
 
     @property
-    def answer_message(self) -> Optional[dict[str, Any]]:
+    def answer_message(self) -> dict[str, Any] | None:
         return self._answer_message
 
     @property
@@ -321,11 +322,11 @@ class SoraClient:
         return self._re_answer_messages
 
     @property
-    def disconnect_message(self) -> Optional[dict[str, Any]]:
+    def disconnect_message(self) -> dict[str, Any] | None:
         return self._disconnect_message
 
     @property
-    def close_message(self) -> Optional[dict[str, Any]]:
+    def close_message(self) -> dict[str, Any] | None:
         return self._close_message
 
     @property
@@ -337,7 +338,7 @@ class SoraClient:
         return self._switched
 
     @property
-    def ignore_disconnect_websocket(self) -> Optional[bool]:
+    def ignore_disconnect_websocket(self) -> bool | None:
         return self._ignore_disconnect_websocket
 
     @property
@@ -345,19 +346,19 @@ class SoraClient:
         return self._ws_close
 
     @property
-    def ws_close_code(self) -> Optional[int]:
+    def ws_close_code(self) -> int | None:
         return self._ws_close_code
 
     @property
-    def ws_close_reason(self) -> Optional[str]:
+    def ws_close_reason(self) -> str | None:
         return self._ws_close_reason
 
     @property
-    def disconnect_code(self) -> Optional[int]:
+    def disconnect_code(self) -> int | None:
         return self._disconnect_code
 
     @property
-    def disconnect_reason(self) -> Optional[str]:
+    def disconnect_reason(self) -> str | None:
         return self._disconnect_reason
 
     def _fake_audio_loop(self):
@@ -506,7 +507,7 @@ class SoraClient:
             self._video_sink = SoraVideoSink(track)
             self._video_sink.on_frame = self._on_video_frame
 
-    def wait_notify(self, pred: Callable[[dict], bool], timeout: Optional[int] = 5):
+    def wait_notify(self, pred: Callable[[dict], bool], timeout: int | None = 5):
         while True:
             notify = self._notify_queue.get(block=True, timeout=timeout)
             if pred(notify):
