@@ -34,7 +34,7 @@ class Settings:
         if not env_path.exists():
             return
 
-        with open(env_path, "r", encoding="utf-8") as f:
+        with open(env_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#"):

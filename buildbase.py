@@ -37,13 +37,13 @@ import subprocess
 import tarfile
 import urllib.parse
 import zipfile
-from typing import Dict, List, NamedTuple, Optional
+from typing import NamedTuple
 
 if platform.system() == "Windows":
     import winreg
 
 
-class ChangeDirectory(object):
+class ChangeDirectory:
     def __init__(self, cwd):
         self._cwd = cwd
 
@@ -146,9 +146,9 @@ def add_path(path: str, is_after=False):
 
 def download(
     url: str,
-    output_dir: Optional[str] = None,
-    filename: Optional[str] = None,
-    expected_sha256: Optional[str] = None,
+    output_dir: str | None = None,
+    filename: str | None = None,
+    expected_sha256: str | None = None,
 ) -> str:
     if filename is None:
         output_path = urllib.parse.urlparse(url).path.split("/")[-1]
@@ -220,7 +220,7 @@ def verify_sha256(file_path: str, expected_sha256: str):
         logging.info(f"SHA256 hash verified successfully for {file_path}")
 
 
-def read_version_file(path: str) -> Dict[str, str]:
+def read_version_file(path: str) -> dict[str, str]:
     versions = {}
 
     lines = open(path, encoding="utf-8").readlines()
@@ -274,7 +274,7 @@ def versioned(func):
 #
 # 単一のディレクトリに格納されている場合はそのディレクトリ名を返す。
 # そうでない場合は None を返す。
-def _is_single_dir(infos, get_name, is_dir) -> Optional[str]:
+def _is_single_dir(infos, get_name, is_dir) -> str | None:
     # tarfile: ['path', 'path/to', 'path/to/file.txt']
     # zipfile: ['path/', 'path/to/', 'path/to/file.txt']
     # どちらも / 区切りだが、ディレクトリの場合、後ろに / が付くかどうかが違う
@@ -297,11 +297,11 @@ def _is_single_dir(infos, get_name, is_dir) -> Optional[str]:
     return dirname
 
 
-def is_single_dir_tar(tar: tarfile.TarFile) -> Optional[str]:
+def is_single_dir_tar(tar: tarfile.TarFile) -> str | None:
     return _is_single_dir(tar.getmembers(), lambda t: t.name, lambda t: t.isdir())
 
 
-def is_single_dir_zip(zip: zipfile.ZipFile) -> Optional[str]:
+def is_single_dir_zip(zip: zipfile.ZipFile) -> str | None:
     return _is_single_dir(zip.infolist(), lambda z: z.filename, lambda z: z.is_dir())
 
 
@@ -317,7 +317,7 @@ def _extractzip(z: zipfile.ZipFile, path: str):
         mod = info.external_attr >> 16
         if (mod & 0o120000) == 0o120000:
             # シンボリックリンク
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 src = f.read()
             os.remove(filepath)
             with cd(os.path.dirname(filepath)):
@@ -350,7 +350,7 @@ def _extractzip(z: zipfile.ZipFile, path: str):
 # - out/libsora/libsora-1.23/file2
 # - out/libsora/LICENSE
 # が出力される。
-def extract(file: str, output_dir: str, output_dirname: str, filetype: Optional[str] = None):
+def extract(file: str, output_dir: str, output_dirname: str, filetype: str | None = None):
     path = os.path.join(output_dir, output_dirname)
     logging.info(f"Extract {file} to {path}")
     if (
@@ -552,7 +552,7 @@ def install_file_ifexists(src: str, dst: str):
 def replace_vcproj_static_runtime(project_file: str):
     # なぜか MSVC_STATIC_RUNTIME が効かずに DLL ランタイムを使ってしまうので
     # 生成されたプロジェクトに対して静的ランタイムを使うように変更する
-    s = open(project_file, "r", encoding="utf-8").read()
+    s = open(project_file, encoding="utf-8").read()
     s = s.replace("MultiThreadedDLL", "MultiThreaded")
     s = s.replace("MultiThreadedDebugDLL", "MultiThreadedDebug")
     open(project_file, "w", encoding="utf-8").write(s)
@@ -617,7 +617,7 @@ class WebrtcInfo(NamedTuple):
     version_file: str
     deps_file: str
     webrtc_include_dir: str
-    webrtc_source_dir: Optional[str]
+    webrtc_source_dir: str | None
     webrtc_library_dir: str
     webrtc_jar_file: str
     clang_dir: str
@@ -626,7 +626,7 @@ class WebrtcInfo(NamedTuple):
 
 
 def get_webrtc_info(
-    platform: str, local_webrtc_build_dir: Optional[str], install_dir: str, debug: bool
+    platform: str, local_webrtc_build_dir: str | None, install_dir: str, debug: bool
 ) -> WebrtcInfo:
     webrtc_install_dir = os.path.join(install_dir, "webrtc")
 
@@ -679,7 +679,7 @@ def install_boost(
     install_dir,
     sora_version,
     platform: str,
-    expected_sha256: Optional[str] = None,
+    expected_sha256: str | None = None,
 ):
     win = platform.startswith("windows_")
     filename = (
@@ -756,7 +756,7 @@ index 54a6ced32..4bb3810b3 100644
              local req = "-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64" ;
              local prop = "-property installationPath" ;
              local limit ;
- 
+
 -            if $(version) = 14.3
 +            if $(version) = 14.4
 +            {
@@ -768,12 +768,12 @@ index 54a6ced32..4bb3810b3 100644
              }
 @@ -2174,7 +2190,7 @@ for local arch in [ MATCH "^\\.cpus-on-(.*)" : [ VARNAMES $(__name__) ] ]
                       armv7 armv7s ;
- 
+
  # Known toolset versions, in order of preference.
 -.known-versions = 14.3 14.2 14.1 14.0 12.0 11.0 10.0 10.0express 9.0 9.0express 8.0 8.0express 7.1
 +.known-versions = 14.4 14.3 14.2 14.1 14.0 12.0 11.0 10.0 10.0express 9.0 9.0express 8.0 8.0express 7.1
      7.1toolkit 7.0 6.0 ;
- 
+
  # Version aliases.
 @@ -2226,6 +2242,11 @@ for local arch in [ MATCH "^\\.cpus-on-(.*)" : [ VARNAMES $(__name__) ] ]
      "Microsoft Visual Studio/2022/*/VC/Tools/MSVC/*/bin/Host*/*"
@@ -784,7 +784,7 @@ index 54a6ced32..4bb3810b3 100644
 +    "Microsoft Visual Studio/2022/*/VC/Tools/MSVC/*/bin/Host*/*"
 +    ;
 +.version-14.4-env = VS170COMNTOOLS ProgramFiles ProgramFiles(x86) ;
- 
+
  # Auto-detect all the available msvc installations on the system.
  auto-detect-toolset-versions ;
 """
@@ -798,9 +798,9 @@ def build_and_install_boost(
     install_dir,
     debug: bool,
     cxx: str,
-    cflags: List[str],
-    cxxflags: List[str],
-    linkflags: List[str],
+    cflags: list[str],
+    cxxflags: list[str],
+    linkflags: list[str],
     toolset,
     visibility,
     target_os,
@@ -810,7 +810,7 @@ def build_and_install_boost(
     address_model="64",
     runtime_link=None,
     android_build_platform="linux-x86_64",
-    expected_sha256: Optional[str] = None,
+    expected_sha256: str | None = None,
 ):
     version_underscore = version.replace(".", "_")
 
@@ -1036,9 +1036,9 @@ def install_sora_and_deps(
 def build_sora(
     platform: str,
     local_sora_cpp_sdk_dir: str,
-    local_sora_cpp_sdk_args: List[str],
+    local_sora_cpp_sdk_args: list[str],
     debug: bool,
-    local_webrtc_build_dir: Optional[str],
+    local_webrtc_build_dir: str | None,
 ):
     if debug and "--debug" not in local_sora_cpp_sdk_args:
         local_sora_cpp_sdk_args = ["--debug", *local_sora_cpp_sdk_args]
@@ -1059,7 +1059,7 @@ class SoraInfo(NamedTuple):
 
 
 def get_sora_info(
-    platform: str, local_sora_cpp_sdk_dir: Optional[str], install_dir: str, debug: bool
+    platform: str, local_sora_cpp_sdk_dir: str | None, install_dir: str, debug: bool
 ) -> SoraInfo:
     if local_sora_cpp_sdk_dir is not None:
         configuration = "debug" if debug else "release"
@@ -1251,7 +1251,7 @@ def install_cmake(version, source_dir, install_dir, platform: str, ext):
 
 @versioned
 def install_sdl2(
-    version, source_dir, build_dir, install_dir, debug: bool, platform: str, cmake_args: List[str]
+    version, source_dir, build_dir, install_dir, debug: bool, platform: str, cmake_args: list[str]
 ):
     url = (
         f"https://github.com/libsdl-org/SDL/releases/download/release-{version}/SDL2-{version}.zip"
@@ -1361,7 +1361,7 @@ def install_sdl2(
 
 @versioned
 def install_sdl3(
-    version, source_dir, build_dir, install_dir, debug: bool, platform: str, cmake_args: List[str]
+    version, source_dir, build_dir, install_dir, debug: bool, platform: str, cmake_args: list[str]
 ):
     url = f"https://github.com/libsdl-org/SDL/releases/download/release-{version}/SDL3-{version}.tar.gz"
     path = download(url, source_dir)
@@ -1541,7 +1541,7 @@ def install_blend2d_official(
     build_dir,
     install_dir,
     cmake_args,
-    expected_sha256: Optional[str] = None,
+    expected_sha256: str | None = None,
 ):
     rm_rf(os.path.join(source_dir, "blend2d"))
     rm_rf(os.path.join(build_dir, "blend2d"))
@@ -1768,9 +1768,9 @@ index 6464e200f..c7bc417a1 100644
 --- a/third_party/boringssl-with-bazel/CMakeLists.txt
 +++ b/third_party/boringssl-with-bazel/CMakeLists.txt
 @@ -543,30 +543,6 @@ add_library(
- 
+
  target_link_libraries(ssl crypto)
- 
+
 -add_executable(
 -  bssl
 -
@@ -1805,12 +1805,12 @@ index 7f1b69f..bcf5577 100644
 @@ -147,10 +147,7 @@ if(MINGW)
      set(ZLIB_DLL_SRCS ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj)
  endif(MINGW)
- 
+
 -add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
  add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 -set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
 -set_target_properties(zlib PROPERTIES SOVERSION 1)
- 
+
  if(NOT CYGWIN)
      # This property causes shared libraries on Linux to have the full version
 @@ -160,22 +157,16 @@ if(NOT CYGWIN)
@@ -1819,7 +1819,7 @@ index 7f1b69f..bcf5577 100644
      # the DLL comes from the resource file win32/zlib1.rc
 -    set_target_properties(zlib PROPERTIES VERSION ${ZLIB_FULL_VERSION})
  endif()
- 
+
  if(UNIX)
      # On unix-like platforms the library is almost always called libz
 -   set_target_properties(zlib zlibstatic PROPERTIES OUTPUT_NAME z)
@@ -1830,7 +1830,7 @@ index 7f1b69f..bcf5577 100644
      # Creates zlib1.dll when building shared library version
 -    set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
  endif()
- 
+
  if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
 -    install(TARGETS zlib zlibstatic
 +    install(TARGETS zlibstatic
@@ -1869,8 +1869,8 @@ def install_grpc(
     build_dir,
     install_dir,
     debug: bool,
-    cmake_args: List[str],
-    cmake_build_args: List[str] = [],
+    cmake_args: list[str],
+    cmake_build_args: list[str] = [],
 ):
     grpc_source_dir = os.path.join(source_dir, "grpc")
     grpc_build_dir = os.path.join(build_dir, "grpc")
@@ -1926,7 +1926,7 @@ index 38d63db..b97b175 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -795,7 +795,7 @@ endif()
- 
+
  if(INSTALL_ENABLED)
    install(TARGETS crypto ssl EXPORT OpenSSLTargets)
 -  install(TARGETS bssl)
@@ -1944,7 +1944,7 @@ def install_boringssl(
     build_dir: str,
     install_dir: str,
     configuration: str,
-    cmake_args: List[str],
+    cmake_args: list[str],
 ):
     boringssl_source_dir = os.path.join(source_dir, "boringssl")
     boringssl_build_dir = os.path.join(build_dir, "boringssl")
@@ -1974,7 +1974,7 @@ def install_boringssl(
 
 @versioned
 def install_opus(
-    version, source_dir, build_dir, install_dir, configuration: str, cmake_args: List[str]
+    version, source_dir, build_dir, install_dir, configuration: str, cmake_args: list[str]
 ):
     opus_source_dir = os.path.join(source_dir, "opus")
     opus_build_dir = os.path.join(build_dir, "opus")
@@ -2204,7 +2204,7 @@ def install_aom(version, source_dir, build_dir, install_dir, configuration, cmak
         cmd(["cmake", "--install", aom_build_dir])
 
 
-class PlatformTarget(object):
+class PlatformTarget:
     def __init__(self, os, osver, arch, extra=None):
         self.os = os
         self.osver = osver
@@ -2334,7 +2334,7 @@ def fix_clang_version(clang_dir, clang_version):
     )
 
 
-class Platform(object):
+class Platform:
     def _check(self, flag, error_message):
         if not flag:
             raise Exception(error_message)
