@@ -17,7 +17,10 @@
 - [UPDATE] setuptools を `~=82.0` に上げる
   - `82.0.x` を許可する
   - @voluntas
-- [UPDATE] nanobind を `2.12.0` に上げる
+- [UPDATE] nanobind を `2.13.0` に上げる
+  - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要
+  - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
+  - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.14` に上げる
   - WEBRTC_BUILD_VERSION を `m150.7871.0.0` に上げる
