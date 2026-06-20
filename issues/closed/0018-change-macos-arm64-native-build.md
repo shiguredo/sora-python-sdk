@@ -3,9 +3,9 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-20
-- Completed: -
+- Completed: 2026-06-20
 - Model: Composer 2.5
-- Branch: feature/change-macos-arm64-native-build
+- Branch: feature/change-scikit-build-core-native-deps
 
 ## 目的
 
@@ -214,3 +214,10 @@ matrix の `python_host_platform` は両 entry とも `macosx-14.0-arm64` に統
 revert は `pyproject.toml` の macOS override / `fetch_deps.cmake` の Darwin 分岐 / xcrun ガード / `build_macos` 復活設定の根本設計に起因する不具合で、 追加コミットで修正できない場合に選ぶ。 個別関数や設定値レベル (FATAL_ERROR 文言 / matrix の `python_host_platform` / env の追加) は revert ではなく追加コミットで前進させる。
 
 手順: `git revert -m 1 <merge-commit>` で revert PR を作成し、 `build_macos` job が再び `if: false` で disable された状態を CI で確認する。 revert 後の macOS host は再び `fetch_deps.cmake:19-23` の FATAL_ERROR で `uv build --wheel` が configure 段階で落ちるため、 `_deps/macos_arm64/` と `_deps/llvm/arm64-Darwin/` は残置可能 (実害なし)。
+
+## 実装時の補足
+
+- 実装ブランチは 0016 と同じ `feature/change-scikit-build-core-native-deps` に相乗りした。 1 PR に 0016 と 0018 が同梱される。
+- 設計方針・解決方法の「FATAL_ERROR メッセージや冒頭コメントから旧 issue 番号を消して現番号 (0016 / 0021) に直す」指示は、 `shiguredo-issues` 規約「ソースコード本体・ドキュメントに issue 番号を書かない」を優先し、 番号書き換えではなく **番号削除** で対応した (`fetch_deps.cmake` の冒頭 issue 参照コメント・許容リスト不一致時の FATAL_ERROR の「will be added in 0021 (Windows)」末尾・Unsupported host FATAL_ERROR の「Windows host will be added in 0021」末尾・Darwin 分岐コメントの「Windows サポートは 0021 で追加予定」を削除)。
+- `CHANGES.md` エントリも同規約に従い、 内部 job 名 (`build_macos`) を露出せず利用者視点の文言とした。
+- レビューで指摘された 0016 由来の `uv sync` lockfile 同期 (dev-dependencies からの `nanobind` 抜けの反映) を同一コミットに同梱した。 0018 のスコープ外だが commit message で明示している。
