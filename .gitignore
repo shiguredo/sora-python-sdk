@@ -29,4 +29,7 @@ src/sora_sdk/py.typed
 # libopenh264
 libopenh264*
 
+/_deps
+/dist-docker
+
 /smallproj

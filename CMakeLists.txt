@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 4.1)
+
+# 依存取得を project() 内（言語有効化前）に差し込む
+list(APPEND CMAKE_PROJECT_TOP_LEVEL_INCLUDES "${CMAKE_CURRENT_LIST_DIR}/cmake/scripts/fetch_deps.cmake")
+
 project(sora_sdk)
 
 # Only interpret if() arguments as variables or keywords when unquoted.
@@ -52,11 +56,20 @@ execute_process(
 list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 
 set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な値は windows, macos, ubuntu")
+set(SORA_GEN_PYI ON CACHE BOOL "Generate .pyi stub")
+set(SORA_PYTHON_SDK_PLATFORM "" CACHE STRING "プラットフォーム識別子 (例: ubuntu-24.04_x86_64)")
 set(WEBRTC_INCLUDE_DIR "" CACHE PATH "WebRTC のインクルードディレクトリ")
 set(WEBRTC_LIBRARY_DIR "" CACHE PATH "WebRTC のライブラリディレクトリ")
 set(WEBRTC_LIBRARY_NAME "webrtc" CACHE STRING "WebRTC のライブラリ名")
 set(Boost_ROOT "" CACHE PATH "Boost のルートディレクトリ")
 set(SORA_DIR "" CACHE PATH "Sora のルートディレクトリ")
+set(OPENH264_DIR "" CACHE PATH "OpenH264 ヘッダのインストールディレクトリ")
+set(LIBCXX_INCLUDE_DIR "" CACHE PATH "libc++ のインクルードディレクトリ")
+set(LIBCXXABI_INCLUDE_DIR "" CACHE PATH "libc++abi のインクルードディレクトリ")
+
+# VERSION ファイルから SORA_PYTHON_SDK_VERSION を取得する
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" _VERSION_RAW)
+string(STRIP "${_VERSION_RAW}" SORA_PYTHON_SDK_VERSION)
 
 list(APPEND CMAKE_PREFIX_PATH ${SORA_DIR})
 list(APPEND CMAKE_MODULE_PATH ${SORA_DIR}/share/cmake)
@@ -103,10 +116,15 @@ if (SORA_GEN_PYI)
   )
 endif()
 
-target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION=${SORA_PYTHON_SDK_VERSION})
+target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION="${SORA_PYTHON_SDK_VERSION}")
 
 set_target_properties(sora_sdk_ext PROPERTIES CXX_STANDARD 20 C_STANDARD 20)
 set_target_properties(sora_sdk_ext PROPERTIES POSITION_INDEPENDENT_CODE ON)
+# C++20 module 依存スキャン (clang-scan-deps) を無効化する。
+# libwebrtc 同梱 clang バイナリには clang-scan-deps が含まれず、
+# Sora C++ SDK 側も C++20 module を使っていないため不要。
+set_target_properties(sora_sdk_ext PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+set_target_properties(nanobind-static PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 
 if(TARGET_OS STREQUAL "macos")
   set_target_properties(sora_sdk_ext PROPERTIES CXX_VISIBILITY_PRESET hidden)
@@ -201,7 +219,10 @@ endif()
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 target_link_libraries(nanobind-static PRIVATE Sora::sora)
 
-install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)
+install(TARGETS sora_sdk_ext LIBRARY DESTINATION sora_sdk)
 if (SORA_GEN_PYI)
-  install(FILES py.typed sora_sdk_ext.pyi DESTINATION ".")
+  install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/py.typed
+    ${CMAKE_CURRENT_BINARY_DIR}/sora_sdk_ext.pyi
+    DESTINATION sora_sdk)
 endif()

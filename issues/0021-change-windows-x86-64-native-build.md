@@ -7,14 +7,14 @@
 
 ## 目的
 
-0001 で ubuntu-24.04 x86_64 native 向けに実装した scikit-build-core + `cmake/scripts/fetch_deps.cmake` を Windows x86_64 でも動作させ、 Windows host 上で `uv build --wheel` 一発で Windows x86_64 用 wheel を生成できる状態にする。 0001 で `if: false` で disable していた `build_windows` job を復活させる。
+0016 で ubuntu-24.04 x86_64 native 向けに実装した scikit-build-core + `cmake/scripts/fetch_deps.cmake` を Windows x86_64 でも動作させ、 Windows host 上で `uv build --wheel` 一発で Windows x86_64 用 wheel を生成できる状態にする。 0016 で `if: false` で disable していた `build_windows` job を復活させる。
 
 ## 設計の前提（プロジェクト全体の新方針からの該当部）
 
 - ビルド環境は ubuntu-24.04 x86_64 host のみに集約するが、 macOS (arm64) と **Windows (x86_64) は例外的にそれぞれの OS で native build を維持する** （ cross-compile しない）
 - Windows native は Windows x86_64 runner で native build する
 - Windows は **MSVC + Windows SDK 同梱ランタイム** でビルドする。 libwebrtc 同梱 clang は使わない（既存 `CMakeLists.txt:174-190` が MSVC 静的ランタイム前提）。 libcxx / libcxxabi も使わない（ MSVC 標準 STL を使う）
-- 0001 で実装した `_sora_fetch_llvm` は ubuntu / macOS 経路で必要だが、 Windows では呼ばない
+- 0016 で実装した `_sora_fetch_llvm` は ubuntu / macOS 経路で必要だが、 Windows では呼ばない
 
 ## スコープ
 
@@ -32,10 +32,10 @@
 
 含まない（別 issue で扱う）:
 
-- macOS arm64 native （ 0002 ）
-- Linux arm64 cross-compile （ 0003 / 0004 ）
-- レガシーファイル削除（ 0006 ）
-- Makefile （ 0007 ）
+- macOS arm64 native （ 0018 ）
+- Linux arm64 cross-compile （ 0019 / 0020 ）
+- レガシーファイル削除（ 0022 ）
+- Makefile （ 0023 ）
 - ローカル dev 用 CMake option（ `SORA_LOCAL_WEBRTC_BUILD_DIR` 等。別途新 issue で扱う）
 - Windows x86 (32-bit) （プロジェクトでサポート対象外）
 - Windows arm64 （プロジェクトでサポート対象外）
@@ -110,7 +110,7 @@ function(_sora_fetch_openh264 version git_url dest stamp_path)
       configure_file("${_h}" "${dest}/include/wels/" COPYONLY)
     endforeach()
   else()
-    # 既存 make install-headers 経路 (0001 で実装済み)
+    # 既存 make install-headers 経路 (0016 で実装済み)
     find_program(_SORA_MAKE_EXECUTABLE make)
     if(NOT _SORA_MAKE_EXECUTABLE)
       message(FATAL_ERROR
@@ -129,7 +129,7 @@ function(_sora_fetch_openh264 version git_url dest stamp_path)
 endfunction()
 ```
 
-ただし 0001 で `Windows は OpenH264 を使わない` （ `CMakeLists.txt:193-199` の `if (NOT TARGET_OS STREQUAL "windows")` ガード）と確定している。 OpenH264 取得自体を Windows で skip する判断もあり得る。 整理:
+ただし 0016 で `Windows は OpenH264 を使わない` （ `CMakeLists.txt:193-199` の `if (NOT TARGET_OS STREQUAL "windows")` ガード）と確定している。 OpenH264 取得自体を Windows で skip する判断もあり得る。 整理:
 
 - 案 A: Windows でも `_sora_fetch_openh264` を呼ぶが、 ヘッダだけコピー（ `dynamic_h264_*.cpp` は Windows では include されないため実害なし）
 - 案 B: Windows では `_sora_fetch_openh264` を完全 skip（ `_sora_fetch_archive` の openh264 呼び出しを `if(NOT WIN32)` で囲む）
@@ -147,7 +147,7 @@ if(NOT WIN32)
 endif()
 ```
 
-Windows では `_SORA_CLANG_DIR` を設定しない。 `CMakeLists.txt` 側で `if(NOT WIN32 AND _SORA_CLANG_DIR)` ガードで `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` を設定するように 0001 の指示を修正する（ 0005 polish に含める）。
+Windows では `_SORA_CLANG_DIR` を設定しない。 `CMakeLists.txt` 側で `if(NOT WIN32 AND _SORA_CLANG_DIR)` ガードで `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` を設定するように 0016 の指示を修正する（ 0021 polish に含める）。
 
 ### TARGET_OS の Windows 上書き
 
@@ -256,7 +256,7 @@ cmake.define.SORA_GEN_PYI = "OFF"
 
 ## ロールバック
 
-0005 マージ後に Windows build で問題が発覚した場合:
+0021 マージ後に Windows build で問題が発覚した場合:
 
 1. `git revert -m 1 <merge-commit>` で revert PR を作成
 2. revert 後、 `build_windows` job が再び `if: false` に戻り skip されることを確認
