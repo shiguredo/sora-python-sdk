@@ -11,11 +11,9 @@
 
 ## develop
 
-- [UPDATE] wheel を `~=0.46` に上げる
-  - `0.46.x` を許可する
+- [CHANGE] build backend を setuptools から scikit-build-core に切り替える
   - @voluntas
-- [UPDATE] setuptools を `~=82.0` に上げる
-  - `82.0.x` を許可する
+- [CHANGE] macOS 14 / 15 (arm64) 向け wheel のビルドを scikit-build-core 経路で復活させる
   - @voluntas
 - [UPDATE] nanobind を `2.13.0` に上げる
   - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要
@@ -37,6 +35,8 @@
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
     - https://issuetracker.google.com/issues/439801349
   - @torikizi
+- [FIX] User-Agent と sora_client の文字列を `Sora Unity SDK` から `Sora Python SDK` に直す
+  - @voluntas
 - [FIX] `SoraConnection::OnPush` が GIL を取得せずに Python コールバックを呼んでいた問題を修正する
   - GIL 非保持の内部スレッドから Python C API を呼ぶ未定義動作であり、参照カウント競合によるメモリ破壊で `push` 受信時にプロセスが SIGSEGV でクラッシュしうる問題があった
   - @sile
