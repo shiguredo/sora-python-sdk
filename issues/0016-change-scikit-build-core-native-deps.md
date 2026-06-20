@@ -12,7 +12,7 @@ build backend を `setuptools.build_meta` から `scikit_build_core.build` に�
 
 ## 優先度根拠
 
-- 後続 issue (0003 〜 0008) が本 issue の成果物 (`cmake/scripts/fetch_deps.cmake` / `_deps/` レイアウト / scikit-build-core overrides 構造) を前提に組まれている。
+- 後続 issue (0018 〜 0023) が本 issue の成果物 (`cmake/scripts/fetch_deps.cmake` / `_deps/` レイアウト / scikit-build-core overrides 構造) を前提に組まれている。
 - 二段ビルド (`run.py build` → `uv build`) と `build_pyi` artifact 経路が CI 信頼性を下げている。
 - 既存の `setup.py:bdist_wheel.get_tag` ハードコード platform tag や `run.py:268-273` 経由の `importlib.metadata.version` による C++ マクロ注入はトラブル源で、 次の依存更新前に整理しておきたい。
 
@@ -30,12 +30,12 @@ build backend を `setuptools.build_meta` から `scikit_build_core.build` に�
 
 含まない（別 issue で扱う）:
 
-- macOS arm64 (0003) / Linux arm64 cross (0004 ubuntu armv8, 0005 jetson + raspberry-pi-os) / Windows (0006)。
-- レガシーファイル削除、 `build_pyi` / `build_ubuntu_arm` 完全削除、 `e2e_test` 復活、 `auditwheel repair` による manylinux タグ付与、 sha256 検証 (0007)。
-- Makefile (0008)。
+- macOS arm64 (0018) / Linux arm64 cross (0019 ubuntu armv8, 0020 jetson + raspberry-pi-os) / Windows (0021)。
+- レガシーファイル削除、 `build_pyi` / `build_ubuntu_arm` 完全削除、 `e2e_test` 復活、 `auditwheel repair` による manylinux タグ付与、 sha256 検証 (0022)。
+- Makefile (0023)。
 - pytest E2E マーカー再設計（別 issue）。
-- `BUILD_PROFILE=debug` 時の C++ マクロへの `+debug` 連結。 既存 `setup.py:19-21` は `setup()` の `version` 引数経由で dist-info にも +debug を入れていたが、 scikit-build-core の `metadata.version` provider は VERSION ファイル直読みで +debug を載せられない。 C++ 側だけ +debug を付けると `__version__` と User-Agent が不一致になるため、 +debug 連結自体を導入しない。 文字列レベルの debug 区別が必要なら 0007 で build-debug.yml の scikit-build-core 経路化と合わせて再設計する。
-- `MANIFEST.in` の削除（参照されない状態にするのみ。 削除は 0007）。
+- `BUILD_PROFILE=debug` 時の C++ マクロへの `+debug` 連結。 既存 `setup.py:19-21` は `setup()` の `version` 引数経由で dist-info にも +debug を入れていたが、 scikit-build-core の `metadata.version` provider は VERSION ファイル直読みで +debug を載せられない。 C++ 側だけ +debug を付けると `__version__` と User-Agent が不一致になるため、 +debug 連結自体を導入しない。 文字列レベルの debug 区別が必要なら 0022 で build-debug.yml の scikit-build-core 経路化と合わせて再設計する。
+- `MANIFEST.in` の削除（参照されない状態にするのみ。 削除は 0022）。
 
 ## 現状
 
@@ -53,7 +53,7 @@ build backend を `setuptools.build_meta` から `scikit_build_core.build` に�
 | `_install/<target>/{webrtc,sora,boost,openh264}` | `_deps/<platform>/{webrtc,sora,boost,openh264}` |
 | `_install/<target>/llvm/{clang,libcxx}` | `_deps/llvm/<host_key>/{clang,libcxx}` |
 
-`<platform>` は `SORA_PYTHON_SDK_PLATFORM` （本 issue では `ubuntu-24.04_x86_64` のみ）。 `<host_key>` は `${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME}` （例 `x86_64-Linux`、 0003 で `arm64-Darwin`、 0006 で `x86_64-Windows`）。 Chromium 由来 clang バイナリは ubuntu バージョン違いで切替えないので host key に ubuntu バージョンを含めない。
+`<platform>` は `SORA_PYTHON_SDK_PLATFORM` （本 issue では `ubuntu-24.04_x86_64` のみ）。 `<host_key>` は `${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME}` （例 `x86_64-Linux`、 0018 で `arm64-Darwin`、 0021 で `x86_64-Windows`）。 Chromium 由来 clang バイナリは ubuntu バージョン違いで切替えないので host key に ubuntu バージョンを含めない。
 
 ### pyproject.toml
 
@@ -76,7 +76,7 @@ build backend を `setuptools.build_meta` から `scikit_build_core.build` に�
 - `boost.version` / `.url_template` （boost 用に `{sora_version}` も使う。 Boost は Sora C++ SDK の release ページに同梱されるため） / `.strip_components`。
 - `openh264.version` （`v` プレフィックス付き tag 名） / `openh264.git` （リポジトリ URL）。
 
-`strip_components` の実値、 `LIBCXXABI_INCLUDE_DIR` 末尾 `/include/__cxxabi_config.h` の所在は実装時に `curl -sL <url> | tar tzf - | head -5` で確認して確定する。 拡張子 (`.zip`) 対応は 0006、 sha256 検証は 0007 で導入する。
+`strip_components` の実値、 `LIBCXXABI_INCLUDE_DIR` 末尾 `/include/__cxxabi_config.h` の所在は実装時に `curl -sL <url> | tar tzf - | head -5` で確認して確定する。 拡張子 (`.zip`) 対応は 0021、 sha256 検証は 0022 で導入する。
 
 ### fetch_deps.cmake の include 経路
 
@@ -109,7 +109,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 | `LIBCXXABI_INCLUDE_DIR` | `${DEPS_ROOT}/<platform>/webrtc/include/third_party/libc++abi/src/include` |
 | `_SORA_CLANG_DIR` | `${DEPS_ROOT}/llvm/<host_key>/clang` |
 
-`DEPS_ROOT = ${CMAKE_SOURCE_DIR}/_deps`。 `_SORA_CLANG_DIR` は 0003 / 0006 が参照する想定で 0001 から出力契約に含める。
+`DEPS_ROOT = ${CMAKE_SOURCE_DIR}/_deps`。 `_SORA_CLANG_DIR` は 0018 / 0021 が参照する想定で 0016 から出力契約に含める。
 
 `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` は LLVM fetch 完了後に `_SORA_CLANG_DIR/bin/clang(++)` を期待値とし、 `if(NOT CMAKE_C_COMPILER STREQUAL "<expected>")` ガード付きで `set(... CACHE FILEPATH "" FORCE)` する（同じ値を連続 FORCE すると CMake が cache invalidation エラーを出すため）。
 
@@ -126,7 +126,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 
 ### 各取得関数（散文契約）
 
-- `_sora_fetch_archive(name url stamp_path dest_dir strip_components)` （末尾に `cmake_parse_arguments(_arg "" "SHA256" "" ${ARGN})` で `SHA256` キーワード引数の受け口を 0001 段階で用意する。 本 issue では値を渡さず、 0007 で sha256 検証導入時に値が渡される）:
+- `_sora_fetch_archive(name url stamp_path dest_dir strip_components)` （末尾に `cmake_parse_arguments(_arg "" "SHA256" "" ${ARGN})` で `SHA256` キーワード引数の受け口を 0016 段階で用意する。 本 issue では値を渡さず、 0022 で sha256 検証導入時に値が渡される）:
   - stamp 内容が `url` と一致したら skip。
   - skip しない場合は `dest_dir` を REMOVE_RECURSE してから `${_archive_dir}/.archives/${name}.tar.gz` に `file(DOWNLOAD ... INACTIVITY_TIMEOUT 120 TIMEOUT 1800 STATUS _status)`。 status code 0 以外なら部分ファイルを `file(REMOVE)` 、 1 秒スリープでリトライ、 3 回までで FATAL_ERROR。
   - 展開は **system `tar`** で行う (`find_program(NAMES tar NO_CACHE)` + `tar -xzf <archive> --strip-components=<n> -C <dest>`)。 CMake の `cmake -E tar` は `--strip-components` を **サポートしていない** ため使えない（ubuntu 24.04 / Windows 10+ / macOS 11+ いずれも system `tar` が同梱されている前提）。 失敗時は `dest_dir` を削除して FATAL_ERROR。
@@ -143,7 +143,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 
 `SORA_PYTHON_SDK_PLATFORM` 未設定時のみ実行する:
 
-1. `CMAKE_HOST_SYSTEM_NAME` が `Linux` でなければ FATAL_ERROR（0003 / 0006 で許容拡張）。
+1. `CMAKE_HOST_SYSTEM_NAME` が `Linux` でなければ FATAL_ERROR（0018 / 0021 で許容拡張）。
 2. `/etc/os-release` を `file(READ)` し、 `string(REPLACE "\n" ";")` + `foreach` で `ID` / `VERSION_ID` を抽出（`lsb_release` には依存しない）。 `ID != ubuntu` なら FATAL_ERROR。
 3. `set(SORA_PYTHON_SDK_PLATFORM "ubuntu-${VERSION_ID}_${CMAKE_HOST_SYSTEM_PROCESSOR}" CACHE STRING "" FORCE)` で確定。
 4. 許容リスト（本 issue は `ubuntu-24.04_x86_64` のみ）に含まれなければ FATAL_ERROR。
@@ -153,7 +153,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 - 既存 `cmake_minimum_required` / `cmake_policy` / `project(sora_sdk)` / `find_package(Python)` の順序は変えない。
 - `project(sora_sdk)` の直前に `list(APPEND CMAKE_PROJECT_TOP_LEVEL_INCLUDES "${CMAKE_CURRENT_LIST_DIR}/cmake/scripts/fetch_deps.cmake")` を追加。
 - 既存 `:54-59` の CACHE 宣言 6 個に加えて、 `OPENH264_DIR` / `LIBCXX_INCLUDE_DIR` / `LIBCXXABI_INCLUDE_DIR` の CACHE PATH 宣言と、 `SORA_PYTHON_SDK_PLATFORM` の CACHE STRING 宣言を追加（`fetch_deps.cmake` から FORCE 設定される受け口）。
-- `set(SORA_GEN_PYI ON CACHE BOOL "Generate .pyi stub")` を `set(TARGET_OS ...)` 直後に追加。 0004 / 0005 / 0006 は `build-dir = _build/{wheel_tag}` で fresh configure になるため `-DSORA_GEN_PYI=OFF` が後で渡されればそのまま反映される。
+- `set(SORA_GEN_PYI ON CACHE BOOL "Generate .pyi stub")` を `set(TARGET_OS ...)` 直後に追加。 0019 / 0020 / 0021 は `build-dir = _build/{wheel_tag}` で fresh configure になるため `-DSORA_GEN_PYI=OFF` が後で渡されればそのまま反映される。
 - `target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION=${SORA_PYTHON_SDK_VERSION})` （`:106`）を `target_compile_definitions(sora_sdk_ext PRIVATE SORA_PYTHON_SDK_VERSION="${SORA_PYTHON_SDK_VERSION}")` に変更（CMake 標準のイディオム。 外側クォート無し）。
 - `set_target_properties(sora_sdk_ext PROPERTIES CXX_SCAN_FOR_MODULES OFF)` と `set_target_properties(nanobind-static PROPERTIES CXX_SCAN_FOR_MODULES OFF)` を `set_target_properties(... CXX_STANDARD 20)` の直後に追加する。 CMake 3.28+ は `CXX_STANDARD 20` の対象に対して C++20 module 依存スキャン (`clang-scan-deps`) を自動有効化するが、 libwebrtc 同梱 clang バイナリには `clang-scan-deps` が含まれず、 Sora C++ SDK 側も C++20 module を使っていないため OFF にする。
 - `install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)` （`:204`）を `... DESTINATION sora_sdk` に変更。
@@ -164,18 +164,18 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 - `CMakeLists.txt` で `file(READ VERSION _RAW)` + `string(STRIP)` で `SORA_PYTHON_SDK_VERSION` を取得し、 上記 `target_compile_definitions` で C 文字列リテラルとして渡す。
 - `src/sora.cpp:215-216` を `"Mozilla 5.0 (Sora Python SDK/" SORA_PYTHON_SDK_VERSION ")"` に変更（Unity → Python の文言修正含む）。
 - `src/sora.cpp:222-223` を `"Sora Python SDK " SORA_PYTHON_SDK_VERSION` に変更（`BOOST_PP_STRINGIZE` を外すのみ）。
-- 既存 `run.py:268-273` の `importlib.metadata.version` 経由のバージョン注入は捨てる。 `sora-sdk-rpi` パッケージ名の切替は 0005 で扱う。
+- 既存 `run.py:268-273` の `importlib.metadata.version` 経由のバージョン注入は捨てる。 `sora-sdk-rpi` パッケージ名の切替は 0020 で扱う。
 
 ### wheel と CI
 
-- 生成 wheel の platform tag は `linux_x86_64`（scikit-build-core デフォルト）。 PyPI 公開不可だが本 issue 〜 0006 期間は PyPI publish を凍結する（`publish_wheel` / `create-release` は `tags/202*` 条件付きなので tag を打たない運用で対応。 PR description のチェックリストで管理）。 manylinux 化は 0007。
-- `_PYTHON_HOST_PLATFORM` は native では不要（クロス時 0004 / 0005 で導入）。
+- 生成 wheel の platform tag は `linux_x86_64`（scikit-build-core デフォルト）。 PyPI 公開不可だが本 issue 〜 0021 期間は PyPI publish を凍結する（`publish_wheel` / `create-release` は `tags/202*` 条件付きなので tag を打たない運用で対応。 PR description のチェックリストで管理）。 manylinux 化は 0022。
+- `_PYTHON_HOST_PLATFORM` は native では不要（クロス時 0019 / 0020 で導入）。
 - ルート `.gitignore` に `/_deps` を追加。
 
 `.github/workflows/build.yml`:
 
 - `build_pyi` / `build_ubuntu_arm` / `build_macos` / `build_windows` / `e2e_test` の各 job に `if: false`。
-- `build_ubuntu` job の `needs: [build_pyi]` 削除、 `download-artifact` step と `cp sora_sdk/py.typed ...` step を削除。 既存 x86_64 用 step (`if: matrix.platform.arch == 'x86_64'`) の `uv run python run.py build ...` を削除し `uv build --wheel` のみを残す（既存 `uv build` から sdist 生成も止める）。 armv8 step / multistrap install step は matrix exclude で動かないので残置（0004 で復活）。
+- `build_ubuntu` job の `needs: [build_pyi]` 削除、 `download-artifact` step と `cp sora_sdk/py.typed ...` step を削除。 既存 x86_64 用 step (`if: matrix.platform.arch == 'x86_64'`) の `uv run python run.py build ...` を削除し `uv build --wheel` のみを残す（既存 `uv build` から sdist 生成も止める）。 armv8 step / multistrap install step は matrix exclude で動かないので残置（0019 で復活）。
 - `build_ubuntu` matrix に `exclude:` を追加し `name` キー一致で 4 entry 除外:
   ```yaml
   exclude:
@@ -185,12 +185,12 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
     - platform: { name: raspberry-pi-os_armv8 }
   ```
   GitHub Actions の exclude は指定キーがすべて一致する組み合わせを除外する。 `platform.name` のみ指定で当該 platform × python_version 3 種すべてが除外され、 残るのは `ubuntu-24.04_x86_64` × py 3.12 / 3.13 / 3.14。
-- `slack_notify.needs` を `[build_ubuntu]` のみに変更（disable された job への依存を外す。 0003 / 0006 で再追加、 0007 で `build_ubuntu_arm` は削除確定）。
+- `slack_notify.needs` を `[build_ubuntu]` のみに変更（disable された job への依存を外す。 0018 / 0021 で再追加、 0022 で `build_ubuntu_arm` は削除確定）。
 - `publish_wheel` / `create-release` は変更しない（tag 起動条件付き）。
 
-`.github/workflows/build-debug.yml`: 唯一の `build_ubuntu` job に `if: false`。 ローカルで debug build を試す開発者は `uv build --wheel -C cmake.build-type=Debug` 等を直接実行する（0007 で scikit-build-core 経路へ完全移行）。
+`.github/workflows/build-debug.yml`: 唯一の `build_ubuntu` job に `if: false`。 ローカルで debug build を試す開発者は `uv build --wheel -C cmake.build-type=Debug` 等を直接実行する（0022 で scikit-build-core 経路へ完全移行）。
 
-`.github/workflows/e2e-test.yml`: 独立トリガ (`push` / `schedule`) で動くため、 配下の全 job （`jobs:` 配下のすべて、 `slack_notify` 含む）に `if: false` を追加（0007 で復活）。
+`.github/workflows/e2e-test.yml`: 独立トリガ (`push` / `schedule`) で動くため、 配下の全 job （`jobs:` 配下のすべて、 `slack_notify` 含む）に `if: false` を追加（0022 で復活）。
 
 ## 完了条件
 
@@ -222,7 +222,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 - **CMakeLists.txt**: 「設計方針 → CMakeLists.txt の変更点」の差分適用。
 - **src/sora.cpp**: `:215-216` と `:222-223` の 2 箇所を「設計方針 → バージョン注入と src/sora.cpp」の通り書き換える。
 - **setup.py**: 削除。
-- **MANIFEST.in**: 触らない（参照されない状態で残す。 削除は 0007）。 本 issue 〜 0007 期間は `uv build --sdist` を実行しない運用とする。
+- **MANIFEST.in**: 触らない（参照されない状態で残す。 削除は 0022）。 本 issue 〜 0022 期間は `uv build --sdist` を実行しない運用とする。
 - **.gitignore**: 末尾 `/smallproj` 行の直前に `/_deps` を追加。
 - **.github/workflows/{build,build-debug,e2e-test}.yml**: 「設計方針 → wheel と CI」の指示に従い `if: false` / `needs` 削減 / matrix exclude / step 削除 / x86_64 step を `uv build --wheel` 化。
 
@@ -231,7 +231,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 `## develop` セクションの整理:
 
 - 既存 `[UPDATE] wheel を ~=0.46 に上げる` / `[UPDATE] setuptools を ~=82.0 に上げる` の 2 エントリは削除する（`[build-system] requires` から両者が消えるため）。
-- 既存 `[UPDATE] Sora C++ SDK のバージョンを 2026.2.0-canary.11 に上げる` 配下のサブ箇条はすべて触らない（`[UPDATE] CMAKE_VERSION を 4.3.2 に上げる` サブ箇条の削除は 0007）。
+- 既存 `[UPDATE] Sora C++ SDK のバージョンを 2026.2.0-canary.11 に上げる` 配下のサブ箇条はすべて触らない（`[UPDATE] CMAKE_VERSION を 4.3.2 に上げる` サブ箇条の削除は 0022）。
 - 追加（`[CHANGE] → [FIX]` の順）:
 
 ```
