@@ -2,7 +2,6 @@
 #
 # `CMAKE_PROJECT_TOP_LEVEL_INCLUDES` 経由で `project()` の中（言語有効化前）に呼ばれる。
 # WebRTC / Sora C++ SDK / Boost / OpenH264 / LLVM の取得を CMake configure 時に完結させる。
-# 詳細は issues/0001-change-scikit-build-core-native-deps.md を参照。
 
 # 入力: Python_EXECUTABLE は scikit-build-core が CMakeInit.txt 経由で渡してくる
 if(NOT Python_EXECUTABLE)
@@ -16,47 +15,60 @@ set(DEPS_ROOT "${CMAKE_SOURCE_DIR}/_deps")
 
 # SORA_PYTHON_SDK_PLATFORM 自動検出（未設定時のみ）
 if(NOT SORA_PYTHON_SDK_PLATFORM)
-  if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-    message(FATAL_ERROR
-      "Phase 1 only supports Linux host; got '${CMAKE_HOST_SYSTEM_NAME}'. "
-      "macOS (0002) / Windows (0005) will be added in subsequent migration phases.")
-  endif()
-
-  if(NOT EXISTS "/etc/os-release")
-    message(FATAL_ERROR "/etc/os-release not found; cannot detect platform")
-  endif()
-  file(READ "/etc/os-release" _OS_RELEASE)
-  string(REPLACE "\n" ";" _OS_LINES "${_OS_RELEASE}")
-  set(_OS_ID "")
-  set(_OS_VERSION_ID "")
-  foreach(_line IN LISTS _OS_LINES)
-    if(_line MATCHES "^ID=\"?([^\"]+)\"?$")
-      set(_OS_ID "${CMAKE_MATCH_1}")
-    elseif(_line MATCHES "^VERSION_ID=\"?([^\"]+)\"?$")
-      set(_OS_VERSION_ID "${CMAKE_MATCH_1}")
+  if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+    if(NOT EXISTS "/etc/os-release")
+      message(FATAL_ERROR "/etc/os-release not found; cannot detect platform")
     endif()
-  endforeach()
-  if(NOT _OS_ID STREQUAL "ubuntu")
+    file(READ "/etc/os-release" _OS_RELEASE)
+    string(REPLACE "\n" ";" _OS_LINES "${_OS_RELEASE}")
+    set(_OS_ID "")
+    set(_OS_VERSION_ID "")
+    foreach(_line IN LISTS _OS_LINES)
+      if(_line MATCHES "^ID=\"?([^\"]+)\"?$")
+        set(_OS_ID "${CMAKE_MATCH_1}")
+      elseif(_line MATCHES "^VERSION_ID=\"?([^\"]+)\"?$")
+        set(_OS_VERSION_ID "${CMAKE_MATCH_1}")
+      endif()
+    endforeach()
+    if(NOT _OS_ID STREQUAL "ubuntu")
+      message(FATAL_ERROR
+        "Linux host must be ubuntu; got ID='${_OS_ID}' from /etc/os-release")
+    endif()
+    if(NOT _OS_VERSION_ID)
+      message(FATAL_ERROR "Failed to read VERSION_ID from /etc/os-release")
+    endif()
+    set(SORA_PYTHON_SDK_PLATFORM
+      "ubuntu-${_OS_VERSION_ID}_${CMAKE_HOST_SYSTEM_PROCESSOR}"
+      CACHE STRING "" FORCE)
+  elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    # Xcode Command Line Tools 不在を早期に検出する。
+    find_program(_XCRUN_EXECUTABLE xcrun NO_CACHE)
+    if(NOT _XCRUN_EXECUTABLE)
+      message(FATAL_ERROR
+        "Xcode Command Line Tools not found. "
+        "Run 'xcode-select --install' in a terminal and re-run the build.")
+    endif()
+    # Rosetta 経由で起動した CMake は x86_64-Darwin を返すため、 arm64 host のみ通す。
+    if(NOT CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+      message(FATAL_ERROR
+        "macOS host must be arm64; got '${CMAKE_HOST_SYSTEM_PROCESSOR}'. "
+        "macOS x86_64 is not supported.")
+    endif()
+    set(SORA_PYTHON_SDK_PLATFORM "macos_arm64" CACHE STRING "" FORCE)
+  else()
     message(FATAL_ERROR
-      "Linux host must be ubuntu; got ID='${_OS_ID}' from /etc/os-release")
+      "Unsupported host: '${CMAKE_HOST_SYSTEM_NAME}'. "
+      "Supported hosts: Linux (ubuntu only), Darwin (arm64 only).")
   endif()
-  if(NOT _OS_VERSION_ID)
-    message(FATAL_ERROR "Failed to read VERSION_ID from /etc/os-release")
-  endif()
-  set(SORA_PYTHON_SDK_PLATFORM
-    "ubuntu-${_OS_VERSION_ID}_${CMAKE_HOST_SYSTEM_PROCESSOR}"
-    CACHE STRING "" FORCE)
 endif()
 
-# 許容リスト検証（Phase 1: ubuntu-24.04_x86_64 のみ）
-set(_SORA_ALLOWED_PLATFORMS "ubuntu-24.04_x86_64")
+# 許容リスト検証
+set(_SORA_ALLOWED_PLATFORMS "ubuntu-24.04_x86_64" "macos_arm64")
 list(FIND _SORA_ALLOWED_PLATFORMS "${SORA_PYTHON_SDK_PLATFORM}" _SORA_PLATFORM_INDEX)
 if(_SORA_PLATFORM_INDEX EQUAL -1)
   message(FATAL_ERROR
-    "Phase 1 only supports SORA_PYTHON_SDK_PLATFORM=ubuntu-24.04_x86_64; "
-    "got '${SORA_PYTHON_SDK_PLATFORM}'. "
-    "Other platforms will be added in 0002 (macOS) / 0003 (ubuntu armv8) / "
-    "0004 (jetson + raspberry-pi-os) / 0005 (Windows).")
+    "Unsupported SORA_PYTHON_SDK_PLATFORM='${SORA_PYTHON_SDK_PLATFORM}'. "
+    "Supported: ubuntu-24.04_x86_64, macos_arm64.")
 endif()
 
 # 排他ロック取得（複数 Python ABI 並列ビルド時の _deps/<platform>/ 競合回避）

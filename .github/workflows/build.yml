@@ -225,50 +225,39 @@ jobs:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
   build_macos:
-    if: false
     strategy:
       fail-fast: false
       matrix:
         platform:
+          # macos-14 / macos-15 両 runner で同じ wheel タグ (macosx_14_0_arm64) を生成する。
           - name: macos-15_arm64
-            target: macos_arm64
             runs_on: macos-15
-            os: macos
-            python_host_platform: "macosx-15.0-arm64"
+            python_host_platform: "macosx-14.0-arm64"
             archflags: "-arch arm64"
           - name: macos-14_arm64
-            target: macos_arm64
             runs_on: macos-14
-            os: macos
             python_host_platform: "macosx-14.0-arm64"
             archflags: "-arch arm64"
         python_version:
           - "3.12"
           - "3.13"
           - "3.14"
-    needs: [build_pyi]
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-      - run: |
-          cp sora_sdk/py.typed src/sora_sdk/py.typed
-          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
-      - run: uv sync
-      - run: |
-          uv run python run.py build ${{ matrix.platform.target }}
-          uv build
+      - run: uv sync --no-install-project
+      - run: uv build --wheel
         env:
+          # 3 つの env をまとめて指定して wheel タグを macosx_14_0_arm64 に確定する。
+          # _PYTHON_HOST_PLATFORM は macos-15 runner で sysconfig が返す 15.0 を上書きするため必須。
           _PYTHON_HOST_PLATFORM: ${{ matrix.platform.python_host_platform }}
           ARCHFLAGS: ${{ matrix.platform.archflags }}
+          MACOSX_DEPLOYMENT_TARGET: "14.0"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -327,7 +316,7 @@ jobs:
     secrets: inherit
 
   slack_notify:
-    needs: [build_ubuntu]
+    needs: [build_ubuntu, build_macos]
     runs-on: ubuntu-slim
     if: ${{ !cancelled() }}
     steps:

@@ -56,6 +56,17 @@ provider = "scikit_build_core.metadata.regex"
 input = "VERSION"
 regex = "(?P<value>\\S+)"
 
+# macOS (Darwin) host 用 override
+# inherit.cmake.define = "append" を外すと base の [tool.scikit-build.cmake.define] が置換されるので必須。
+[[tool.scikit-build.overrides]]
+if.platform-system = "^darwin"
+inherit.cmake.define = "append"
+cmake.define.TARGET_OS = "macos"
+cmake.define.CMAKE_OSX_ARCHITECTURES = "arm64"
+cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET = "14.0"
+cmake.define.CMAKE_C_COMPILER_TARGET = "aarch64-apple-darwin"
+cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
+
 [tool.pytest.ini_options]
 # テスト探索のルートディレクトリ
 # https://docs.pytest.org/en/stable/reference/reference.html#confval-testpaths
