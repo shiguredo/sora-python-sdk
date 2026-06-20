@@ -2,6 +2,9 @@
 
 #include "sora.h"
 
+// Boost
+#include <boost/preprocessor/stringize.hpp>
+
 // WebRTC
 #include <rtc_base/crypto_random.h>
 
@@ -219,8 +222,7 @@ nb::ref<SoraConnection> Sora::CreateConnection(
   config.network_manager = factory_->default_network_manager();
   config.socket_factory = factory_->default_socket_factory();
 
-  config.sora_client =
-      "Sora Python SDK " SORA_PYTHON_SDK_VERSION;
+  config.sora_client = "Sora Python SDK " SORA_PYTHON_SDK_VERSION;
 
   conn->Init(config);
   if (audio_source) {

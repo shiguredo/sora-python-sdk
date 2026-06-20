@@ -238,8 +238,8 @@ int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   }
 
   if (conn->on_signaling_message_) {
-    nb::object on_disconnect = nb::find(conn->on_signaling_message_);
-    Py_VISIT(on_disconnect.ptr());
+    nb::object on_signaling_message = nb::find(conn->on_signaling_message_);
+    Py_VISIT(on_signaling_message.ptr());
   }
 
   if (conn->on_notify_) {
@@ -293,6 +293,7 @@ int connection_tp_clear(PyObject* self) {
   conn->on_notify_ = nullptr;
   conn->on_push_ = nullptr;
   conn->on_message_ = nullptr;
+  conn->on_rpc_ = nullptr;
   conn->on_switched_ = nullptr;
   conn->on_track_ = nullptr;
   conn->on_data_channel_ = nullptr;

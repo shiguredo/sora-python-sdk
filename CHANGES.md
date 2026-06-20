@@ -13,27 +13,49 @@
 
 - [CHANGE] build backend を setuptools から scikit-build-core に切り替える
   - @voluntas
-- [UPDATE] nanobind を `2.12.0` に上げる
+- [UPDATE] nanobind を `2.13.0` に上げる
+  - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要
+  - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
+  - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
   - @voluntas
-- [FIX] User-Agent と sora_client の文字列を `Sora Unity SDK` から `Sora Python SDK` に直す
-  - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.11` に上げる
-  - WEBRTC_BUILD_VERSION を `m149.7827.0.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.14` に上げる
+  - WEBRTC_BUILD_VERSION を `m150.7871.0.0` に上げる
   - CMAKE_VERSION を `4.3.2` に上げる
   - BOOST_VERSION を `1.91.0` に上げる
-  - macOS ビルドで Boost.Asio の `std::atomic::wait` 利用を無効化する
-    - Boost 1.91.0 では macOS 14.4 以降で Asio の `kqueue_reactor` が `std::atomic::wait` ベースの `atomic_slim_mutex` を利用するようになっており、 Sora C++ SDK はこれを無効化している
-    - Sora Python SDK 側でも同じように無効化するため `BOOST_ASIO_DISABLE_STD_ATOMIC_WAIT` を定義する
-    - 定義がずれると Boost.Asio の内部実装が食い違い、接続時にクラッシュやハングが発生する可能性がある
+  - @torikizi
+- [UPDATE] macOS ビルドで Boost.Asio の `std::atomic::wait` 利用を無効化する
+  - `2026.2.0-canary.11` で BOOST_VERSION を `1.91.0` に上げたことに伴う対応
+  - Boost 1.91.0 では macOS 14.4 以降で Asio の `kqueue_reactor` が `std::atomic::wait` ベースの `atomic_slim_mutex` を利用するようになっており、 Sora C++ SDK はこれを無効化している
+  - Sora Python SDK 側でも同じように無効化するため `BOOST_ASIO_DISABLE_STD_ATOMIC_WAIT` を定義する
+  - 定義がずれると Boost.Asio の内部実装が食い違い、接続時にクラッシュやハングが発生する可能性がある
   - @torikizi
 - [UPDATE] libwebrtc m148 で `ArrayView` が C++ 標準の `std::span` に移行したため追従する
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
     - https://issuetracker.google.com/issues/439801349
   - @torikizi
+- [FIX] User-Agent と sora_client の文字列を `Sora Unity SDK` から `Sora Python SDK` に直す
+  - @voluntas
+- [FIX] `SoraConnection::OnPush` が GIL を取得せずに Python コールバックを呼んでいた問題を修正する
+  - GIL 非保持の内部スレッドから Python C API を呼ぶ未定義動作であり、参照カウント競合によるメモリ破壊で `push` 受信時にプロセスが SIGSEGV でクラッシュしうる問題があった
+  - @sile
+- [FIX] `SoraConnection` の `connection_tp_clear` が `on_rpc_` を解放していなかった問題を修正する
+  - `connection_tp_traverse` は `on_rpc_` を `Py_VISIT` で GC に報告しているのに `connection_tp_clear` が解放しておらず、traverse/clear が非対称で CPython の循環 GC の契約に反していた
+  - `on_rpc` ハンドラを含む参照循環を循環 GC が断ち切れず接続オブジェクトのグラフ全体がリークしうる問題があった
+  - @sile
+- [FIX] `SoraAudioSink.read()` が待機中に GIL を解放していなかった問題を修正する
+  - `read()` はデータを待つ間ずっと GIL を保持しており、`read(timeout=T)` がブロックする間、同一プロセスの他の Python スレッドが最大 T 秒間停止していた
+  - @sile
+- [FIX] `SoraAudioSink.read()` がシグナル割り込み時に Python 例外を握り潰していた問題を修正する
+  - メインスレッドで `read()` の待機中にシグナル (Ctrl-C による SIGINT 等) を受け取ると、シグナルハンドラが送出した例外を呼び出し側へ伝播せず握り潰していた
+  - 加えて、シグナルで待機を抜けた際に要求フレーム数に満たないバッファをそのまま読み出し、バッファ外アクセスによってプロセスのクラッシュやメモリ破壊に至りうる問題もあった
+  - いずれもメインスレッドで `read()` を呼んだ場合にのみ発生し、ワーカースレッドなどメインスレッド以外で `read()` を呼ぶ一般的な使い方では影響しない
+  - @sile
 
 ### misc
 
 - [UPDATE] Slack 通知を `rtCamp/action-slack-notify` から `shiguredo/github-actions/slack-notify` に切り替える
+  - @voluntas
+- [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP", "PT"]` を追加する
   - @voluntas
 
 ## 2025.5.2
