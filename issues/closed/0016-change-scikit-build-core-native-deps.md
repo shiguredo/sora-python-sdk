@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Completed: -
+- Completed: 2026-06-20
 - Model: Composer 2.5
 - Branch: feature/change-scikit-build-core-native-deps
 
