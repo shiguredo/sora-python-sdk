@@ -37,20 +37,49 @@ requires = ["setuptools~=82.0", "wheel~=0.46"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
+# テスト探索のルートディレクトリ
+# https://docs.pytest.org/en/stable/reference/reference.html#confval-testpaths
+testpaths = ["tests"]
+# xfail マーカ付きのテストが期待に反して pass した場合をエラー扱いにする
+# https://docs.pytest.org/en/stable/reference/reference.html#confval-xfail_strict
 xfail_strict = true
 
 [tool.ruff]
+# 自動修正や lint が想定する Python の最小バージョン
+# https://docs.astral.sh/ruff/settings/#target-version
 target-version = "py312"
+# 行長 (E501 と formatter の折り返し基準)
+# https://docs.astral.sh/ruff/settings/#line-length
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["I", "UP", "PT"]
+# デフォルトの lint ルールに加えて有効化するルール群
+# https://docs.astral.sh/ruff/settings/#lint_extend-select
+extend-select = [
+  # isort: import の並び替えと整理
+  # https://docs.astral.sh/ruff/rules/#isort-i
+  "I",
+  # flake8-pytest-style: pytest の命名・fixture などのスタイル
+  # https://docs.astral.sh/ruff/rules/#flake8-pytest-style-pt
+  "PT",
+  # pyupgrade: 古い Python 構文を target-version に合わせて更新
+  # https://docs.astral.sh/ruff/rules/#pyupgrade-up
+  "UP",
+]
 
 [tool.ty.src]
+# 型チェック対象のファイル・ディレクトリ
+# https://docs.astral.sh/ty/reference/configuration/#src-include
 include = ["src", "tests"]
 
 [tool.uv]
+# システム Python ではなく uv 管理下の Python のみを使用する
+# https://docs.astral.sh/uv/reference/settings/#python-preference
 python-preference = "only-managed"
 
 [tool.uv.pip]
+# uv pip コマンド向けの設定
+# https://docs.astral.sh/uv/reference/settings/#pip
+# 指定日時より新しくアップロードされた配布物を解決候補から除外する
+# https://docs.astral.sh/uv/reference/settings/#pip-exclude-newer
 exclude-newer = "7 days"
