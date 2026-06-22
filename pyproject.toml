@@ -67,6 +67,14 @@ cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET = "14.0"
 cmake.define.CMAKE_C_COMPILER_TARGET = "aarch64-apple-darwin"
 cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
 
+# Windows では MSVC + Ninja でビルドし、nanobind_add_stub 実行時の .pyd import で
+# 追加の DLL/PATH 整備が必要なため、当面 pyi / py.typed は生成しない。
+[[tool.scikit-build.overrides]]
+if.platform-system = "^win32"
+inherit.cmake.define = "append"
+cmake.define.TARGET_OS = "windows"
+cmake.define.SORA_GEN_PYI = "OFF"
+
 [tool.pytest.ini_options]
 # テスト探索のルートディレクトリ
 # https://docs.pytest.org/en/stable/reference/reference.html#confval-testpaths

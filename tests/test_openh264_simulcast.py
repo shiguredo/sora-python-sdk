@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 
 import pytest
@@ -12,8 +13,8 @@ from sora_sdk import (
 )
 
 pytestmark = pytest.mark.skipif(
-    os.environ.get("OPENH264_PATH") is None,
-    reason="OpenH264 のときだけ実行する",
+    os.environ.get("OPENH264_PATH") is None or sys.platform == "win32",
+    reason="OpenH264 のときだけ実行する。Windows では OpenH264 動的呼び出しを無効にしているためスキップする",
 )
 
 

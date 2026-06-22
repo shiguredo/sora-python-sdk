@@ -1,17 +1,17 @@
 {
   "webrtc": {
-    "version": "m149.7827.0.0",
-    "url_template": "https://github.com/shiguredo-webrtc-build/webrtc-build/releases/download/{version}/webrtc.{platform}.tar.gz",
+    "version": "m150.7871.0.0",
+    "url_template": "https://github.com/shiguredo-webrtc-build/webrtc-build/releases/download/{version}/webrtc.{platform}.{ext}",
     "strip_components": 1
   },
   "sora_cpp_sdk": {
-    "version": "2026.2.0-canary.11",
-    "url_template": "https://github.com/shiguredo/sora-cpp-sdk/releases/download/{version}/sora-cpp-sdk-{version}_{platform}.tar.gz",
+    "version": "2026.2.0-canary.14",
+    "url_template": "https://github.com/shiguredo/sora-cpp-sdk/releases/download/{version}/sora-cpp-sdk-{version}_{platform}.{ext}",
     "strip_components": 1
   },
   "boost": {
     "version": "1.91.0",
-    "url_template": "https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/boost-{version}_sora-cpp-sdk-{sora_version}_{platform}.tar.gz",
+    "url_template": "https://github.com/shiguredo/sora-cpp-sdk/releases/download/{sora_version}/boost-{version}_sora-cpp-sdk-{sora_version}_{platform}.{ext}",
     "strip_components": 1
   },
   "openh264": {

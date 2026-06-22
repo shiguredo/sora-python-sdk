@@ -55,8 +55,8 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
 list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 
-set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な値は windows, macos, ubuntu")
-set(SORA_GEN_PYI ON CACHE BOOL "Generate .pyi stub")
+set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な値は windows, macos, ubuntu, jetson, raspberry-pi-os")
+set(SORA_GEN_PYI ON CACHE BOOL ".pyi スタブを生成するかどうか")
 set(SORA_PYTHON_SDK_PLATFORM "" CACHE STRING "プラットフォーム識別子 (例: ubuntu-24.04_x86_64)")
 set(WEBRTC_INCLUDE_DIR "" CACHE PATH "WebRTC のインクルードディレクトリ")
 set(WEBRTC_LIBRARY_DIR "" CACHE PATH "WebRTC のライブラリディレクトリ")
@@ -86,7 +86,6 @@ find_package(nanobind CONFIG REQUIRED)
 if(NOT TARGET_OS STREQUAL "windows")
   find_package(Threads REQUIRED)
 endif()
-
 
 nanobind_add_module(
   sora_sdk_ext
@@ -192,7 +191,7 @@ elseif(TARGET_OS STREQUAL "raspberry-pi-os")
 elseif(TARGET_OS STREQUAL "windows")
   # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
   target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
-  # CRTライブラリを静的リンクさせる
+  # CRT ライブラリを静的リンクさせる
   set_property(TARGET sora_sdk_ext PROPERTY
     MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   set_property(TARGET nanobind-static PROPERTY
@@ -219,7 +218,11 @@ endif()
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 target_link_libraries(nanobind-static PRIVATE Sora::sora)
 
-install(TARGETS sora_sdk_ext LIBRARY DESTINATION sora_sdk)
+# Windows では .pyd は RUNTIME 扱いとなるため、RUNTIME DESTINATION も指定する
+install(TARGETS sora_sdk_ext
+  LIBRARY DESTINATION sora_sdk
+  RUNTIME DESTINATION sora_sdk
+)
 if (SORA_GEN_PYI)
   install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/py.typed
