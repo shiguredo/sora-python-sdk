@@ -175,3 +175,11 @@ Python 3.13 / 3.14 用にも同じ形で計 3 件記述する（scikit-build-cor
 revert は `_sora_fetch_sysroot` の根本設計（Chromium build リポジトリ shallow clone + install-sysroot.py 実行 + sysroot 配置）に起因する不具合で追加コミットでは修正できない場合に選ぶ。 toolchain / override / matrix step の単発不具合は revert ではなく追加コミットで前進させる。
 
 手順: `git revert -m 1 <merge-commit>` で revert PR 作成、 `build_ubuntu` matrix から `ubuntu-24.04_armv8` 再 exclude を確認、 `_deps/sysroots/` は残留しても無害。
+
+## 撤回理由
+
+- Created: 2026-06-22
+
+Chromium prebuilt sysroot 案は ubuntu armv8 ターゲットでは成立するが、 jetson の `nvidia-jetpack` / Raspberry Pi OS の `libcamera-dev` のような外部 APT リポジトリ依存パッケージは Chromium が公開する固定 sysroot tarball に含まれず、 全 4 ターゲット (`ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` / `ubuntu-22.04_armv8_jetson` / `raspberry-pi-os_armv8`) を統一する共通基盤としては機能しない。 また、 multistrap が Ubuntu 26.04 で廃止される件への対応も別途必要になる。
+
+全ターゲット統一の sysroot 構築は 0024 (`multistrap` から `sysroot.py` 経路への移行) で扱う。 本 issue が想定していた ubuntu-24.04 armv8 個別 cross 対応 (toolchain ファイル新設、 pyproject.toml override 追加、 CI step 追加) は、 0024 完了後に別 issue で再起票する。
