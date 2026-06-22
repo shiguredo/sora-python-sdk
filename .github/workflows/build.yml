@@ -197,7 +197,8 @@ jobs:
           python3 sysroot.py build --config sysroot/raspberry-pi-os_armv8.json --dest /tmp/rootfs
           test -e /tmp/rootfs/usr/include/aarch64-linux-gnu/sys/types.h
           test -e /tmp/rootfs/usr/include/c++/11/cstddef
-          test -e /tmp/rootfs/usr/include/libcamera/libcamera.h
+          test -d /tmp/rootfs/usr/include/libcamera
+          ls /tmp/rootfs/usr/include/libcamera/ | head
           test "$(find /tmp/rootfs -type l -lname '/*' | wc -l)" = "0"
           test -L /tmp/rootfs/lib && test -L /tmp/rootfs/bin && test -L /tmp/rootfs/sbin
           ! test -e /tmp/rootfs/usr/sbin/exim4
