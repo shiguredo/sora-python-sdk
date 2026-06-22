@@ -64,6 +64,9 @@
 
 ### misc
 
+- [ADD] CI workflow に sysroot.py の 4 platform 検証 job を追加する
+  - ubuntu-22.04_armv8 / ubuntu-24.04_armv8 / raspberry-pi-os_armv8 / ubuntu-22.04_armv8_jetson の build → 検証 → clean を順次実行
+  - @voluntas
 - [UPDATE] Slack 通知を `rtCamp/action-slack-notify` から `shiguredo/github-actions/slack-notify` に切り替える
   - @voluntas
 - [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP", "PT"]` を追加する
