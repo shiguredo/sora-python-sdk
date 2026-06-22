@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Completed: 2026-06-22
 - Polished: 2026-06-22
 - Model: Kimi K2.7 Code
 - Branch: feature/change-windows-x86-64-native-build
@@ -243,6 +244,8 @@ tar -tf boost-<boost-version>_sora-cpp-sdk-<version>_windows_x86_64.zip | head -
 
 ## 解決方法
 
+以下の設計に基づき、 develop ブランチに反映した。
+
 ### cmake/scripts/fetch_deps.cmake
 
 - `SORA_PYTHON_SDK_PLATFORM` 算出に Windows 分岐を追加する
@@ -358,6 +361,16 @@ install(TARGETS sora_sdk_ext
 - [CHANGE] Windows x86_64 向け wheel のビルドを scikit-build-core 経路で復活させる
   - @voluntas
 ```
+
+### 反映結果
+
+- `cmake/scripts/fetch_deps.cmake` に Windows host 検出、 `.zip` 展開、 MSVC 用 LLVM / OpenH264 skip を追加した
+- `deps.json` の `url_template` に `{ext}` プレースホルダを追加し、依存バージョンを最新に合わせた
+- `pyproject.toml` に Windows 用 scikit-build-core override を追加した
+- `CMakeLists.txt` の `install(TARGETS sora_sdk_ext)` に `RUNTIME DESTINATION sora_sdk` を追加した
+- `.github/workflows/build.yml` の `build_windows` job を scikit-build-core 経路に変更し、 `slack_notify` の `needs` に `build_windows` を戻した
+- `tests/test_openh264.py` / `tests/test_openh264_simulcast.py` に Windows skip を追加した
+- `CHANGES.md` に `[CHANGE]` エントリを追加した
 
 ## ロールバック
 
