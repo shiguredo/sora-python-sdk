@@ -17,6 +17,13 @@
   - @voluntas
 - [CHANGE] Windows x86_64 向け wheel のビルドを scikit-build-core 経路で復活させる
   - @voluntas
+- [CHANGE] cross-compile 用 sysroot 構築から multistrap を廃止する
+  - multistrap は Debian/Ubuntu 上流のメンテが停滞しており、 Ubuntu 26.04 で配布終了見込みのため
+  - armv8 系 cross-compile wheel は CI で生成されない (元から matrix exclude 済)
+  - @voluntas
+- [ADD] cross-compile 用 sysroot 構築スクリプト sysroot.py を追加する
+  - ubuntu-22.04_armv8 / ubuntu-24.04_armv8 / ubuntu-22.04_armv8_jetson / raspberry-pi-os_armv8 向けの設定を同梱する
+  - @voluntas
 - [UPDATE] nanobind を `2.13.0` に上げる
   - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要
   - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
