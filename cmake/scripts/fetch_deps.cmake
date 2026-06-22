@@ -376,7 +376,8 @@ function(_sora_fetch_llvm webrtc_install_dir dest_root stamp_path)
 endfunction()
 
 # cross-compile 用 sysroot を sysroot.py で構築する。
-# scikit-build-core 経路では呼び出しを行わず、 後続の cross 系 issue で実呼び出しを追加する。
+# scikit-build-core のメインスクリプトからは呼び出さず、 cross-compile 経路が
+# 追加されたときに呼び出しを足す。
 function(_sora_fetch_rootfs rootfs_dir json_config)
   set(_script "${CMAKE_SOURCE_DIR}/sysroot.py")
   if(NOT EXISTS "${_script}")

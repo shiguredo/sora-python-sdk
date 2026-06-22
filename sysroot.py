@@ -31,6 +31,7 @@ import urllib.request
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import cast
 
 __all__ = [
     "PackageMeta",
@@ -157,19 +158,17 @@ def _normalize_url(url: str) -> str:
 def _parse_repo(raw: object, index: int) -> Repo:
     """JSON の repos[i] エントリ 1 件を Repo に変換する。"""
     _ensure(isinstance(raw, dict), f"repos[{index}] must be an object, got {type(raw).__name__}")
-    # `_ensure` で isinstance を確認済みだが、 静的解析向けにキャストする。
-    repo: Mapping[str, object] = raw  # type: ignore[assignment]
+    repo = cast("Mapping[str, object]", raw)
 
     url_raw = repo.get("url")
     _ensure(
         isinstance(url_raw, str) and bool(url_raw),
         f"repos[{index}].url must be a non-empty string",
     )
-    url_str = url_raw  # type: ignore[assignment]
+    url = cast(str, url_raw)
     _ensure(
-        isinstance(url_str, str)
-        and (url_str.startswith("http://") or url_str.startswith("https://")),
-        f"repos[{index}].url must start with http:// or https://, got {url_str!r}",
+        url.startswith("http://") or url.startswith("https://"),
+        f"repos[{index}].url must start with http:// or https://, got {url!r}",
     )
 
     suites_raw = repo.get("suites")
@@ -177,8 +176,8 @@ def _parse_repo(raw: object, index: int) -> Repo:
         isinstance(suites_raw, list) and len(suites_raw) > 0,
         f"repos[{index}].suites must be a non-empty array",
     )
-    suites_list: list[object] = suites_raw  # type: ignore[assignment]
-    for j, s in enumerate(suites_list):
+    suites = cast("list[object]", suites_raw)
+    for j, s in enumerate(suites):
         _ensure(
             isinstance(s, str) and bool(s),
             f"repos[{index}].suites[{j}] must be a non-empty string",
@@ -189,8 +188,8 @@ def _parse_repo(raw: object, index: int) -> Repo:
         isinstance(components_raw, list) and len(components_raw) > 0,
         f"repos[{index}].components must be a non-empty array",
     )
-    components_list: list[object] = components_raw  # type: ignore[assignment]
-    for j, c in enumerate(components_list):
+    components = cast("list[object]", components_raw)
+    for j, c in enumerate(components):
         _ensure(
             isinstance(c, str) and bool(c),
             f"repos[{index}].components[{j}] must be a non-empty string",
@@ -202,17 +201,17 @@ def _parse_repo(raw: object, index: int) -> Repo:
         f"repos[{index}].allow_insecure must be a bool, got {type(allow_insecure_raw).__name__}",
     )
 
-    # 真の未知フィールドは警告ログ。 webrtc-rs / momo 互換の任意フィールドは黙って無視。
+    # 真の未知フィールドは警告ログ。 webrtc-rs / momo 互換の任意フィールドは黙って無視する。
     known_keys = frozenset(["url", "suites", "components"]) | _KNOWN_OPTIONAL_REPO_KEYS
     for key in repo:
         if key not in known_keys:
             logger.warning("%s: unknown field %r in repos[%d], ignoring", _LOG_PREFIX, key, index)
 
     return Repo(
-        url=_normalize_url(url_str),  # type: ignore[arg-type]
-        suites=tuple(suites_list),  # type: ignore[arg-type]
-        components=tuple(components_list),  # type: ignore[arg-type]
-        allow_insecure=allow_insecure_raw,
+        url=_normalize_url(url),
+        suites=tuple(cast("list[str]", suites)),
+        components=tuple(cast("list[str]", components)),
+        allow_insecure=cast(bool, allow_insecure_raw),
     )
 
 
@@ -222,42 +221,39 @@ def _parse_post_install_symlink(raw: object, index: int) -> PostInstallSymlink:
         isinstance(raw, dict),
         f"post_install_symlinks[{index}] must be an object, got {type(raw).__name__}",
     )
-    entry: Mapping[str, object] = raw  # type: ignore[assignment]
+    entry = cast("Mapping[str, object]", raw)
 
-    link = entry.get("link")
+    link_raw = entry.get("link")
     _ensure(
-        isinstance(link, str) and bool(link),
+        isinstance(link_raw, str) and bool(link_raw),
         f"post_install_symlinks[{index}].link must be a non-empty string",
     )
-    file_field = entry.get("file")
+    link = cast(str, link_raw)
+    file_raw = entry.get("file")
     _ensure(
-        isinstance(file_field, str) and bool(file_field),
+        isinstance(file_raw, str) and bool(file_raw),
         f"post_install_symlinks[{index}].file must be a non-empty string",
     )
-
-    link_str = link  # type: ignore[assignment]
-    file_str = file_field  # type: ignore[assignment]
+    file_value = cast(str, file_raw)
 
     # link は <dest> 相対パスに限る。 絶対パス・先頭 / ・.. の混入はパストラバーサル防止のため CRITICAL abort。
     _ensure(
-        isinstance(link_str, str)
-        and not link_str.startswith("/")
-        and not link_str.startswith(".."),
+        not link.startswith("/") and not link.startswith(".."),
         f"post_install_symlinks[{index}].link must be a relative path without leading / or .., "
-        f"got {link_str!r}",
+        f"got {link!r}",
     )
     _ensure(
-        isinstance(link_str, str) and ".." not in Path(link_str).parts,
-        f"post_install_symlinks[{index}].link must not contain '..', got {link_str!r}",
+        ".." not in Path(link).parts,
+        f"post_install_symlinks[{index}].link must not contain '..', got {link!r}",
     )
 
     # file は basename に限る (link と同一ディレクトリの実体名)。
     _ensure(
-        isinstance(file_str, str) and "/" not in file_str and ".." not in file_str,
-        f"post_install_symlinks[{index}].file must be a basename without / or .., got {file_str!r}",
+        "/" not in file_value and ".." not in file_value,
+        f"post_install_symlinks[{index}].file must be a basename without / or .., got {file_value!r}",
     )
 
-    return PostInstallSymlink(link=link_str, file=file_str)  # type: ignore[arg-type]
+    return PostInstallSymlink(link=link, file=file_value)
 
 
 def parse_config(path: Path) -> SysrootConfig:
@@ -272,19 +268,21 @@ def parse_config(path: Path) -> SysrootConfig:
         isinstance(data, dict),
         f"top-level JSON must be an object, got {type(data).__name__}",
     )
-    obj: Mapping[str, object] = data  # type: ignore[assignment]
+    obj = cast("Mapping[str, object]", data)
 
-    name = obj.get("name")
+    name_raw = obj.get("name")
     _ensure(
-        isinstance(name, str) and bool(name) and bool(_NAME_PATTERN.match(name)),
-        f"name must be a non-empty string matching {_NAME_PATTERN.pattern}, got {name!r}",
+        isinstance(name_raw, str) and bool(name_raw) and bool(_NAME_PATTERN.match(name_raw)),
+        f"name must be a non-empty string matching {_NAME_PATTERN.pattern}, got {name_raw!r}",
     )
+    name = cast(str, name_raw)
 
-    arch = obj.get("arch")
+    arch_raw = obj.get("arch")
     _ensure(
-        isinstance(arch, str) and bool(arch),
-        f"arch must be a non-empty string, got {arch!r}",
+        isinstance(arch_raw, str) and bool(arch_raw),
+        f"arch must be a non-empty string, got {arch_raw!r}",
     )
+    arch = cast(str, arch_raw)
     if arch != "arm64":
         logger.warning(
             "%s: arch %r is not 'arm64'; proceeding but unverified",
@@ -297,8 +295,8 @@ def parse_config(path: Path) -> SysrootConfig:
         isinstance(packages_raw, list) and len(packages_raw) > 0,
         "packages must be a non-empty array",
     )
-    packages_list: list[object] = packages_raw  # type: ignore[assignment]
-    for i, p in enumerate(packages_list):
+    packages = cast("list[object]", packages_raw)
+    for i, p in enumerate(packages):
         _ensure(
             isinstance(p, str) and bool(p),
             f"packages[{i}] must be a non-empty string",
@@ -309,7 +307,7 @@ def parse_config(path: Path) -> SysrootConfig:
         isinstance(repos_raw, list) and len(repos_raw) > 0,
         "repos must be a non-empty array",
     )
-    repos_list: list[object] = repos_raw  # type: ignore[assignment]
+    repos_list = cast("list[object]", repos_raw)
     repos = tuple(_parse_repo(r, i) for i, r in enumerate(repos_list))
 
     post_install_raw = obj.get("post_install_symlinks", [])
@@ -317,12 +315,12 @@ def parse_config(path: Path) -> SysrootConfig:
         isinstance(post_install_raw, list),
         "post_install_symlinks must be an array when present",
     )
-    post_install_list: list[object] = post_install_raw  # type: ignore[assignment]
+    post_install_list = cast("list[object]", post_install_raw)
     post_install_symlinks = tuple(
         _parse_post_install_symlink(e, i) for i, e in enumerate(post_install_list)
     )
 
-    # 真の未知フィールドのみ警告。 webrtc-rs / momo 互換の任意フィールド (rust_target 等) は黙って無視。
+    # 真の未知フィールドのみ警告。 webrtc-rs / momo 互換の任意フィールド (rust_target 等) は黙って無視する。
     known_keys = (
         frozenset(["name", "arch", "packages", "repos", "post_install_symlinks"])
         | _KNOWN_OPTIONAL_KEYS
@@ -332,9 +330,9 @@ def parse_config(path: Path) -> SysrootConfig:
             logger.warning("%s: unknown top-level field %r, ignoring", _LOG_PREFIX, key)
 
     return SysrootConfig(
-        name=name,  # type: ignore[arg-type]
-        arch=arch,  # type: ignore[arg-type]
-        packages=tuple(packages_list),  # type: ignore[arg-type]
+        name=name,
+        arch=arch,
+        packages=tuple(cast("list[str]", packages)),
         repos=repos,
         post_install_symlinks=post_install_symlinks,
     )
@@ -489,7 +487,9 @@ def _parse_packages_text(text: str, base_url: str) -> list[PackageMeta]:
 def _parse_control_block(lines: list[str]) -> dict[str, str]:
     """RFC822 風の Debian control ブロックを `dict[str, str]` にパースする。
 
-    `Description: ...` の続き行のように先頭が空白の行は直前フィールド値の続きとして連結する。
+    継続行 (先頭が空白の行) は直前フィールド値の続きとして半角スペースで連結する。
+    `Depends:` などの relations は仕様上複数行に折り返されることがあるため、
+    `Description:` のような multi-line 整形フィールドの改行表現は再現しない。
     """
     fields: dict[str, str] = {}
     current_key: str | None = None
@@ -497,7 +497,7 @@ def _parse_control_block(lines: list[str]) -> dict[str, str]:
         if line.startswith((" ", "\t")):
             if current_key is None:
                 continue
-            fields[current_key] = fields[current_key] + "\n" + line.strip()
+            fields[current_key] = fields[current_key] + " " + line.strip()
             continue
         if ":" not in line:
             continue
@@ -588,7 +588,8 @@ def _fetch_all_packages_indexes(
 
     packages: dict[str, PackageMeta] = {}
     provides: dict[str, list[str]] = {}
-    # 統合順序は repos -> suites -> components の順を厳守 (issue 設計方針)。
+    # 統合順序は repos -> suites -> components の順。
+    # 同一 repo 内は配列末尾を後勝ちにすることで apt の updates 反映と同等にする。
     for i, (repo, _suite, _component) in enumerate(units):
         text = indexed_results[i]
         for meta in _parse_packages_text(text, repo.url):
@@ -618,14 +619,20 @@ def _resolve_candidate(
 def _resolve_dependencies(
     config: SysrootConfig,
     index: _PackagesIndex,
-) -> list[PackageMeta]:
-    """roots から `Depends` + `Pre-Depends` を辿り、 採用パッケージの集合と依存グラフを返す。
+) -> tuple[list[PackageMeta], dict[str, list[str]]]:
+    """roots から `Depends` + `Pre-Depends` を辿り、 採用パッケージと依存マップを返す。
 
-    返り値は採用順 (発見順) を保つ list。
+    第 1 戻り値は採用順 (発見順) を保つ list。 第 2 戻り値は
+    「meta.name -> その meta が依存する採用候補名の list」 (essential も含めて記録)。
+    依存マップは `_topological_order` が同じ採用候補で辺を張るために使う。
+
+    Essential: yes が選ばれた場合、 satisfaction として扱い install 集合には追加しない
+    (cross-compile 用 sysroot に dpkg / apt 等は不要)。
     """
     selected: dict[str, PackageMeta] = {}
     visit_order: list[str] = []
     queue: list[str] = []
+    prerequisites: dict[str, list[str]] = {}
     for root in config.packages:
         chosen = _resolve_candidate(root, index)
         if chosen is None:
@@ -644,11 +651,9 @@ def _resolve_dependencies(
         meta = selected[current]
         for relation in (*meta.depends, *meta.pre_depends):
             resolved: str | None = None
-            tried_purely_virtual = False
             for cand in relation:
                 chosen = _resolve_candidate(cand, index)
                 if chosen is None:
-                    tried_purely_virtual = True
                     continue
                 resolved = chosen
                 break
@@ -656,9 +661,9 @@ def _resolve_dependencies(
                 # 単独 / OR 全候補が「未提供」 = MTA / cron 系の意図せぬ混入を防ぐため CRITICAL abort。
                 raise SysrootError(
                     f"unresolved dependency {list(relation)!r} required by {current!r} "
-                    f"(no real package or virtual provider found; tried_purely_virtual="
-                    f"{tried_purely_virtual})"
+                    f"(no real package or virtual provider found)"
                 )
+            prerequisites.setdefault(current, []).append(resolved)
             if resolved in selected:
                 continue
             resolved_meta = index.packages[resolved]
@@ -667,28 +672,27 @@ def _resolve_dependencies(
             selected[resolved] = resolved_meta
             visit_order.append(resolved)
             queue.append(resolved)
-    return [selected[name] for name in visit_order]
+    return [selected[name] for name in visit_order], prerequisites
 
 
 def _topological_order(
     selected: list[PackageMeta],
-    index: _PackagesIndex,
+    prerequisites: Mapping[str, list[str]],
 ) -> list[PackageMeta]:
-    """採用済みパッケージを依存グラフから topological order に並べ替える。
+    """採用済みパッケージを `_resolve_dependencies` の依存マップから topological order に並べる。
 
-    同レベルのノード間は selected の出現順 (= JSON packages 順 + transitive 発見順) を tie-breaker とする。
+    同レベルのノード間は selected の出現順 (= JSON packages 順 + transitive 発見順)
+    を tie-breaker とする。 `graphlib.TopologicalSorter.static_order()` は
+    Python 3.9 以降で同レベル順序として `add()` 呼び出し順を保つ。
     """
     name_to_meta = {meta.name: meta for meta in selected}
     sorter: graphlib.TopologicalSorter[str] = graphlib.TopologicalSorter()
     for meta in selected:
-        prerequisites: list[str] = []
-        for relation in (*meta.depends, *meta.pre_depends):
-            for cand in relation:
-                chosen = _resolve_candidate(cand, index)
-                if chosen is not None and chosen in name_to_meta and chosen != meta.name:
-                    prerequisites.append(chosen)
-                    break
-        sorter.add(meta.name, *prerequisites)
+        prereqs: list[str] = []
+        for name in prerequisites.get(meta.name, ()):
+            if name in name_to_meta and name != meta.name and name not in prereqs:
+                prereqs.append(name)
+        sorter.add(meta.name, *prereqs)
     ordered_names = list(sorter.static_order())
     return [name_to_meta[name] for name in ordered_names]
 
@@ -819,7 +823,8 @@ def _ensure_usrmerge_symlinks(dest: Path) -> None:
 def _fix_absolute_symlinks(root: Path) -> None:
     """`<root>` 内の絶対パス symlink を相対パスに置き換える。
 
-    buildbase.py:install_rootfs の挙動を機能等価で移植する。
+    buildbase.py:install_rootfs の挙動を機能等価で移植する。 ターゲットが root 内に
+    実体として存在しない broken symlink はそのまま残す (元実装と同じ)。
     """
     for dirpath, _dirnames, filenames in os.walk(root):
         for filename in filenames:
@@ -829,15 +834,19 @@ def _fix_absolute_symlinks(root: Path) -> None:
             target = os.readlink(link_path)
             if not os.path.isabs(target):
                 continue
-            # rootfs_dir を先頭に付けて外側から見た絶対パスに直す。
-            target_path = Path(str(root) + target)
+            # 絶対パス target の先頭 `/` を剥がして root 配下のパスを組み立てる。
+            target_path = Path(root, target.lstrip("/"))
             if not target_path.exists():
                 continue
             relpath = os.path.relpath(target_path, dirpath)
+            try:
+                rel_link = link_path.relative_to(root)
+            except ValueError:
+                rel_link = link_path
             logger.debug(
                 "%s: rewriting symlink %s: %s -> %s",
                 _LOG_PREFIX,
-                str(link_path)[len(str(root)) :],
+                rel_link,
                 target,
                 relpath,
             )
@@ -942,10 +951,10 @@ def build_rootfs(
     index = _fetch_all_packages_indexes(config, jobs=jobs)
 
     logger.info("%s: resolving dependencies (%d roots)", _LOG_PREFIX, len(config.packages))
-    selected = _resolve_dependencies(config, index)
+    selected, prerequisites = _resolve_dependencies(config, index)
     logger.info("%s: selected %d packages", _LOG_PREFIX, len(selected))
 
-    ordered = _topological_order(selected, index)
+    ordered = _topological_order(selected, prerequisites)
 
     cache_dir.mkdir(parents=True, exist_ok=True)
     logger.info("%s: downloading %d .deb files", _LOG_PREFIX, len(ordered))
