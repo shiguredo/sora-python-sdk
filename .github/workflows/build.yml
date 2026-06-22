@@ -5,7 +5,6 @@ on:
   push:
     paths-ignore:
       - "**.md"
-      - "tests/**"
       - ".github/workflows/e2e-test.yml"
       - ".github/workflows/build-debug.yml"
     branches-ignore:
@@ -151,7 +150,7 @@ jobs:
       - if: ${{ matrix.platform.arch == 'x86_64' }}
         run: uv build --wheel
 
-      # Ubuntu armv8 向け（0003 で復活）
+      # Ubuntu armv8 向け
       - if: ${{ matrix.platform.arch == 'armv8' }}
         run: |
           uv run python run.py build ${{ matrix.platform.target }}
@@ -266,45 +265,44 @@ jobs:
           path: "dist/"
 
   build_windows:
-    if: false
-    needs: [build_pyi]
     strategy:
       fail-fast: false
       matrix:
         platform:
           - name: windows-2025_x86_64
-            target: windows_x86_64
             runs_on: windows-2025
         python_version:
           - "3.12"
           - "3.13"
           - "3.14"
     runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-
-      - run: |
-          cp sora_sdk/py.typed src/sora_sdk/py.typed
-          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
-      - run: uv sync
-      - run: |
-          uv run python run.py build ${{ matrix.platform.target }}
-          uv build
+      # Ninja + MSVC ビルドを行うため、uv build --wheel 前に amd64 開発者環境を有効化する
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: amd64
+      # プロジェクト本体の二重ビルドを避けるため、ここでは依存解決のみ行う
+      - run: uv sync --no-install-project
+      - run: uv build --wheel
+      # Windows では .pyd の DLL 解決などで import 失敗するリスクがあるため、
+      # アーティファクトアップロード前に最低限のテストを実行する
+      - shell: bash
+        run: |
+          uv pip install --force-reinstall dist/*.whl
+          uv run --no-sync pytest tests/test_version.py
+          uv run --no-sync python -c "from sora_sdk import sora_sdk_ext; print(sora_sdk_ext.__file__)"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
-          path: dist/
+          path: "dist/"
 
   # E2E テストの実行
   e2e_test:
@@ -316,7 +314,7 @@ jobs:
     secrets: inherit
 
   slack_notify:
-    needs: [build_ubuntu, build_macos]
+    needs: [build_ubuntu, build_macos, build_windows]
     runs-on: ubuntu-slim
     if: ${{ !cancelled() }}
     steps:
