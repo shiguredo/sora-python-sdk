@@ -375,6 +375,31 @@ function(_sora_fetch_llvm webrtc_install_dir dest_root stamp_path)
   file(WRITE "${stamp_path}" "${_stamp_value}")
 endfunction()
 
+# cross-compile 用 sysroot を sysroot.py で構築する。
+# scikit-build-core のメインスクリプトからは呼び出さず、 cross-compile 経路が
+# 追加されたときに呼び出しを足す。
+function(_sora_fetch_rootfs rootfs_dir json_config)
+  set(_script "${CMAKE_SOURCE_DIR}/sysroot.py")
+  if(NOT EXISTS "${_script}")
+    message(FATAL_ERROR
+      "sysroot.py not found at ${_script}. "
+      "Required to build a cross-compile sysroot.")
+  endif()
+  if(NOT EXISTS "${json_config}")
+    message(FATAL_ERROR "sysroot JSON config not found: ${json_config}")
+  endif()
+  file(MAKE_DIRECTORY "${rootfs_dir}")
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" "${_script}" build
+            "--config" "${json_config}"
+            "--dest" "${rootfs_dir}"
+    RESULT_VARIABLE _rootfs_result)
+  if(NOT _rootfs_result EQUAL 0)
+    message(FATAL_ERROR
+      "sysroot.py build failed (config=${json_config}, dest=${rootfs_dir})")
+  endif()
+endfunction()
+
 # ---------- メインスクリプト ----------
 
 # deps.json を読む

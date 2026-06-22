@@ -1,0 +1,17 @@
+{
+  "name": "ubuntu-24.04_armv8",
+  "arch": "arm64",
+  "packages": [
+    "libc6-dev",
+    "libstdc++-13-dev",
+    "libxext-dev",
+    "libdbus-1-dev"
+  ],
+  "repos": [
+    {
+      "url": "http://ports.ubuntu.com/ubuntu-ports",
+      "suites": ["noble"],
+      "components": ["main", "universe"]
+    }
+  ]
+}

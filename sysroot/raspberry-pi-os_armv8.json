@@ -1,0 +1,29 @@
+{
+  "name": "raspberry-pi-os_armv8",
+  "arch": "arm64",
+  "packages": [
+    "libc6-dev",
+    "libstdc++-11-dev",
+    "libcamera-dev",
+    "libasound2-dev",
+    "libpulse-dev",
+    "libudev-dev",
+    "libexpat1-dev",
+    "libnss3-dev",
+    "libxext-dev",
+    "libxtst-dev"
+  ],
+  "repos": [
+    {
+      "url": "http://archive.raspberrypi.org/debian",
+      "suites": ["bookworm"],
+      "components": ["main"],
+      "allow_insecure": true
+    },
+    {
+      "url": "http://deb.debian.org/debian",
+      "suites": ["bookworm"],
+      "components": ["main"]
+    }
+  ]
+}

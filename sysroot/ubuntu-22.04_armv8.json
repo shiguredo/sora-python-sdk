@@ -1,0 +1,17 @@
+{
+  "name": "ubuntu-22.04_armv8",
+  "arch": "arm64",
+  "packages": [
+    "libc6-dev",
+    "libstdc++-11-dev",
+    "libxext-dev",
+    "libdbus-1-dev"
+  ],
+  "repos": [
+    {
+      "url": "http://ports.ubuntu.com/ubuntu-ports",
+      "suites": ["jammy"],
+      "components": ["main", "universe"]
+    }
+  ]
+}

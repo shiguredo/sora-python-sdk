@@ -136,11 +136,6 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev
-      - if: ${{ matrix.platform.arch == 'armv8' }}
-        run: |
-          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           enable-cache: false
@@ -150,19 +145,104 @@ jobs:
       - if: ${{ matrix.platform.arch == 'x86_64' }}
         run: uv build --wheel
 
-      # Ubuntu armv8 向け
-      - if: ${{ matrix.platform.arch == 'armv8' }}
-        run: |
-          uv run python run.py build ${{ matrix.platform.target }}
-          uv build
-        env:
-          SORA_SDK_TARGET: ${{ matrix.platform.target }}
-
       - name: Upload Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
+
+  # sysroot.py を CI 上で 4 platform 順次ビルドして検証する。
+  # rootfs 構築の決定的な検証 (依存解決 / .deb 展開 / symlink 後処理 / キャッシュ動作) を CI で固定する。
+  verify_sysroot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - run: dpkg-deb --version
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: false
+          python-version: "3.12"
+      - name: ubuntu-22.04_armv8
+        run: |
+          set -eux
+          python3 sysroot.py build --config sysroot/ubuntu-22.04_armv8.json --dest /tmp/rootfs
+          test -e /tmp/rootfs/usr/include/aarch64-linux-gnu/sys/types.h
+          test -e /tmp/rootfs/usr/include/c++/11/cstddef
+          test "$(find /tmp/rootfs -type l -lname '/*' | wc -l)" = "0"
+          test -L /tmp/rootfs/lib && test -L /tmp/rootfs/bin && test -L /tmp/rootfs/sbin
+          ! test -e /tmp/rootfs/usr/sbin/exim4
+          ! test -e /tmp/rootfs/usr/sbin/sendmail
+          ! test -e /tmp/rootfs/usr/sbin/postfix
+          ! test -e /tmp/rootfs/usr/sbin/cron
+          find /tmp/rootfs -type f -printf '%s\n' | awk '{s+=$1}END{print s; if (s > 200*1024*1024) exit 1}'
+          python3 sysroot.py clean --dest /tmp/rootfs
+      - name: ubuntu-24.04_armv8
+        run: |
+          set -eux
+          python3 sysroot.py build --config sysroot/ubuntu-24.04_armv8.json --dest /tmp/rootfs
+          test -e /tmp/rootfs/usr/include/aarch64-linux-gnu/sys/types.h
+          test -e /tmp/rootfs/usr/include/c++/13/cstddef
+          test "$(find /tmp/rootfs -type l -lname '/*' | wc -l)" = "0"
+          test -L /tmp/rootfs/lib && test -L /tmp/rootfs/bin && test -L /tmp/rootfs/sbin
+          ! test -e /tmp/rootfs/usr/sbin/exim4
+          ! test -e /tmp/rootfs/usr/sbin/sendmail
+          ! test -e /tmp/rootfs/usr/sbin/postfix
+          ! test -e /tmp/rootfs/usr/sbin/cron
+          find /tmp/rootfs -type f -printf '%s\n' | awk '{s+=$1}END{print s; if (s > 200*1024*1024) exit 1}'
+          python3 sysroot.py clean --dest /tmp/rootfs
+      - name: raspberry-pi-os_armv8
+        run: |
+          set -eux
+          python3 sysroot.py build --config sysroot/raspberry-pi-os_armv8.json --dest /tmp/rootfs
+          test -e /tmp/rootfs/usr/include/aarch64-linux-gnu/sys/types.h
+          test -e /tmp/rootfs/usr/include/c++/11/cstddef
+          test -d /tmp/rootfs/usr/include/libcamera
+          ls /tmp/rootfs/usr/include/libcamera/ | head
+          test "$(find /tmp/rootfs -type l -lname '/*' | wc -l)" = "0"
+          test -L /tmp/rootfs/lib && test -L /tmp/rootfs/bin && test -L /tmp/rootfs/sbin
+          ! test -e /tmp/rootfs/usr/sbin/exim4
+          ! test -e /tmp/rootfs/usr/sbin/sendmail
+          ! test -e /tmp/rootfs/usr/sbin/postfix
+          ! test -e /tmp/rootfs/usr/sbin/cron
+          find /tmp/rootfs -type f -printf '%s\n' | awk '{s+=$1}END{print s; if (s > 300*1024*1024) exit 1}'
+          python3 sysroot.py clean --dest /tmp/rootfs
+      - name: ubuntu-22.04_armv8_jetson
+        run: |
+          set -eux
+          # jetson rootfs は 8 GB に達するため /var/tmp に置く
+          python3 sysroot.py build --config sysroot/ubuntu-22.04_armv8_jetson.json --dest /var/tmp/rootfs-jetson
+          test -e /var/tmp/rootfs-jetson/usr/include/aarch64-linux-gnu/sys/types.h
+          test -e /var/tmp/rootfs-jetson/usr/include/c++/10/cstddef
+          # NVIDIA の .deb には postinst で解決される前提の broken absolute symlink が含まれる
+          # ため、 ここでは数を記録するだけで 0 件チェックはしない (buildbase.py 経路と機能等価)
+          echo "absolute symlinks remaining: $(find /var/tmp/rootfs-jetson -type l -lname '/*' | wc -l)"
+          test -L /var/tmp/rootfs-jetson/lib && test -L /var/tmp/rootfs-jetson/bin && test -L /var/tmp/rootfs-jetson/sbin
+          ! test -e /var/tmp/rootfs-jetson/usr/sbin/exim4
+          ! test -e /var/tmp/rootfs-jetson/usr/sbin/sendmail
+          ! test -e /var/tmp/rootfs-jetson/usr/sbin/postfix
+          ! test -e /var/tmp/rootfs-jetson/usr/sbin/cron
+          # nvidia-jetpack の transitive 依存 (CUDA / TensorRT / OpenCV など) が大きく
+          # rootfs が数十 GB に達するため、 サイズの記録のみ行う (最適化は cross-compile 復活時の別件)
+          find /var/tmp/rootfs-jetson -type f -printf '%s\n' | awk '{s+=$1}END{print "jetson rootfs total bytes:", s}'
+          python3 sysroot.py clean --dest /var/tmp/rootfs-jetson
+      - name: stamp 動作と --force / clean の確認
+        run: |
+          set -eux
+          # 1 回目: 通常 build
+          python3 sysroot.py build --config sysroot/ubuntu-24.04_armv8.json --dest /tmp/rootfs
+          # 2 回目: stamp 一致なら skip され .sysroot.stamp が変わらない
+          STAMP_BEFORE=$(cat /tmp/rootfs/.sysroot.stamp)
+          python3 sysroot.py build --config sysroot/ubuntu-24.04_armv8.json --dest /tmp/rootfs
+          STAMP_AFTER=$(cat /tmp/rootfs/.sysroot.stamp)
+          test "$STAMP_BEFORE" = "$STAMP_AFTER"
+          # --force で再構築されることを確認
+          python3 sysroot.py build --config sysroot/ubuntu-24.04_armv8.json --dest /tmp/rootfs --force
+          # clean で /tmp/rootfs と .sysroot.stamp が消える
+          python3 sysroot.py clean --dest /tmp/rootfs
+          ! test -e /tmp/rootfs
+          # 不在 dest を clean しても no-op exit 0
+          python3 sysroot.py clean --dest /tmp/rootfs
 
   build_ubuntu_arm:
     if: false
