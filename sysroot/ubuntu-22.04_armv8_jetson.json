@@ -1,0 +1,42 @@
+{
+  "name": "ubuntu-22.04_armv8_jetson",
+  "arch": "arm64",
+  "packages": [
+    "libc6-dev",
+    "libstdc++-10-dev",
+    "libxext-dev",
+    "libdbus-1-dev",
+    "nvidia-jetpack",
+    "nvidia-l4t-camera",
+    "nvidia-l4t-multimedia"
+  ],
+  "repos": [
+    {
+      "url": "http://ports.ubuntu.com/ubuntu-ports",
+      "suites": ["jammy"],
+      "components": ["main", "universe"]
+    },
+    {
+      "url": "https://repo.download.nvidia.com/jetson/common",
+      "suites": ["r36.3"],
+      "components": ["main"],
+      "allow_insecure": true
+    },
+    {
+      "url": "https://repo.download.nvidia.com/jetson/t234",
+      "suites": ["r36.3"],
+      "components": ["main"],
+      "allow_insecure": true
+    }
+  ],
+  "post_install_symlinks": [
+    {
+      "link": "usr/lib/aarch64-linux-gnu/tegra/libnvbuf_fdmap.so",
+      "file": "libnvbuf_fdmap.so.1.0.0"
+    },
+    {
+      "link": "usr/lib/aarch64-linux-gnu/nvidia/libnvbuf_fdmap.so",
+      "file": "libnvbuf_fdmap.so.1.0.0"
+    }
+  ]
+}
