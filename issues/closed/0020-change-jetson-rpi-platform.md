@@ -311,3 +311,11 @@ cross 用ステップ拡張:
 2. revert 後、 `build_ubuntu` matrix から jetson / RPi entry が消えるか確認
 3. `_deps/ubuntu-22.04_armv8_jetson/` / `_deps/raspberry-pi-os_armv8/` 配下のキャッシュは残っても問題ない（次回 build まで参照されない）
 4. PyPI 上の `sora-sdk-rpi` パッケージ publish が止まる（ 0022 の publish 復活までは止まっている前提のため影響は限定的）
+
+## 撤回理由
+
+- Created: 2026-06-22
+
+multistrap を bash スクリプト (`cmake/scripts/install_rootfs.sh`) に移植する案は、 multistrap が Ubuntu 26.04 で廃止されるため当面の解にしかならない。 また CI で multistrap 本体に `sed` で `AllowInsecureRepositories=true` を流し込む脆い運用も継続することになる。
+
+全ターゲット統一の sysroot 構築は 0024 (`multistrap` から `sysroot.py` 経路への移行) で扱う。 本 issue が想定していた jetson / Raspberry Pi OS 個別 cross 対応 (toolchain ファイル新設、 pyproject.toml override 追加、 CI step 追加、 `libcamerac.so` 同梱、 `sora_sdk_rpi` パッケージ名切替) は、 0024 完了後に別 issue で再起票する。
