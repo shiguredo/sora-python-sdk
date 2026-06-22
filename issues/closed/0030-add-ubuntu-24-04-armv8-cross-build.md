@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-06-22
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-06-22
 - Model: Opus 4.7
 - Branch: feature/add-ubuntu-24-04-armv8-cross-build
 - Polished: 2026-06-22
@@ -317,15 +317,23 @@ cmake.define.SORA_GEN_PYI = "OFF"
 
 ## 解決方法
 
-1. `cmake/toolchains/aarch64-linux-gnu.cmake` を新規作成 (設計方針節の内容そのまま、 `set` 5 行 + if ブロック)
+1. `cmake/toolchains/aarch64-linux-gnu.cmake` を新規作成
+   - `CMAKE_SYSTEM_NAME` / `CMAKE_SYSTEM_PROCESSOR` / `CMAKE_C_COMPILER_TARGET` / `CMAKE_CXX_COMPILER_TARGET` を set
+   - `SORA_PYTHON_SDK_SYSROOT_DIR` 環境変数があれば `CMAKE_SYSROOT` に確定
 2. `cmake/scripts/fetch_deps.cmake` を改修
-   - `_SORA_ALLOWED_PLATFORMS` (76 行目) 拡張
-   - メインスクリプトの `_sora_fetch_llvm` を含む `if(NOT WIN32) ... endif()` ブロック (455-459 行) 直後、 `# 出力契約 8 変数を CACHE PATH で確定` (461 行) より前に cross 分岐追加 (`_sora_fetch_rootfs` 呼び出し + `CMAKE_SYSROOT` sanity check)
-3. `pyproject.toml` に Python 3.12 / 3.13 / 3.14 別の cross 用 `[[tool.scikit-build.overrides]]` を 3 件追加 (`if.env` は anchored regex、 `CMAKE_C_COMPILER_WORKS = "TRUE"` 含む)
-4. `.github/workflows/build.yml` の `exclude:` から `ubuntu-24.04_armv8` を削除、 `timeout-minutes` を `60` に変更、 `SORA_PYTHON_SDK_SYSROOT_DIR` を env で渡す cross build step + Verify step を追加
-5. `CHANGES.md` の `## develop` に `[ADD]` エントリを既存 sysroot.py `[ADD]` 直後に追加し、 0024 由来 `[CHANGE]` エントリの 2 行目を削除
-6. ローカル macOS で「ローカル macOS で実行可能な確認」 を実施
-7. PR を出して CI で動作検証。 「CI 上の反復確認」 に挙げた不足パッケージ追加を反復で push する
+   - `_SORA_ALLOWED_PLATFORMS` に `ubuntu-24.04_armv8` を追加 (エラーメッセージも同期)
+   - メインスクリプトの `_sora_fetch_llvm` 直後に cross 分岐を追加し、 `_sora_fetch_rootfs` で sysroot を構築
+   - sanity check は `file(REAL_PATH)` で両辺正規化したうえで `STREQUAL` 比較し、 末尾スラッシュ / シンボリックリンク差を吸収。 空 `CMAKE_SYSROOT` 検出時は明示的に `FATAL_ERROR`。 比較式の右辺は CMP0054 NEW のもとで文字列リテラル扱いされないよう明示的に `"${...}"` で展開
+3. **設計変更**: `pyproject.toml` の cross 用 `[[tool.scikit-build.overrides]]` は **0 件** とし、 CI step の `CMAKE_ARGS` 環境変数で `-DCMAKE_TOOLCHAIN_FILE` / `-DSORA_PYTHON_SDK_PLATFORM` / `-DCMAKE_C_COMPILER_WORKS=TRUE` / `-DCMAKE_CXX_COMPILER_WORKS=TRUE` を直接渡す経路に変更
+   - 元設計の Python ABI 別 override 3 件は、 cross platform を追加するたびに 3 倍に増えるため
+   - `NB_SUFFIX` / `SORA_GEN_PYI` は `CMakeLists.txt` の cross 分岐内 (`SORA_PYTHON_SDK_PLATFORM` 単独条件) で確定。 `NB_SUFFIX` は `Python_VERSION_MAJOR` / `Python_VERSION_MINOR` から組み立てる
+4. `.github/workflows/build.yml` の `build_ubuntu` を改修
+   - `exclude:` から `ubuntu-24.04_armv8` を 1 行削除
+   - `timeout-minutes` を 15 → 60 に引き上げ
+   - cross build step (env で `SORA_PYTHON_SDK_PLATFORM` / `SORA_PYTHON_SDK_SYSROOT_DIR` / `_PYTHON_HOST_PLATFORM` / `CMAKE_ARGS` を渡す) を追加
+   - Verify wheel architecture step (wheel 個数 / `.so` 個数 / `.so` suffix / ELF target の 4 段検証) を追加。 配列長判定は `[[ ... -eq ]]`、 unzip 先は `mktemp -d`、 ELF 検証は `grep -qE ... <<< "$FILE_OUT"` で fail 時のエラーメッセージを強化
+5. `CHANGES.md` の `## develop` に `[ADD]` エントリを既存 sysroot.py `[ADD]` 直後に追加し、 0024 由来 `[CHANGE]` エントリの 2 行目 (`armv8 系 cross-compile wheel は CI で生成されない (元から matrix exclude 済)`) を削除。 利用者向けに PyPI publish の影響 (`pip install sora_sdk` は未対応) を明示
+6. ローカル macOS で「ローカル macOS で実行可能な確認」 を実施 (`cmake -P cmake/toolchains/aarch64-linux-gnu.cmake` / `tomllib.load(pyproject.toml)` / `uv run ruff format --check` が pass、 prebuilt artifact 3 件の HTTP 200 確認)
 
 ## ロールバック
 

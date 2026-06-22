@@ -118,10 +118,9 @@ jobs:
         exclude:
           - platform: { name: ubuntu-22.04_x86_64 }
           - platform: { name: ubuntu-22.04_armv8 }
-          - platform: { name: ubuntu-24.04_armv8 }
           - platform: { name: raspberry-pi-os_armv8 }
     runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -144,6 +143,49 @@ jobs:
 
       - if: ${{ matrix.platform.arch == 'x86_64' }}
         run: uv build --wheel
+
+      # cross-compile (ubuntu-24.04_armv8) 用 wheel ビルド。
+      # SORA_PYTHON_SDK_SYSROOT_DIR は cmake/toolchains/aarch64-linux-gnu.cmake で
+      # CMAKE_SYSROOT に渡される (toolchain 評価時点で path 存在が必要なため事前に mkdir)。
+      # sysroot の中身は fetch_deps.cmake 内 _sora_fetch_rootfs (sysroot.py) で構築する。
+      # _PYTHON_HOST_PLATFORM=linux-aarch64 で wheel タグの platform 部分を linux_aarch64 に確定する。
+      # CMAKE_ARGS の 4 値は cmake configure 開始時に必要なため、 pyproject.toml の override ではなく
+      # 環境変数経由で cmake コマンドラインに直接渡す。 NB_SUFFIX と SORA_GEN_PYI は CMakeLists.txt で確定する。
+      - name: Build wheel (cross ubuntu-24.04_armv8)
+        if: matrix.platform.target == 'ubuntu-24.04_armv8'
+        env:
+          SORA_PYTHON_SDK_PLATFORM: ubuntu-24.04_armv8
+          SORA_PYTHON_SDK_SYSROOT_DIR: ${{ github.workspace }}/_deps/ubuntu-24.04_armv8/rootfs
+          _PYTHON_HOST_PLATFORM: linux-aarch64
+          CMAKE_ARGS: >-
+            -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-gnu.cmake
+            -DSORA_PYTHON_SDK_PLATFORM=ubuntu-24.04_armv8
+            -DCMAKE_C_COMPILER_WORKS=TRUE
+            -DCMAKE_CXX_COMPILER_WORKS=TRUE
+        run: |
+          mkdir -p "${SORA_PYTHON_SDK_SYSROOT_DIR}"
+          uv build --wheel
+
+      # 生成した wheel が確かに linux_aarch64 / aarch64 ELF であることを 4 段で検証する。
+      - name: Verify wheel architecture (cross ubuntu-24.04_armv8)
+        if: matrix.platform.target == 'ubuntu-24.04_armv8'
+        shell: bash
+        run: |
+          set -eux
+          shopt -s nullglob
+          ls dist/
+          WHEELS=(dist/sora_sdk-*-cp*-linux_aarch64.whl)
+          [[ ${#WHEELS[@]} -eq 1 ]] || { echo "ERROR: expected 1 linux_aarch64 wheel, got ${#WHEELS[@]}"; ls dist/; exit 1; }
+          WHL="${WHEELS[0]}"
+          WHL_DIR=$(mktemp -d)
+          unzip -o "$WHL" -d "$WHL_DIR"
+          SO_FILES=("$WHL_DIR/sora_sdk/sora_sdk_ext."*.so)
+          [[ ${#SO_FILES[@]} -eq 1 ]] || { echo "ERROR: expected 1 .so, got ${#SO_FILES[@]}"; ls "$WHL_DIR/sora_sdk/"; exit 1; }
+          SO_FILE="${SO_FILES[0]}"
+          [[ "$SO_FILE" == *"-aarch64-linux-gnu.so" ]] || { echo "ERROR: .so suffix is not -aarch64-linux-gnu: $SO_FILE"; exit 1; }
+          FILE_OUT=$(file "$SO_FILE")
+          echo "$FILE_OUT"
+          grep -qE 'ELF 64-bit LSB.*ARM aarch64' <<< "$FILE_OUT" || { echo "ERROR: .so is not aarch64 ELF; actual: $FILE_OUT"; exit 1; }
 
       - name: Upload Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

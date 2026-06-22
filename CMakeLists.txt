@@ -58,6 +58,16 @@ list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 set(TARGET_OS "" CACHE STRING "ビルド対象の動作する OS。\n有効な値は windows, macos, ubuntu, jetson, raspberry-pi-os")
 set(SORA_GEN_PYI ON CACHE BOOL ".pyi スタブを生成するかどうか")
 set(SORA_PYTHON_SDK_PLATFORM "" CACHE STRING "プラットフォーム識別子 (例: ubuntu-24.04_x86_64)")
+
+# cross-compile 時の nanobind 関連設定。
+# CMAKE_TOOLCHAIN_FILE / CMAKE_C_COMPILER_WORKS は project() 前評価のため CI step の CMAKE_ARGS 経由で渡すが、
+# NB_SUFFIX と SORA_GEN_PYI は nanobind_add_module 呼び出し前 (find_package(Python) 後) で間に合うため、
+# Python ABI 別に値を組み立てる責務を CMakeLists.txt 側で持つ。
+if(SORA_PYTHON_SDK_PLATFORM STREQUAL "ubuntu-24.04_armv8")
+  set(NB_SUFFIX ".cpython-${Python_VERSION_MAJOR}${Python_VERSION_MINOR}-aarch64-linux-gnu.so")
+  # cross-compile 時は host 上で aarch64 の .so を import できず nanobind_add_stub が必ず失敗するため OFF。
+  set(SORA_GEN_PYI OFF)
+endif()
 set(WEBRTC_INCLUDE_DIR "" CACHE PATH "WebRTC のインクルードディレクトリ")
 set(WEBRTC_LIBRARY_DIR "" CACHE PATH "WebRTC のライブラリディレクトリ")
 set(WEBRTC_LIBRARY_NAME "webrtc" CACHE STRING "WebRTC のライブラリ名")

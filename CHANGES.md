@@ -19,10 +19,14 @@
   - @voluntas
 - [CHANGE] cross-compile 用 sysroot 構築から multistrap を廃止する
   - multistrap は Debian/Ubuntu 上流のメンテが停滞しており、 Ubuntu 26.04 で配布終了見込みのため
-  - armv8 系 cross-compile wheel は CI で生成されない (元から matrix exclude 済)
   - @voluntas
 - [ADD] cross-compile 用 sysroot 構築スクリプト sysroot.py を追加する
   - ubuntu-22.04_armv8 / ubuntu-24.04_armv8 / ubuntu-22.04_armv8_jetson / raspberry-pi-os_armv8 向けの設定を同梱する
+  - @voluntas
+- [ADD] ubuntu-24.04_armv8 platform の cross-compile wheel ビルドを sysroot.py 経路で追加する
+  - multistrap 廃止に伴い停止していた cross-compile wheel ビルドを scikit-build-core (cmake) → `_sora_fetch_rootfs` → sysroot.py 経路で再開
+  - wheel タグは `linux_aarch64` で artifact 化のみ。 manylinux タグ化と PyPI publish (`pip install sora_sdk` 経由でのインストール) は今後対応する
+  - ubuntu-24.04_armv8 のみ追加、 残り 3 platform (ubuntu-22.04_armv8 / raspberry-pi-os_armv8 / ubuntu-22.04_armv8_jetson) は今後対応する
   - @voluntas
 - [UPDATE] nanobind を `2.13.0` に上げる
   - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要

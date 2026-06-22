@@ -73,12 +73,12 @@ if(NOT SORA_PYTHON_SDK_PLATFORM)
 endif()
 
 # 許容リスト検証
-set(_SORA_ALLOWED_PLATFORMS "ubuntu-24.04_x86_64" "macos_arm64" "windows_x86_64")
+set(_SORA_ALLOWED_PLATFORMS "ubuntu-24.04_x86_64" "ubuntu-24.04_armv8" "macos_arm64" "windows_x86_64")
 list(FIND _SORA_ALLOWED_PLATFORMS "${SORA_PYTHON_SDK_PLATFORM}" _SORA_PLATFORM_INDEX)
 if(_SORA_PLATFORM_INDEX EQUAL -1)
   message(FATAL_ERROR
     "Unsupported SORA_PYTHON_SDK_PLATFORM='${SORA_PYTHON_SDK_PLATFORM}'. "
-    "Supported: ubuntu-24.04_x86_64, macos_arm64, windows_x86_64.")
+    "Supported: ubuntu-24.04_x86_64, ubuntu-24.04_armv8, macos_arm64, windows_x86_64.")
 endif()
 
 # 排他ロック取得（複数 Python ABI 並列ビルド時の _deps/<platform>/ 競合回避）
@@ -456,6 +456,30 @@ endif()
 # Windows では MSVC を使用するため LLVM 取得は不要
 if(NOT WIN32)
   _sora_fetch_llvm("${_PLATFORM_ROOT}/webrtc" "${_LLVM_ROOT}" "${_LLVM_STAMPS_ROOT}/llvm")
+endif()
+
+# cross 系 platform 用 sysroot 構築 (rootfs を _PLATFORM_ROOT/rootfs に展開)。
+# CMAKE_SYSROOT は toolchain ファイル経由で SORA_PYTHON_SDK_SYSROOT_DIR 環境変数から確定済。
+# ここでは rootfs ディレクトリの中身 (libc / libstdc++ / dev headers) を sysroot.py で構築する。
+if(SORA_PYTHON_SDK_PLATFORM STREQUAL "ubuntu-24.04_armv8")
+  set(_ROOTFS_DIR "${_PLATFORM_ROOT}/rootfs")
+  _sora_fetch_rootfs("${_ROOTFS_DIR}"
+    "${CMAKE_SOURCE_DIR}/sysroot/${SORA_PYTHON_SDK_PLATFORM}.json")
+  # CMAKE_SYSROOT と _ROOTFS_DIR が一致することを sanity check する。
+  # 比較前に file(REAL_PATH) で正規化して、 末尾スラッシュ / シンボリックリンク経由で誤検出しないようにする。
+  # 右辺は CMP0054 NEW (CMakeLists.txt) のもとで文字列リテラル扱いになるのを避けるため明示的に展開する。
+  if(NOT CMAKE_SYSROOT)
+    message(FATAL_ERROR
+      "CMAKE_SYSROOT is empty. "
+      "Set SORA_PYTHON_SDK_SYSROOT_DIR env var to '${_ROOTFS_DIR}' before running 'uv build --wheel'.")
+  endif()
+  file(REAL_PATH "${CMAKE_SYSROOT}" _SYSROOT_REAL)
+  file(REAL_PATH "${_ROOTFS_DIR}" _ROOTFS_REAL)
+  if(NOT "${_SYSROOT_REAL}" STREQUAL "${_ROOTFS_REAL}")
+    message(FATAL_ERROR
+      "CMAKE_SYSROOT (${CMAKE_SYSROOT}) does not match expected rootfs (${_ROOTFS_DIR}). "
+      "Set SORA_PYTHON_SDK_SYSROOT_DIR env var to '${_ROOTFS_DIR}' before running 'uv build --wheel'.")
+  endif()
 endif()
 
 # 出力契約 8 変数を CACHE PATH で確定
