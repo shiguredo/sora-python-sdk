@@ -295,3 +295,11 @@ cross-compile 用ステップ:
 2. revert 後、 `build_ubuntu` matrix から armv8 entry が消えて `exclude:` に戻ること、 `multistrap` install step が消えることを確認
 3. armv8 wheel publish が止まる（ 0022 の `publish_wheel` 復活までは 0016 / 0018 / 0021 完了でも publish は止まっている前提なので影響は限定的）
 4. forward fix を選ぶ判断: cross-compile ステップ単位（ multistrap / fetch_deps / toolchain ） の単一不具合なら追加コミットで対応する
+
+## 撤回理由
+
+- Created: 2026-06-22
+
+multistrap を bash スクリプト (`cmake/scripts/install_rootfs.sh`) に移植する案は、 multistrap が Ubuntu 26.04 で廃止されるため当面の解にしかならない。 また CI で multistrap 本体に `sed` で `AllowInsecureRepositories=true` を流し込む脆い運用も継続することになる。
+
+全ターゲット統一の sysroot 構築は 0024 (`multistrap` から `sysroot.py` 経路への移行) で扱う。 本 issue が想定していた ubuntu armv8 個別 cross 対応 (toolchain ファイル新設、 pyproject.toml override 追加、 CI step 追加) は、 0024 完了後に別 issue で再起票する。
