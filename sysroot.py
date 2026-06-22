@@ -663,12 +663,16 @@ def _resolve_dependencies(
                     f"unresolved dependency {list(relation)!r} required by {current!r} "
                     f"(no real package or virtual provider found)"
                 )
-            prerequisites.setdefault(current, []).append(resolved)
+            # current -> resolved を依存マップに記録するのは BFS forward edge のみ。
+            # 既に selected に入っているノードへの back-edge は dpkg-deb の unpack 順序では
+            # 問題にならず、 graphlib の CycleError を回避するため除外する
+            # (Debian / Ubuntu の libc6 <-> libgcc-s1 のような相互依存が現実に存在する)。
             if resolved in selected:
                 continue
             resolved_meta = index.packages[resolved]
             if resolved_meta.essential:
                 continue
+            prerequisites.setdefault(current, []).append(resolved)
             selected[resolved] = resolved_meta
             visit_order.append(resolved)
             queue.append(resolved)
