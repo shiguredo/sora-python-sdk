@@ -34,7 +34,7 @@ def update_version(file_path: str, dry_run: bool) -> str | None:
         print(new_version)
     else:
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(new_version)
+            f.write(new_version + "\n")
         print(f"Version updated in {file_path} to {new_version}")
 
     return new_version
