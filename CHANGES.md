@@ -22,16 +22,10 @@
   - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
   - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.14` に上げる
-  - WEBRTC_BUILD_VERSION を `m150.7871.0.0` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.18` に上げる
+  - WEBRTC_BUILD_VERSION を `m150.7871.3.0` に上げる
   - CMAKE_VERSION を `4.3.2` に上げる
   - BOOST_VERSION を `1.91.0` に上げる
-  - @torikizi
-- [UPDATE] macOS ビルドで Boost.Asio の `std::atomic::wait` 利用を無効化する
-  - `2026.2.0-canary.11` で BOOST_VERSION を `1.91.0` に上げたことに伴う対応
-  - Boost 1.91.0 では macOS 14.4 以降で Asio の `kqueue_reactor` が `std::atomic::wait` ベースの `atomic_slim_mutex` を利用するようになっており、 Sora C++ SDK はこれを無効化している
-  - Sora Python SDK 側でも同じように無効化するため `BOOST_ASIO_DISABLE_STD_ATOMIC_WAIT` を定義する
-  - 定義がずれると Boost.Asio の内部実装が食い違い、接続時にクラッシュやハングが発生する可能性がある
   - @torikizi
 - [UPDATE] libwebrtc m148 で `ArrayView` が C++ 標準の `std::span` に移行したため追従する
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
