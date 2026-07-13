@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-06-23
 - Polished: 2026-07-13
+- Completed: 2026-07-13
 - Model: Opus 4.7
 - Branch: feature/fix-audio-on-data-missing-gil
 
@@ -185,10 +186,23 @@ Python 公開 API は削除・改名せず、`on_data`、`on_format`、`on_frame
 
 ## 関連 issue
 
-- `issues/pending/0013-bug-fix-append-data-callback-missing-gil.md`: `SoraAudioSinkImpl::AppendData` の `on_format_` / `on_data_` を対象にした pending issue。0018 が対象範囲を引き継ぎ、`SoraAudioStreamSinkImpl::OnData` も含めて扱う。
+- `issues/closed/0013-bug-fix-append-data-callback-missing-gil.md`: `SoraAudioSinkImpl::AppendData` の `on_format_` / `on_data_` を対象にした pending issue。0018 が対象範囲を引き継ぎ、`SoraAudioStreamSinkImpl::OnData` も含めて扱う。
 - `issues/0019-bug-fix-frame-transformer-missing-gil.md`: frame transformer の別の GIL 未取得問題。対象シンボルは重複しない。
 - `issues/closed/0009-bug-fix-on-push-missing-gil.md`: GIL 非保持で Python callback を呼ぶ問題を修正した先例。
 - `issues/closed/0012-bug-fix-audio-sink-read-holds-gil.md`: `Read` の GIL 解放と `GILMutexLock` 導入の先例。
 - `issues/closed/0014-bug-fix-read-pyerr-checksignals-not-propagated.md`: `Read` の Python 例外伝播を修正した先例。
 - `issues/0055-refactor-sora-connection-callbacks-private.md`: 廃止予定の `on_data_` / `on_format_` を当面維持し、次のメジャーで除去する方針。0018 ではこの API 方針を変更しない。
 - `issues/0057-bug-fix-gil-scope-uninitialized-member.md`: `gil_scoped_acquire` の終了処理時の未初期化メンバを扱う別 issue。0018 では `src/gil.h` を変更しない。
+
+## 解決方法
+
+`SoraAudioSinkImpl::AppendData` の先頭で GIL を取得し、`buffer_mtx_` の取得、`on_format_` の呼び出し、`nb::ndarray` の構築、`on_data_` の呼び出しを GIL 保持下で実行するようにした。
+また、`number_of_channels_` を mutex 保持中に snapshot し、mutex 解放後の `on_data_` の shape に使用することで、既存の `(frames, channels)` の shape を維持した。
+
+`SoraAudioStreamSinkImpl::OnData` では `on_frame_` の読み出しと `SoraAudioFrame` の構築前に GIL を取得した。
+さらに、音声 sink の `RemoveSink()` 待機中に GIL を保持して callback 側と相互待ちにならないよう、待機区間だけ GIL を解放するようにした。
+
+実接続の `tests/test_audio_sink_callbacks.py` を追加し、`on_format` と `on_data` の callback 発火、引数、実行スレッドを検証した。
+`tests/test_vad.py` では `on_frame` callback の発火を待機してから統計を確認し、失敗時も接続を解放するようにした。
+
+あわせて、対象範囲を引き継いだ pending issue 0013 を closed へ移動した。

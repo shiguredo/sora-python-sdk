@@ -1,7 +1,7 @@
 #include "sora_audio_sink.h"
 
-#include <span>
 #include <chrono>
+#include <span>
 
 // WebRTC
 #include <api/audio/channel_layout.h>
@@ -40,7 +40,14 @@ void SoraAudioSinkImpl::Disposed() {
   if (track_ && track_->GetTrack()) {
     webrtc::AudioTrackInterface* audio_track =
         static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
-    audio_track->RemoveSink(this);
+    // 音声スレッドは sink のロックを保持して callback を呼ぶため、
+    // RemoveSink() の待機中に GIL を保持すると callback 側と相互待ちになる。
+    if (PyGILState_Check()) {
+      gil_scoped_release release;
+      audio_track->RemoveSink(this);
+    } else {
+      audio_track->RemoveSink(this);
+    }
   }
   track_ = nullptr;
 }
@@ -104,6 +111,8 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
                                    int sample_rate,
                                    size_t number_of_channels,
                                    size_t number_of_frames) {
+  gil_scoped_acquire acq;
+  size_t callback_number_of_channels = 0;
   {
     std::unique_lock<std::mutex> lock(buffer_mtx_);
 
@@ -117,6 +126,8 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
       }
     }
 
+    callback_number_of_channels = number_of_channels_;
+
     const size_t num_elements = number_of_channels_ * number_of_frames;
     buffer_.AppendData(num_elements, [&](std::span<int16_t> buf) {
       memcpy(buf.data(), audio_data, num_elements * sizeof(int16_t));
@@ -127,7 +138,7 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
   }
 
   if (on_data_) {
-    size_t shape[2] = {number_of_frames, number_of_channels_};
+    size_t shape[2] = {number_of_frames, callback_number_of_channels};
     auto data = nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>(
         (void*)audio_data, 2, shape, nb::handle());
     /* まだ使ったことながない。現状 Python 側で on_frame と同じ感覚でコールバックの外に値を持ち出すと落ちるはず。 */
