@@ -10,6 +10,7 @@
 #include <modules/audio_processing/agc2/rnn_vad/common.h>
 #include <modules/audio_processing/include/audio_frame_view.h>
 
+#include "gil.h"
 #include "sora_call.h"
 
 SoraAudioFrameDefaultImpl::SoraAudioFrameDefaultImpl(
@@ -164,7 +165,14 @@ void SoraAudioStreamSinkImpl::Disposed() {
   if (track_ && track_->GetTrack()) {
     webrtc::AudioTrackInterface* audio_track =
         static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
-    audio_track->RemoveSink(this);
+    // 音声スレッドは sink のロックを保持して callback を呼ぶため、
+    // RemoveSink() の待機中に GIL を保持すると callback 側と相互待ちになる。
+    if (PyGILState_Check()) {
+      gil_scoped_release release;
+      audio_track->RemoveSink(this);
+    } else {
+      audio_track->RemoveSink(this);
+    }
   }
   track_ = nullptr;
 }
@@ -206,6 +214,7 @@ void SoraAudioStreamSinkImpl::OnData(
     webrtc::RemixFrame(output_channels_, tuned_frame.get());
   }
 
+  gil_scoped_acquire acq;
   call_python(on_frame_,
               std::make_shared<SoraAudioFrame>(std::move(tuned_frame)));
 }

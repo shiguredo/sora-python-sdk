@@ -2,8 +2,9 @@
 
 - Priority: Low
 - Created: 2026-06-02
+- Completed: 2026-07-13
 - Model: Opus 4.8
-- Branch: feature/fix-append-data-callback-missing-gil
+- Branch: feature/fix-audio-on-data-missing-gil
 
 ## pending にした理由
 
@@ -127,3 +128,8 @@ pending のため確定しない。A 案を採る場合は以下を満たすこ�
   コールバックを呼ぶ未定義動作」。本 issue の手本となる先例。
 - `issues/0012-bug-fix-audio-sink-read-holds-gil.md` (または closed): 本 issue の
   発見契機。0012 のスコープ外として切り出した。
+
+## 解決方法
+
+issue 0018 が本 issue の対象範囲を引き継ぎ、`SoraAudioSinkImpl::AppendData` の先頭で GIL を取得する修正を実施した。
+`on_format_`、`on_data_`、`nb::ndarray` の構築を GIL 保持下で実行し、実接続テストで callback の発火と引数を確認した。
