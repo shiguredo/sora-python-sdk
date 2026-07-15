@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-16
 - Model: Opus 4.7
 - Branch: feature/fix-on-track-receiver-null-check
 
@@ -50,3 +51,34 @@ void SoraConnection::OnTrack(
 - 正常系 (`receiver` が非 null) の挙動が従来と変わらないこと。
 - 既存の e2e テスト・ユニットテストが引き続き通ること。
 - 可能であれば null receiver を模した低レベルテストで防御が効くことを確認する (難しい場合はコメントで再現条件を残す)。
+
+## 解決方法
+
+`src/sora_connection.cpp` の `SoraConnection::OnTrack` で、`SoraMediaTrack` 構築前に `transceiver` と `receiver` の null チェックを追加した。null の場合は `RTC_LOG(LS_WARNING)` で英語の警告を出し、Python コールバックを呼ばずに return する。
+
+```cpp
+void SoraConnection::OnTrack(
+    webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+  gil_scoped_acquire acq;
+  if (on_track_) {
+    if (transceiver == nullptr) {
+      RTC_LOG(LS_WARNING) << "OnTrack received null transceiver";
+      return;
+    }
+    auto receiver = transceiver->receiver();
+    if (receiver == nullptr) {
+      RTC_LOG(LS_WARNING)
+          << "OnTrack received transceiver with null receiver";
+      return;
+    }
+    nb::ref<SoraMediaTrack> track = new SoraMediaTrack(this, receiver);
+    call_python(on_track_, track);
+  }
+}
+```
+
+`OnRemoveTrack` は `receiver` を参照しない空実装 (`TODO(tnoho): 要実装`) のままであるため、同種の null 経路は無く追加修正は不要だった。
+
+null receiver を模した低レベルテストは、モック・スタブ禁止かつ Python から `OnTrack` を注入できないため追加しなかった。代わりにコードコメントへ再現条件（送信専用 transceiver / receiver 未確定タイミング）とテスト省略理由を残した。`macos_arm64` 向けビルドと `tests/test_version.py` は通過した。既存 e2e は CI で確認する。
+
+あわせて `CHANGES.md` の `## develop` に `[FIX]` エントリを追記した。

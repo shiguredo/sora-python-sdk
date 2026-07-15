@@ -253,7 +253,22 @@ void SoraConnection::OnTrack(
     webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   gil_scoped_acquire acq;
   if (on_track_) {
+    // transceiver / receiver が null のまま OnTrack が発火する経路があり得る
+    // （送信専用 transceiver や receiver 未確定のタイミングなど）。
+    // SoraMediaTrack のコンストラクタは receiver->track() を呼ぶため、
+    // ここで弾かないと null ポインタ参照で SIGSEGV になる。
+    // モック禁止かつ Python から OnTrack を注入できないため、
+    // null 分岐の低レベルテストは設けずコード検査とこの再現条件で担保する。
+    if (transceiver == nullptr) {
+      RTC_LOG(LS_WARNING) << "OnTrack received null transceiver";
+      return;
+    }
     auto receiver = transceiver->receiver();
+    if (receiver == nullptr) {
+      RTC_LOG(LS_WARNING)
+          << "OnTrack received transceiver with null receiver";
+      return;
+    }
     nb::ref<SoraMediaTrack> track = new SoraMediaTrack(this, receiver);
     call_python(on_track_, track);
   }
