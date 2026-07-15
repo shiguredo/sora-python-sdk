@@ -18,7 +18,7 @@ SoraVideoFrame::SoraVideoFrame(
    * また、複数回呼び出された際に毎回変換を行いパフォーマンスが悪化してしまうので、
    * ここで numpy の形式である 24BG に変換することとしました。
    */
-  argb_data_ = std::unique_ptr<uint8_t>(new uint8_t[width_ * height_ * 3]);
+  argb_data_ = std::unique_ptr<uint8_t[]>(new uint8_t[width_ * height_ * 3]);
   libyuv::ConvertFromI420(
       i420_data->DataY(), i420_data->StrideY(), i420_data->DataU(),
       i420_data->StrideU(), i420_data->DataV(), i420_data->StrideV(),

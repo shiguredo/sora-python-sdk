@@ -35,6 +35,9 @@
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
     - https://issuetracker.google.com/issues/439801349
   - @torikizi
+- [FIX] `SoraVideoFrame` / `SoraVideoSource` が配列確保メモリを非配列 `unique_ptr` で保持していた未定義動作を修正する
+  - `std::unique_ptr<uint8_t[]>` に直し、破棄時に `delete[]` が呼ばれるようにする
+  - @voluntas
 - [FIX] デフォルト User-Agent が `Sora Unity SDK` になっていたのを `Sora Python SDK` に修正する
   - `user_agent` 未指定時のコピペ残骸で、Sora サーバ側のクライアント識別が誤っていた
   - @voluntas

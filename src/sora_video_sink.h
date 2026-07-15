@@ -41,7 +41,7 @@ class SoraVideoFrame {
   // width や height は ndarray に情報として含まれるため、これらを別で返す関数は不要
   const int width_;
   const int height_;
-  std::unique_ptr<uint8_t> argb_data_;
+  std::unique_ptr<uint8_t[]> argb_data_;
 };
 
 /**
