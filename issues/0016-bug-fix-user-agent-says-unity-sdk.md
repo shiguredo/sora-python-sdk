@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-06-23
+- Completed: 2026-07-15
 - Model: Opus 4.7
 - Branch: feature/fix-user-agent-says-unity-sdk
 
@@ -47,3 +48,9 @@ config.sora_client =
 - `src/sora.cpp` 内に `Sora Unity SDK` の文字列リテラルが存在しないこと。
 - ユーザーが `user_agent` を指定せずに `Sora::CreateConnection` を呼んだとき、Sora サーバへ送出される User-Agent ヘッダが `Mozilla 5.0 (Sora Python SDK/<version>)` であること。
 - `CHANGES.md` の `## develop` セクションに `[FIX]` エントリが追加されていること。
+
+## 解決方法
+
+`src/sora.cpp` の `CreateConnection` で `user_agent` 未指定時に設定していたデフォルト文字列を、`Sora Unity SDK` から `Sora Python SDK` に修正した。`sora_client` と同じ SDK 名になり、Sora サーバ側でのクライアント識別が Python SDK として正しく見えるようになった。
+
+`CHANGES.md` の `## develop` に `[FIX]` エントリを追記した。
