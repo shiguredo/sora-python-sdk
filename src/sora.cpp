@@ -216,7 +216,7 @@ nb::ref<SoraConnection> Sora::CreateConnection(
   } else {
     // 無指定時はデフォルトの User-Agent を設定する
     config.user_agent = std::optional<std::string>(
-        "Mozilla 5.0 (Sora Unity SDK/" BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION) ")");
+        "Mozilla 5.0 (Sora Python SDK/" BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION) ")");
   }
 
   config.network_manager = factory_->default_network_manager();
