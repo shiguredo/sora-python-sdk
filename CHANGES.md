@@ -39,6 +39,9 @@
   - `SoraMediaTrack` 構築時の null 参照によるプロセスクラッシュを防ぐ
   - null 時は警告ログのみ出し Python コールバックは呼ばない
   - @voluntas
+- [FIX] Encoded Transform の `Transform` が GIL を取得せずに Python を呼び出していた問題を修正する
+  - `SoraAudioFrameTransformer` / `SoraVideoFrameTransformer` の `Transform` を GIL 保持下で実行する
+  - @voluntas
 - [FIX] デフォルト User-Agent が `Sora Unity SDK` になっていたのを `Sora Python SDK` に修正する
   - `user_agent` 未指定時のコピペ残骸で、Sora サーバ側のクライアント識別が誤っていた
   - @voluntas

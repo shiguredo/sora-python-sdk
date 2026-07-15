@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import threading
 import time
@@ -17,6 +19,9 @@ from sora_sdk import (
     SoraVideoFrameTransformer,
     SoraVideoSource,
 )
+
+# on_transform 発火待ちのタイムアウト（秒）
+TRANSFORM_EVENT_TIMEOUT_S = 30.0
 
 
 class SendonlyEncodedTransform:
@@ -96,8 +101,13 @@ class SendonlyEncodedTransform:
         self._connection.on_notify = self._on_notify
         self._connection.on_disconnect = self._on_disconnect
 
-        self._is_called_on_audio_transform = False
-        self._is_called_on_video_transform = False
+        # callback 発火通知と結果保存（callback 内では assert しない）
+        self._audio_transform_event = Event()
+        self._video_transform_event = Event()
+        self._audio_transform_error: BaseException | None = None
+        self._video_transform_error: BaseException | None = None
+        self._audio_transform_thread_id: int | None = None
+        self._video_transform_thread_id: int | None = None
 
     def connect(self):
         self._connection.connect()
@@ -121,13 +131,27 @@ class SendonlyEncodedTransform:
         stats = json.loads(raw_stats)
         return stats
 
-    @property
-    def is_called_on_audio_transform(self):
-        return self._is_called_on_audio_transform
+    def wait_transforms(self, timeout: float = TRANSFORM_EVENT_TIMEOUT_S) -> None:
+        """送信側 Audio / Video の on_transform 発火を待つ"""
+        assert self._audio_transform_event.wait(timeout), (
+            "送信側 Audio on_transform が発火しなかった"
+        )
+        assert self._video_transform_event.wait(timeout), (
+            "送信側 Video on_transform が発火しなかった"
+        )
 
-    @property
-    def is_called_on_video_transform(self):
-        return self._is_called_on_video_transform
+    def assert_transform_results(self, test_thread_id: int) -> None:
+        """保存した callback 結果をテストスレッド側で検証する"""
+        assert self._audio_transform_error is None, (
+            f"送信側 Audio on_transform で例外: {self._audio_transform_error!r}"
+        )
+        assert self._video_transform_error is None, (
+            f"送信側 Video on_transform で例外: {self._video_transform_error!r}"
+        )
+        assert self._audio_transform_thread_id is not None
+        assert self._video_transform_thread_id is not None
+        assert self._audio_transform_thread_id != test_thread_id
+        assert self._video_transform_thread_id != test_thread_id
 
     def _fake_audio_loop(self):
         while not self._disconnected.is_set():
@@ -171,46 +195,38 @@ class SendonlyEncodedTransform:
             self._fake_video_thread.join(timeout=10)
 
     def _on_audio_transform(self, frame: SoraTransformableAudioFrame):
-        # この実装が Encoded Transform を利用する上での基本形となる
+        # Encoded Transform の基本形。callback 内では assert せず結果を保存する
+        try:
+            self._audio_transform_thread_id = threading.get_ident()
+            if not frame.mime_type.startswith("audio/"):
+                raise AssertionError(f"想定外の audio mime_type: {frame.mime_type!r}")
 
-        # MIME type は正しいプロパティ名 mime_type で取得できること
-        assert frame.mime_type.startswith("audio/")
-
-        # frame からエンコードされたフレームデータを取得する
-        # 戻り値は numpy.ndarray になっている
-        new_data = frame.get_data()
-
-        # "sora" という文字列を new_data の後ろに追加
-        new_data = numpy.append(new_data, numpy.frombuffer(b"sora", dtype=numpy.uint8))
-
-        self._is_called_on_audio_transform = True
-
-        # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
-
-        # 加工したフレームデータで frame の フレームデータを入れ替える
-        frame.set_data(new_data)
-        self._audio_transformer.enqueue(frame)
+            # frame からエンコードされたフレームデータを取得する
+            new_data = frame.get_data()
+            # "sora" を末尾に追加して受信側で検証できるようにする
+            new_data = numpy.append(new_data, numpy.frombuffer(b"sora", dtype=numpy.uint8))
+            frame.set_data(new_data)
+            self._audio_transformer.enqueue(frame)
+        except BaseException as exc:
+            self._audio_transform_error = exc
+        finally:
+            self._audio_transform_event.set()
 
     def _on_video_transform(self, frame: SoraTransformableVideoFrame):
-        # この実装が Encoded Transform を利用する上での基本形となる
+        # Encoded Transform の基本形。callback 内では assert せず結果を保存する
+        try:
+            self._video_transform_thread_id = threading.get_ident()
+            if not frame.mime_type.startswith("video/"):
+                raise AssertionError(f"想定外の video mime_type: {frame.mime_type!r}")
 
-        # MIME type は正しいプロパティ名 mime_type で取得できること
-        assert frame.mime_type.startswith("video/")
-
-        # frame からエンコードされたフレームデータを取得する
-        # 戻り値は numpy.ndarray になっている
-        new_data = frame.get_data()
-
-        # "sora" という文字列を new_data の後ろに追加
-        new_data = numpy.append(new_data, numpy.frombuffer(b"sora", dtype=numpy.uint8))
-
-        self._is_called_on_video_transform = True
-
-        # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
-
-        # 加工したフレームデータで frame の フレームデータを入れ替える
-        frame.set_data(new_data)
-        self._video_transformer.enqueue(frame)
+            new_data = frame.get_data()
+            new_data = numpy.append(new_data, numpy.frombuffer(b"sora", dtype=numpy.uint8))
+            frame.set_data(new_data)
+            self._video_transformer.enqueue(frame)
+        except BaseException as exc:
+            self._video_transform_error = exc
+        finally:
+            self._video_transform_event.set()
 
 
 class RecvonlyEncodedTransform:
@@ -264,8 +280,15 @@ class RecvonlyEncodedTransform:
 
         self._connection.on_track = self._on_track
 
-        self._is_called_on_audio_transform = False
-        self._is_called_on_video_transform = False
+        # callback 発火通知と結果保存（callback 内では assert しない）
+        self._audio_transform_event = Event()
+        self._video_transform_event = Event()
+        self._audio_transform_error: BaseException | None = None
+        self._video_transform_error: BaseException | None = None
+        self._audio_transform_thread_id: int | None = None
+        self._video_transform_thread_id: int | None = None
+        self._audio_payload_ok = False
+        self._video_payload_ok = False
 
     def connect(self):
         self._connection.connect()
@@ -283,13 +306,29 @@ class RecvonlyEncodedTransform:
         stats = json.loads(raw_stats)
         return stats
 
-    @property
-    def is_called_on_audio_transform(self):
-        return self._is_called_on_audio_transform
+    def wait_transforms(self, timeout: float = TRANSFORM_EVENT_TIMEOUT_S) -> None:
+        """受信側 Audio / Video の on_transform 発火を待つ"""
+        assert self._audio_transform_event.wait(timeout), (
+            "受信側 Audio on_transform が発火しなかった"
+        )
+        assert self._video_transform_event.wait(timeout), (
+            "受信側 Video on_transform が発火しなかった"
+        )
 
-    @property
-    def is_called_on_video_transform(self):
-        return self._is_called_on_video_transform
+    def assert_transform_results(self, test_thread_id: int) -> None:
+        """保存した callback 結果をテストスレッド側で検証する"""
+        assert self._audio_transform_error is None, (
+            f"受信側 Audio on_transform で例外: {self._audio_transform_error!r}"
+        )
+        assert self._video_transform_error is None, (
+            f"受信側 Video on_transform で例外: {self._video_transform_error!r}"
+        )
+        assert self._audio_payload_ok is True
+        assert self._video_payload_ok is True
+        assert self._audio_transform_thread_id is not None
+        assert self._video_transform_thread_id is not None
+        assert self._audio_transform_thread_id != test_thread_id
+        assert self._video_transform_thread_id != test_thread_id
 
     def _on_set_offer(self, raw_offer):
         offer = json.loads(raw_offer)
@@ -329,78 +368,81 @@ class RecvonlyEncodedTransform:
             track.set_frame_transformer(self._video_transformer)
 
     def _on_audio_transform(self, frame: SoraTransformableAudioFrame):
-        # この実装が Encoded Transform を利用する上での基本形となる
+        # Encoded Transform の基本形。callback 内では assert せず結果を保存する
+        try:
+            self._audio_transform_thread_id = threading.get_ident()
+            if not frame.mime_type.startswith("audio/"):
+                raise AssertionError(f"想定外の audio mime_type: {frame.mime_type!r}")
 
-        # MIME type は正しいプロパティ名 mime_type で取得できること
-        assert frame.mime_type.startswith("audio/")
+            new_data = numpy.asarray(frame.get_data(), dtype=numpy.uint8)
+            removed_data = new_data[-4:]
+            self._audio_payload_ok = removed_data.tobytes() == b"sora"
+            if not self._audio_payload_ok:
+                raise AssertionError(f"想定外の audio trailer: {removed_data.tobytes()!r}")
 
-        # frame からエンコードされたフレームデータを取得する
-        # 戻り値は ArrayLike になっている
-        new_data = frame.get_data()
-
-        # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
-
-        # ArrayLike を numpy.uint8 のバイト列に変換する
-        new_data = numpy.asarray(new_data, dtype=numpy.uint8)
-
-        # 後ろ4バイトを取得する
-        removed_data = new_data[-4:]
-
-        assert b"sora" == removed_data.tobytes()
-
-        # 後ろ4バイトを取り除く
-        new_data = new_data[:-4]
-
-        self._is_called_on_audio_transform = True
-
-        # 加工したフレームデータで frame の フレームデータを入れ替える
-        frame.set_data(new_data)
-        self._audio_transformer.enqueue(frame)
+            # 後ろ 4 バイトを取り除いて enqueue する
+            frame.set_data(new_data[:-4])
+            self._audio_transformer.enqueue(frame)
+        except BaseException as exc:
+            self._audio_transform_error = exc
+        finally:
+            self._audio_transform_event.set()
 
     def _on_video_transform(self, frame: SoraTransformableVideoFrame):
-        # この実装が Encoded Transform を利用する上での基本形となる
+        # Encoded Transform の基本形。callback 内では assert せず結果を保存する
+        try:
+            self._video_transform_thread_id = threading.get_ident()
+            if not frame.mime_type.startswith("video/"):
+                raise AssertionError(f"想定外の video mime_type: {frame.mime_type!r}")
 
-        # MIME type は正しいプロパティ名 mime_type で取得できること
-        assert frame.mime_type.startswith("video/")
+            new_data = numpy.asarray(frame.get_data(), dtype=numpy.uint8)
+            removed_data = new_data[-4:]
+            self._video_payload_ok = removed_data.tobytes() == b"sora"
+            if not self._video_payload_ok:
+                raise AssertionError(f"想定外の video trailer: {removed_data.tobytes()!r}")
 
-        # frame からエンコードされたフレームデータを取得する
-        # 戻り値は ArrayLike になっている
-        new_data = frame.get_data()
-
-        # ここで new_data の末尾にデータをつける new_data を暗号化するなど任意の処理を実装する
-
-        # ArrayLike を numpy.uint8 のバイト列に変換する
-        new_data = numpy.asarray(new_data, dtype=numpy.uint8)
-
-        # 後ろ4バイトを取得する
-        removed_data = new_data[-4:]
-
-        assert b"sora" == removed_data.tobytes()
-
-        # 後ろ4バイトを取り除く
-        new_data = new_data[:-4]
-
-        self._is_called_on_video_transform = True
-
-        # 加工したフレームデータで frame の フレームデータを入れ替える
-        frame.set_data(new_data)
-        self._video_transformer.enqueue(frame)
+            frame.set_data(new_data[:-4])
+            self._video_transformer.enqueue(frame)
+        except BaseException as exc:
+            self._video_transform_error = exc
+        finally:
+            self._video_transform_event.set()
 
 
 def test_encoded_transform(settings):
-    sendonly = SendonlyEncodedTransform(settings)
-    sendonly.connect()
+    """Encoded Transform の 4 経路が GIL 保持下で安全に動くことを実接続で確認する
 
+    Audio / Video の送受信で on_transform を発火させ、get_data / set_data / enqueue
+    と NumPy 操作を通過したうえで、切断前に結果を検証する。
+    """
+    test_thread_id = threading.get_ident()
+    sendonly = SendonlyEncodedTransform(settings)
     recvonly = RecvonlyEncodedTransform(settings)
+
+    sendonly.connect()
     recvonly.connect()
 
-    time.sleep(5)
+    # 固定 sleep ではなく、4 経路の callback 発火をイベントで待つ
+    sendonly.wait_transforms()
+    recvonly.wait_transforms()
+    sendonly.assert_transform_results(test_thread_id)
+    recvonly.assert_transform_results(test_thread_id)
 
+    # codec / RTP stats は callback 確認後に取得する
     sendonly_stats = sendonly.get_stats()
     recvonly_stats = recvonly.get_stats()
 
     sendonly.disconnect()
     recvonly.disconnect()
+
+    # 切断完了を待ち、その後も callback 例外が増えないこと（継続呼び出しの副作用）を確認する
+    assert sendonly._disconnected.wait(10)
+    assert recvonly._disconnected.wait(10)
+    time.sleep(0.5)
+    assert sendonly._audio_transform_error is None
+    assert sendonly._video_transform_error is None
+    assert recvonly._audio_transform_error is None
+    assert recvonly._video_transform_error is None
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(
@@ -417,19 +459,15 @@ def test_encoded_transform(settings):
     outbound_rtp_stats = next(
         s for s in sendonly_stats if s.get("type") == "outbound-rtp" and s.get("kind") == "audio"
     )
-    # audio には encoderImplementation が無い
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
-    # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(
         s for s in sendonly_stats if s.get("type") == "outbound-rtp" and s.get("kind") == "video"
     )
-    # video には encoderImplementation が無い
     assert outbound_rtp_stats["bytesSent"] > 0
     assert outbound_rtp_stats["packetsSent"] > 0
 
-    # codec が無かったら StopIteration 例外が上がる
     recvonly_codec_stats = next(
         s for s in recvonly_stats if s.get("type") == "codec" and s.get("mimeType") == "audio/opus"
     )
@@ -440,25 +478,14 @@ def test_encoded_transform(settings):
     )
     assert recvonly_codec_stats["mimeType"] == "video/VP9"
 
-    # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(
         s for s in recvonly_stats if s.get("type") == "inbound-rtp" and s.get("kind") == "audio"
     )
-    # audio には encoderImplementation が無い
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
 
-    # inbound-rtp が無かったら StopIteration 例外が上がる
     inbound_rtp_stats = next(
         s for s in recvonly_stats if s.get("type") == "inbound-rtp" and s.get("kind") == "video"
     )
-    # video には encoderImplementation が無い
     assert inbound_rtp_stats["bytesReceived"] > 0
     assert inbound_rtp_stats["packetsReceived"] > 0
-
-    # on_transform が呼ばれていることを確認
-    assert sendonly.is_called_on_audio_transform is True
-    assert sendonly.is_called_on_video_transform is True
-
-    assert recvonly.is_called_on_audio_transform is True
-    assert recvonly.is_called_on_video_transform is True
