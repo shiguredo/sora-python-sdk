@@ -35,6 +35,9 @@
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
     - https://issuetracker.google.com/issues/439801349
   - @torikizi
+- [FIX] `SoraVideoFrame` / `SoraVideoSource` が配列確保メモリを非配列 `unique_ptr` で保持していた未定義動作を修正する
+  - `std::unique_ptr<uint8_t[]>` に直し、破棄時に `delete[]` が呼ばれるようにする
+  - @voluntas
 - [FIX] `SoraConnection::OnTrack` で `transceiver` / `receiver` が null のときに SIGSEGV しうる問題を修正する
   - `SoraMediaTrack` 構築時の null 参照によるプロセスクラッシュを防ぐ
   - null 時は警告ログのみ出し Python コールバックは呼ばない

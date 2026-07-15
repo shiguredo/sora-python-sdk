@@ -49,7 +49,7 @@ void SoraVideoSource::OnCaptured(
     int64_t timestamp_us) {
   int width = ndarray.shape(1);
   int height = ndarray.shape(0);
-  std::unique_ptr<uint8_t> data(new uint8_t[width * height * 3]);
+  std::unique_ptr<uint8_t[]> data(new uint8_t[width * height * 3]);
   memcpy(data.get(), ndarray.data(), width * height * 3);
 
   if (finished_) {
