@@ -281,6 +281,8 @@ class RecvonlyEncodedTransform:
         self._connection.on_track = self._on_track
 
         # callback 発火通知と結果保存（callback 内では assert しない）
+        self._audio_track_ready = Event()
+        self._video_track_ready = Event()
         self._audio_transform_event = Event()
         self._video_transform_event = Event()
         self._audio_transform_error: BaseException | None = None
@@ -359,6 +361,7 @@ class RecvonlyEncodedTransform:
             self._audio_transformer.on_transform = self._on_audio_transform
             # Encoded Transformer を RTPReceiver に設定する
             track.set_frame_transformer(self._audio_transformer)
+            self._audio_track_ready.set()
         if track.kind == "video":
             # Video 向けの Encoded Transformer
             self._video_transformer = SoraVideoFrameTransformer()
@@ -366,6 +369,7 @@ class RecvonlyEncodedTransform:
             self._video_transformer.on_transform = self._on_video_transform
             # Encoded Transformer を SoraMediaTrack に設定する
             track.set_frame_transformer(self._video_transformer)
+            self._video_track_ready.set()
 
     def _on_audio_transform(self, frame: SoraTransformableAudioFrame):
         # Encoded Transform の基本形。callback 内では assert せず結果を保存する
@@ -418,36 +422,54 @@ def test_encoded_transform(settings):
     test_thread_id = threading.get_ident()
     sendonly = SendonlyEncodedTransform(settings)
     recvonly = RecvonlyEncodedTransform(settings)
+    sendonly_started = False
+    recvonly_started = False
 
-    # 受信側を先に接続し、送信開始前に frame transformer を張れるようにする
-    recvonly.connect()
-    sendonly.connect()
+    try:
+        # 受信側を先に接続し、送信開始前に frame transformer を張れるようにする
+        recvonly.connect()
+        recvonly_started = True
+        sendonly.connect()
+        sendonly_started = True
 
-    # 4 経路を並行に待ち、どれが欠けているかを明示する
-    deadline = time.time() + TRANSFORM_EVENT_TIMEOUT_S
-    events = {
-        "送信側 Audio": sendonly._audio_transform_event,
-        "送信側 Video": sendonly._video_transform_event,
-        "受信側 Audio": recvonly._audio_transform_event,
-        "受信側 Video": recvonly._video_transform_event,
-    }
-    while time.time() < deadline:
-        if all(event.is_set() for event in events.values()):
-            break
-        time.sleep(0.05)
-    else:
-        missing = [name for name, event in events.items() if not event.is_set()]
-        raise AssertionError(f"on_transform が発火しなかった経路: {missing}")
+        # 受信側 track への transformer 設定完了を待ってから発火待ちに入る
+        assert recvonly._audio_track_ready.wait(TRANSFORM_EVENT_TIMEOUT_S), (
+            "受信側 Audio track の transformer 設定が完了しなかった"
+        )
+        assert recvonly._video_track_ready.wait(TRANSFORM_EVENT_TIMEOUT_S), (
+            "受信側 Video track の transformer 設定が完了しなかった"
+        )
 
-    sendonly.assert_transform_results(test_thread_id)
-    recvonly.assert_transform_results(test_thread_id)
+        # 4 経路を並行に待ち、どれが欠けているかを明示する
+        deadline = time.time() + TRANSFORM_EVENT_TIMEOUT_S
+        events = {
+            "送信側 Audio": sendonly._audio_transform_event,
+            "送信側 Video": sendonly._video_transform_event,
+            "受信側 Audio": recvonly._audio_transform_event,
+            "受信側 Video": recvonly._video_transform_event,
+        }
+        while time.time() < deadline:
+            if all(event.is_set() for event in events.values()):
+                break
+            time.sleep(0.05)
+        else:
+            missing = [name for name, event in events.items() if not event.is_set()]
+            raise AssertionError(f"on_transform が発火しなかった経路: {missing}")
 
-    # codec / RTP stats は callback 確認後に取得する
-    sendonly_stats = sendonly.get_stats()
-    recvonly_stats = recvonly.get_stats()
+        sendonly.assert_transform_results(test_thread_id)
+        recvonly.assert_transform_results(test_thread_id)
 
-    sendonly.disconnect()
-    recvonly.disconnect()
+        # codec / RTP stats は callback 確認後に取得する
+        sendonly_stats = sendonly.get_stats()
+        recvonly_stats = recvonly.get_stats()
+    finally:
+        # 失敗時も切断し、fake loop / worker crash を誘発しない
+        try:
+            if sendonly_started:
+                sendonly.disconnect()
+        finally:
+            if recvonly_started:
+                recvonly.disconnect()
 
     # 切断完了を待ち、その後も callback 例外が増えないこと（継続呼び出しの副作用）を確認する
     assert sendonly._disconnected.wait(10)
