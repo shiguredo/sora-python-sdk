@@ -33,7 +33,7 @@ lint = ["ruff", "ty"]
 test = ["httpx", "numpy", "pyjwt", "pytest", "pytest-repeat", "pytest-xdist"]
 
 [build-system]
-requires = ["setuptools~=82.0", "wheel~=0.46"]
+requires = ["setuptools~=83.0", "wheel~=0.47"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]

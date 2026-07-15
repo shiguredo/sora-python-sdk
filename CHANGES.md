@@ -11,11 +11,11 @@
 
 ## develop
 
-- [UPDATE] wheel を `~=0.46` に上げる
-  - `0.46.x` を許可する
+- [UPDATE] wheel を `~=0.47` に上げる
+  - `0.47.x` を許可する
   - @voluntas
-- [UPDATE] setuptools を `~=82.0` に上げる
-  - `82.0.x` を許可する
+- [UPDATE] setuptools を `~=83.0` に上げる
+  - `83.0.x` を許可する
   - @voluntas
 - [UPDATE] nanobind を `2.13.0` に上げる
   - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要
