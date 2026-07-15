@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-06-23
+- Completed: 2026-07-16
 - Model: Opus 4.7
 - Branch: feature/fix-mine-type-typo
 
@@ -47,3 +48,11 @@ Python 側からは `frame.mine_type` でアクセスする形になっており
 - alias を残す場合: `frame.mine_type` も当面動作し、利用時に deprecation 警告が出る。
 - alias を残さない場合: `frame.mine_type` は AttributeError になり、CHANGES.md の `[CHANGE]` エントリで後方互換破壊を明示する。
 - `tests/test_encoded_transform.py` の Encoded Transform テストで `frame.mime_type` 経由のアサーションが通ること。
+
+## 解決方法
+
+正式リリース前 (VERSION は `2026.1.0.dev12`) かつプロジェクト規約で後方互換を取らない方針のため、`mine_type` の alias は残さず削除した。
+
+- `src/sora_sdk_ext.cpp` の `.def_prop_ro("mine_type", ...)` を `.def_prop_ro("mime_type", ...)` に書き換えた。型スタブ `sora_sdk_ext.pyi` はビルド時生成のため、次回ビルドで追随する。
+- `CHANGES.md` の `## develop` に `[CHANGE]` エントリを追記した。
+- `tests/test_encoded_transform.py` の sendonly / recvonly 双方の `on_transform` で `frame.mime_type` が `audio/` または `video/` で始まることを assert するよう追加した。
