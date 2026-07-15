@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] `SoraTransformableFrame` のタイポ `mine_type` を `mime_type` に修正する
+  - 誤った公開プロパティ名をそのまま残さない
+  - `mine_type` は削除する（alias は残さない）
+  - @voluntas
 - [UPDATE] wheel を `~=0.47` に上げる
   - `0.47.x` を許可する
   - @voluntas

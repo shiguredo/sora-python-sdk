@@ -532,7 +532,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_rw("rtp_timestamp", &SoraTransformableFrame::GetTimestamp,
                    &SoraTransformableFrame::SetRTPTimestamp)
       .def_prop_ro("direction", &SoraTransformableFrame::GetDirection)
-      .def_prop_ro("mine_type", &SoraTransformableFrame::GetMimeType);
+      .def_prop_ro("mime_type", &SoraTransformableFrame::GetMimeType);
 
   nb::enum_<webrtc::TransformableAudioFrameInterface::FrameType>(
       m, "SoraTransformableAudioFrameType", nb::is_arithmetic())

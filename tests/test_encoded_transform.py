@@ -173,6 +173,9 @@ class SendonlyEncodedTransform:
     def _on_audio_transform(self, frame: SoraTransformableAudioFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
 
+        # MIME type は正しいプロパティ名 mime_type で取得できること
+        assert frame.mime_type.startswith("audio/")
+
         # frame からエンコードされたフレームデータを取得する
         # 戻り値は numpy.ndarray になっている
         new_data = frame.get_data()
@@ -190,6 +193,9 @@ class SendonlyEncodedTransform:
 
     def _on_video_transform(self, frame: SoraTransformableVideoFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
+
+        # MIME type は正しいプロパティ名 mime_type で取得できること
+        assert frame.mime_type.startswith("video/")
 
         # frame からエンコードされたフレームデータを取得する
         # 戻り値は numpy.ndarray になっている
@@ -325,6 +331,9 @@ class RecvonlyEncodedTransform:
     def _on_audio_transform(self, frame: SoraTransformableAudioFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
 
+        # MIME type は正しいプロパティ名 mime_type で取得できること
+        assert frame.mime_type.startswith("audio/")
+
         # frame からエンコードされたフレームデータを取得する
         # 戻り値は ArrayLike になっている
         new_data = frame.get_data()
@@ -350,6 +359,10 @@ class RecvonlyEncodedTransform:
 
     def _on_video_transform(self, frame: SoraTransformableVideoFrame):
         # この実装が Encoded Transform を利用する上での基本形となる
+
+        # MIME type は正しいプロパティ名 mime_type で取得できること
+        assert frame.mime_type.startswith("video/")
+
         # frame からエンコードされたフレームデータを取得する
         # 戻り値は ArrayLike になっている
         new_data = frame.get_data()
