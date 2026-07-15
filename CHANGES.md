@@ -35,6 +35,10 @@
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
     - https://issuetracker.google.com/issues/439801349
   - @torikizi
+- [FIX] `SoraConnection::OnTrack` で `transceiver` / `receiver` が null のときに SIGSEGV しうる問題を修正する
+  - `SoraMediaTrack` 構築時の null 参照によるプロセスクラッシュを防ぐ
+  - null 時は警告ログのみ出し Python コールバックは呼ばない
+  - @voluntas
 - [FIX] デフォルト User-Agent が `Sora Unity SDK` になっていたのを `Sora Python SDK` に修正する
   - `user_agent` 未指定時のコピペ残骸で、Sora サーバ側のクライアント識別が誤っていた
   - @voluntas
