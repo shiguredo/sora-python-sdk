@@ -29,8 +29,10 @@ struct gil_scoped_acquire {
   }
 
  private:
-  bool initialized;
-  PyGILState_STATE state;
+  // Py_IsInitialized() が偽で early return した場合でもデストラクタが
+  // 未初期化メンバを読まないよう、必ずデフォルト初期化しておく
+  bool initialized = false;
+  PyGILState_STATE state{};
 };
 
 // nanobind::gil_scoped_release は終了処理中（Py_IsInitialized() == false 時）に呼ばれた場合の
@@ -54,7 +56,9 @@ struct gil_scoped_release {
   }
 
  private:
-  PyThreadState* state;
+  // Py_IsInitialized() が偽で early return した場合でもデストラクタが
+  // 未初期化ポインタを読まないよう、必ず nullptr で初期化しておく
+  PyThreadState* state = nullptr;
 };
 
 // condition_variable_any で GIL を利用するためにアダプトしたクラス
