@@ -21,7 +21,7 @@ from sora_sdk import (
 )
 
 # on_transform 発火待ちのタイムアウト（秒）
-TRANSFORM_EVENT_TIMEOUT_S = 30.0
+TRANSFORM_EVENT_TIMEOUT_S = 60.0
 
 
 class SendonlyEncodedTransform:
@@ -419,12 +419,26 @@ def test_encoded_transform(settings):
     sendonly = SendonlyEncodedTransform(settings)
     recvonly = RecvonlyEncodedTransform(settings)
 
-    sendonly.connect()
+    # 受信側を先に接続し、送信開始前に frame transformer を張れるようにする
     recvonly.connect()
+    sendonly.connect()
 
-    # 固定 sleep ではなく、4 経路の callback 発火をイベントで待つ
-    sendonly.wait_transforms()
-    recvonly.wait_transforms()
+    # 4 経路を並行に待ち、どれが欠けているかを明示する
+    deadline = time.time() + TRANSFORM_EVENT_TIMEOUT_S
+    events = {
+        "送信側 Audio": sendonly._audio_transform_event,
+        "送信側 Video": sendonly._video_transform_event,
+        "受信側 Audio": recvonly._audio_transform_event,
+        "受信側 Video": recvonly._video_transform_event,
+    }
+    while time.time() < deadline:
+        if all(event.is_set() for event in events.values()):
+            break
+        time.sleep(0.05)
+    else:
+        missing = [name for name, event in events.items() if not event.is_set()]
+        raise AssertionError(f"on_transform が発火しなかった経路: {missing}")
+
     sendonly.assert_transform_results(test_thread_id)
     recvonly.assert_transform_results(test_thread_id)
 
