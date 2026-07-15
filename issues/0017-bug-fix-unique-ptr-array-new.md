@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-06-23
+- Completed: 2026-07-16
 - Model: Opus 4.7
 - Branch: feature/fix-unique-ptr-array-new
 - Polished: 2026-07-16
@@ -125,3 +126,18 @@ Python 公開 API、`.pyi`、送受信の観測可能な挙動は変更しない
 - `issues/0023-bug-fix-sora-video-source-no-disposed-override.md`: 同じ `SoraVideoSource` の寿命 / `Disposed`。バッファ型とは独立。
 
 ## 解決方法
+
+設計方針どおり、非配列 `std::unique_ptr<uint8_t>` を配列版 `std::unique_ptr<uint8_t[]>` に変更した。確保は `std::unique_ptr<uint8_t[]>(new uint8_t[n])` に統一した。
+
+変更箇所:
+
+- `src/sora_video_sink.h` / `src/sora_video_sink.cpp`: `argb_data_`
+- `src/sora_video_source.h` / `src/sora_video_source.cpp`: `Frame` の引数・メンバと `OnCaptured` 内ローカル `data`
+
+検証:
+
+- `rg -n 'unique_ptr<uint8_t\[\]>' src/` が 5 ヒット
+- 非配列 `unique_ptr<uint8_t>` が `src/` に残っていないこと
+- `uv run python run.py build macos_arm64` が成功
+
+`CHANGES.md` の `## develop` に `[FIX]` を追記した。
