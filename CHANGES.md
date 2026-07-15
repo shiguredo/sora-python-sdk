@@ -22,11 +22,11 @@
   - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
   - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.18` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.22` に上げる
   - WEBRTC_BUILD_VERSION を `m150.7871.3.0` に上げる
   - CMAKE_VERSION を `4.3.2` に上げる
   - BOOST_VERSION を `1.91.0` に上げる
-  - @torikizi
+  - @voluntas
 - [UPDATE] libwebrtc m148 で `ArrayView` が C++ 標準の `std::span` に移行したため追従する
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
     - https://issuetracker.google.com/issues/439801349
@@ -52,6 +52,14 @@
 
 ### misc
 
+- [UPDATE] actions/checkout を v7.0.0 に上げる
+  - @voluntas
+- [UPDATE] astral-sh/setup-uv を v8.3.2 に上げる
+  - @voluntas
+- [UPDATE] tailscale/github-action を v4.1.3 に上げる
+  - @voluntas
+- [UPDATE] Homebrew/actions/setup-homebrew を最新の master に追従する
+  - @voluntas
 - [UPDATE] Slack 通知を `rtCamp/action-slack-notify` から `shiguredo/github-actions/slack-notify` に切り替える
   - @voluntas
 - [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP", "PT"]` を追加する
