@@ -1,6 +1,9 @@
 #ifndef SORA_TRANSFORMER_H_
 #define SORA_TRANSFORMER_H_
 
+// Python.h を他ヘッダより先に読み込むため、gil.h を先頭に置く
+#include "gil.h"
+
 #include <span>
 #include <unordered_map>
 
@@ -261,6 +264,8 @@ class SoraAudioFrameTransformer : public SoraFrameTransformer {
 
   void Transform(std::unique_ptr<webrtc::TransformableFrameInterface>
                      transformable_frame) override {
+    // libwebrtc のワーカースレッドから呼ばれるため、Python callback の前に GIL を取る
+    gil_scoped_acquire acq;
     on_transform_(std::make_unique<SoraTransformableAudioFrame>(
         std::move(transformable_frame)));
   }
@@ -328,6 +333,8 @@ class SoraVideoFrameTransformer : public SoraFrameTransformer {
 
   void Transform(std::unique_ptr<webrtc::TransformableFrameInterface>
                      transformable_frame) override {
+    // libwebrtc のワーカースレッドから呼ばれるため、Python callback の前に GIL を取る
+    gil_scoped_acquire acq;
     on_transform_(std::make_unique<SoraTransformableVideoFrame>(
         std::move(transformable_frame)));
   }

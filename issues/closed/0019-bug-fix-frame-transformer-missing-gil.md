@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-06-23
+- Completed: 2026-07-16
 - Polished: 2026-07-13
 - Model: Opus 4.7
 - Branch: feature/fix-frame-transformer-missing-gil
@@ -150,3 +151,13 @@ Python 公開 API、`on_transform` の引数型、callback の同期的な呼び
 
 - [WebRTC `FrameTransformerInterface`](https://webrtc.googlesource.com/src/+/refs/heads/main/api/frame_transformer_interface.h): `Transform` と `TransformedFrameCallback::OnTransformedFrame` を別 API として定義している。
 - [WebRTC Encoded Transform](https://www.w3.org/TR/webrtc-encoded-transform/): sender / receiver の encoded frame を transform して返す仕様。
+
+## 解決方法
+
+`src/sora_frame_transformer.h` の先頭で `gil.h` を include し、`SoraAudioFrameTransformer::Transform` と `SoraVideoFrameTransformer::Transform` の先頭で `gil_scoped_acquire acq;` を構築した。ラッパーフレーム構築から `on_transform_` 呼び出し終了まで GIL を保持する。`call_python` への移管、`on_transform_` の null チェック、callback の非同期化、`PostTask` / 専用キュー / 追加 mutex は導入していない。
+
+`tests/test_encoded_transform.py` は送信・受信の Audio / Video 4 経路で `threading.Event` による発火通知、callback 内の例外保存、テストスレッド側での結果検証、切断完了後の例外非増加確認に拡張した。固定 `sleep` のみを発火根拠にしない。ローカルで `test_encoded_transform` が通過した。
+
+先行依存として挙げていた `issues/0057-bug-fix-gil-scope-uninitialized-member.md` は本リポジトリに存在しない。一方 `src/gil.h` には既に `Py_IsInitialized()` ガードがあり、0019 では `gil.h` を変更していない。
+
+あわせて `CHANGES.md` の `## develop` に `[FIX]` エントリを追記した。
