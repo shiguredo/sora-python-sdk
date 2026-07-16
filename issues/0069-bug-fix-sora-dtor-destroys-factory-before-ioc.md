@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-07-16
+- Completed: 2026-07-16
 - Model: Fable 5
 - Branch: feature/fix-sora-dtor-destroys-factory-before-ioc
 
@@ -81,3 +82,13 @@ GIL 解放には `src/gil.h` の `gil_scoped_release` を使うが、同クラ�
 - 修正前に SIGSEGV が再現していた E コア限定並列ストレス（100 回以上）で SIGSEGV が発生しないこと。
 - 既存の e2e テストが引き続き通ること。
 
+## 解決方法
+
+`Sora::~Sora` を以下の順序に修正した。
+
+1. `Disposed()` を先頭に移動し、子への破棄通知を最初に行うようにした。
+2. `ioc_->stop()` → `thread_->join()` → `ioc_ = nullptr` を factory 破棄より前に移動した。これにより io_context に abandoned のまま残った handler（`DoInternalDisconnect` のタイマーなど）が握る `sora::SoraSignaling` の破棄が、生存中の signaling スレッドへ正常に `Marshal` されるようになった。
+3. `factory_.reset()` を最後に移動した。
+4. スレッド終了待ちとネイティブリソース破棄の間は `gil_scoped_release` で GIL を解放し、io スレッド・signaling スレッド上の GIL 取得を伴うタスクとの相互待ちを防いだ。
+
+検証として、修正前に約 100 回中 2 回 SIGSEGV していた E コア限定 4 並列ストレス（fresh プロセス × 100 回）と lldb 配下の 75 回ループを修正後に実行し、SIGSEGV が発生しないことを確認した。
