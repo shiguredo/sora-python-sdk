@@ -2,6 +2,8 @@
 
 #include "sora.h"
 
+#include "gil.h"
+
 // Boost
 #include <boost/preprocessor/stringize.hpp>
 
@@ -21,14 +23,39 @@ Sora::Sora(std::optional<std::string> openh264,
 }
 
 Sora::~Sora() {
-  factory_.reset();
-  if (thread_) {
-    ioc_->stop();
-    thread_->join();
-    thread_ = nullptr;
-    ioc_ = nullptr;
-  }
+  // 破棄順序が生死を分けるので変更してはならない。
+  //
+  // 1. まず Disposed() で子 (SoraConnection や各種 source) に破棄を通知し、
+  //    factory_ のリソースを使う活動を止める。
+  // 2. 次に io_context を停止・破棄する。io_context のキューには
+  //    sora::SoraSignaling の shared_ptr を握った handler (例えば
+  //    DoInternalDisconnect のタイマー) が abandoned のまま残っていることがあり、
+  //    ioc_ の破棄で走る ~SoraSignaling は SoraSignalingConfig::pc_factory 経由で
+  //    PeerConnectionFactory のプロキシを解放し、factory_ の signaling スレッドへ
+  //    Marshal する。このとき factory_ が生きている必要がある。
+  // 3. 最後に factory_ を破棄する。
+  //
+  // factory_ を先に破棄すると、手順 2 の Marshal が破棄済みスレッドを触って
+  // use-after-free になり、GC のタイミング次第でプロセスが SEGV する。
   Disposed();
+  // io スレッドの handler や signaling スレッドのタスクは GIL を取得することが
+  // あるため、GIL を保持したまま join や Marshal の完了を待つと相互待ちになる。
+  // スレッドの終了とネイティブリソースの破棄の間だけ GIL を解放する。
+  auto teardown = [this]() {
+    if (thread_) {
+      ioc_->stop();
+      thread_->join();
+      thread_ = nullptr;
+      ioc_ = nullptr;
+    }
+    factory_.reset();
+  };
+  if (PyGILState_Check()) {
+    gil_scoped_release release;
+    teardown();
+  } else {
+    teardown();
+  }
 }
 
 nb::ref<SoraConnection> Sora::CreateConnection(

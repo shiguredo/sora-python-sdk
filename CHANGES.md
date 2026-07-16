@@ -35,6 +35,18 @@
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
     - https://issuetracker.google.com/issues/439801349
   - @torikizi
+- [FIX] `Sora` の破棄順序が原因で GC のタイミング次第にプロセスが SIGSEGV でクラッシュしうる問題を修正する
+  - `Sora::~Sora` が `PeerConnectionFactory` を先に破棄した後に io_context を破棄していたため、io_context に残った handler が握る `sora::SoraSignaling` の破棄が破棄済みの signaling スレッドへ Marshal して use-after-free になっていた
+  - 破棄順序を「子への破棄通知 → io_context の停止・破棄 → factory の破棄」に修正する
+  - io スレッドや signaling スレッドとの相互待ちを防ぐため、スレッドの終了待ちの間は GIL を解放する
+  - e2e テストの `test_audio_sink_callbacks` などで flaky に発生していた SEGV クラッシュの原因
+  - @voluntas
+- [FIX] `gil_scoped_acquire` / `gil_scoped_release` が `Py_IsInitialized()` が偽のときに未初期化メンバをデストラクタで読む未定義動作を修正する
+  - メンバをデフォルト初期化し、early return 経路でもデストラクタが確定した値を読むようにする
+  - @voluntas
+- [FIX] `SoraVideoFrame` / `SoraVideoSource` が配列確保メモリを非配列 `unique_ptr` で保持していた未定義動作を修正する
+  - `std::unique_ptr<uint8_t[]>` に直し、破棄時に `delete[]` が呼ばれるようにする
+  - @voluntas
 - [FIX] `SoraConnection::OnTrack` で `transceiver` / `receiver` が null のときに SIGSEGV しうる問題を修正する
   - `SoraMediaTrack` 構築時の null 参照によるプロセスクラッシュを防ぐ
   - null 時は警告ログのみ出し Python コールバックは呼ばない

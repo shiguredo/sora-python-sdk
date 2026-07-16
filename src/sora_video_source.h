@@ -82,10 +82,10 @@ class SoraVideoSource : public SoraTrackInterface {
 
  private:
   struct Frame {
-    Frame(std::unique_ptr<uint8_t> d, int w, int h, int64_t t)
+    Frame(std::unique_ptr<uint8_t[]> d, int w, int h, int64_t t)
         : data(std::move(d)), width(w), height(h), timestamp_us(t) {}
 
-    const std::unique_ptr<uint8_t> data;
+    const std::unique_ptr<uint8_t[]> data;
     const int32_t width;
     const int32_t height;
     const int64_t timestamp_us;
