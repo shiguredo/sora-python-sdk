@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-16
 - Model: Opus 4.7
 - Branch: feature/fix-gil-scope-uninitialized-member
 
@@ -119,3 +120,12 @@ UB 修正に伴うテストの追加方針:
 - 早期 return パスを経由したデストラクタの実行で未初期化メンバを読まないこと。
 - 修正の意図 (Python シャットダウン中の早期 return 経路で UB を踏まないため) がコメントで明示されていること。
 - 既存テストが pass すること。
+
+## 解決方法
+
+`gil_scoped_acquire` の `initialized` / `state` と `gil_scoped_release` の `state` をメンバ初期化子でデフォルト初期化した。
+これにより `Py_IsInitialized()` が偽で early return した場合でも、デストラクタは確定した値 (`initialized == false` / `state == nullptr`) を読み、未初期化メンバの参照による未定義動作が発生しなくなった。
+
+修正の意図 (early return 経路でデストラクタが未初期化メンバを読まないため) は `src/gil.h` のコメントに明記した。
+
+この修正は `Sora::~Sora` の破棄順序修正 (GC タイミング依存の SEGV クラッシュ対応) で `gil_scoped_release` をデストラクタ経路から使用するようになったことに伴い、同修正の正しさの前提として必要になったため合わせて実施した。
