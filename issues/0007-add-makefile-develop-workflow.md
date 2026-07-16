@@ -2,16 +2,17 @@
 
 - Priority: Medium
 - Created: 2026-05-21
+- Updated: 2026-07-17
 - Model: Composer 2.5
 - Branch: feature/add-makefile-develop-workflow
 
 ## 目的
 
-webcodecs-py と同様に `Makefile` をリポジトリルートに追加し、 開発者が `make develop` / `make wheel` / `make format` / `make clean` で scikit-build-core 経路のビルド / editable install / フォーマット / クリーンアップを行えるようにする。 0006 で `run.py` を削除するため、 `run.py format` の代替を `make format` で提供する。
+webcodecs-py と同様に `Makefile` をリポジトリルートに追加し、 開発者が `make develop` / `make wheel` / `make format` / `make clean` で scikit-build-core 経路のビルド / editable install / フォーマット / クリーンアップを行えるようにする。 `run.py` は 0001 で削除され、 フォーマットは prek の ruff-format / clang-format フックが担うため、 `make format` は prek フックの手動実行入口として提供する。
 
 ## 設計の前提
 
-0006 で `run.py` 削除と入れ替わるため、 0006 着手の前に 0007 を完了させて `make format` 代替を用意するか、 0006 PR 内で `run.py format` を一時的に残して 0007 完了後に削除するか、 どちらでも可。 デフォルト順序は **0007 → 0006** とする（依存方向が明示的）。
+前提は 0001 の完了（ scikit-build-core 経路の成立と `run.py` の削除）。 フォーマット手段は 0001 完了後も prek フックで確保されているため、 0006 との順序依存は無く、 0001 完了後いつでも着手できる。
 
 ## スコープ
 
@@ -20,25 +21,25 @@ webcodecs-py と同様に `Makefile` をリポジトリルートに追加し、 
 - リポジトリルートに `Makefile` を新設する
 - `make wheel`: `uv build --wheel` を呼ぶ
 - `make develop`: editable install 経路で開発環境にプロジェクトをインストールする。 scikit-build-core の editable install は `uv pip install --no-build-isolation -e .` を使う必要がある（ build-isolation 有効だと毎回フル CMake configure が走る）
-- `make format`: C++ ファイル（ `src/**/*.cpp` / `src/**/*.h` ）を `clang-format -i` で整形し、 Python ファイル（ `tests/` / `src/sora_sdk/` ）を `uv run ruff format` で整形する。 既存 `run.py:427-457` `_format` 関数の挙動を踏襲
-- `make clean`: scikit-build-core 生成物を削除する。 対象は `_build` / `dist` / `*.egg-info`。 `_deps` は **削除しない** （ 再 fetch コストが大きく、 開発フローでは保持したい）
+- `make format`: prek の整形系フック（ ruff-format / clang-format ）を全ファイルに対して手動実行する入口とする（ `prek run ruff-format clang-format --all-files` ）。 整形ルールの単一情報源は `prek.toml` とし、 Makefile 側に整形コマンドを重複実装しない
+- `make clean`: ビルド生成物を削除する。 対象は `_build` / `dist` / `src/*.egg-info` （ egg-info は setuptools 時代の残骸掃除。 scikit-build-core は egg-info を生成しない）。 `_deps` は **削除しない** （ 再 fetch コストが大きく、 開発フローでは保持したい）
 - `make distclean`: `make clean` 対象 + `_deps` を削除する
-- `make test`: `uv build --wheel && uv pip install --force-reinstall dist/*.whl && uv run --no-sync pytest tests/test_version.py` を呼ぶ（ 0001 完了条件と同じ）
+- `make test`: `uv build --wheel && uv pip install --force-reinstall dist/*.whl && uv run --no-sync pytest tests/test_version.py` を呼ぶ（ 0001 の動作確認手順と同じ。 前段の `uv sync --no-install-project` は `make develop` が担う前提）
 - `make` 単独実行（デフォルトターゲット）の挙動を `make wheel` にする
 - `.PHONY` 宣言を全ターゲットに付ける
 
 含まない（別 issue で扱う）:
 
-- ローカル `pre-commit` / `prek` フックの追加（既存運用維持）
+- `prek.toml` 自体の変更（既存フック構成を維持する）
 - 開発者向けドキュメント（ README.md 等）の更新（ CLAUDE.md「ドキュメントは別管理」方針）
 - `make develop` で `SORA_SDK_TARGET` をプラットフォーム別に切り替えるロジック（開発者は手動で env 設定）
 
 ## 現状
 
-- `run.py:427-457` `_format` 関数で `clang-format -i src/**/*.cpp src/**/*.h` + `uv run ruff format` を実行する
-- `run.py` 経由で開発者は `uv run python run.py format` を呼ぶ運用
+- フォーマットは `prek.toml` の ruff-format / clang-format フック（ commit hook + `prek run` の手動実行）で行う運用が確立している
+- 旧 `run.py:426-456` の `_format` 関数（ `clang-format -i` + `uv run ruff format` 。 パス指定なしでプロジェクト全体を整形）は 0001 で run.py ごと削除される。 削除後は git 履歴 (`git show <削除前コミット>:run.py`) で参照する
 - webcodecs-py の `Makefile` （ `/Users/voluntas/shiguredo/webcodecs-py/Makefile` ）を参考にする
-- `uv sync` は scikit-build-core 経由でプロジェクト本体を install する（ 0001 で確認済み）。 `make develop` の `uv pip install --no-build-isolation -e .` との重複ビルドが起きないかを 0007 実装時に検証する
+- 0001 完了後は素の `uv sync` が scikit-build-core 経由でプロジェクト本体をビルド・install する想定（ 0001 の動作確認手順は `uv sync --no-install-project` を必須としている）。 `make develop` の `uv pip install --no-build-isolation -e .` との重複ビルドが起きないかを 0007 実装時に実機で検証する
 
 ## 設計方針
 
@@ -53,42 +54,30 @@ wheel:
 	uv build --wheel
 
 develop:
-	uv sync
+	uv sync --no-install-project
 	uv pip install --no-build-isolation -e .
 
 format:
-	find src/ -type f \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format -i
-	uv run ruff format
+	prek run ruff-format clang-format --all-files
 
 test: wheel
 	uv pip install --force-reinstall dist/*.whl
 	uv run --no-sync pytest tests/test_version.py
 
 clean:
-	rm -rf _build dist src/sora_sdk.egg-info src/sora_sdk_rpi.egg-info
+	rm -rf _build dist src/*.egg-info
 
 distclean: clean
 	rm -rf _deps
 ```
 
-`make format` の clang-format 呼び出しは `find -print0 | xargs -0` 形式でファイル名にスペースが含まれても安全に動く形にする。
-
-`make develop` で `uv sync` を先に呼ぶ理由: dev グループ（ pyjwt 等）が install されていないと `tests/conftest.py:8` の `import jwt` が collect 時に失敗する。 続けて `uv pip install --no-build-isolation -e .` でプロジェクト本体を editable install する。
+`make format` は prek フックの手動実行入口に徹する。 整形対象・除外・ツールバージョンは `prek.toml` が単一情報源のため、 Makefile 側で `find` / `clang-format` / `ruff format` を直接呼ばない。 prek 本体のインストール前提（ pyproject の依存には prek が無い。 system ツール運用か `uv tool` 経由か）は実装時に確定する。
 
 ### uv sync と editable install の重複懸念
 
-`uv sync` 単独で scikit-build-core 経由のフルビルドが走る（ 0001 で確認）。 続けて `uv pip install --no-build-isolation -e .` を呼ぶと **同じビルドが 2 回走る** 可能性がある。 これを避ける案:
+素の `uv sync` は scikit-build-core 経由のフルビルドが走る想定（ 0001 実装後に実機確認）。 続けて `uv pip install --no-build-isolation -e .` を呼ぶと **同じビルドが 2 回走る** 可能性がある。 これを避けるため `make develop` は `uv sync --no-install-project` で project 本体を skip し、 dev グループ（ pyjwt 等。 `tests/conftest.py:8` の `import jwt` が collect 時に必要）のみ install した上で editable install を行う（上記骨格の形）。
 
-- 案 A: `uv sync --no-install-project` で project 本体を skip し、 dev グループのみ install。 続けて `uv pip install --no-build-isolation -e .` で editable のみビルドする
-- 案 B: `uv sync` のみで終わらせ、 editable は別途宣言する（ 0001 では editable install していない）
-
-0001 で `uv build --wheel` ベースの動作確認は済んでいるが、 editable install の挙動は 0007 が初出。 案 A を採る:
-
-```makefile
-develop:
-	uv sync --no-install-project
-	uv pip install --no-build-isolation -e .
-```
+`--no-build-isolation` では build requirements が環境に入っている必要がある。 0001 で nanobind は `[dependency-groups] dev` から `[build-system] requires` に移るため、 `uv sync --no-install-project` だけでは scikit-build-core / nanobind / cmake / ninja が環境に入らない可能性がある。 webcodecs-py の Makefile の対応方法を確認し、 必要なら editable install 前に build requirements を明示 install する step を挟む（ 0007 実装時に検証・確定する）。
 
 `make develop` 後に `uv run python -c "import sora_sdk; print(sora_sdk.__file__)"` が source tree 直下の `src/sora_sdk/__init__.py` を返すか確認する（ editable install の動作検証）。
 
@@ -97,7 +86,7 @@ develop:
 - リポジトリ直下に `Makefile` が存在する
 - `make wheel` が成功し `dist/*.whl` を生成する
 - `make develop` が成功し、 `uv run python -c "import sora_sdk; print(sora_sdk.__file__)"` が source tree 配下のパスを返す（ editable install 動作確認）
-- `make format` で `src/**/*.cpp` / `src/**/*.h` / `tests/` / `src/sora_sdk/` が整形される。 差分が無いリポジトリで `make format` を実行しても再差分が出ない（ idempotent ）
+- `make format` で prek の ruff-format / clang-format フックが全ファイルに適用される。 差分が無いリポジトリで `make format` を実行しても再差分が出ない（ idempotent ）
 - `make clean` 後に `_build` / `dist` が消え、 `_deps` は残る
 - `make distclean` 後に `_deps` も消える
 - `make test` で `pytest tests/test_version.py` が成功する
@@ -126,4 +115,4 @@ develop:
 
 1. `git revert -m 1 <merge-commit>` で revert PR を作成
 2. revert 後、 `Makefile` が削除される
-3. 0006 が先にマージ済みなら `run.py format` は既に削除済みのため、 開発者は再び手打ちで format することになる。 forward fix を選んで個別ターゲットの修正コミットを優先する
+3. revert 後も prek の ruff-format / clang-format フックが機能するため、 フォーマット手段は失われない。 forward fix を選んで個別ターゲットの修正コミットを優先する
