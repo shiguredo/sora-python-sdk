@@ -1,71 +1,151 @@
-# Linux arm64 クロスコンパイル対応（ubuntu armv8）
+# Linux arm64 クロスコンパイル対応と multistrap から sysroot builder への移行
 
 - Priority: High
 - Created: 2026-05-21
-- Updated: 2026-07-16
+- Updated: 2026-07-17
+- Completed: -
 - Model: Composer 2.5
 - Branch: feature/change-crosscompile-aarch64-linux
+- Polished: 2026-07-17
 
 ## 目的
 
-ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` 向け wheel を `uv build --wheel` 一発で生成できる経路を 0001 で確立した scikit-build-core + `cmake/scripts/fetch_deps.cmake` 構成で実装する。 multistrap で sysroot を用意し、 0001 で取得済みの libwebrtc 同梱 clang （ host = Linux x86_64 ）を `-target aarch64-linux-gnu` でクロスコンパイルに使う。
+0001 で導入する scikit-build-core + `cmake/scripts/fetch_deps.cmake` 構成を拡張し、 ubuntu-24.04 x86_64 host 上で `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` 向け wheel を `uv build --wheel` で生成できるようにする。
 
-## 設計の前提（プロジェクト全体の新方針からの該当部）
+sysroot は `multistrap` ではなく、 webrtc-build の実装を基に `apt-get --download-only` と `dpkg-deb --extract` で生成する。ホストの APT 状態を参照せず、 HTTPS と `signed-by` による署名検証を必須とし、 `--no-auth` 、 `AllowInsecureRepositories` 、 `/usr/sbin/multistrap` の書き換えを廃止する。
 
-- ビルド環境は ubuntu-24.04 x86_64 host のみ
-- Linux arm64 (`ubuntu-22.04_armv8` / `ubuntu-24.04_armv8`) は x86_64 host からの **sysroot クロスコンパイル**
-- arm64 native runner (`ubuntu-22.04-arm` / `ubuntu-24.04-arm`) は廃止。 既存 `build_ubuntu_arm` job （削除前 `build.yml:172-228` 。 git 履歴参照）は 0001 で build.yml から削除される。 復活はしない
-- libwebrtc 同梱 clang バイナリは 0001 で `_sora_fetch_llvm` が host = `x86_64-Linux` （ 0001 の `<host_key>` ）用に取得する。 cross-compile では同じバイナリに `-target aarch64-linux-gnu` を渡す
+## 優先度根拠
+
+- 0004 の Raspberry Pi OS 対応と 0043 の Jetson 対応が、本 issue で導入する `sysroot_builder.py` 、 JSON 設定、 CMake 連携を前提とする。
+- `multistrap` は Debian unstable から削除済みで、将来の runner 更新を妨げる。
+- 現行経路は HTTP 、 `--no-auth` 、 `AllowInsecureRepositories` を使用しており、依存パッケージの取得経路として維持できない。
+- 0001 は arm64 native job とレガシービルドスクリプトを削除するため、本 issue が完了するまで Linux arm64 wheel の生成経路が失われる。
+
+## 前提
+
+- 0001 および 0002 の完了後に実装する。0001 が追加する `_deps/` レイアウト / `fetch_deps.cmake` と、0002 が更新する scikit-build-core 1.x 設定 / `build_macos` job を直接拡張する。
+- wheel の compile / link host は ubuntu-24.04 x86_64 のみとし、arm64 native build は復活させない。0052 が auditwheel の architecture 制約により matching AArch64 runner で repair だけを行うことは許可する。
+- クロスコンパイラは 0001 が `_deps/llvm/x86_64-Linux/clang` に取得する libwebrtc 同梱 clang を使う。
+- 本 issue で生成する wheel の platform tag は `linux_aarch64` とする。manylinux tag の決定と `auditwheel repair` は 0052 で行う。
+- 0004 は本 issue の実装を拡張する。 0003 と 0004 を同時実装しない。
 
 ## スコープ
 
 含む:
 
-- `cmake/toolchains/ubuntu-aarch64-cross.cmake` を新設し、 cross-compile 時の `CMAKE_SYSTEM_NAME` / `CMAKE_SYSTEM_PROCESSOR` / `CMAKE_*_COMPILER_TARGET` / `CMAKE_FIND_ROOT_PATH_MODE_*` のみ設定する（ `CMAKE_SYSROOT` / `CMAKE_FIND_ROOT_PATH` / `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` は `fetch_deps.cmake` 経由の cache 変数で渡る）
-- `cmake/scripts/install_rootfs.sh` を新設し、 旧 `buildbase.py:install_rootfs` (削除前 L1074-1118 。 0001 で削除されるため git 履歴参照) 相当の処理（ multistrap 実行 + 絶対パス symlink の相対化 + `AllowInsecureRepositories=true` multistrap パッチ）を bash で移植する
-- `fetch_deps.cmake` に `_sora_fetch_rootfs` を追加し、 multistrap 取得後に `CMAKE_SYSROOT` / `CMAKE_FIND_ROOT_PATH` cache 変数を `set(... CACHE PATH "" FORCE)` で渡す
-- `cmake/scripts/fetch_deps.cmake` の `SORA_PYTHON_SDK_PLATFORM` 自動検出に「cache 値 / 環境変数で渡されていれば自動検出をスキップ」分岐を追加する
-- `pyproject.toml` に `[[tool.scikit-build.overrides]]` を追加し、 `SORA_SDK_TARGET=ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` × Python 3.12 / 3.13 / 3.14 の **6 件の独立 override** で `wheel.tags` を 1 要素のみ指定する
-- `NB_SUFFIX=.cpython-XYZ-aarch64-linux-gnu.so` を `CMakeLists.txt` の `find_package(Python)` 後に設定する
-- `SORA_GEN_PYI=OFF` をクロス時 override で渡す（ pyi はクロス環境では生成できない）
-- `_PYTHON_HOST_PLATFORM=linux_aarch64` 環境変数を CI で設定する（ scikit-build-core の `WheelTag.compute_best` が `_PYTHON_HOST_PLATFORM` を見るため、 `wheel.tags` 上書きとの二重指定で platform tag を強制する）
-- 0001 で `ubuntu-24.04_x86_64` の 1 entry に縮小された `build_ubuntu` matrix に、 `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` の 2 entry を新規追加する（ runs_on は ubuntu-24.04 のままで、 x86_64 host から cross-compile する）
+- webrtc-build の `sysroot_builder.py` とユニットテストの移植。
+- Ubuntu 22.04 / 24.04 arm64 用 JSON 設定の追加。
+- `multistrap/ubuntu-22.04_armv8.conf` / `multistrap/ubuntu-24.04_armv8.conf` の削除。
+- 共通 AArch64 toolchain `linux-aarch64-cross.cmake` の追加。
+- `fetch_deps.cmake` から sysroot builder を呼び出し、 `CMAKE_SYSROOT` / `CMAKE_FIND_ROOT_PATH` を設定する処理。
+- scikit-build-core の cross override 、 arm64 extension suffix 、 CI matrix の追加。
+- Python 3.12 / 3.13 / 3.14 ごとの型情報 artifact を native wheel から生成し、同じ ABI の cross wheel へ `.pyi` / `py.typed` を同梱する経路。
+- 設定 validation 、キャッシュ再利用、 ELF architecture を含む検証。
 
-含まない（別 issue で扱う）:
+含まない:
 
-- jetson / Raspberry Pi OS 向けクロスコンパイル（ 0004 ）
-- macOS / Windows native （ 0002 / 0005 ）
-- クロス wheel への pyi / py.typed 同梱経路の整理（クロスは `SORA_GEN_PYI=OFF` のため同梱されない。 native 生成物を流用する経路の整理は 0006 。 `build_pyi` job 自体は 0001 で削除済み）
-- PyPI publish 用 manylinux 検証 (`auditwheel show`) と publish job 再構築（ 0006 ）
-- `ubuntu-22.04_x86_64` の再有効化（ 0006 ）
-- `build_ubuntu_arm` （ native arm64 runner ）の再有効化（新方針で廃止。 job は 0001 で削除済みのため復活なし）
+- Raspberry Pi OS の sysroot（0004）と Jetson の sysroot（0043）。
+- macOS / Windows の native build（0002 / 0005）。
+- manylinux tag / `auditwheel repair`（0052）、publish / release（0066）、E2E（0067）。
+- arm64 native build の復活。0052 の repair-only job は本 issue の対象外とする。
+- WebRTC / Sora / Boost 等の release archive の SHA-256 検証（0070）。sysroot の fingerprint に使う署名鍵の SHA-256 は本 issue に含む。
+- CI job 間の dependency cache（0071）。同一 checkout 内の sysroot 再利用は本 issue で検証する。
 
 ## 現状
 
-以下のレガシーファイル参照は 0001 で削除されるため、 実装時は git 履歴 (`git show <削除前コミット>:run.py` 等) で参照する:
+現行 `develop` には `run.py` / `buildbase.py` / `setup.py` を使う Ubuntu arm64 クロスビルド経路がある。しかし 0001 はこれらのファイル、 arm64 matrix 、 `build_ubuntu_arm` job を削除し、 ubuntu-24.04 x86_64 native build だけを残す。
 
-- `run.py:282-372` のクロス用 cmake 引数生成（ L302-318 が armv8 クロス）。 `SORA_SDK_TARGET` 環境変数を `setup.py` 側で読み、 `target_platform` を上書きする
-- `buildbase.py:install_rootfs` (L1074-1118) が `multistrap --no-auth -a arm64 -d <rootfs_dir> -f <conf>` 実行 + 絶対パス symlink 相対化を行う
-- `setup.py:bdist_wheel.get_tag()` で `ubuntu-22.04_armv8` → `manylinux_2_31_aarch64` 、 `ubuntu-24.04_armv8` → `manylinux_2_35_aarch64` を強制する
-- manylinux タグ番号の根拠（旧 `setup.py:27-31` を踏襲）:
-  - 22.04 → `manylinux_2_31` （ Ubuntu 20.04 / Debian 11 互換）
-  - 24.04 → `manylinux_2_35` （ Ubuntu 22.04 互換）
-  - 実シンボル検証は 0006 で `auditwheel show` を導入して確認する
-- 旧 `build.yml:142-146` の multistrap step （ 0001 で削除される）:
-  - `sudo apt-get -y install multistrap binutils-aarch64-linux-gnu`
-  - `sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap`（ multistrap 本体パッチ）
+現行 rootfs 経路には次の問題がある。
 
-現存するファイル・0001 の成果物:
+- `buildbase.py:1075-1118` の `install_rootfs()` が `multistrap --no-auth` を実行する。
+- CI が `/usr/sbin/multistrap` を `sed` で書き換え、 `Acquire::AllowInsecureRepositories=true` を注入する。
+- Ubuntu 用 conf が `http://ports.ubuntu.com` を参照する。
+- conf の MD5 だけをキャッシュキーとするため、署名鍵や生成ロジックの変更を検出できない。
+- rootfs を出力先へ直接展開するため、失敗時に部分生成物が残り得る。
 
-- multistrap conf: `multistrap/ubuntu-22.04_armv8.conf` (`suite=jammy`, `libstdc++-11-dev`) / `multistrap/ubuntu-24.04_armv8.conf` (`suite=noble`, `libstdc++-13-dev`)。 `noauth=true / ignorenativearch=true` 設定済み
-- 0001 で `SORA_PYTHON_SDK_PLATFORM` は `/etc/os-release` から自動検出される設計（ ubuntu 24.04 x86_64 のみ受け入れ）。 cross 時に `SORA_SDK_TARGET` 環境変数を見て自動検出をスキップする分岐を本 issue で追加する
-- 0001 で `_SORA_CLANG_DIR = ${DEPS_ROOT}/llvm/<host_key>/clang` が `fetch_deps.cmake` 経由で確定する（ cross 時もホスト側 clang を使うためそのまま流用）
+一方、参照先の webrtc-build には、これらを解消した `sysroot_builder.py` とテストがある。移植元は次の 2 commit に固定する。
+
+- `2c15196`：`apt-get --download-only` + `dpkg-deb --extract` による実装とテスト。
+- `59a0ce0`：同実装へ設計意図を説明する日本語コメントを追加。
+
+sora-cpp-sdk の multistrap 移行 issue は同じ移行の設計資料として参照する。ただし、 sora-cpp-sdk の古い実装 branch にある inline `install_sysroot` や、 sora-python-sdk の `origin/feature/change-replace-multistrap-with-sysroot` にある旧 `sysroot.py` は、 APT の隔離と署名検証が不足するため移植しない。 webrtc-rs の `cargo-shiguredo-sysroot` は JSON 構成と CI の参考に留め、 Python / CMake の依存には追加しない。
 
 ## 設計方針
 
-### toolchain ファイル
+### sysroot builder
 
-`cmake/toolchains/ubuntu-aarch64-cross.cmake` を新設する:
+リポジトリルートへ `sysroot_builder.py` を追加し、 webrtc-build の `59a0ce0` 時点の内容を移植する。動作を合わせるため、次の契約を維持する。
+
+- `SysrootConfig` / `RepositoryConfig` を frozen dataclass とし、 JSON の必須値、重複、使用可能文字を APT 実行前に検証する。
+- リポジトリ URL は HTTPS だけを許可し、全リポジトリに `signed_by` を要求する。
+- `APT_CONFIG` 、 `Dir::State` 、 `Dir::Cache` 、 `Dir::Etc::*` を一時ディレクトリへ向け、ホストの `/var/lib/apt` と `/etc/apt` を読み書きしない。
+- `APT::Architecture=arm64` を設定し、 `apt-get update` 、 `apt-get --download-only install` 、 `dpkg-deb --extract` の順で実行する。 maintainer script と chroot は使わず、 root 権限を要求しない。
+- usrmerge link 、 sysroot 内で解決できる絶対 symlink の相対化、 triplet 固有 pkg-config file への互換 link を後処理する。解決不能な `/etc/alternatives` 等の絶対 symlink は変更しない。
+- 設定値と署名鍵内容の SHA-256 、 `MANIFEST_VERSION` を manifest に保存する。同一 fingerprint は再利用し、不一致の既存出力は `--force` 無しでは削除しない。
+- 同じ親ディレクトリの一時領域で完成させ、 rename によって出力先を入れ替える。失敗時は既存 sysroot を戻す。
+
+manifest 名は cross repository で builder と生成物の形式を識別できる互換名として `.webrtc-build-sysroot.json` を恒久的に維持する。この意図を定数のコメントにも残す。後処理または生成形式を変えた場合は、同じ変更で `MANIFEST_VERSION` と該当テストを更新する。
+
+APT が解決した package version は manifest の `deb_files` に記録するが、 JSON では pin しない。このため、本 issue の「再利用」は同一設定で一度生成した sysroot を固定して使うことを意味し、 repository の時点再現までは保証しない。依存を更新するときは CLI を `--force` 付きで直接実行し、 PR で変更前後の `deb_files` を確認する。
+
+ログとエラーメッセージは英語、コメントとテストの説明は日本語とする。エラーメッセージの末尾にピリオドを付けず、ソースとテストのコメントに issue 番号を書かない。
+
+### CLI と CMake 連携
+
+`sysroot_builder.py` 自体に `main()` と `if __name__ == "__main__":` を追加し、 module API と CLI を 1 ファイルにまとめる。 CLI 専用の `sysroot.py` は追加しない。
+
+```text
+python sysroot_builder.py --config <json> --dest <rootfs> [--force]
+```
+
+CLI は subcommand を設けず、設定を読み込み、 `config.name` と JSON のファイル stem が一致することを検証してから `build_sysroot()` を呼ぶ。 `main(argv: Sequence[str] | None = None) -> int` と argument parser を分離して unit test 可能にする。 `SysrootConfigError` / `SysrootBuildError` / `subprocess.CalledProcessError` / 入出力に伴う `OSError` は英語のエラーを標準エラーへ出して `1` 、成功または再利用は `0` で終了する。想定外の例外は原因調査のため stack trace を維持する。 logging level は `INFO` とする。 `--force` は由来不明または fingerprint 不一致の既存 rootfs を利用者が明示的に置き換える場合だけ使う。
+
+0001 の `cmake/scripts/fetch_deps.cmake` に `_sora_fetch_sysroot(config_path rootfs_dir)` を追加する。
+
+- `SORA_PYTHON_SDK_PLATFORM` が `ubuntu-22.04_armv8` または `ubuntu-24.04_armv8` の場合だけ呼び出す。
+- `${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/sysroot_builder.py --config ... --dest ...` を `execute_process()` で実行し、失敗時は `FATAL_ERROR` にする。
+- rootfs は `${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/rootfs` に生成する。
+- CMake 独自の MD5 stamp は作らない。再利用判定は builder の manifest に一本化する。
+- CMake からは `--force` を渡さない。 fingerprint 不一致時は安全側で configure を失敗させ、エラーに表示された config / dest を使って利用者が CLI を `--force` 付きで直接実行してから build を再実行する。
+- 成功後に `CMAKE_SYSROOT` と `CMAKE_FIND_ROOT_PATH` を rootfs へ `CACHE PATH FORCE` で設定する。
+- 0001 が取得処理全体に設定する `${DEPS_ROOT}/.fetch.lock` の内側で実行し、同一 checkout の並列 configure を直列化する。
+- 最初の `project()` が言語を有効化する前に走る `CMAKE_PROJECT_TOP_LEVEL_INCLUDES` 上で、 platform 確定、 sysroot 生成、依存取得、 compiler cache 設定の順に完了させる。 CMake の compiler check 後に `CMAKE_SYSROOT` を変更しない。
+
+`SORA_PYTHON_SDK_PLATFORM` の cache 値と `SORA_SDK_TARGET` 環境変数の両方が設定され、値が異なる場合は `FATAL_ERROR` とする。同じ値なら明示 target として扱い、片方だけならその値を使う。どちらも未設定の場合だけ 0001 の host 自動検出を使う。全経路で最後に許容リストを検証し、不明な値を受け入れない。
+
+### JSON 設定
+
+`sysroot/ubuntu-22.04_armv8.json` と `sysroot/ubuntu-24.04_armv8.json` を追加する。共通値は次の通り。
+
+```json
+{
+    "name": "<ファイル stem>",
+    "arch": "arm64",
+    "triplet": "aarch64-linux-gnu",
+    "packages": ["<後述>"],
+    "repositories": [
+        {
+            "url": "https://ports.ubuntu.com/ubuntu-ports",
+            "suite": "<jammy または noble>",
+            "components": ["main", "universe"],
+            "signed_by": "/usr/share/keyrings/ubuntu-archive-keyring.gpg"
+        }
+    ]
+}
+```
+
+パッケージは現行 conf と同じ集合を維持する。
+
+| target | suite | packages |
+| --- | --- | --- |
+| `ubuntu-22.04_armv8` | `jammy` | `libstdc++-11-dev`, `libc6-dev`, `libxext-dev`, `libdbus-1-dev` |
+| `ubuntu-24.04_armv8` | `noble` | `libstdc++-13-dev`, `libc6-dev`, `libxext-dev`, `libdbus-1-dev` |
+
+Ubuntu archive keyring は repository に複製せず、 CI で `ubuntu-keyring` を明示的に install して system keyring を使う。設定変更または runner の keyring 更新で fingerprint が変わった場合は、 CLI を `--force` 付きで直接実行して再生成する。
+
+### toolchain と CMake
+
+`linux-aarch64-cross.cmake` を共通 AArch64 toolchain として追加する。
 
 ```cmake
 set(CMAKE_SYSTEM_NAME Linux)
@@ -73,234 +153,198 @@ set(CMAKE_SYSTEM_PROCESSOR aarch64)
 set(CMAKE_C_COMPILER_TARGET aarch64-linux-gnu)
 set(CMAKE_CXX_COMPILER_TARGET aarch64-linux-gnu)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
-set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 ```
 
-toolchain ファイルでは `CMAKE_SYSROOT` / `CMAKE_FIND_ROOT_PATH` / `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` を一切触らない。 これらは `fetch_deps.cmake` 末尾の cache 変数上書きで設定する（ rootfs / clang 取得後にしか確定しないため）。
+compiler は 0001 の `_SORA_CLANG_DIR` 、 sysroot は `fetch_deps.cmake` が確定するため、 toolchain file に絶対パスを重複記載しない。通常の library / include / package 探索は sysroot のみに限定する。 host Python discovery の間だけ検索 mode を退避して `NEVER` にし、終了後は元の `ONLY` へ戻す。 `PROGRAM` は host tool を探すため `NEVER` のままとする。
 
-### install_rootfs.sh
+sysroot 外にある target 用 Sora / WebRTC / Boost / OpenH264 は、 0001 が確定する `SORA_DIR` / `Boost_ROOT` / `WEBRTC_*` / `OPENH264_DIR` だけを使う。 `find_package()` が必要な Sora / Boost はそれぞれの絶対 root を `PATHS` へ渡し、 `NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH` で限定する。 WebRTC は `${SORA_DIR}/share/cmake` の既存 module path に限定して `NO_CMAKE_FIND_ROOT_PATH` で探す。 host 側で必要な nanobind は、 `Python_EXECUTABLE -m nanobind --cmake_dir` の結果だけを `PATHS` に渡し、 `NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH` で探す。それ以外の host package / header / library への fallback は認めない。
 
-`cmake/scripts/install_rootfs.sh` を新設する。 引数: `--conf <conf>` `--dest <rootfs_dir>` `--arch arm64` 。 処理:
+configure 後に `compile_commands.json` 、 link command 、 `CMakeCache.txt` の絶対 path を検査する。許可するのは rootfs 、 `_deps/<platform>/` 、 `_deps/llvm/x86_64-Linux/` 、 build isolation 環境の Python / nanobind 、 host program の path だけとし、それ以外の host include / library / package config が含まれたら失敗させる。
 
-1. `multistrap` と `binutils-aarch64-linux-gnu` の存在確認。 不在なら `apt-get -y install` を促す
-2. `/usr/sbin/multistrap` の `AllowInsecureRepositories=true` パッチを冪等に適用（既に当たっていれば skip ）
-3. `multistrap --no-auth -a arm64 -d <rootfs_dir> -f <conf>` を実行
-4. `<rootfs_dir>` 内の絶対パス symlink を相対パスに置き換える（旧 `buildbase.py:install_rootfs` L1079-1100 と同等。 git 履歴参照）
-5. Jetson 用 `libnvbuf_fdmap.so` symlink workaround（旧 `buildbase.py:install_rootfs` L1102-1118 ）は 0004 で扱うため本 issue では実装しない
-
-### fetch_deps.cmake の cross 対応
-
-- `SORA_PYTHON_SDK_PLATFORM` 算出の冒頭に「 cache 値 / 環境変数で既に設定済みなら自動検出をスキップ」分岐を追加する:
-
-  ```cmake
-  if(NOT SORA_PYTHON_SDK_PLATFORM)
-    if(DEFINED ENV{SORA_SDK_TARGET})
-      set(SORA_PYTHON_SDK_PLATFORM "$ENV{SORA_SDK_TARGET}" CACHE STRING "")
-    else()
-      # 0001 の自動検出ロジック
-    endif()
-  endif()
-  ```
-
-  `SORA_SDK_TARGET` は旧 `setup.py:69-79` （ 0001 で削除。 git 履歴参照）で使われていた環境変数名と一致させる（互換性のため）。
-
-- FATAL_ERROR の許容リストに `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` を追加する
-- LLVM の `<host_key>` は cross 時もホスト側 LLVM を使うため `x86_64-Linux` のまま（ 0001 と共有。 host key に ubuntu バージョンは含まれない）
-- `_sora_fetch_rootfs(rootfs_dir conf stamp_path)` を追加する:
-
-  ```cmake
-  function(_sora_fetch_rootfs rootfs_dir conf stamp_path)
-    # conf ファイルの MD5 を stamp 値にする
-    # (旧 run.py:61-68 の conf MD5 算出 + 旧 buildbase.py:251-270 の versioned デコレータと同等)
-    file(MD5 "${conf}" _conf_md5)
-    if(EXISTS "${stamp_path}")
-      file(READ "${stamp_path}" _existing_stamp)
-      string(STRIP "${_existing_stamp}" _existing_stamp)
-      if("${_existing_stamp}" STREQUAL "${_conf_md5}")
-        message(STATUS "Sora deps: rootfs cache hit")
-        return()
-      endif()
-    endif()
-
-    if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-      message(FATAL_ERROR
-        "ubuntu armv8 cross-compile requires Linux host; got '${CMAKE_HOST_SYSTEM_NAME}'.")
-    endif()
-
-    message(STATUS "Sora deps: building rootfs via multistrap (conf=${conf})")
-    file(REMOVE_RECURSE "${rootfs_dir}")
-    execute_process(
-      COMMAND bash "${CMAKE_SOURCE_DIR}/cmake/scripts/install_rootfs.sh"
-        --conf "${conf}"
-        --dest "${rootfs_dir}"
-        --arch arm64
-      RESULT_VARIABLE _r)
-    if(NOT _r EQUAL 0)
-      file(REMOVE_RECURSE "${rootfs_dir}")
-      message(FATAL_ERROR "install_rootfs.sh failed (conf=${conf})")
-    endif()
-    get_filename_component(_stamp_parent "${stamp_path}" DIRECTORY)
-    file(MAKE_DIRECTORY "${_stamp_parent}")
-    file(WRITE "${stamp_path}" "${_conf_md5}")
-  endfunction()
-  ```
-
-- メインスクリプトに以下を追加する（ `SORA_PYTHON_SDK_PLATFORM` が `ubuntu-*_armv8` のときのみ実行。 rootfs / stamp のパスは 0001 のレイアウト `_deps/<platform>/` に従う）:
-
-  ```cmake
-  if(SORA_PYTHON_SDK_PLATFORM MATCHES "^ubuntu-([0-9.]+)_armv8$")
-    set(_ubuntu_version "${CMAKE_MATCH_1}")
-    set(_rootfs_dir "${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/rootfs")
-    set(_rootfs_conf "${CMAKE_SOURCE_DIR}/multistrap/${SORA_PYTHON_SDK_PLATFORM}.conf")
-    _sora_fetch_rootfs("${_rootfs_dir}" "${_rootfs_conf}" "${DEPS_ROOT}/${SORA_PYTHON_SDK_PLATFORM}/.stamps/rootfs")
-    set(CMAKE_SYSROOT       "${_rootfs_dir}" CACHE PATH "" FORCE)
-    set(CMAKE_FIND_ROOT_PATH "${_rootfs_dir}" CACHE PATH "" FORCE)
-  endif()
-  ```
-
-### pyproject.toml の cross override
-
-`SORA_SDK_TARGET=ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` × Python 3.12 / 3.13 / 3.14 の 6 件 override を追加する。 各 override に `wheel.tags` を 1 要素のみ指定し、 platform tag を強制する。
-
-```toml
-# ubuntu-22.04_armv8 (manylinux_2_31_aarch64) × Python 3.12
-[[tool.scikit-build.overrides]]
-if.env.SORA_SDK_TARGET = "^ubuntu-22\\.04_armv8$"
-if.python-version = "3.12"
-wheel.tags = ["cp312-cp312-manylinux_2_31_aarch64"]
-cmake.define.CMAKE_TOOLCHAIN_FILE = "${PROJECT_ROOT}/cmake/toolchains/ubuntu-aarch64-cross.cmake"
-cmake.define.NB_SUFFIX = ".cpython-312-aarch64-linux-gnu.so"
-cmake.define.SORA_GEN_PYI = "OFF"
-
-# ubuntu-22.04_armv8 × Python 3.13
-[[tool.scikit-build.overrides]]
-if.env.SORA_SDK_TARGET = "^ubuntu-22\\.04_armv8$"
-if.python-version = "3.13"
-wheel.tags = ["cp313-cp313-manylinux_2_31_aarch64"]
-cmake.define.CMAKE_TOOLCHAIN_FILE = "${PROJECT_ROOT}/cmake/toolchains/ubuntu-aarch64-cross.cmake"
-cmake.define.NB_SUFFIX = ".cpython-313-aarch64-linux-gnu.so"
-cmake.define.SORA_GEN_PYI = "OFF"
-
-# ubuntu-22.04_armv8 × Python 3.14
-[[tool.scikit-build.overrides]]
-if.env.SORA_SDK_TARGET = "^ubuntu-22\\.04_armv8$"
-if.python-version = "3.14"
-wheel.tags = ["cp314-cp314-manylinux_2_31_aarch64"]
-cmake.define.CMAKE_TOOLCHAIN_FILE = "${PROJECT_ROOT}/cmake/toolchains/ubuntu-aarch64-cross.cmake"
-cmake.define.NB_SUFFIX = ".cpython-314-aarch64-linux-gnu.so"
-cmake.define.SORA_GEN_PYI = "OFF"
-
-# ubuntu-24.04_armv8 (manylinux_2_35_aarch64) × Python 3.12 / 3.13 / 3.14
-# (上 3 つと同様、manylinux タグだけ 2_35 に変える)
-```
-
-`${PROJECT_ROOT}` は scikit-build-core 提供の特殊変数（プロジェクトルートに展開される）。 6 件の冗長は許容する（ scikit-build-core の override は配列で順次適用される仕様で、 まとめて書くと条件の OR が表現できないため）。
-
-### CMakeLists.txt の cross 対応
-
-- `find_package(Python)` 後（ 0001 適用前の L40-47 周辺）に `NB_SUFFIX` を nanobind に渡す処理を追加する:
-
-  ```cmake
-  if(NB_SUFFIX)
-    set_target_properties(sora_sdk_ext PROPERTIES SUFFIX "${NB_SUFFIX}")
-  endif()
-  ```
-
-  旧 `run.py:317, 350, 371` （ 0001 で削除。 git 履歴参照）で渡していた `-DNB_SUFFIX=.cpython-XYZ-aarch64-linux-gnu.so` を踏襲する。
-- 既存 `CMakeLists.txt:21-38` （ 0001 適用前の行番号）の `if(CMAKE_CROSSCOMPILING)` ガード（ Python find のクロス対応）はそのまま動く
-
-### CI 影響
-
-`.github/workflows/build.yml` の `build_ubuntu` matrix （ 0001 で `ubuntu-24.04_x86_64` の 1 entry に縮小済み）に以下を **新規追加** する:
-
-```yaml
-- name: ubuntu-22.04_armv8
-  target: ubuntu-22.04_armv8
-  runs_on: ubuntu-24.04         # x86_64 host で cross-compile
-  os: ubuntu
-  arch: armv8
-- name: ubuntu-24.04_armv8
-  target: ubuntu-24.04_armv8
-  runs_on: ubuntu-24.04         # 同上
-  os: ubuntu
-  arch: armv8
-```
-
-cross step の `if:` 分岐は matrix entry の `arch` キーで行うため、 native entry （ `ubuntu-24.04_x86_64` ）にも `arch: x86_64` キーが揃っていることを前提とする（ 0001 の縮小 matrix に無ければ本 issue で追加する）。
-
-cross-compile 用ステップ:
-
-```yaml
-- if: ${{ matrix.platform.arch == 'armv8' && matrix.platform.os == 'ubuntu' }}
-  run: |
-    sudo apt-get update
-    sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-- if: ${{ matrix.platform.arch == 'armv8' && matrix.platform.os == 'ubuntu' }}
-  env:
-    SORA_SDK_TARGET: ${{ matrix.platform.target }}
-    _PYTHON_HOST_PLATFORM: linux_aarch64
-  run: uv build --wheel
-```
-
-0001 で再構成された native x86_64 用 steps （ `uv sync --no-install-project` → `uv build --wheel` → wheel install → `pytest tests/test_version.py` smoke → upload-artifact ）は維持し、 native の build step と cross の build step を `if:` で分岐する。 wheel install + pytest smoke step はクロスでは実行できないため `arch == 'x86_64'` 条件を付ける。
-
-`build_ubuntu_arm` job は 0001 で削除済み。 復活はしない（ `slack_notify` の needs にも追加しない）。
-
-## 完了条件
-
-- ubuntu-24.04 x86_64 host で `SORA_SDK_TARGET=ubuntu-22.04_armv8 _PYTHON_HOST_PLATFORM=linux_aarch64 uv build --wheel` が成功し、 wheel タグが `cp312-cp312-manylinux_2_31_aarch64` 等になる（ Python 3.12 / 3.13 / 3.14 × 22.04 / 24.04 = 6 通り）
-- 生成された wheel 内に `sora_sdk/sora_sdk_ext.cpython-XYZ-aarch64-linux-gnu.so` が含まれる
-- `file dist/sora_sdk*.whl` 相当で wheel 内 `.so` のアーキテクチャが `aarch64` であることを確認する（具体的には `unzip -p dist/*.whl 'sora_sdk/sora_sdk_ext.*.so' | file -` で `ELF 64-bit LSB shared object, ARM aarch64`）
-- 2 回目以降の cross build で `_deps/ubuntu-22.04_armv8/{webrtc,sora,boost,openh264}` / `_deps/ubuntu-22.04_armv8/rootfs` が再生成されない
-- CI で `build_ubuntu` matrix の armv8 entry 全 6 件（ 22.04 × 3 Python + 24.04 × 3 Python ）が green
-- `slack_notify` job の `needs` に `build_ubuntu` が含まれたまま動作する（ matrix 内の追加 entry も自動的に対象になる）
-- pytest 動作確認はクロスのため実行しない。 0006 で `auditwheel show` 確認に置き換える
-
-## 解決方法
-
-### cmake/toolchains/ubuntu-aarch64-cross.cmake
-
-「設計方針 → toolchain ファイル」の CMake コードを新設する。
-
-### cmake/scripts/install_rootfs.sh
-
-「設計方針 → install_rootfs.sh」の手順を bash で実装する。 シェバン `#!/usr/bin/env bash` + `set -euo pipefail` 付き。 旧 `buildbase.py:install_rootfs` （ git 履歴参照）を踏襲する。
-
-### cmake/scripts/fetch_deps.cmake
-
-`SORA_PYTHON_SDK_PLATFORM` 算出冒頭に `SORA_SDK_TARGET` 環境変数チェック追加 + `_sora_fetch_rootfs` 関数追加 + メインスクリプトの `if(SORA_PYTHON_SDK_PLATFORM MATCHES "^ubuntu-([0-9.]+)_armv8$")` ブロック追加。
+`CMakeLists.txt` では `nanobind_add_module(sora_sdk_ext ...)` より後で、 `NB_SUFFIX` が設定されている場合に `sora_sdk_ext` の `SUFFIX` をその値へ設定する。 target 作成前に `set_target_properties()` を呼ばない。 cross build は `SORA_GEN_PYI=OFF` とし、 target binary を host 上で実行しない。
 
 ### pyproject.toml
 
-「設計方針 → pyproject.toml の cross override」の 6 件 override を末尾に追記する。 0001 の `[tool.scikit-build.cmake.define]` と 0002 の macOS override は維持する。
+`cmake.toolchain-file` と `wheel.tags` を利用する。0002 が更新した build requirement `scikit-build-core>=1.0,<2`、`minimum-version = "1.0"` を維持し、0.12 系へ downgrade しない。`cmake.define` は override すると base table を置き換えるため、全 block に `inherit.cmake.define = "append"` を指定して 0001 の `TARGET_OS = "ubuntu"` を維持する。
 
-### CMakeLists.txt
+`SORA_SDK_TARGET` 2 種類と Python 3.12 / 3.13 / 3.14 の組み合わせごとに、次の 6 block を追加する。
 
-`find_package(Python)` 後に `if(NB_SUFFIX) set_target_properties(sora_sdk_ext PROPERTIES SUFFIX "${NB_SUFFIX}") endif()` を追加する。
+```toml
+[[tool.scikit-build.overrides]]
+if.env.SORA_SDK_TARGET = "^ubuntu-22\\.04_armv8$"
+if.python-version = "==3.12.*"
+inherit.cmake.define = "append"
+build-dir = "_build/ubuntu-22.04_armv8/{wheel_tag}"
+cmake.toolchain-file = "cmake/toolchains/linux-aarch64-cross.cmake"
+cmake.define.NB_SUFFIX = ".cpython-312-aarch64-linux-gnu.so"
+cmake.define.SORA_GEN_PYI = "OFF"
+cmake.define.CMAKE_EXPORT_COMPILE_COMMANDS = "ON"
+wheel.tags = ["cp312-cp312-linux_aarch64"]
 
-### .github/workflows/build.yml
+[[tool.scikit-build.overrides]]
+if.env.SORA_SDK_TARGET = "^ubuntu-22\\.04_armv8$"
+if.python-version = "==3.13.*"
+inherit.cmake.define = "append"
+build-dir = "_build/ubuntu-22.04_armv8/{wheel_tag}"
+cmake.toolchain-file = "cmake/toolchains/linux-aarch64-cross.cmake"
+cmake.define.NB_SUFFIX = ".cpython-313-aarch64-linux-gnu.so"
+cmake.define.SORA_GEN_PYI = "OFF"
+cmake.define.CMAKE_EXPORT_COMPILE_COMMANDS = "ON"
+wheel.tags = ["cp313-cp313-linux_aarch64"]
 
-- `build_ubuntu.strategy.matrix.platform` に `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` の 2 entry を新規追加する（ `ubuntu-22.04_x86_64` / `raspberry-pi-os_armv8` の entry 追加は 0006 / 0004 で扱う）
-- cross-compile 用ステップ（ multistrap install + `SORA_SDK_TARGET` + `_PYTHON_HOST_PLATFORM` 付き `uv build --wheel` ）を `build_ubuntu` job に追加する。 native x86_64 step との `if:` 分岐を明示する
+[[tool.scikit-build.overrides]]
+if.env.SORA_SDK_TARGET = "^ubuntu-22\\.04_armv8$"
+if.python-version = "==3.14.*"
+inherit.cmake.define = "append"
+build-dir = "_build/ubuntu-22.04_armv8/{wheel_tag}"
+cmake.toolchain-file = "cmake/toolchains/linux-aarch64-cross.cmake"
+cmake.define.NB_SUFFIX = ".cpython-314-aarch64-linux-gnu.so"
+cmake.define.SORA_GEN_PYI = "OFF"
+cmake.define.CMAKE_EXPORT_COMPILE_COMMANDS = "ON"
+wheel.tags = ["cp314-cp314-linux_aarch64"]
 
-### CHANGES.md
+[[tool.scikit-build.overrides]]
+if.env.SORA_SDK_TARGET = "^ubuntu-24\\.04_armv8$"
+if.python-version = "==3.12.*"
+inherit.cmake.define = "append"
+build-dir = "_build/ubuntu-24.04_armv8/{wheel_tag}"
+cmake.toolchain-file = "cmake/toolchains/linux-aarch64-cross.cmake"
+cmake.define.NB_SUFFIX = ".cpython-312-aarch64-linux-gnu.so"
+cmake.define.SORA_GEN_PYI = "OFF"
+cmake.define.CMAKE_EXPORT_COMPILE_COMMANDS = "ON"
+wheel.tags = ["cp312-cp312-linux_aarch64"]
 
-`## develop` の `[CHANGE]` グループに追加:
+[[tool.scikit-build.overrides]]
+if.env.SORA_SDK_TARGET = "^ubuntu-24\\.04_armv8$"
+if.python-version = "==3.13.*"
+inherit.cmake.define = "append"
+build-dir = "_build/ubuntu-24.04_armv8/{wheel_tag}"
+cmake.toolchain-file = "cmake/toolchains/linux-aarch64-cross.cmake"
+cmake.define.NB_SUFFIX = ".cpython-313-aarch64-linux-gnu.so"
+cmake.define.SORA_GEN_PYI = "OFF"
+cmake.define.CMAKE_EXPORT_COMPILE_COMMANDS = "ON"
+wheel.tags = ["cp313-cp313-linux_aarch64"]
 
+[[tool.scikit-build.overrides]]
+if.env.SORA_SDK_TARGET = "^ubuntu-24\\.04_armv8$"
+if.python-version = "==3.14.*"
+inherit.cmake.define = "append"
+build-dir = "_build/ubuntu-24.04_armv8/{wheel_tag}"
+cmake.toolchain-file = "cmake/toolchains/linux-aarch64-cross.cmake"
+cmake.define.NB_SUFFIX = ".cpython-314-aarch64-linux-gnu.so"
+cmake.define.SORA_GEN_PYI = "OFF"
+cmake.define.CMAKE_EXPORT_COMPILE_COMMANDS = "ON"
+wheel.tags = ["cp314-cp314-linux_aarch64"]
 ```
-- [CHANGE] Linux arm64 wheel を ubuntu-24.04 x86_64 host からのクロスコンパイルで生成するように切り替える
+
+manylinux tag は指定しない。 `_PYTHON_HOST_PLATFORM` との二重指定も行わず、 wheel tag の単一情報源を override にする。 target 名を `build-dir` に含め、同じ Python ABI で Ubuntu 22.04 / 24.04 を切り替えても CMake cache を共有しない。
+
+`sysroot_builder.py` を ty の対象へ追加する。 `pytest-timeout~=2.4.0` を test dependency group と `uv.lock` に追加する。
+
+### テスト
+
+`tests/test_sysroot_builder.py` は webrtc-build のテストを移植し、少なくとも次をネットワーク接続、 mock 、 stub 無しで検証する。
+
+- 相対 keyring path の解決、必須値、重複、 HTTPS 、 `signed_by` の validation 。
+- checkout path に依存しない fingerprint 。
+- `_apt_options()` と `_write_apt_files()` が APT の state / cache / sources / preferences を一時ディレクトリへ隔離し、 HTTPS + `signed-by` の sources.list を生成すること。
+- 解決可能な絶対 symlink の相対化と、解決不能 link の維持。
+- pkg-config 互換 link 。
+- manifest 一致時の再利用。
+- 古い manifest 、由来不明 directory 、壊れた symlink の `--force` 無しでの拒否。
+- `_install_completed_sysroot()` が完成済み directory を入れ替えることと、存在しない `new_root` で配置に失敗した場合に既存 directory を復元すること。
+- CLI における config name とファイル stem の不一致拒否。
+- CLI の argument parser が `--force` を正しく解釈すること。 APT 呼び出しへの伝播は integration test で確認する。
+
+これらは APT 実行前の早期 return / error だけを通し、 unit test から実ネットワークへ接続しない。実際の APT download は CI の wheel build で integration test する。
+
+検証コマンド:
+
+```bash
+uv run --no-sync ruff check sysroot_builder.py tests/test_sysroot_builder.py
+uv run --no-sync ruff format --check sysroot_builder.py tests/test_sysroot_builder.py
+uv run --no-sync ty check
+uv run --no-sync pytest tests/test_sysroot_builder.py --timeout=10
+```
+
+### 型情報の生成と同梱
+
+0001 で一旦削除する `build_pyi` job を Python 3.12 / 3.13 / 3.14 の matrix として復活させる。ubuntu-24.04 x86_64 の native wheel を `uv build --wheel` で生成し、標準 library の `zipfile` で展開して `sora_sdk/sora_sdk_ext.pyi` と `sora_sdk/py.typed` が各 1 件あることを確認する。
+
+Python version、2 file の相対 path と SHA-256 を manifest に記録し、`type-stubs_python-<version>` artifact として upload する。source tree に残った file は artifact に使わない。
+
+各 cross entry は同じ Python version の artifact を download し、manifest の version / path / SHA-256 を検証してから 2 file を `src/sora_sdk/` へ配置する。cross CMake は `SORA_GEN_PYI=OFF` を維持し、target extension を host 上で実行しない。生成 wheel を展開し、`.pyi` / `py.typed` が各 1 件だけ含まれることを確認する。0004 の Raspberry Pi OS entry も本 artifact 契約を再利用する。
+
+### CI
+
+0001 後の `.github/workflows/build.yml` の `build_ubuntu` matrix に、 ubuntu-24.04 x86_64 runner で動く次の 2 target を追加する。 Python 3.12 / 3.13 / 3.14 と組み合わせ、計 6 entry とする。
+
+- `ubuntu-22.04_armv8`
+- `ubuntu-24.04_armv8`
+
+`build_ubuntu` は `needs: [build_pyi]` を持つ。cross entry は `ca-certificates` 、 `ubuntu-keyring` 、 `binutils-aarch64-linux-gnu` を install する。 `multistrap` は install しない。対応する型情報 artifact を検証・配置してから、`SORA_SDK_TARGET=${{ matrix.platform.target }}` を渡して `uv build --wheel` を実行する。
+
+cross wheel は x86_64 host へ install せず、 pytest も実行しない。代わりに `unzip -p <wheel> 'sora_sdk/sora_sdk_ext.*.so' | file -` で `.so` を標準入力経由で検査し、 `ELF 64-bit LSB shared object, ARM aarch64` を確認する。 wheel filename が `cp3XY-cp3XY-linux_aarch64.whl` であることも確認する。
+
+sysroot は次を確認する。
+
+- manifest の `format_version` / `name` / `arch=arm64` / `triplet=aarch64-linux-gnu` / `deb_files` が有効である。
+- 共通で `usr/include/stdio.h` 、 `usr/lib/aarch64-linux-gnu/libXext.so` 、 `usr/include/dbus-1.0/dbus/dbus.h` が存在する。
+- Ubuntu 22.04 は `usr/include/c++/11/vector` 、 Ubuntu 24.04 は `usr/include/c++/13/vector` が存在する。
+- `compile_commands.json` 、 `ninja -C <build-dir> -t commands sora_sdk_ext` の出力、 `CMakeCache.txt` の dependency path を realpath 化して検査する。 rootfs 、 target 用 `_deps/<platform>/` 、 LLVM の `_deps/llvm/x86_64-Linux/` 、 build isolation 環境の Python / nanobind 以外の include / library / package config を拒否する。 host program は検査対象外とする。
+
+同じ設定で builder を 2 回実行し、 2 回目の英語ログが cache reuse を示し、 manifest と代表 header の mtime が変わらないことを integration test に含める。さらに代表 1 target で manifest の fingerprint を意図的に不一致にし、通常実行が既存 rootfs を維持して失敗した後、 CLI の `--force` 付き直接実行で置換できることを確認する。 CI job 間では workspace を共有しないため、 job をまたぐ cache reuse は本 issue の完了条件にしない。
+
+native x86_64 entry の wheel install + pytest は維持する。`slack_notify.needs` は 0002 の `build_macos` dependency を維持して `[build_ubuntu, build_macos]` とし、arm64 専用 job は新設しない。
+
+## 完了条件
+
+- `multistrap` 、 `--no-auth` 、 `AllowInsecureRepositories` 、 `install_rootfs.sh` を新経路が使用しない。
+- Ubuntu 用 2 conf が削除され、非 issue / 変更履歴の Ubuntu arm64 build 用 multistrap 参照が残らない。 Jetson 用 conf は 0001 で削除し、 Raspberry Pi OS 用 conf は 0004 まで残してよい。
+- sysroot の APT state が一時ディレクトリへ隔離され、 HTTPS + `signed-by` 以外の repository 設定を拒否する。
+- unit test 、 ruff 、 ty が完走する。
+- ubuntu-24.04 x86_64 host で 2 target × Python 3.12 / 3.13 / 3.14 の wheel build が成功する。
+- wheel tag が `cp3XY-cp3XY-linux_aarch64` 、 extension が `sora_sdk/sora_sdk_ext.cpython-3XY-aarch64-linux-gnu.so` 、 ELF architecture が AArch64 である。
+- 各 cross wheel に対応 ABI の `.pyi` / `py.typed` が各 1 件だけ含まれ、target extension を host 上で実行しない。
+- `CMAKE_EXPORT_COMPILE_COMMANDS=ON` で生成した compile command 、 Ninja の link command 、 CMake cache に、許可していない host の include / library / package config が含まれない。
+- 2 回目の同一設定 build が sysroot を再生成しない。 fingerprint 不一致の既存 sysroot は `--force` 無しで拒否する。
+- 同一 checkout での並列 configure は 0001 の `${DEPS_ROOT}/.fetch.lock` によって直列化され、同じ rootfs 出力を同時更新しない。
+- APT download / deb 展開 / 後処理が失敗した段階では既存 sysroot に触れず、完成した出力だけに manifest が存在する。最終 rename の失敗時は既存 sysroot を復元する。
+- native ubuntu-24.04 x86_64 build と smoke test が引き続き成功する。
+- CI が `multistrap` を install せず、wheel の compile / link に arm64 native runner を使用しない。
+
+## 解決方法
+
+1. `sysroot_builder.py` と `tests/test_sysroot_builder.py` を webrtc-build の `2c15196` + `59a0ce0` から移植し、出典 commit を PR 本文に記録する。
+2. `sysroot_builder.py` に CLI entry point と CLI test を追加し、 Ubuntu 2 target の JSON 設定を追加する。
+3. `fetch_deps.cmake` 、 toolchain 、 `CMakeLists.txt` 、 `pyproject.toml` を cross build 対応にする。
+4. unit test と、各 JSON を使う実 sysroot 生成を先に通す。
+5. `build_pyi` と CI matrix を追加し、型情報 manifest、wheel tag、wheel 内 ELF、sysroot manifest、再利用を検証する。
+6. Ubuntu 用 multistrap conf と CI の multistrap install / insecure patch を削除する。
+7. `CHANGES.md` の `## develop` に次を追加する。
+
+```text
+- [CHANGE] Linux arm64 wheel の生成を apt-get と dpkg-deb による sysroot クロスコンパイルへ切り替える
+  - arm64 native build runner を廃止し、ubuntu-24.04 x86_64 host から生成する
   - @voluntas
 ```
 
-旧 `build_ubuntu_arm` （ native arm64 runner ）廃止の旨は 0006 でまとめて記載する。
+## 関連 issue への影響
+
+- 0004 は `install_rootfs.sh` / multistrap を前提とする現行案を破棄し、 `sysroot_builder.py` / JSON 設定を拡張する内容へ全面改稿する。
+- 0004 完了時に Raspberry Pi OS 用 multistrap conf も削除されるため、0061 は 0004 の実装 PR で解決理由と完了日を記録して closed にする。
+- 0071 の cache key は `multistrap/*.conf` ではなく `sysroot/*.json` / `sysroot_builder.py` を対象にする。system keyring の SHA-256 は `hashFiles()` で取得できないため、cache restore 前に step output として算出し key に含める。
 
 ## ロールバック
 
-0003 マージ後、 armv8 wheel が壊れた場合の手順:
+問題が発生した場合は 0003 の squash commit を `git revert` し、 0001 完了時点の ubuntu-24.04 x86_64 native entry のみに戻す。 `multistrap` 経路と arm64 native runner は復活させず、 Linux arm64 wheel の生成を一時停止して forward fix する。
 
-1. `git revert -m 1 <merge-commit>` で revert PR を作成
-2. revert 後、 `build_ubuntu` matrix が `ubuntu-24.04_x86_64` の 1 entry に戻ること、 `multistrap` install step が消えることを確認
-3. armv8 wheel publish が止まる（ 0006 の publish 再構築までは 0001 / 0002 / 0005 完了でも publish は止まっている前提なので影響は限定的）
-4. forward fix を選ぶ判断: cross-compile ステップ単位（ multistrap / fetch_deps / toolchain ） の単一不具合なら追加コミットで対応する
+## 参照（一次資料）
+
+- webrtc-build `2c15196` / `59a0ce0`: `sysroot_builder.py` と `tests/test_sysroot_builder.py` 。
+- scikit-build-core 公式 Cross-compiling guide: `cmake.toolchain-file` と manual cross compilation 。
+- scikit-build-core 公式 Config Reference: override 専用の `cmake.toolchain-file` と `wheel.tags` 。
+- scikit-build-core 公式 Overrides: version / environment 条件と `inherit.cmake.define = "append"` 。
