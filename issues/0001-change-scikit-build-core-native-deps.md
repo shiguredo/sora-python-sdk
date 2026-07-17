@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Updated: 2026-07-17
 - Completed: -
 - Model: Fable 5
 - Branch: feature/change-scikit-build-core-native-deps
@@ -24,6 +25,8 @@ build backend を `setuptools.build_meta` から `scikit_build_core.build` に�
 
 - `pyproject.toml` の build backend を `scikit_build_core.build` に切替える。
 - `run.py` / `buildbase.py` / `pypath.py` / `setup.py` / `MANIFEST.in` を削除する。
+- 旧 Jetson build の consumer と一緒に、到達不能になる Jetson 用 multistrap conf を削除する。
+- レガシー build directory の `.gitignore` entry `/_install` / `/_source` / `/_package` を削除し、scikit-build-core が使う `/_build` と新しい `/_deps` だけを残す。
 - `CMakeLists.txt` の更新と `cmake/scripts/fetch_deps.cmake` 新設。
 - WebRTC / Sora / Boost / OpenH264 / LLVM を CMake configure 時に取得する。 バージョンは既存 `DEPS` から読む。
 - `DEPS` から `CMAKE_VERSION` 行を削除する (cmake は scikit-build-core が `[tool.scikit-build.cmake] version` に基づき pip 経由で解決するため不要になる)。
@@ -34,9 +37,12 @@ build backend を `setuptools.build_meta` から `scikit_build_core.build` に�
 
 含まない（別 issue で扱う）:
 
-- macOS arm64 (0002) / Linux arm64 cross (0003 ubuntu armv8, 0004 jetson + raspberry-pi-os) / Windows (0005)。
-- `ubuntu-22.04_x86_64` のビルド・配布。 matrix 縮小により本 issue で停止する。 x86_64 Linux wheel の glibc ベースラインが 2.31 (22.04) から 2.39 (24.04) に上がるため、 22.04 向け配布を継続するかどうかは 0006 の publish 再構築 (0066 の論点) で確定する。
-- `e2e_test` 復活、 `publish_wheel` / `create-release` (PyPI publish / GitHub release) の再構築、 build-debug.yml 相当のローカル webrtc-build / sora-cpp-sdk ビルド経路の再設計、 `auditwheel repair` による manylinux タグ付与、 依存アーカイブの sha256 検証 (DEPS への SHA256 キー追加を含む設計) 、 sdist の設計 (以上 0006)。
+- macOS arm64（0002）/ Linux arm64 cross（0003 Ubuntu armv8、0004 Raspberry Pi OS、0043 Jetson）/ Windows（0005）。
+- `ubuntu-22.04_x86_64` のビルド・配布。 matrix 縮小により本 issue で停止する。 x86_64 Linux wheel の glibc ベースラインが 2.31 (22.04) から 2.39 (24.04) に上がるため、22.04 向け配布を継続するかどうかは 0066 の publish / release artifact 再構築で確定する。
+- build-debug.yml 相当のローカル webrtc-build / sora-cpp-sdk ビルド経路（0006）。
+- cross wheel への型情報同梱（0003 / 0004）。
+- sdist 専用 build / publish（0051）、`auditwheel repair`（0052）、publish 対象と release artifact 集約（0066）、E2E 復活と release gate（0067）。
+- 依存 archive の SHA-256 検証（0070）、dependency cache（0071）。
 - Makefile (0007)。 `run.py format` の代替は当面 prek (ruff-format / clang-format hook 設定済み) で足りる。
 - pytest E2E マーカー再設計（issue 未作成）。
 - `BUILD_PROFILE=debug` 時のバージョン文字列への `+debug` 連結。 技術的には scikit-build-core の `metadata.regex` の `result` テンプレートと `[[tool.scikit-build.overrides]]` の `if.env` で dist-info に載せることは可能だが、 C++ マクロ (User-Agent) / `__version__` / dist-info の三者一致を単純に保つため導入しない。 文字列レベルの debug 区別が必要なら 0006 の debug ビルド経路再設計と合わせて検討する。
@@ -71,16 +77,16 @@ build backend を `setuptools.build_meta` から `scikit_build_core.build` に�
 
 ### レガシーファイルの削除と移植元の参照
 
-- 削除対象はスコープの 5 ファイル。 `canary.py` / `prek.toml` / `scripts/` は削除せず「開発ツールの調整」の変更のみ行う。
-- 削除コミットの位置は「解決方法」のコミット順序に従う（実装が終わるまで削除しないため、 実装中は buildbase.py の該当関数を移植元として直接参照できる）。 移植元の関数と行番号は「参照（一次資料）」に列挙する。 削除後に参照する場合（ 0002〜0004 が `install_rootfs` 等を移植する場合を含む）は git 履歴 (`git show <削除前コミット>:buildbase.py`) 経由で参照する。
+- 削除対象はスコープのレガシービルドスクリプト 5 ファイルと、旧 Jetson 用 multistrap conf 。 `canary.py` / `prek.toml` / `scripts/` は削除せず「開発ツールの調整」の変更のみ行う。
+- 削除コミットの位置は「解決方法」のコミット順序に従う（実装が終わるまで削除しないため、実装中は `buildbase.py` の該当関数を移植元として直接参照できる）。移植元の関数と行番号は「参照（一次資料）」に列挙する。削除後に参照する場合は削除前 commit の git 履歴を参照する。
 - build-debug.yml の `--local-webrtc-build-dir` / `--local-sora-cpp-sdk-dir` 相当の機能は本 issue で一旦失われる（再設計は 0006）。
 
 ### pyproject.toml
 
-- `[build-system]` を `requires = ["scikit-build-core>=0.11.3", "nanobind==2.13.0"]` / `build-backend = "scikit_build_core.build"` に置換する。 scikit-build-core に上限は付けない代わりに、 本設計が依存する内部挙動（ wheel.packages コピー / wheel.exclude 全走査 / CMakeInit.txt 注入）を「参照（一次資料）」に記録する。
+- `[build-system]` を `requires = ["scikit-build-core>=0.11,<0.12", "nanobind==2.13.0"]` / `build-backend = "scikit_build_core.build"` に置換する。本設計が依存する内部挙動（ wheel.packages コピー / wheel.exclude 全走査 / CMakeInit.txt 注入）を「参照（一次資料）」に記録する。
 - `[dependency-groups] dev` から `nanobind==2.13.0` を削除する（ build-system 側へ移動。 `uv lock` で uv.lock を更新する）。
 - `[tool.scikit-build]`: `minimum-version = "0.11.3"`（本設計が依存する `metadata.regex` / `build-dir` テンプレート / `wheel.packages` が揃っている版） / `build-dir = "_build/{wheel_tag}"`（Python ABI ごとに build-dir 分離し `CMakeCache.txt` の `Python_INCLUDE_DIR` キャッシュ干渉を防ぐ）。
-- `[tool.scikit-build.cmake] version = ">=4.1"`（ `cmake_minimum_required(VERSION 4.1)` と一致させる） / `[tool.scikit-build.ninja] version = ">=1.13"`。
+- `[tool.scikit-build.cmake] version = ">=4.1,<5"`（ `cmake_minimum_required(VERSION 4.1)` と一致させる）/ `[tool.scikit-build.ninja] version = ">=1.13,<2"`。
 - `[tool.scikit-build.cmake.define]`: `TARGET_OS = "ubuntu"` のみ。 fetch スクリプトの include は `CMakeLists.txt` 側で行う（後述）。
 - `[tool.scikit-build.wheel] packages = ["src/sora_sdk"]` のみ。 **`wheel.exclude` は使わない**。 `wheel.exclude` は wheel build dir 全体走査でも評価されるため `*.so` 等の平坦パターンは CMake install 出力まで除外してしまう。 ローカル `src/sora_sdk/sora_sdk_ext.*.so` の混入は `.gitignore`（既に `src/sora_sdk/*.so` 等を含む）と、 packages コピー時の `target_path.is_file()` skip ガードで防ぐ。
 - `install-dir` は明示せず空文字デフォルト。 CMake `install(... DESTINATION sora_sdk)` と `wheel.packages` 由来コピーが `site-packages/sora_sdk/` で同居する。
@@ -151,7 +157,7 @@ CMake 3.24+ の公式機能で、 最初の `project()` の中（言語有効化
 
 全関数に共通する契約: 外部コマンド (`git` / `make` / `update.py`) は `execute_process(... RESULT_VARIABLE ...)` （または `COMMAND_ERROR_IS_FATAL ANY` ）で失敗を検出し、 失敗時は部分成果物（ dest / 一時ディレクトリ）を削除して FATAL_ERROR する。 skip しないと判定した時点でまず旧 stamp を `file(REMOVE)` し（取得失敗時に旧 stamp が残って空の dest を指すのを防ぐ）、 stamp は **全手順の成功後にのみ** 書く。 stamp の親ディレクトリは事前に `file(MAKE_DIRECTORY)`。
 
-- `_sora_fetch_archive(name url stamp_path dest_dir)` （末尾に `cmake_parse_arguments(_arg "" "SHA256" "" ${ARGN})` で `SHA256` キーワード引数の受け口を 0001 段階で用意する。 本 issue では値を渡さず、 0006 で sha256 検証導入時に値が渡される）:
+- `_sora_fetch_archive(name url stamp_path dest_dir)` （末尾に `cmake_parse_arguments(_arg "" "SHA256" "" ${ARGN})` で `SHA256` キーワード引数の受け口を 0001 段階で用意する。 本 issue では値を渡さず、0070 で SHA-256 検証導入時に値が渡される）:
   - stamp 内容が `url` と一致したら skip。
   - `.archives/` 配下に `file(DOWNLOAD ... INACTIVITY_TIMEOUT 120 STATUS _status)` でダウンロード（転送が停止した場合のみタイムアウト。 全体 TIMEOUT は設けない）。 status code 0 以外なら部分ファイルを `file(REMOVE)` 、 1 秒スリープでリトライ、 3 回までで FATAL_ERROR。
   - 展開: `.extract/<name>` を REMOVE_RECURSE + MAKE_DIRECTORY してから `file(ARCHIVE_EXTRACT INPUT ... DESTINATION ...)` で展開する。 展開後、 `.extract/<name>` 直下を `file(GLOB)` し、 エントリが 1 個かつ `IS_DIRECTORY` ならそれを、 そうでなければ `.extract/<name>` 自体を `file(RENAME)` で `dest_dir` へ移動する（旧 `buildbase.py:353` の `extract()` と同じ動的判定。 `cmake -E tar` に `--strip-components` 相当は存在しないためこの方式を採る。 `file(ARCHIVE_EXTRACT)` は zip も扱えるため 0005 にもそのまま効く）。 `dest_dir` の親は事前に MAKE_DIRECTORY し、 成功時も残った一時ディレクトリを REMOVE_RECURSE する。
@@ -200,23 +206,23 @@ backend 切替後、 素の `uv sync` / `uv run` は project 本体を scikit-bu
 - `scripts/pytest_memory_leak_checker.py:26` を `["uv", "run", "--no-sync", "pytest"]` に変更する。
 - `scripts/pytest_with_llvm.py:13` の lldb 起動引数を `["run", "--no-sync", "pytest", ...]` に変更する。
 
-canary.py の tag push は継続してよい。 `publish_wheel` / `create-release` job を本 issue で削除するため、 tag を push しても publish / release は発生しない（ dev 版の PyPI 配布と GitHub release は 0006 の再構築まで停止する。 正式リリースも同様）。
+canary.py の tag push は継続してよい。 `publish_wheel` / `create-release` job を本 issue で削除するため、 tag を push しても publish / release は発生しない（dev 版の PyPI 配布と GitHub Release は 0066 の再構築まで停止する。正式リリースも同様）。
 
 ### wheel と CI
 
 - 生成 wheel の platform tag は `linux_x86_64`（scikit-build-core デフォルト）。 PyPI 公開不可のタグだが、 publish 系 job を削除するため問題にならない。
-- `_PYTHON_HOST_PLATFORM` は native では不要（クロス時 0003 / 0004 で導入）。
-- ルート `.gitignore` に `/_deps` を追加。 `/_build` は scikit-build-core の build-dir として引き続き現役。 `/_install` / `/_source` / `/_package` は残骸になるが、 開発者のローカルに残っている間は維持する（整理は 0006）。
+- `_PYTHON_HOST_PLATFORM` は native / cross のどちらでも使用しない。 cross wheel tag は 0003 / 0004 の `wheel.tags` override を単一情報源とする。
+- ルート `.gitignore` に `/_deps` を追加する。`/_build` は scikit-build-core の build-dir として維持し、レガシー経路専用だった `/_install` / `/_source` / `/_package` は削除する。ignore entry の削除は開発者の local directory 自体を削除しない。
 
 `.github/workflows/build.yml`:
 
 - `get_sdk_version` job は触らない（未使用 job の削除は 0050 で扱う）。
-- 次の job を削除する: `build_pyi` / `build_ubuntu_arm` / `build_macos` / `build_windows` / `e2e_test` / `publish_wheel` / `create-release`。 0002 / 0005 / 0006 が新経路の job を新設する。
+- 次の job を削除する: `build_pyi` / `build_ubuntu_arm` / `build_macos` / `build_windows` / `e2e_test` / `publish_wheel` / `create-release`。0002 〜 0005、0066、0067 が責務ごとに新経路の job を新設する。
 - `build_ubuntu` job:
   - matrix の `platform` を `ubuntu-24.04_x86_64` (runs_on: ubuntu-24.04) の 1 entry に、 `python_version` は 3.12 / 3.13 / 3.14 を維持。 `timeout-minutes: 15` は維持（取得物・ビルド量は旧経路と同じ）。
   - `needs: [build_pyi]` / `download-artifact` step / `cp sora_sdk/py.typed ...` step / `sora_sdk_rpi` sed step / multistrap install step / armv8 用 build step を削除。
   - steps を checkout → `sudo apt-get update && sudo apt-get -y install libx11-dev` → setup-uv → `uv sync --no-install-project` → `uv build --wheel` → `uv pip install dist/*.whl` → `uv run --no-sync pytest tests/test_version.py` → upload-artifact に再構成する。
-  - upload-artifact の name は `${{ matrix.platform.name }}_python-${{ matrix.python_version }}` を維持する（ 0006 の e2e 復活で `download-whl` action が `{platform}_python-{version}` 命名を前提とするため）。
+  - upload-artifact の name は `${{ matrix.platform.name }}_python-${{ matrix.python_version }}` を維持する（0067 の E2E 復活で `download-whl` action が `{platform}_python-{version}` 命名を前提とするため）。
 - workflow レベル env の `TEST_SIGNALING_URLS` / `TEST_CHANNEL_ID_PREFIX` / `TEST_SECRET_KEY` / `TEST_API_URL` / `OPENH264_VERSION` を削除する（ reusable workflow には env が継承されないため、 もともと build.yml 内に参照が無い dead env。 e2e-test.yml は自前の env を持っている）。
 - `on.push.paths-ignore` から `.github/workflows/build-debug.yml` の行を削除する（ファイル削除に伴う dead 参照）。
 - `slack_notify.needs` を `[build_ubuntu]` のみに変更。
@@ -225,7 +231,7 @@ canary.py の tag push は継続してよい。 `publish_wheel` / `create-releas
 
 `.github/actions/`: `download/` を削除する（ create-release 専用のため job 削除で未参照になる）。 `download-whl/` と `download-openh264/` は残す（参照状況は「現状」の通り）。
 
-`.github/workflows/e2e-test.yml`: run.py 非依存のためファイルは残す。 `push` / `workflow_dispatch` トリガで独立に動くため、 配下の全 job を `if: false` にして一時停止する（ `e2e_test` job は `if: false` を追加、 `slack_notify` job は既存の `if: ${{ !cancelled() && inputs.from_build != true }}` を `if: false` に置換）。 `workflow_call` トリガと `from_build` input は呼び出し元 job の削除で dead になるが、 0006 で復活させるため残置する。
+`.github/workflows/e2e-test.yml`: run.py 非依存のためファイルは残す。 `push` / `workflow_dispatch` トリガで独立に動くため、 配下の全 job を `if: false` にして一時停止する（ `e2e_test` job は `if: false` を追加、 `slack_notify` job は既存の `if: ${{ !cancelled() && inputs.from_build != true }}` を `if: false` に置換）。 `workflow_call` トリガと `from_build` input は呼び出し元 job の削除で dead になるが、0067 で復活させるため残置する。
 
 ## 完了条件
 
@@ -240,6 +246,7 @@ canary.py の tag push は継続してよい。 `publish_wheel` / `create-releas
 - `git grep -nE "BOOST_PP_STRINGIZE|boost/preprocessor" src/` が 0 件。
 - `DEPS` のキーが `SORA_CPP_SDK_VERSION` / `WEBRTC_BUILD_VERSION` / `BOOST_VERSION` / `OPENH264_VERSION` の 4 つのみ。
 - `.github/actions/` 配下から `download/` が消えている（ `download-whl/` と `download-openh264/` は残る）。
+- `.gitignore` に `/_install` / `/_source` / `/_package` が残らず、`/_build` / `/_deps` が存在する。
 - pyproject.toml 内の `nanobind` の記述が `[build-system] requires` の 1 箇所のみ。
 - `canary.py` の uv sync が `--no-install-project` 付き（ dry-run メッセージ含む）、 `prek.toml` の ty-check が `uv run --no-sync ty check`、 `scripts/` の 2 スクリプトの uv run が `--no-sync` 付きになっている。
 - 動作確認（まっさらな ubuntu-24.04 では手順 0 の前提パッケージが必要）:
@@ -267,7 +274,7 @@ canary.py の tag push は継続してよい。 `publish_wheel` / `create-releas
 - **src/sora.cpp**: 「設計方針 → バージョン注入と src/sora.cpp」の差分適用。
 - **canary.py / prek.toml / scripts/**: 「設計方針 → 開発ツールの調整」の 4 箇所を変更。
 - **レガシービルドスクリプト 5 ファイル**: `git rm` で削除。
-- **.gitignore**: 末尾 `/smallproj` 行の直前に `/_deps` を追加。
+- **.gitignore**: 末尾 `/smallproj` 行の直前に `/_deps` を追加し、`/_install` / `/_source` / `/_package` を削除する。
 - **.github/workflows/build.yml**: 「設計方針 → wheel と CI」の指示に従い job 削除 / matrix 縮小 / step 再構成 / env 削減 / `paths-ignore` 修正 / `slack_notify.needs` 変更。
 - **.github/workflows/build-debug.yml**: `git rm` で削除。
 - **.github/actions/download/**: `git rm -r` で削除。
@@ -302,9 +309,9 @@ revert は `fetch_deps.cmake` の根本設計（`CMAKE_PROJECT_TOP_LEVEL_INCLUDE
 ## 関連 issue への影響
 
 - 0002 〜 0007: 本 issue の再計画（レガシー削除の前倒し / deps.json 廃止 / CI job 削除方式 / 展開方式の `file(ARCHIVE_EXTRACT)` 化）は refresh で各 issue に反映済み。
-- 前提が消滅する open issue（本 issue マージ時にクローズ候補。 判断は別途トリアージで行う）: 0046 (buildbase.py の `_extractzip`) / 0052 (setup.py の手動タグ → auditwheel。 auditwheel 導入自体は 0006 と重複) / 0060 (buildbase.py の `get_macos_osver`) / 0063 (setup.py の osver fallback) / 0068 (`build_ubuntu_arm` job の扱い)。
-- 0006 の publish 再構築に論点が吸収される open issue: 0051 (sdist の残し方) / 0066 (publish 対象の ubuntu 系列) / 0067 (publish の e2e ゲート)。
-- 読み替え・交差が必要な open issue: 0043 (run.py の行参照 → git 履歴) / 0053 (e2e matrix。 e2e 停止中は着手不可) / 0054 (`MANIFEST.in` の `include VERSION` 削除で sdist の VERSION 同梱手段が消える。 0006 の sdist 設計で引き継ぐ) / 0062 (canary.py の git フロー。 本 issue の変更は `uv sync` 引数と dry-run メッセージのみに留める)。
+- 前提が消滅する open issue: 0046（buildbase.py の `_extractzip`）/ 0060（buildbase.py の `get_macos_osver`）/ 0063（setup.py の osver fallback）/ 0068（`build_ubuntu_arm` job の扱い）。本 issue の実装を先に commit し、次の close commit で 4 issue を `issues/closed/` へ移動する。個別修正 branch は作成しない。0052 は setup.py 削除後の `auditwheel repair` 導入 issue として refresh して残す。
+- 後続の責務: 0006（debug build）、0051（sdist）、0052（auditwheel）、0066（publish / release artifact）、0067（E2E / release gate）、0070（archive SHA-256）、0071（cache）。
+- 読み替え・交差が必要な open issue: 0043（`run.py` の行参照を git 履歴へ読み替える）/ 0053（E2E matrix。0067 完了までは着手不可）/ 0054（`MANIFEST.in` の `include VERSION` 削除で sdist の VERSION 同梱手段が消えるため 0051 で引き継ぐ）/ 0062（`canary.py` の git flow。本 issue の変更は `uv sync` 引数と dry-run message のみに留める）。
 
 ## 参照（一次資料）
 
