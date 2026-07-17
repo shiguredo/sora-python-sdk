@@ -2,9 +2,11 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Updated: 2026-07-16
+- Updated: 2026-07-17
+- Completed: -
 - Model: Composer 2.5
 - Branch: feature/change-macos-arm64-native-build
+- Polished: 2026-07-17
 
 ## 目的
 
@@ -23,20 +25,20 @@
 - `cmake/scripts/fetch_deps.cmake` の `SORA_PYTHON_SDK_PLATFORM` 算出を macOS host 対応に拡張する（ `CMAKE_HOST_SYSTEM_NAME = Darwin` 分岐で `macos_${arch}` を組み立てる）
 - `fetch_deps.cmake` の FATAL_ERROR ガードを `ubuntu-24.04_x86_64` / `macos_arm64` 両方を許容するように拡張する
 - `fetch_deps.cmake` の URL 組み立てを macOS 用アーカイブ名（platform 文字列 `macos_arm64`）に対応させる
-- `CMakeLists.txt` の `find_package(Python ...)` 周辺と `project()` 前後の処理を macOS でも問題なく動くか確認し、必要なら macOS 固有調整を加える
+- `CMakeLists.txt` の `find_package(Python ...)` が scikit-build-core 注入の exact interpreter を使い、project 後の sysroot 変更を必要としないことを検証する。
 - `pyproject.toml` に `[[tool.scikit-build.overrides]]` で macOS の `TARGET_OS = "macos"` 上書きを追加する（ 0001 では `[tool.scikit-build.cmake.define] TARGET_OS = "ubuntu"` を直接設定したため、 macOS では override で `"macos"` に変える）
 - macOS native での `uv build --wheel` 成功と `pytest tests/test_version.py` 完走（ wheel タグは `macosx_14_0_arm64` 等）
 - `.github/workflows/build.yml` に scikit-build-core 経路の `build_macos` job を新設する（ 0001 で旧 job は削除済み。 `build_pyi` artifact 経路は使わない）
+- `build_macos` matrix は、2026 年 11 月 2 日に support 終了予定の `macos-14` を使わず、GitHub が support する arm64 の `macos-15` / `macos-26` に固定する。
+- macos-15 / macos-26 のどちらで build しても binary と wheel tag の最小 deployment target を macOS 14.0 に固定する。`macos-15_arm64` を canonical 配布 artifact、`macos-26_arm64` を validation-only とし、0066 / 0067 と同じ名前空間を使う。
 - `slack_notify` の `needs:` に `build_macos` を追加する
 
 含まない（別 issue で扱う）:
 
-- Linux arm64 cross-compile (ubuntu armv8) （ 0003 ）
-- Linux arm64 cross-compile (jetson / rpi) （ 0004 ）
+- Linux arm64 cross-compile（Ubuntu は 0003、Raspberry Pi OS は 0004、Jetson は 0043）
 - Windows x86_64 native （ 0005 ）
-- `publish_wheel` / `create-release` / e2e 復活等の CI 最終整理（ 0006 。 レガシーファイル削除は 0001 で完了済み）
+- publish / release artifact の選定（0066）と E2E（0067）。レガシーファイル削除は 0001 で完了済み。
 - Makefile （ 0007 ）
-- `build_macos` matrix の macOS バージョン拡充（旧 job と同じ `macos-15_arm64` / `macos-14_arm64` を維持する）
 - macOS x86_64 native （プロジェクトでサポート対象外。 macOS arm64 のみ）
 
 ## 現状
@@ -46,7 +48,7 @@
 - `CMakeLists.txt:111-123` の `if(TARGET_OS STREQUAL "macos")` ブランチで `CXX_VISIBILITY_PRESET hidden` を設定し、 `sora_sdk_ext` に `-nostdinc++ -isystem${LIBCXX_INCLUDE_DIR}` を、 `nanobind-static` にはさらに `-isystem${LIBCXXABI_INCLUDE_DIR}` を付ける既存実装がある（このまま使える）
 - `BOOST_ASIO_DISABLE_STD_ATOMIC_WAIT` は sora-cpp-sdk 側で PUBLIC 定義されるようになったため CMakeLists.txt から削除済み（ 69ac472 ）。 Python SDK 側の対応は不要
 - 0001 で削除される run.py （削除前 `run.py:319-331` ）は macOS arm64 native の `cmake_args` として `CMAKE_SYSTEM_PROCESSOR=arm64` / `CMAKE_OSX_ARCHITECTURES=arm64` / `CMAKE_*_COMPILER_TARGET=aarch64-apple-darwin` / `CMAKE_SYSROOT=$(xcrun --sdk macosx --show-sdk-path)` を渡していた。 削除後は git 履歴 (`git show <削除前コミット>:run.py`) で参照する
-- 0001 で削除される旧 `build_macos` job （削除前 `build.yml:230-279` ）は `macos-15_arm64` / `macos-14_arm64` matrix で Python 3.12 / 3.13 / 3.14 を回し、 `uv run python run.py build macos_arm64` + `uv build` を実行する 2 段構成だった。 matrix 構成（ runner とラベル）は新設 job に引き継ぐ
+- 0001 で削除される旧 `build_macos` job （削除前 `build.yml:230-279` ）は `macos-15_arm64` / `macos-14_arm64` matrix で Python 3.12 / 3.13 / 3.14 を回し、 `uv run python run.py build macos_arm64` + `uv build` を実行する 2 段構成だった。Python matrix だけを引き継ぎ、deprecated な runner label は引き継がない。
 
 ## 設計方針
 
@@ -75,39 +77,30 @@ endif()
 
 LLVM の `<host_key>` は 0001 の定義 `${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME}` のままで macOS では `arm64-Darwin` になるため、 0002 での変更は不要。
 
-### TARGET_OS の macOS 上書き
+### macOS toolchain override
 
-`pyproject.toml` に override を追加する:
+0001 の scikit-build-core requirement を `scikit-build-core>=1.0,<2`、`minimum-version = "1.0"` へ更新する。1.0 以降は `CMAKE_OSX_DEPLOYMENT_TARGET` を wheel tag 算出へ反映するため、ローカルの素の `uv build --wheel` と CI が同じ `macosx_14_0_arm64` tag を生成できる。
+
+build-system requirement は通常の project dependency として `uv.lock` に記録されないため、backend version 確認のためだけに scikit-build-core を dev dependency へ重複追加しない。`uv build -v --wheel` の build isolation log から実際に解決された version が `>=1.0,<2` であることを確認する。この global backend 更新後に、0001 の ubuntu-24.04 x86_64 × Python 3.12 / 3.13 / 3.14 について wheel filename / 内容、型情報、version metadata、install / import smoke を再実行し、0.11 系からの回帰が無いことを必須とする。0003 / 0005 は同じ 1.x backend 契約を維持し、downgrade しない。
+
+`pyproject.toml` に macOS 用 override を 1 block だけ追加する。matching override が `cmake.define` table を置換しないよう `inherit.cmake.define = "append"` を必須とし、`TARGET_OS` と全 Apple toolchain define を同じ block に置く。
 
 ```toml
 [[tool.scikit-build.overrides]]
 if.platform-system = "darwin"
+inherit.cmake.define = "append"
 cmake.define.TARGET_OS = "macos"
-```
-
-scikit-build-core の `if.platform-system` は `sys.platform` ベース。 `darwin` で macOS にマッチする。
-
-これにより:
-
-- ubuntu host: `TARGET_OS = "ubuntu"` （ 0001 のデフォルト）
-- macOS host: override で `TARGET_OS = "macos"` に切替
-
-`CMakeLists.txt:111-123` の `if(TARGET_OS STREQUAL "macos")` ブランチが有効化され、 `-nostdinc++ -isystem${LIBCXX_INCLUDE_DIR}` 等が付く。
-
-### macOS 用 cmake.args の追加
-
-旧 run.py （削除前 `run.py:319-331` 。 git 履歴参照）で渡していた macOS 固有引数を `pyproject.toml` の `[[tool.scikit-build.overrides]]` に移植する:
-
-```toml
-[[tool.scikit-build.overrides]]
-if.platform-system = "darwin"
 cmake.define.CMAKE_SYSTEM_PROCESSOR = "arm64"
 cmake.define.CMAKE_OSX_ARCHITECTURES = "arm64"
+cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET = "14.0"
+cmake.define.CMAKE_OSX_SYSROOT = "macosx"
 cmake.define.CMAKE_C_COMPILER_TARGET = "aarch64-apple-darwin"
 cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
 ```
 
-`CMAKE_SYSROOT` は `xcrun --sdk macosx --show-sdk-path` 経由で動的に決まるため、 `CMakeLists.txt` 側で `if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSROOT)` ガードで `execute_process(COMMAND xcrun --sdk macosx --show-sdk-path OUTPUT_VARIABLE _macos_sysroot OUTPUT_STRIP_TRAILING_WHITESPACE)` + `set(CMAKE_SYSROOT "${_macos_sysroot}" CACHE PATH "" FORCE)` で設定する。 `fetch_deps.cmake` ではなく `CMakeLists.txt` の `project()` 後（ compiler 確定後）に置く。
+scikit-build-core の `if.platform-system` は `sys.platform` ベースで、`darwin` が macOS に一致する。`CMAKE_OSX_SYSROOT=macosx` は最初の `project()` より前に cache へ渡され、CMake が active Xcode の SDK を解決する。Apple SDK に `CMAKE_SYSROOT` を使わず、`project()` 後に sysroot を変更しない。
+
+CI は configure 前に `xcrun --sdk macosx --show-sdk-path` の exit code、空出力、directory 実在を検証する。configure 後は compile / link command の `-isysroot` が同じ SDK realpath、`CMAKE_OSX_DEPLOYMENT_TARGET=14.0`、全 Mach-O の minimum OS が 14.0 であることを検証する。
 
 `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` は 0001 で `_SORA_CLANG_DIR/bin/clang(++)` に設定されるため、 macOS でも libwebrtc 同梱 clang が使われる。
 
@@ -135,10 +128,13 @@ message(FATAL_ERROR
 ### CI 影響
 
 - `build.yml` に `build_macos` job を新設する（ 0001 で旧 job は削除済みのため、 `if: false` 解除ではなく新規追加）:
-  - matrix: platform は `macos-15_arm64` (runs_on: macos-15) / `macos-14_arm64` (runs_on: macos-14) の 2 entry、 python_version は 3.12 / 3.13 / 3.14 （旧 job の構成を git 履歴から引き継ぐ）
+  - matrix: platform は `macos-15_arm64` (runs_on: macos-15) / `macos-26_arm64` (runs_on: macos-26) の 2 entry、Python version は 3.12 / 3.13 / 3.14。
   - steps: checkout → setup-uv → `uv sync --no-install-project` → `uv build --wheel` → `uv pip install dist/*.whl` → `uv run --no-sync pytest tests/test_version.py` → upload-artifact （ 0001 の `build_ubuntu` job 構成に準拠。 apt install step は不要）
   - `needs` は付けない（ `build_pyi` artifact 経路は 0001 で廃止済み）
-- `slack_notify` job の `needs:` を `[build_ubuntu]` から `[build_ubuntu, build_macos]` に変更する
+- 両 runner の build step に `MACOSX_DEPLOYMENT_TARGET=14.0` を設定し、override の `CMAKE_OSX_DEPLOYMENT_TARGET=14.0` と一致させる。生成 wheel は `macosx_14_0_arm64` tag とし、macOS 14 で利用できない binary を同 tag で配布しない。
+- artifact 名は `${{ matrix.platform.name }}_python-${{ matrix.python_version }}` に固定する。各 artifact は対応 ABI の wheel を厳密に 1 件だけ含み、upload 前に distribution、version、CPython / ABI tag、`macosx_14_0_arm64`、全 Mach-O の arm64 / minimum OS 14.0 を検証する。
+- `slack_notify` job の `needs:` を `[build_ubuntu]` から `[build_ubuntu, build_macos]` に変更する。
+- 後続 0003 は `build_macos` dependency を維持し、0067 が `ci_result` へ置き換えるまで `[build_ubuntu, build_macos]` から退行させない。
 
 ### pyproject.toml の override 整理
 
@@ -148,8 +144,8 @@ scikit-build-core の override 適用順は `if.<key>` の評価で順次適用�
 
 ## 完了条件
 
-- macOS arm64 host （ macos-15_arm64 / macos-14_arm64 ）+ Python 3.12 / 3.13 / 3.14 で `uv build --wheel` が成功する
-- 生成された wheel のタグが `cp312-cp312-macosx_14_0_arm64` 等になる（ scikit-build-core デフォルトの macOS deployment target に依存）
+- macOS arm64 host（macos-15_arm64 / macos-26_arm64）+ Python 3.12 / 3.13 / 3.14 で `uv build --wheel` が成功する。
+- 両 runner で生成された wheel のタグが `cp312-cp312-macosx_14_0_arm64` 等になり、Mach-O の minimum OS が 14.0 である
 - wheel 内に `sora_sdk/sora_sdk_ext.cpython-*-darwin.so` / `sora_sdk/sora_sdk_ext.pyi` / `sora_sdk/py.typed` / Python ソースが含まれる
 - 次の手順で動作確認が成功する:
   1. `uv venv`
@@ -160,8 +156,9 @@ scikit-build-core の override 適用順は `if.<key>` の評価で順次適用�
   6. `uv run --no-sync python -c "from sora_sdk import sora_sdk_ext; print(sora_sdk_ext.__file__)"` が `site-packages/sora_sdk/sora_sdk_ext.cpython-*-darwin.so` を出力する
   7. `uv run --no-sync python -c "import sora_sdk; print(sora_sdk.Sora)"` がクラスを返す
 - `_deps/macos_arm64/{webrtc,sora,boost,openh264}` および `_deps/llvm/arm64-Darwin/{clang,libcxx}` が 2 回目以降の `uv build --wheel` で再 DL されない
-- CI で新設 `build_macos` job が green になる（ matrix 内全 entry ）
+- CI で新設 `build_macos` job が green になり、完全名 artifact 6 件が各 1 wheel を持つ。
 - `slack_notify` job が `build_ubuntu` + `build_macos` の両 needs を持って動作する
+- `pyproject.toml` の build requirement と `uv build -v` の build isolation log が scikit-build-core `>=1.0,<2` を示し、ubuntu-24.04 x86_64 × 3 ABI の 0001 成果物 / install smoke が backend 更新後も green になる。
 
 ## 解決方法
 
@@ -176,18 +173,21 @@ scikit-build-core の override 適用順は `if.<key>` の評価で順次適用�
 ```toml
 [[tool.scikit-build.overrides]]
 if.platform-system = "darwin"
+inherit.cmake.define = "append"
 cmake.define.TARGET_OS = "macos"
 cmake.define.CMAKE_SYSTEM_PROCESSOR = "arm64"
 cmake.define.CMAKE_OSX_ARCHITECTURES = "arm64"
+cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET = "14.0"
+cmake.define.CMAKE_OSX_SYSROOT = "macosx"
 cmake.define.CMAKE_C_COMPILER_TARGET = "aarch64-apple-darwin"
 cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
 ```
 
 ### CMakeLists.txt
 
-- `if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSROOT)` ガードで `xcrun --sdk macosx --show-sdk-path` 経由で `CMAKE_SYSROOT` を設定するロジックを `project()` 直後に追加する
-- 既存 `CMakeLists.txt:111-123` の macOS ブランチは触らない（ 0001 後の `TARGET_OS=macos` で自動的に有効化される）
-- `find_package(Python ...)` 周辺で macOS の SDK path 不整合が出ないか確認する（必要なら `CMAKE_FIND_FRAMEWORK = LAST` 追加検討）
+- project 後に `CMAKE_SYSROOT` / `CMAKE_OSX_SYSROOT` を変更する処理は追加しない。
+- 既存 `CMakeLists.txt:111-123` の macOS ブランチは触らない（0001 後の `TARGET_OS=macos` で自動的に有効化される）。
+- scikit-build-core が注入する exact `Python_EXECUTABLE` を使用し、`CMAKE_FIND_FRAMEWORK` は変更しない。
 
 ### .github/workflows/build.yml
 
@@ -207,9 +207,13 @@ cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
 
 ## ロールバック
 
-0002 マージ後に macOS native build で問題が発覚した場合:
+後続 issue が未着手の場合だけ、0002 の squash commit を `git revert <squash-commit>` し、0001 適用直後の `get_sdk_version` / `build_ubuntu` / `slack_notify` 構成へ戻す。
 
-1. `git revert -m 1 <merge-commit>` で revert PR を作成する
-2. revert 後、 新設した `build_macos` job が build.yml から消え、 0001 適用直後の job 構成（ `get_sdk_version` / `build_ubuntu` / `slack_notify` ）に戻ることを確認する
-3. `pyproject.toml` の macOS override セクションが消えるか確認する
-4. 0001 + 0003 + 0004 + 0005 の進捗状況に応じて、 macOS だけ別途修正コミットで forward fix するか判断する
+0003 / 0004 / 0005 または 0066 / 0067 / 0070 / 0071 が merge 済みなら、先に publish / release / E2E を停止して forward fix を優先する。根本設計を revert する場合は依存 issue を逆順に revert または workflow 無効化してから 0002 を戻し、scikit-build-core version、macOS artifact 名、Slack dependency の dangling reference が無いことを確認する。
+
+## 参照（一次資料）
+
+- CMake `CMAKE_OSX_SYSROOT`: https://cmake.org/cmake/help/latest/variable/CMAKE_OSX_SYSROOT.html
+- scikit-build-core overrides: https://scikit-build-core.readthedocs.io/en/stable/configuration/overrides.html
+- scikit-build-core changelog: https://scikit-build-core.readthedocs.io/en/stable/about/changelog.html
+- GitHub Actions runner images: https://github.com/actions/runner-images
