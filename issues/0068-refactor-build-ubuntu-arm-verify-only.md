@@ -1,66 +1,36 @@
-# build_ubuntu_arm を「検証専用ジョブ」として明示するか native arm wheel 配布に切り替える
+# `build_ubuntu_arm` を廃止して x86_64 host の cross build に一本化する
 
 - Priority: Medium
 - Created: 2026-06-23
+- Updated: 2026-07-17
+- Completed: -
 - Model: Opus 4.7
 - Branch: feature/refactor-build-ubuntu-arm-verify-only
+- Polished: 2026-07-17
 
 ## 目的
 
-`.github/workflows/build.yml` の `build_ubuntu_arm` ジョブは、native arm ランナー (`ubuntu-24.04-arm` / `ubuntu-22.04-arm`) 上で `ubuntu-24.04_armv8` / `ubuntu-22.04_armv8` の 2 ターゲット x Python 3.12 / 3.13 / 3.14 の合計 6 種類のビルドを実行する。
-しかし `actions/upload-artifact` を一切呼んでおらず、生成された wheel は CI 終了とともに破棄される。
-一方で同じ wheel は `build_ubuntu` (x86_64 ランナーから multistrap でクロスビルド) でも作られて upload されており、`publish_wheel` / `create-release` はそちらを使う。
+本 issue を個別実装せず、0001 で artifact を生成しない `build_ubuntu_arm` job を削除する。0003 / 0004 は ubuntu-24.04 x86_64 host から署名検証済み sysroot を使う cross build を追加し、arm64 native build は復活させない。0052 の matching AArch64 runner は cross build 済み wheel の auditwheel repair だけを行う例外とする。
 
-すなわち `build_ubuntu_arm` は「クロスビルド結果と一致するかを native arm で再ビルド検証する」役割を果たしているのに、コード上では普通のビルドジョブと区別できず、CI 時間を浪費しているように見える。
-
-実態としては `slack_notify.needs` に含まれているため失敗通知は飛ぶが、その意図が CI 設定の表面からは読み取れない。これを是正する。
-
-## 優先度根拠
-
-Medium とする。
-
-- 現状の CI は動いており、`build_ubuntu_arm` の失敗通知は機能している (Slack に上がる)。
-- ただし「artifact を上げないビルドジョブが 6 個ある」のは新規メンバーから見ると重複ビルドにしか見えず、削除候補に挙がる危険がある。実際には削るとクロスビルド結果の native 検証が消えるため、構造的に保護すべき意図がある。
-- CI 時間も `build_ubuntu_arm` 単体で 15 分 x 6 ジョブ並列で、コストは小さくない。意図を明確にせず放置すると、構造的に CI を整理しづらい。
-- 即時の機能不良ではないので High ではない。
-
-## 現状
-
-`.github/workflows/build.yml:172-228` (`build_ubuntu_arm`):
-
-- matrix: `ubuntu-22.04_armv8` / `ubuntu-24.04_armv8` x Python 3.12 / 3.13 / 3.14 = 6 ジョブ。
-- runs-on: `ubuntu-24.04-arm` / `ubuntu-22.04-arm` (native arm GitHub Actions ランナー)。
-- 主なステップ: `apt-get install multistrap` (実は native でも multistrap を入れている), clang-19 セットアップ, `uv sync`, `uv run python run.py build ...`, `uv build`。
-- 最後に `actions/upload-artifact` の呼び出しが **無い**。
-- `needs:` で参照されるのは `slack_notify` のみ (失敗通知用)。
-
-`build_ubuntu` (x86_64 ランナーからクロスビルド) は同じターゲットで wheel を生成し `upload-artifact` する。
-`publish_wheel` / `create-release` はこちらを参照する。
+旧案にあった「検証 job として残す」案と「native arm wheel の配布元へ切り替える」案は採用しない。
 
 ## 設計方針
 
-以下 (a) (b) のどちらかを選ぶ。実装時に判断する。
-
-(a) 検証専用ジョブとして明示する。
-
-- ジョブ名を `build_ubuntu_arm` から `verify_ubuntu_arm` (または `native_build_check_ubuntu_arm`) にリネーム。
-- ジョブのコメントに「native arm ランナーでビルドが通ることを検証するためだけのジョブ。生成 wheel は破棄。配布 wheel は `build_ubuntu` から作られるクロスビルド成果物」と明記する。
-- `slack_notify.needs` の参照名も更新する。
-- 削減検討: CI コスト圧縮のため Python 3.12 / 3.13 / 3.14 全てではなく代表 1 バージョンに減らすかも検討する (本 issue のスコープ外で良いが提案として記録)。
-
-(b) native arm wheel 配布に切り替える。
-
-- `build_ubuntu_arm` に `actions/upload-artifact` を追加し、`build_ubuntu` (x86_64 + multistrap クロス) の armv8 ビルドを廃止する。
-- `publish_wheel` / `create-release` の参照を `build_ubuntu_arm` 成果物に切り替える。
-- multistrap 経路 (`multistrap/ubuntu-22.04_armv8.conf` / `multistrap/ubuntu-24.04_armv8.conf`) を含む armv8 クロスビルド機構を削除できる可能性がある。issue 0061 (multistrap conf) や PR #302 (sysroot.py 移行) と整合させる。
-
-可能であれば (b) のほうが「クロスビルドとネイティブビルドの両方を維持する複雑性」を減らせる。
-ただし native arm ランナーの実行時間・キャパシティが PyPI リリースゲートに耐えられるか確認が必要。
-本 issue ではまず (a) で意図明示を行い、(b) は別 issue で本格検討する流れも想定する (issue 0006 の CI 整理と連動)。
+- 本 issue の branch は作成しない。
+- 0001 の実装 commit 後、別の close commit で本 issue file を `issues/closed/` へ移動する。
+- 0003 / 0004 は cross wheel の AArch64 ELF、extension suffix、dependency、host contamination を x86_64 host 上で機械検証する。
+- 実行時 import は各 target の E2E issue で検証し、native build の成功を cross artifact の代替検証にしない。
+- CI cost 改善は 0071 の dependency cache で扱い、native runner を追加しない。
+- 本 issue 独自の CHANGES entry は追加せず、0003 の arm64 cross build entry に native runner 廃止を記載する。
 
 ## 完了条件
 
-- `.github/workflows/build.yml` 上で `build_ubuntu_arm` の役割が「artifact を出さない検証ジョブ」または「native arm wheel 配布元」のいずれかに明確に位置付けられている。
-- (a) を選ぶ場合: ジョブ名がその役割を反映している。コメントで意図が読み取れる。`slack_notify.needs` も更新済み。
-- (b) を選ぶ場合: `publish_wheel` / `create-release` が `build_ubuntu_arm` 成果物を参照する。armv8 クロスビルドが削除 (または役割縮小) されている。
-- 既存の CI green が崩れないこと。
+- 0001 の完了条件が満たされ、`build_ubuntu_arm` とその `slack_notify.needs` entry が存在しない。
+- 0003 / 0004 の Linux arm64 wheel 生成が ubuntu-24.04 x86_64 host に統一される。
+- arm64 native runner で wheel を compile / link しない。0052 の repair-only job は raw cross wheel の provenance を検証してから最終 artifact を生成する。
+- 本 issue 単独の実装 branch / commit がない。
+- 0001 の close commit で本 issue が `issues/closed/` へ移動される。
+
+## ロールバック
+
+0001 / 0003 / 0004 に問題があっても `build_ubuntu_arm` を復活させない。Linux arm64 release を一時停止し、cross build を forward fix する。
