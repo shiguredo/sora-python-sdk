@@ -6,7 +6,7 @@
 - Completed: -
 - Model: Composer 2.5
 - Branch: feature/change-macos-arm64-native-build
-- Polished: 2026-07-17
+- Polished: 2026-07-23
 
 ## 目的
 
@@ -106,11 +106,11 @@ CI は configure 前に `xcrun --sdk macosx --show-sdk-path` の exit code、空
 
 ### fetch_deps.cmake の URL 組み立ての macOS 対応
 
-fetch_deps.cmake が `DEPS` の値から組み立てる各アーカイブ URL の platform 文字列に `macos_arm64` を対応させる。 アーカイブ名の例（バージョンは `DEPS` の現在値で組み立てる。 現時点では `WEBRTC_BUILD_VERSION=m150.7871.3.0` / `SORA_CPP_SDK_VERSION=2026.2.0-canary.22` / `BOOST_VERSION=1.91.0` ）:
+fetch_deps.cmake が `DEPS` の値から組み立てる各アーカイブ URL の platform 文字列に `macos_arm64` を対応させる。 アーカイブ名の例（バージョンは `DEPS` の現在値で組み立てる。 現時点では `WEBRTC_BUILD_VERSION=m150.7871.3.1` / `SORA_CPP_SDK_VERSION=2026.2.0-canary.23` / `BOOST_VERSION=1.91.0` ）:
 
 - WebRTC: `webrtc.macos_arm64.tar.gz`
-- Sora C++ SDK: `sora-cpp-sdk-2026.2.0-canary.22_macos_arm64.tar.gz`
-- Boost: `boost-1.91.0_sora-cpp-sdk-2026.2.0-canary.22_macos_arm64.tar.gz`
+- Sora C++ SDK: `sora-cpp-sdk-2026.2.0-canary.23_macos_arm64.tar.gz`
+- Boost: `boost-1.91.0_sora-cpp-sdk-2026.2.0-canary.23_macos_arm64.tar.gz`
 
 0002 実装時に `curl -sL <url> | tar tzf - | head -5` で各 macOS アーカイブの実在と展開後レイアウトを確認する（ 0001 と同じ手順。 展開は `file(ARCHIVE_EXTRACT)` + 単一トップディレクトリの動的判定のため strip 数の確定は不要）。
 
