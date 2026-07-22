@@ -6,7 +6,7 @@
 - Completed: -
 - Model: Composer 2.5
 - Branch: feature/change-raspberry-pi-os-platform
-- Polished: 2026-07-17
+- Polished: 2026-07-23
 
 ## 目的
 
