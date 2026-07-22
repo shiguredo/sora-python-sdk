@@ -3,8 +3,10 @@
 - Priority: High
 - Created: 2026-05-21
 - Updated: 2026-07-17
+- Completed: -
 - Model: Composer 2.5
 - Branch: feature/change-windows-x86-64-native-build
+- Polished: 2026-07-23
 
 ## 目的
 
@@ -164,12 +166,12 @@ Windows では libcxx / libcxxabi を使わないため、 `LIBCXX_INCLUDE_DIR` 
 
 ### Boost / OpenH264 アーカイブの Windows 命名確認
 
-実機確認（バージョンは `DEPS` の現在値で組み立てる。 現時点では `WEBRTC_BUILD_VERSION=m150.7871.3.0` / `SORA_CPP_SDK_VERSION=2026.2.0-canary.22` / `BOOST_VERSION=1.91.0` ）:
+実機確認（バージョンは `DEPS` の現在値で組み立てる。 現時点では `WEBRTC_BUILD_VERSION=m150.7871.3.1` / `SORA_CPP_SDK_VERSION=2026.2.0-canary.23` / `BOOST_VERSION=1.91.0` ）:
 
 ```
-curl -sLO https://github.com/shiguredo-webrtc-build/webrtc-build/releases/download/m150.7871.3.0/webrtc.windows_x86_64.zip && unzip -l webrtc.windows_x86_64.zip | head -10
-curl -sLO https://github.com/shiguredo/sora-cpp-sdk/releases/download/2026.2.0-canary.22/sora-cpp-sdk-2026.2.0-canary.22_windows_x86_64.zip && unzip -l sora-cpp-sdk-2026.2.0-canary.22_windows_x86_64.zip | head -10
-curl -sLO https://github.com/shiguredo/sora-cpp-sdk/releases/download/2026.2.0-canary.22/boost-1.91.0_sora-cpp-sdk-2026.2.0-canary.22_windows_x86_64.zip && unzip -l boost-1.91.0_sora-cpp-sdk-2026.2.0-canary.22_windows_x86_64.zip | head -10
+curl -sLO https://github.com/shiguredo-webrtc-build/webrtc-build/releases/download/m150.7871.3.1/webrtc.windows_x86_64.zip && unzip -l webrtc.windows_x86_64.zip | head -10
+curl -sLO https://github.com/shiguredo/sora-cpp-sdk/releases/download/2026.2.0-canary.23/sora-cpp-sdk-2026.2.0-canary.23_windows_x86_64.zip && unzip -l sora-cpp-sdk-2026.2.0-canary.23_windows_x86_64.zip | head -10
+curl -sLO https://github.com/shiguredo/sora-cpp-sdk/releases/download/2026.2.0-canary.23/boost-1.91.0_sora-cpp-sdk-2026.2.0-canary.23_windows_x86_64.zip && unzip -l boost-1.91.0_sora-cpp-sdk-2026.2.0-canary.23_windows_x86_64.zip | head -10
 ```
 
 展開後レイアウト（単一トップディレクトリか）を確認する（ 0001 の動的判定がそのまま効くことの確認）。
