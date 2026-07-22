@@ -6,7 +6,7 @@
 - Completed: -
 - Model: Fable 5
 - Branch: feature/change-scikit-build-core-native-deps
-- Polished: 2026-07-17
+- Polished: 2026-07-23
 
 ## 目的
 
@@ -285,7 +285,7 @@ canary.py の tag push は継続してよい。 `publish_wheel` / `create-releas
 `## develop` セクションの整理:
 
 - 既存 `[UPDATE] wheel を ~=0.47 に上げる` / `[UPDATE] setuptools を ~=83.0 に上げる` の 2 エントリは削除する（`[build-system] requires` から両者が消えるため）。
-- 既存 `[UPDATE] Sora C++ SDK のバージョンを 2026.2.0-canary.22 に上げる` エントリの `CMAKE_VERSION を 4.3.2 に上げる` サブ箇条を削除する（`DEPS` から `CMAKE_VERSION` が消えるため）。 他のサブ箇条は触らない。
+- 既存 `[UPDATE] Sora C++ SDK のバージョンを 2026.2.0-canary.23 に上げる` エントリの `CMAKE_VERSION を 4.3.2 に上げる` サブ箇条を削除する（`DEPS` から `CMAKE_VERSION` が消えるため）。 他のサブ箇条は触らない。
 - `[CHANGE]` グループ（既存 `[CHANGE] SoraTransformableFrame のタイポ ...` エントリの直後）に追加:
 
 ```
