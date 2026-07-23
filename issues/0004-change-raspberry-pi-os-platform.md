@@ -3,7 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: Composer 2.5
 - Branch: feature/change-raspberry-pi-os-platform
 - Polished: 2026-07-23
@@ -222,17 +222,10 @@ cross wheel は x86_64 host へ install せず、 pytest を実行しない。 n
 
 ## 解決方法
 
-1. `sysroot_builder.py` の repository schema 、 fingerprint 、 APT preferences 、テストを先に拡張する。
-2. Raspberry Pi OS Trixie JSON と archive keyring を追加し、実 sysroot を生成して package 解決を確認する。
-3. dependency fetch component 、 CMake 構成、 project metadata を Raspberry Pi OS 対応にする。
-4. CI matrix と distribution 名切替を追加し、 wheel / ELF / sysroot / host path を検証する。
-5. Raspberry Pi OS 用 multistrap conf を削除し、 CI の旧実行経路が残らないことを確認する。
-6. `CHANGES.md` の `## develop` にある既存 `[CHANGE]` 群へ、 `[UPDATE]` より前に次を追加する。
+実装せず closed にする。
 
-```text
-- [CHANGE] Raspberry Pi OS wheel の生成を Trixie sysroot のクロスコンパイルへ切り替える
-  - @voluntas
-```
+本 issue は scikit-build-core（0001）前提の文面だったため、現行 `run.py` 経路向けの 0074 に置き換える。
+Ubuntu arm64 と Raspberry Pi OS の multistrap → sysroot 切り替えは 0074 で扱う。
 
 ## 関連 issue への影響
 
