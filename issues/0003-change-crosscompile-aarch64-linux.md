@@ -3,7 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: Composer 2.5
 - Branch: feature/change-crosscompile-aarch64-linux
 - Polished: 2026-07-23
@@ -318,19 +318,10 @@ native x86_64 entry の wheel install + pytest は維持する。`slack_notify.n
 
 ## 解決方法
 
-1. `sysroot_builder.py` と `tests/test_sysroot_builder.py` を webrtc-build の `2c15196` + `59a0ce0` から移植し、出典 commit を PR 本文に記録する。
-2. `sysroot_builder.py` に CLI entry point と CLI test を追加し、 Ubuntu 2 target の JSON 設定を追加する。
-3. `fetch_deps.cmake` 、 toolchain 、 `CMakeLists.txt` 、 `pyproject.toml` を cross build 対応にする。
-4. unit test と、各 JSON を使う実 sysroot 生成を先に通す。
-5. `build_pyi` と CI matrix を追加し、型情報 manifest、wheel tag、wheel 内 ELF、sysroot manifest、再利用を検証する。
-6. Ubuntu 用 multistrap conf と CI の multistrap install / insecure patch を削除する。
-7. `CHANGES.md` の `## develop` に次を追加する。
+実装せず closed にする。
 
-```text
-- [CHANGE] Linux arm64 wheel の生成を apt-get と dpkg-deb による sysroot クロスコンパイルへ切り替える
-  - arm64 native build runner を廃止し、ubuntu-24.04 x86_64 host から生成する
-  - @voluntas
-```
+本 issue は scikit-build-core（0001）前提の文面だったため、現行 `run.py` 経路向けの 0074 に置き換える。
+Ubuntu arm64 と Raspberry Pi OS の multistrap → sysroot 切り替えは 0074 で扱う。
 
 ## 関連 issue への影響
 
