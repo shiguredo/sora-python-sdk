@@ -3,7 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: Composer 2.5
 - Branch: feature/change-windows-x86-64-native-build
 - Polished: 2026-07-23
@@ -201,43 +201,11 @@ curl -sLO https://github.com/shiguredo/sora-cpp-sdk/releases/download/2026.2.0-c
 
 ## 解決方法
 
-### cmake/scripts/fetch_deps.cmake
+実装せず closed にする。
 
-- `SORA_PYTHON_SDK_PLATFORM` 算出に Windows 分岐追加
-- URL 組み立てに拡張子分岐（ `zip` / `tar.gz` ）を追加し、 `_sora_fetch_archive` の保存ファイル名を拡張子可変にする（展開は 0001 の方式のまま変更不要）
-- `_sora_fetch_openh264` の呼び出しを `if(NOT WIN32)` で囲む（案 B ）
-- `_sora_fetch_llvm` 呼び出しを `if(NOT WIN32)` ガード
-- `OPENH264_DIR` / `LIBCXX_INCLUDE_DIR` / `LIBCXXABI_INCLUDE_DIR` / `_SORA_CLANG_DIR` の cache 確定と `CMAKE_C/CXX_COMPILER` の FORCE 設定を `if(NOT WIN32)` ガード
-- 許容 `SORA_PYTHON_SDK_PLATFORM` リストに `windows_x86_64` 追加
-
-### pyproject.toml
-
-Windows override を末尾に追加:
-
-```toml
-[[tool.scikit-build.overrides]]
-if.platform-system = "win32"
-cmake.define.TARGET_OS = "windows"
-cmake.define.SORA_GEN_PYI = "OFF"
-```
-
-### CMakeLists.txt
-
-既存 `:166-182` の Windows ブランチは変更不要（ compiler 設定は fetch_deps.cmake 側の `if(NOT WIN32)` ガードで扱うため、 CMakeLists.txt 側の変更は無い）。
-
-### .github/workflows/build.yml
-
-- 「設計方針 → CI 影響」の通り `build_windows` job を新設する
-- `jobs.slack_notify.needs` に `build_windows` を追加する
-
-### CHANGES.md
-
-`## develop` の `[CHANGE]` グループに追加:
-
-```
-- [CHANGE] Windows x86_64 ネイティブビルドを scikit-build-core 経路に移行する
-  - @voluntas
-```
+scikit-build-core 化を複数回試みたが難しく、方針としてあきらめることにした。
+build backend の移行は行わず、現行の setuptools / `run.py` 経路を維持する。
+sysroot 化は 0074 で現行経路向けに切り直す。
 
 ## ロールバック
 
