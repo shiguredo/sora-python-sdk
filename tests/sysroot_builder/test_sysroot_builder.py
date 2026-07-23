@@ -8,7 +8,16 @@ from pathlib import Path
 
 import pytest
 
-from sysroot_builder import (
+# POSIX symlink セマンティクスに依存するテストに付与する共通マーカ。
+# sysroot builder は Linux ホスト上で動作させる前提のツールで、
+# Windows CI が pytest tests/ 全体を走らせる際に、
+# 絶対 symlink の解釈と relpath 生成が Windows と揃わない部分は skip する。
+_requires_posix_symlinks = pytest.mark.skipif(
+    os.name != "posix",
+    reason="POSIX symlink semantics required for sysroot post-processing",
+)
+
+from sysroot_builder import (  # noqa: E402
     MANIFEST_NAME,
     MANIFEST_VERSION,
     SysrootBuildError,
@@ -697,6 +706,7 @@ def test_collect_pin_stanzas_deduplicates_same_hostname(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+@_requires_posix_symlinks
 def test_ensure_usrmerge_symlinks_creates_missing_links(tmp_path: Path) -> None:
     # dpkg-deb --extract で作られない usr* -> legacy の互換リンクを 4 対全て補う
     for merged in ("usr/bin", "usr/sbin", "usr/lib", "usr/lib64"):
@@ -715,6 +725,7 @@ def test_ensure_usrmerge_symlinks_creates_missing_links(tmp_path: Path) -> None:
         assert os.readlink(link) == merged
 
 
+@_requires_posix_symlinks
 def test_ensure_usrmerge_symlinks_respects_existing(tmp_path: Path) -> None:
     # 既に実体（ディレクトリ / symlink）が居る legacy は上書きしない
     (tmp_path / "usr" / "lib").mkdir(parents=True)
@@ -726,6 +737,7 @@ def test_ensure_usrmerge_symlinks_respects_existing(tmp_path: Path) -> None:
     assert (tmp_path / "lib").is_dir()
 
 
+@_requires_posix_symlinks
 def test_ensure_usrmerge_symlinks_skips_when_target_missing(tmp_path: Path) -> None:
     # マージ先が無い状態で legacy を作ってしまうと壊れた symlink が残る。作らない挙動を担保する
     _ensure_usrmerge_symlinks(tmp_path)
@@ -734,6 +746,7 @@ def test_ensure_usrmerge_symlinks_skips_when_target_missing(tmp_path: Path) -> N
         assert not (tmp_path / legacy).exists()
 
 
+@_requires_posix_symlinks
 def test_postprocess_sysroot_applies_all_steps(tmp_path: Path) -> None:
     # 後処理 3 段（usrmerge / 絶対 symlink 相対化 / pkg-config link）が合成される
     # usr/lib を用意して usrmerge / pkg-config link を有効化する
@@ -757,6 +770,7 @@ def test_postprocess_sysroot_applies_all_steps(tmp_path: Path) -> None:
     assert share_link.is_symlink()
 
 
+@_requires_posix_symlinks
 def test_fix_absolute_symlinks_makes_existing_target_relative(tmp_path: Path) -> None:
     # sysroot の移動後もリンクがホスト側の /usr/lib を参照しないことを確認する
     target = tmp_path / "usr" / "lib" / "aarch64-linux-gnu" / "libexample.so.1"
@@ -772,6 +786,7 @@ def test_fix_absolute_symlinks_makes_existing_target_relative(tmp_path: Path) ->
     assert link.resolve() == target
 
 
+@_requires_posix_symlinks
 def test_fix_absolute_symlinks_keeps_unresolved_target(tmp_path: Path) -> None:
     # alternatives など展開だけでは解決しないリンクを誤った相対リンクへ変更しない
     link = tmp_path / "usr" / "bin" / "example"
@@ -795,6 +810,7 @@ def test_fix_absolute_symlinks_ignores_regular_files(tmp_path: Path) -> None:
     assert regular.read_text(encoding="utf-8") == "keep"
 
 
+@_requires_posix_symlinks
 def test_fix_absolute_symlinks_keeps_relative_symlinks(tmp_path: Path) -> None:
     # もともと相対 symlink になっているものは書き換えない
     real = tmp_path / "usr" / "lib" / "real.so"
@@ -808,6 +824,7 @@ def test_fix_absolute_symlinks_keeps_relative_symlinks(tmp_path: Path) -> None:
     assert os.readlink(link) == "real.so"
 
 
+@_requires_posix_symlinks
 def test_fix_absolute_symlinks_rejects_traversal_target(tmp_path: Path) -> None:
     # 絶対 symlink のターゲットが `..` を含み sysroot 境界を越える場合、書き換えない
     outside = tmp_path / "outside" / "marker"
@@ -827,6 +844,7 @@ def test_fix_absolute_symlinks_rejects_traversal_target(tmp_path: Path) -> None:
     assert os.readlink(link) == "/../outside/marker"
 
 
+@_requires_posix_symlinks
 def test_link_pkgconfig_files_creates_compatibility_links(tmp_path: Path) -> None:
     # WebRTC の pkg-config 探索が従来と同じ場所からターゲット用定義を発見できるようにする
     source_dir = tmp_path / "usr" / "lib" / "aarch64-linux-gnu" / "pkgconfig"
@@ -840,6 +858,7 @@ def test_link_pkgconfig_files_creates_compatibility_links(tmp_path: Path) -> Non
     assert os.readlink(link) == "../../lib/aarch64-linux-gnu/pkgconfig/example.pc"
 
 
+@_requires_posix_symlinks
 def test_link_pkgconfig_files_keeps_existing_destination(tmp_path: Path) -> None:
     # パッケージが既に usr/share/pkgconfig へ配置した定義を上書きしない
     source_dir = tmp_path / "usr" / "lib" / "aarch64-linux-gnu" / "pkgconfig"
@@ -863,6 +882,7 @@ def test_link_pkgconfig_files_no_op_when_source_absent(tmp_path: Path) -> None:
     assert not (tmp_path / "usr" / "share" / "pkgconfig").exists()
 
 
+@_requires_posix_symlinks
 def test_link_pkgconfig_files_ignores_non_pc_entries(tmp_path: Path) -> None:
     # .pc 以外のファイルには互換 link を張らない
     source_dir = tmp_path / "usr" / "lib" / "aarch64-linux-gnu" / "pkgconfig"
@@ -931,6 +951,7 @@ def test_install_completed_sysroot_replaces_existing(tmp_path: Path) -> None:
     assert not (output_dir / "old.txt").exists()
 
 
+@_requires_posix_symlinks
 def test_install_completed_sysroot_replaces_symlink(tmp_path: Path) -> None:
     # 既存が symlink のときは unlink 経由で退避し、正しく新規で置き換える
     target = tmp_path / "target"
@@ -1040,6 +1061,7 @@ def test_build_sysroot_rejects_mismatched_fingerprint_without_force(tmp_path: Pa
         build_sysroot(config, output_dir)
 
 
+@_requires_posix_symlinks
 def test_build_sysroot_rejects_stale_symlink_without_force(tmp_path: Path) -> None:
     # 壊れたリンクも既存出力として扱い、利用者の明示なしに置き換えない
     config_path = _write_full_config(tmp_path / "config")

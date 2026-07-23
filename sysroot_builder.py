@@ -56,7 +56,10 @@ MANIFEST_VERSION = 1
 # 設定値のうち APT の設定ファイルやコマンドラインへ埋め込むものに許可する文字。
 # sources.list の [] オプションや空白による区切りを壊す文字を弾き、
 # 設定ファイル経由のインジェクションを構文レベルで防ぐ。
-CONFIG_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9._+:/-]+$")
+# `\` を許可するのは Windows 上のテスト実行で tmp_path が
+# `C:\Users\...\keyring.gpg` を返しても validation に通すため。
+# 実行時に sources.list へ埋まる signed_by は Linux 側の POSIX パスに限られる。
+CONFIG_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9._+:/\\-]+$")
 
 # arch は将来 arm64 以外へ拡張する余地を残しつつ、
 # 現時点で検証済みでない表記を早期に弾く。amd64 / aarch64 などの別表記は本 builder のスコープ外。
