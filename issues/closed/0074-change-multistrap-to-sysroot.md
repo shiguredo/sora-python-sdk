@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-07-23
-- Completed: -
+- Completed: 2026-07-23
 - Model: Cursor Grok 4.5
 - Branch: feature/change-multistrap-to-sysroot
 - Polished: 2026-07-23
@@ -428,6 +428,20 @@ close 手順（ `shiguredo-issues` / `shiguredo-git` 規約）：
 - 追記コミット `0074 解決方法を追記する` で `Completed:` を当日日付に更新し、「解決方法」節に実際の commit hash / PR 番号を追記する。
 - 続いて `git mv issues/0074-change-multistrap-to-sysroot.md issues/closed/` を実行するリネームだけのコミットを `0074 closed Ubuntu arm64 と Raspberry Pi OS の multistrap をやめて署名検証付き sysroot に切り替える` として作る。
 - 先行 issue は既に 2026-07-23 に closed 済みのため本 issue では触らない。
+
+## 実装後追記
+
+上記「解決方法」節の 1〜8 の手順どおり 1 PR にまとめて実装した。追加で、レビュー 3 周を経て次を反映した。
+
+- `_install_completed_sysroot` に stale backup 検出ガードを追加し、前回失敗の残骸で silently 詰まる経路を SysrootBuildError で明示的に拒否する
+- `_fix_absolute_symlinks` に path traversal 対策（`is_relative_to()` で sysroot 内かを検証、書き込み path も resolve 済みの値から作る）を追加
+- `_write_apt_files` を `_AptLayout` の単一生成に統一し、pin の有無で 2 度組み立てる不自然な流れを解消
+- `load_sysroot_config` / `_read_manifest` に `UnicodeDecodeError` を追加捕捉
+- `main()` の `CalledProcessError` メッセージに `os.path.basename` を適用してログの読み手を助ける
+- `RepositoryConfig` に `hostname` field を追加し、hostname の再計算と dead branch を除去
+- `tests/sysroot_builder/test_sysroot_builder.py` に 84 件のテストを追加（usrmerge 全 4 対、apt.conf 内容、sources.list 完全一致、pin_priority 境界、fingerprint 挙動、stale backup 拒否、broken manifest 拒否、fingerprint 不一致拒否、force + matching manifest 経路、URL 各種拒否、arch whitelist ほか）
+
+ローカル検証は `uv sync` の後に `uv run python run.py build macos_arm64` で拡張をビルドし、`ruff check` / `ruff format --check` / `ty check` / `pytest --confcutdir=tests/sysroot_builder tests/sysroot_builder/ --timeout=10` の全 84 件通過を確認した。
 
 ## ロールバック
 

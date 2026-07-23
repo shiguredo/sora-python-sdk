@@ -8,6 +8,7 @@ import shlex
 import shutil
 import sys
 
+import buildbase
 from buildbase import (
     Platform,
     add_path,
@@ -36,6 +37,30 @@ from pypath import get_python_include_dir, get_python_version
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
+def install_sysroot(config_path: str, install_dir: str, force: bool = False) -> None:
+    """署名検証付き sysroot builder を呼び出して rootfs を install_dir/rootfs へ配置する。
+
+    テンプレート由来の install_rootfs() が採用している @versioned decorator と
+    <install_dir>/rootfs.version の運用は意図的に踏襲しない。sysroot builder は
+    設定 / keyring / MANIFEST_VERSION から算出した fingerprint を出力側 manifest
+    (.webrtc-build-sysroot.json) に書き込み、そこで再利用可否を判定するため、
+    version_file 経由の再入判定と二重管理になる。cache 判断を builder 側に一本化する。
+    """
+    # buildbase.cmd を明示 module 参照で呼ぶことで、テンプレート同期後も
+    # 追加 import の指定なしにこの helper がそのまま機能するようにする。
+    args = [
+        sys.executable,
+        os.path.join(BASE_DIR, "sysroot_builder.py"),
+        "--config",
+        config_path,
+        "--dest",
+        os.path.join(install_dir, "rootfs"),
+    ]
+    if force:
+        args.append("--force")
+    buildbase.cmd(args)
+
+
 def install_deps(
     platform: Platform,
     source_dir,
@@ -49,13 +74,12 @@ def install_deps(
 ):
     version = read_version_file("DEPS")
 
-    # multistrap を使った sysroot の構築
-    if platform.target.package_name in (
-        "ubuntu-22.04_armv8_jetson",
-        "raspberry-pi-os_armv8",
-        "ubuntu-22.04_armv8",
-        "ubuntu-24.04_armv8",
-    ):
+    # rootfs の構築
+    # Jetson は melpon/buildbase テンプレート由来の multistrap 経路をそのまま使う。
+    # それ以外の armv8 target は cross build のときだけ署名検証付き sysroot builder を呼ぶ。
+    if platform.target.os == "jetson":
+        # Jetson の base OS 判定は package_name 合成キーではなく target.os を見る。
+        # 将来 base OS の Ubuntu バージョンが変わっても壊れない同じ判定を CMake 分岐と共有する。
         conf = os.path.join("multistrap", f"{platform.target.package_name}.conf")
         # conf ファイルのハッシュ値をバージョンとする
         version_md5 = hashlib.md5(open(conf, "rb").read()).hexdigest()
@@ -66,6 +90,15 @@ def install_deps(
             "conf": conf,
         }
         install_rootfs(**install_rootfs_args)
+    elif (
+        platform.target.package_name
+        in ("raspberry-pi-os_armv8", "ubuntu-22.04_armv8", "ubuntu-24.04_armv8")
+        and platform.build.arch != platform.target.arch
+    ):
+        # x86_64 host からの cross build のときだけ sysroot を構築する。
+        # arm64 native runner では CMake の cross build 分岐に入らないため rootfs 自体が不要。
+        config_path = os.path.join(BASE_DIR, "sysroot", f"{platform.target.package_name}.json")
+        install_sysroot(config_path=config_path, install_dir=install_dir)
 
     # WebRTC
     webrtc_platform = get_webrtc_platform(platform)
