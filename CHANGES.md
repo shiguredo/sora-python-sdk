@@ -15,11 +15,12 @@
   - 誤った公開プロパティ名をそのまま残さない
   - `mine_type` は削除する（alias は残さない）
   - @voluntas
-- [UPDATE] wheel を `~=0.47` に上げる
-  - `0.47.x` を許可する
+- [CHANGE] build backend を setuptools から scikit-build-core に切り替える
+  - `uv build --wheel` だけで依存の取得からビルドまで完結する
+  - WebRTC / Sora C++ SDK / Boost / OpenH264 / LLVM は CMake configure 時に自動取得する
   - @voluntas
-- [UPDATE] setuptools を `~=83.0` に上げる
-  - `83.0.x` を許可する
+- [CHANGE] レガシービルドスクリプト (run.py / buildbase.py / pypath.py / setup.py / MANIFEST.in) を削除する
+  - フォーマットは prek の ruff-format / clang-format フックを利用する
   - @voluntas
 - [UPDATE] nanobind を `2.13.0` に上げる
   - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要
@@ -28,7 +29,6 @@
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.23` に上げる
   - WEBRTC_BUILD_VERSION を `m150.7871.3.1` に上げる
-  - CMAKE_VERSION を `4.3.2` に上げる
   - BOOST_VERSION を `1.91.0` に上げる
   - @voluntas
 - [UPDATE] libwebrtc m148 で `ArrayView` が C++ 標準の `std::span` に移行したため追従する

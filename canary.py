@@ -43,10 +43,12 @@ def update_version(file_path: str, dry_run: bool) -> str | None:
 # uv sync を実行し、uv.lock を git に追加
 def run_uv_sync(dry_run: bool) -> None:
     if dry_run:
-        print("Dry-run: Would run 'uv sync' and add 'uv.lock' to git")
+        print("Dry-run: Would run 'uv sync --no-install-project' and add 'uv.lock' to git")
     else:
         # uv sync の実行
-        result = subprocess.run(["uv", "sync"], check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["uv", "sync", "--no-install-project"], check=True, capture_output=True, text=True
+        )
         print(result.stdout)
 
         # uv.lock ファイルを git に追加

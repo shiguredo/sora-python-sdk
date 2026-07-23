@@ -23,7 +23,7 @@ import sys
 
 def run_pytest_and_check_for_leaks(pytest_args):
     # Construct the pytest command
-    command = ["uv", "run", "pytest"] + pytest_args
+    command = ["uv", "run", "--no-sync", "pytest"] + pytest_args
 
     # Run pytest and capture the output
     process = subprocess.Popen(

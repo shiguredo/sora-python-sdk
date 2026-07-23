@@ -1,12 +1,9 @@
-/_install
 /_build
-/_source
-/_package
+/_deps
 __pycache__
 .pytest_cache/
 .venv/
 *.egg-info/
-/_skbuild
 build
 .ruff_cache
 .mypy_cache
@@ -29,4 +26,5 @@ src/sora_sdk/py.typed
 # libopenh264
 libopenh264*
 
+.qwen/
 /smallproj
