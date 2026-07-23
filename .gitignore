@@ -1,5 +1,8 @@
 /_build
 /_deps
+# legacy run.py 経路の残骸
+/_install
+/_source
 __pycache__
 .pytest_cache/
 .venv/
