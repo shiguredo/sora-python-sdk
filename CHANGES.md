@@ -19,6 +19,8 @@
   - `uv build --wheel` だけで依存の取得からビルドまで完結する
   - WebRTC / Sora C++ SDK / Boost / OpenH264 / LLVM は CMake configure 時に自動取得する
   - @voluntas
+- [CHANGE] macOS arm64 ネイティブビルドを scikit-build-core 経路に移行する
+  - @voluntas
 - [CHANGE] レガシービルドスクリプト (run.py / buildbase.py / pypath.py / setup.py / MANIFEST.in) を削除する
   - フォーマットは prek の ruff-format / clang-format フックを利用する
   - @voluntas

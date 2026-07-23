@@ -96,6 +96,22 @@ version = ">=1.13,<2"
 [tool.scikit-build.cmake.define]
 TARGET_OS = "ubuntu"
 
+# if.platform-system は Python の sys.platform と比較され、 "darwin" が macOS を意味する。
+# inherit.cmake.define = "append" でデフォルトの TARGET_OS = "ubuntu" を上書きしつつ
+# Apple toolchain 用の define を追加する。 CMAKE_OSX_SYSROOT = "macosx" は
+# scikit-build-core が initial cache に書き込むため、最初の project() 呼び出しよりも
+# 前に評価される。これにより CMake が active Xcode の SDK を解決する。
+# CMAKE_OSX_ARCHITECTURES と CMAKE_OSX_DEPLOYMENT_TARGET のみで Apple 側は
+# 最終 triple を決めるため、 CMAKE_SYSTEM_PROCESSOR や CMAKE_C/CXX_COMPILER_TARGET は
+# 明示しない (native macOS build では実 compile flag に伝播しない dead define となる)。
+[[tool.scikit-build.overrides]]
+if.platform-system = "darwin"
+inherit.cmake.define = "append"
+cmake.define.TARGET_OS = "macos"
+cmake.define.CMAKE_OSX_ARCHITECTURES = "arm64"
+cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET = "14.0"
+cmake.define.CMAKE_OSX_SYSROOT = "macosx"
+
 [tool.scikit-build.wheel]
 packages = ["src/sora_sdk"]
 

@@ -70,8 +70,135 @@ jobs:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
 
+  build_macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: macos-15_arm64
+            runs_on: macos-15
+          - name: macos-26_arm64
+            runs_on: macos-26
+        python_version:
+          - "3.12"
+          - "3.13"
+          - "3.14"
+    runs-on: ${{ matrix.platform.runs_on }}
+    # 依存 DL + libwebrtc 同梱 clang 展開 + native compile で build_ubuntu の倍程度が必要
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Verify Xcode SDK
+        # CMAKE_OSX_SYSROOT = "macosx" は xcrun 解決に依存するため事前検証する
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          sdk_version="$(xcrun --sdk macosx --show-sdk-version)"
+          if [ -z "$sdk_version" ]; then
+            echo "xcrun returned empty SDK version"
+            exit 1
+          fi
+          echo "SDK version: $sdk_version"
+          sdk_path="$(xcrun --sdk macosx --show-sdk-path)"
+          if [ -z "$sdk_path" ]; then
+            echo "xcrun returned empty SDK path"
+            exit 1
+          fi
+          if [ ! -d "$sdk_path" ]; then
+            echo "SDK path does not exist: $sdk_path"
+            exit 1
+          fi
+          echo "SDK path: $sdk_path"
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          enable-cache: false
+          python-version: ${{ matrix.python_version }}
+      - run: uv sync --no-install-project
+      - name: Build wheel with backend resolution log
+        # -v で build isolation phase の pip install ログに backend の resolved version を残す
+        run: uv build -v --wheel
+      - name: Verify wheel
+        run: |
+          set -euo pipefail
+          # 一時展開ディレクトリを step 終了時に必ず削除する
+          workdir="$(mktemp -d)"
+          trap 'rm -rf "$workdir"' EXIT
+          # dist/ に wheel が 1 件だけ入っていることを確認する
+          shopt -s nullglob
+          wheels=(dist/*.whl)
+          if [ "${#wheels[@]}" -ne 1 ]; then
+            echo "expected exactly one wheel, got ${#wheels[@]}"
+            exit 1
+          fi
+          wheel="${wheels[0]}"
+          echo "wheel: $wheel"
+          # wheel filename の distribution 名、 CPython / ABI tag、 platform tag を検証する
+          py="${{ matrix.python_version }}"
+          py_tag="cp${py//./}"
+          expected_pattern="^sora_sdk-.+-${py_tag}-${py_tag}-macosx_14_0_arm64\\.whl$"
+          if [[ ! "$(basename "$wheel")" =~ $expected_pattern ]]; then
+            echo "wheel tag mismatch: expected pattern $expected_pattern"
+            exit 1
+          fi
+          # wheel を展開して type stub と marker と Mach-O バイナリの同梱を検証する
+          unzip -q "$wheel" -d "$workdir"
+          for path in \
+            "$workdir/sora_sdk/__init__.py" \
+            "$workdir/sora_sdk/py.typed" \
+            "$workdir/sora_sdk/sora_sdk_ext.pyi"; do
+            if [ ! -f "$path" ]; then
+              echo "missing required file in wheel: $path"
+              exit 1
+            fi
+          done
+          so_files=("$workdir"/sora_sdk/sora_sdk_ext.cpython-*-darwin.so)
+          if [ "${#so_files[@]}" -ne 1 ]; then
+            echo "expected exactly one Mach-O extension, got ${#so_files[@]}"
+            exit 1
+          fi
+          so="${so_files[0]}"
+          arch_out="$(lipo -info "$so")"
+          echo "$arch_out"
+          case "$arch_out" in
+            *x86_64*)
+              echo "unexpected x86_64 slice in $so"
+              exit 1
+              ;;
+            *arm64*) ;;
+            *)
+              echo "arm64 slice not found in $so"
+              exit 1
+              ;;
+          esac
+          # LC_BUILD_VERSION セクション内の minos を抽出する
+          minos="$(otool -l "$so" | awk '/LC_BUILD_VERSION/{f=1} f && /minos/{print $2; exit}')"
+          if [ -z "$minos" ]; then
+            echo "LC_BUILD_VERSION not found in $so"
+            exit 1
+          fi
+          echo "minos: $minos"
+          if [ "$minos" != "14.0" ]; then
+            echo "expected minos 14.0, got $minos"
+            exit 1
+          fi
+      - name: Install wheel
+        run: uv pip install --force-reinstall dist/*.whl
+      - name: Smoke test - sora_sdk_ext import path
+        # site-packages 配下の Mach-O が正しく解決されることを検証する
+        run: uv run --no-sync python -c "from sora_sdk import sora_sdk_ext; print(sora_sdk_ext.__file__)"
+      - name: Smoke test - sora_sdk.Sora class access
+        # 拡張本体の class export が正しく解決されることを検証する
+        run: uv run --no-sync python -c "import sora_sdk; print(sora_sdk.Sora)"
+      - name: pytest test_version
+        run: uv run --no-sync pytest tests/test_version.py
+      - name: Upload Artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
+          path: "dist/"
+
   slack_notify:
-    needs: [build_ubuntu]
+    needs: [build_ubuntu, build_macos]
     runs-on: ubuntu-slim
     if: ${{ !cancelled() }}
     steps:

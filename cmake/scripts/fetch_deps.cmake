@@ -35,32 +35,40 @@ endfunction()
 # 未設定時のみ /etc/os-release から算出する。
 # 許容リスト検証は明示指定時も含め常に実行する。
 # ---------------------------------------------------------------------------
-set(_SORA_ALLOWED_PLATFORMS "ubuntu-24.04_x86_64")
+set(_SORA_ALLOWED_PLATFORMS "ubuntu-24.04_x86_64" "macos_arm64")
 
 if(NOT SORA_PYTHON_SDK_PLATFORM)
-  # Linux 以外は未対応
-  if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+  if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+    # /etc/os-release から ID / VERSION_ID を抽出する
+    if(NOT EXISTS "/etc/os-release")
+      message(FATAL_ERROR "[fetch_deps] /etc/os-release not found")
+    endif()
+    file(READ "/etc/os-release" _os_release_content)
+    _sora_kv_get("${_os_release_content}" "ID" _os_id)
+    _sora_kv_get("${_os_release_content}" "VERSION_ID" _os_version_id)
+
+    if(NOT _os_id STREQUAL "ubuntu")
+      message(FATAL_ERROR
+        "[fetch_deps] Unsupported distribution: ${_os_id}. Only ubuntu is supported.")
+    endif()
+
+    set(SORA_PYTHON_SDK_PLATFORM "ubuntu-${_os_version_id}_${CMAKE_HOST_SYSTEM_PROCESSOR}"
+      CACHE STRING "" FORCE)
+  elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    # macOS は arm64 のみサポート
+    if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+      set(SORA_PYTHON_SDK_PLATFORM "macos_arm64" CACHE STRING "" FORCE)
+    else()
+      message(FATAL_ERROR
+        "[fetch_deps] macOS host must be arm64; got '${CMAKE_HOST_SYSTEM_PROCESSOR}'. "
+        "macOS x86_64 is not supported. "
+        "If launched via Rosetta 2 ('arch -x86_64'), rerun in a native arm64 shell.")
+    endif()
+  else()
     message(FATAL_ERROR
       "[fetch_deps] Unsupported host OS: ${CMAKE_HOST_SYSTEM_NAME}. "
-      "Only Linux is currently supported.")
+      "Only Linux and Darwin are currently supported.")
   endif()
-
-  # /etc/os-release から ID / VERSION_ID を抽出する
-  if(NOT EXISTS "/etc/os-release")
-    message(FATAL_ERROR "[fetch_deps] /etc/os-release not found")
-  endif()
-  file(READ "/etc/os-release" _os_release_content)
-  _sora_kv_get("${_os_release_content}" "ID" _os_id)
-  _sora_kv_get("${_os_release_content}" "VERSION_ID" _os_version_id)
-
-  if(NOT _os_id STREQUAL "ubuntu")
-    message(FATAL_ERROR
-      "[fetch_deps] Unsupported distribution: ${_os_id}. Only ubuntu is supported.")
-  endif()
-
-  set(SORA_PYTHON_SDK_PLATFORM "ubuntu-${_os_version_id}_${CMAKE_HOST_SYSTEM_PROCESSOR}"
-    CACHE STRING "" FORCE)
-  message(STATUS "[fetch_deps] Detected platform: ${SORA_PYTHON_SDK_PLATFORM}")
 endif()
 
 # 許容リスト検証（バイパスは認めない）
@@ -307,8 +315,9 @@ function(_sora_fetch_openh264 version git_url dest stamp_path)
   find_program(_SORA_MAKE_EXECUTABLE make NO_CACHE)
   if(NOT _SORA_MAKE_EXECUTABLE)
     message(FATAL_ERROR
-      "[fetch_deps] make not found. "
-      "Install build-essential: sudo apt-get install build-essential")
+      "[fetch_deps] OpenH264 header installation requires 'make'. "
+      "On Debian/Ubuntu: run 'apt-get install build-essential'. "
+      "On macOS: run 'xcode-select --install'.")
   endif()
 
   # git shallow clone
