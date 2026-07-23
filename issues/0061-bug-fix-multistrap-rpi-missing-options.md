@@ -3,7 +3,7 @@
 - Priority: Medium
 - Created: 2026-06-23
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: Opus 4.7
 - Branch: feature/fix-multistrap-rpi-missing-options
 - Polished: 2026-07-17
@@ -72,7 +72,10 @@ aptsources=Deb Rasp
 
 ## 解決方法
 
-0004 の実装 PR でのみ close する。0004 より先に本 issue を処理しない。
+実装せず closed にする。
+
+0004 前提の衛星 issue だったが、0004 は 0074 に置き換えた。
+insecure な multistrap 経路の削除は 0074 の完了条件に含め、本 issue 単独では扱わない。
 
 ## ロールバック
 
