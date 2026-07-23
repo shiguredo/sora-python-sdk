@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-21
+- Completed: 2026-07-23
 - Updated: 2026-07-17
 - Model: Composer 2.5
 - Branch: feature/add-makefile-develop-workflow
@@ -94,20 +95,11 @@ distclean: clean
 
 ## 解決方法
 
-### Makefile
+実装せず closed にする。
 
-「設計方針 → Makefile の骨格」を `/Users/voluntas/shiguredo/sora-python-sdk/Makefile` として新設する。
-
-### CHANGES.md
-
-`## develop` セクションに追加（種別は `[ADD]` ）:
-
-```
-- [ADD] 開発者向け Makefile を追加する
-  - @voluntas
-```
-
-`### misc` サブセクションではなく `[ADD]` グループに置く（ Makefile はリリース成果物の一部として開発者に公開されるため）。
+scikit-build-core 化を複数回試みたが難しく、方針としてあきらめることにした。
+build backend の移行は行わず、現行の setuptools / `run.py` 経路を維持する。
+sysroot 化は 0074 で現行経路向けに切り直す。
 
 ## ロールバック
 
