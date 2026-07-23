@@ -34,7 +34,7 @@
   - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
   - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.23` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.25` に上げる
   - WEBRTC_BUILD_VERSION を `m150.7871.3.1` に上げる
   - CMAKE_VERSION を `4.3.2` に上げる
   - BOOST_VERSION を `1.91.0` に上げる
