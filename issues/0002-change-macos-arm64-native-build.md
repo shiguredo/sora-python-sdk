@@ -3,7 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: Composer 2.5
 - Branch: feature/change-macos-arm64-native-build
 - Polished: 2026-07-23
@@ -162,48 +162,11 @@ scikit-build-core の override 適用順は `if.<key>` の評価で順次適用�
 
 ## 解決方法
 
-### cmake/scripts/fetch_deps.cmake
+実装せず closed にする。
 
-`SORA_PYTHON_SDK_PLATFORM` 算出を「設計方針 → SORA_PYTHON_SDK_PLATFORM 算出の macOS 対応」のコード形に書き換え、 URL 組み立ての platform 文字列に `macos_arm64` を対応させる。 既存 FATAL_ERROR メッセージは「 ubuntu-24.04_x86_64 / macos_arm64 only 」に拡張する。 0003 / 0004 / 0005 で順次追加。
-
-### pyproject.toml
-
-0001 の末尾追加セクション群に以下を追記する:
-
-```toml
-[[tool.scikit-build.overrides]]
-if.platform-system = "darwin"
-inherit.cmake.define = "append"
-cmake.define.TARGET_OS = "macos"
-cmake.define.CMAKE_SYSTEM_PROCESSOR = "arm64"
-cmake.define.CMAKE_OSX_ARCHITECTURES = "arm64"
-cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET = "14.0"
-cmake.define.CMAKE_OSX_SYSROOT = "macosx"
-cmake.define.CMAKE_C_COMPILER_TARGET = "aarch64-apple-darwin"
-cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
-```
-
-### CMakeLists.txt
-
-- project 後に `CMAKE_SYSROOT` / `CMAKE_OSX_SYSROOT` を変更する処理は追加しない。
-- 既存 `CMakeLists.txt:111-123` の macOS ブランチは触らない（0001 後の `TARGET_OS=macos` で自動的に有効化される）。
-- scikit-build-core が注入する exact `Python_EXECUTABLE` を使用し、`CMAKE_FIND_FRAMEWORK` は変更しない。
-
-### .github/workflows/build.yml
-
-- 「設計方針 → CI 影響」の通り `build_macos` job を新設する
-- `jobs.slack_notify.needs` を `[build_ubuntu]` から `[build_ubuntu, build_macos]` に変更する
-
-### CHANGES.md
-
-`## develop` セクションに以下を追加する（既存 `[CHANGE] build backend を ...` の下、 `[CHANGE]` グループ内）:
-
-```
-- [CHANGE] macOS arm64 ネイティブビルドを scikit-build-core 経路に移行する
-  - @voluntas
-```
-
-`build_macos` job の新設、 `build_pyi` artifact 経路廃止等の実装詳細はリリースノートに含めない。
+scikit-build-core 化を複数回試みたが難しく、方針としてあきらめることにした。
+build backend の移行は行わず、現行の setuptools / `run.py` 経路を維持する。
+sysroot 化は 0074 で現行経路向けに切り直す。
 
 ## ロールバック
 
