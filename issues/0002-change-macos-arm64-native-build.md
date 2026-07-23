@@ -3,7 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: Composer 2.5
 - Branch: feature/change-macos-arm64-native-build
 - Polished: 2026-07-23
@@ -164,46 +164,46 @@ scikit-build-core の override 適用順は `if.<key>` の評価で順次適用�
 
 ### cmake/scripts/fetch_deps.cmake
 
-`SORA_PYTHON_SDK_PLATFORM` 算出を「設計方針 → SORA_PYTHON_SDK_PLATFORM 算出の macOS 対応」のコード形に書き換え、 URL 組み立ての platform 文字列に `macos_arm64` を対応させる。 既存 FATAL_ERROR メッセージは「 ubuntu-24.04_x86_64 / macos_arm64 only 」に拡張する。 0003 / 0004 / 0005 で順次追加。
+- `_SORA_ALLOWED_PLATFORMS` に `macos_arm64` を追加する。
+- 自動検出ロジックを `CMAKE_HOST_SYSTEM_NAME` の Linux / Darwin / other 3 分岐に書き直す。 Darwin 分岐では `CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64"` のとき `SORA_PYTHON_SDK_PLATFORM = macos_arm64` を確定し、それ以外は FATAL_ERROR で拒否する。 Rosetta 2 (`arch -x86_64`) 経由の shell で誤起動した場合の誘導文言も FATAL_ERROR に含める。
+- URL 組み立ては `${SORA_PYTHON_SDK_PLATFORM}` 展開で自動的に macOS 用アーカイブ名に対応するため既存ロジックのまま流用する。
+- `_sora_fetch_openh264` の FATAL_ERROR メッセージを Debian/Ubuntu (`apt-get install build-essential`) と macOS (`xcode-select --install`) 両プラットフォームの誘導を含む形に拡張する。
+- 自動検出パスの `Detected platform:` message は末尾で常に出力される `platform: ${SORA_PYTHON_SDK_PLATFORM}` message と重複するため削除する。
 
 ### pyproject.toml
 
-0001 の末尾追加セクション群に以下を追記する:
-
-```toml
-[[tool.scikit-build.overrides]]
-if.platform-system = "darwin"
-inherit.cmake.define = "append"
-cmake.define.TARGET_OS = "macos"
-cmake.define.CMAKE_SYSTEM_PROCESSOR = "arm64"
-cmake.define.CMAKE_OSX_ARCHITECTURES = "arm64"
-cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET = "14.0"
-cmake.define.CMAKE_OSX_SYSROOT = "macosx"
-cmake.define.CMAKE_C_COMPILER_TARGET = "aarch64-apple-darwin"
-cmake.define.CMAKE_CXX_COMPILER_TARGET = "aarch64-apple-darwin"
-```
+- 既存 `[tool.scikit-build.cmake.define] TARGET_OS = "ubuntu"` はデフォルトとして残し、`[[tool.scikit-build.overrides]]` with `if.platform-system = "darwin"` + `inherit.cmake.define = "append"` で macOS 用 define を上書き追加する。
+- 実際に採用した define は次の 4 つに絞る:
+  - `TARGET_OS = "macos"`
+  - `CMAKE_OSX_ARCHITECTURES = "arm64"`
+  - `CMAKE_OSX_DEPLOYMENT_TARGET = "14.0"`
+  - `CMAKE_OSX_SYSROOT = "macosx"`
+- 設計方針時に列挙していた `CMAKE_SYSTEM_PROCESSOR` / `CMAKE_C_COMPILER_TARGET` / `CMAKE_CXX_COMPILER_TARGET` は、実 build (`_build/.../build.ninja`) の compile flag に一切伝播しないことを確認したため不採用とした（Apple プラットフォームでは `CMAKE_OSX_ARCHITECTURES` + `CMAKE_OSX_DEPLOYMENT_TARGET` が最終 triple を決定する）。 native macOS build では dead define のため残さない。
 
 ### CMakeLists.txt
 
-- project 後に `CMAKE_SYSROOT` / `CMAKE_OSX_SYSROOT` を変更する処理は追加しない。
-- 既存 `CMakeLists.txt:111-123` の macOS ブランチは触らない（0001 後の `TARGET_OS=macos` で自動的に有効化される）。
-- scikit-build-core が注入する exact `Python_EXECUTABLE` を使用し、`CMAKE_FIND_FRAMEWORK` は変更しない。
+- 変更なし（既存 macOS 分岐が `TARGET_OS=macos` で自動的に有効化される）。
 
 ### .github/workflows/build.yml
 
-- 「設計方針 → CI 影響」の通り `build_macos` job を新設する
-- `jobs.slack_notify.needs` を `[build_ubuntu]` から `[build_ubuntu, build_macos]` に変更する
+- `build_macos` job を新設する。 matrix は `macos-15_arm64` (runs_on: macos-15) / `macos-26_arm64` (runs_on: macos-26) × Python 3.12 / 3.13 / 3.14。 timeout は 30 分。
+- steps: checkout → Verify Xcode SDK (`xcodebuild -version`, `xcrun --sdk macosx --show-sdk-version`, `xcrun --sdk macosx --show-sdk-path` の実在検証) → setup-uv → `uv sync --no-install-project` → `uv build -v --wheel` (build isolation ログに scikit-build-core の解決 version を残す) → Verify wheel → Install wheel (`--force-reinstall`) → Smoke test (`sora_sdk_ext.__file__`, `sora_sdk.Sora`) → `pytest tests/test_version.py` → upload-artifact。
+- Verify wheel step は: dist/ に wheel が 1 件 / wheel filename の distribution・CPython・ABI・platform tag の regex 一致 / wheel 内に `sora_sdk/__init__.py` / `sora_sdk/py.typed` / `sora_sdk/sora_sdk_ext.pyi` が同梱 / Mach-O が arm64 単一 slice / Mach-O `LC_BUILD_VERSION` の minos が 14.0、を検証する。
+- `MACOSX_DEPLOYMENT_TARGET` env は設定しない。 scikit-build-core 1.x が `CMAKE_OSX_DEPLOYMENT_TARGET` cmake define から wheel tag を算出することを確認したため、 pyproject.toml の該当 define を single source of truth とする。 実 build でも env なしで `macosx_14_0_arm64` tag と minos 14.0 が生成されることを確認した。
+- `jobs.slack_notify.needs` を `[build_ubuntu]` から `[build_ubuntu, build_macos]` に変更する。
 
 ### CHANGES.md
 
-`## develop` セクションに以下を追加する（既存 `[CHANGE] build backend を ...` の下、 `[CHANGE]` グループ内）:
+`## develop` セクションの `[CHANGE]` グループ内、既存 `[CHANGE] build backend を setuptools から scikit-build-core に切り替える` の下に次を追加する:
 
 ```
 - [CHANGE] macOS arm64 ネイティブビルドを scikit-build-core 経路に移行する
   - @voluntas
 ```
 
-`build_macos` job の新設、 `build_pyi` artifact 経路廃止等の実装詳細はリリースノートに含めない。
+### .gitignore
+
+- 旧 `run.py` 経路の残骸である `/_install` `/_source` を追加する。 新 scikit-build-core 経路 (`/_build` `/_deps`) は 0001 で対応済み。
 
 ## ロールバック
 
