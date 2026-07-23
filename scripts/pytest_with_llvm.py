@@ -10,7 +10,9 @@ def test(debugger, command, result, internal_dict):
     debugger.HandleCommand("settings set target.process.follow-fork-mode child")
 
     target = debugger.CreateTargetWithFileAndArch("uv", lldb.LLDB_ARCH_DEFAULT)
-    process = target.LaunchSimple(["run", "pytest", "tests/test_capability.py", "-s"], None, None)
+    process = target.LaunchSimple(
+        ["run", "--no-sync", "pytest", "tests/test_capability.py", "-s"], None, None
+    )
 
     if not process:
         print("Error: could not launch process")

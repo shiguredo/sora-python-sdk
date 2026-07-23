@@ -3,7 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: Fable 5
 - Branch: feature/change-scikit-build-core-native-deps
 - Polished: 2026-07-23
