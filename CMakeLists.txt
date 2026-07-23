@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 4.4)
+# Chromium 同梱 clang には clang-scan-deps が含まれないため C++ モジュールスキャンを無効化する
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 list(APPEND CMAKE_PROJECT_TOP_LEVEL_INCLUDES "${CMAKE_CURRENT_LIST_DIR}/cmake/scripts/fetch_deps.cmake")
 project(sora_sdk)
 
