@@ -100,6 +100,7 @@ TARGET_OS = "ubuntu"
 packages = ["src/sora_sdk"]
 
 [[tool.dynamic-metadata]]
+field = "version"
 provider = "scikit_build_core.metadata.regex"
 input = "VERSION"
 regex = "(?P<value>\\S+)"
