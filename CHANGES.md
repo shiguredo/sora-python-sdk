@@ -15,6 +15,14 @@
   - 誤った公開プロパティ名をそのまま残さない
   - `mine_type` は削除する（alias は残さない）
   - @voluntas
+- [CHANGE] Ubuntu arm64 と Raspberry Pi OS の rootfs 生成を multistrap から署名検証付き sysroot builder に切り替える
+  - insecure な `multistrap` / `--no-auth` / `AllowInsecureRepositories` への依存を撤去する
+  - Raspberry Pi OS wheel の動作対象を Trixie 以降に変更する（Bookworm 以前は非対応）
+  - libstdc++ 依存を 14 に引き上げ、`GLIBCXX_3.4.32` 未満の環境を動作対象外とする
+  - wheel の manylinux tag （`manylinux_2_35_aarch64`）は本変更では変更しない
+  - Jetson の rootfs 生成は本変更の対象外とし、既存経路のまま残す
+  - 既存の `_install/<target>/rootfs` を持つローカル環境では、初回 build 前に該当 rootfs と `_install/<target>/rootfs.version` を手動削除する（sysroot builder は由来不明の既存 rootfs を `--force` 無しで拒否する）
+  - @voluntas
 - [UPDATE] wheel を `~=0.47` に上げる
   - `0.47.x` を許可する
   - @voluntas

@@ -30,7 +30,15 @@ dev = [
   { include-group = "test" },
 ]
 lint = ["ruff", "ty"]
-test = ["httpx", "numpy", "pyjwt", "pytest", "pytest-repeat", "pytest-xdist"]
+test = [
+  "httpx",
+  "numpy",
+  "pyjwt",
+  "pytest",
+  "pytest-repeat",
+  "pytest-timeout~=2.4.0",
+  "pytest-xdist",
+]
 
 [build-system]
 requires = ["setuptools~=83.0", "wheel~=0.47"]
@@ -40,6 +48,9 @@ build-backend = "setuptools.build_meta"
 # テスト探索のルートディレクトリ
 # https://docs.pytest.org/en/stable/reference/reference.html#confval-testpaths
 testpaths = ["tests"]
+# リポジトリルート直下の sysroot_builder.py を tests から import 可能にする
+# https://docs.pytest.org/en/stable/reference/reference.html#confval-pythonpath
+pythonpath = ["."]
 # xfail マーカ付きのテストが期待に反して pass した場合をエラー扱いにする
 # https://docs.pytest.org/en/stable/reference/reference.html#confval-xfail_strict
 xfail_strict = true
@@ -70,7 +81,7 @@ extend-select = [
 [tool.ty.src]
 # 型チェック対象のファイル・ディレクトリ
 # https://docs.astral.sh/ty/reference/configuration/#src-include
-include = ["src", "tests"]
+include = ["src", "tests", "sysroot_builder.py"]
 
 [tool.uv]
 # システム Python ではなく uv 管理下の Python のみを使用する

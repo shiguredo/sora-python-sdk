@@ -139,11 +139,26 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev
+      # armv8 向け cross build で aarch64 の binutils を用意する
       - if: ${{ matrix.platform.arch == 'armv8' }}
         run: |
-          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+          sudo apt-get -y install binutils-aarch64-linux-gnu
+      # Ubuntu armv8 用の Ubuntu archive keyring を明示 install し、
+      # runner image 変更で pre-install が外れる将来の回帰を防ぐ
+      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
+        run: |
+          sudo apt-get -y install ubuntu-keyring
+          test -f /usr/share/keyrings/ubuntu-archive-keyring.gpg
+      # Raspberry Pi OS 用の vendored keyring は SHA-256 が固定値と一致することを確認する
+      - if: ${{ matrix.platform.name == 'raspberry-pi-os_armv8' }}
+        name: Verify vendored keyrings
+        run: |
+          set -eux
+          cd sysroot/keyrings
+          sha256sum -c <<'EOF'
+          506b815cbb32d9b6066b4a2aa524071e071761e7e7f68c3ac74f3061ba852017  debian-archive-keyring.gpg
+          76603890d82a492175caf17aba68dc73acb1189c9fd58ec0c19145dfa3866d56  raspberrypi-archive-keyring.asc
+          EOF
       - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           enable-cache: false
@@ -162,6 +177,20 @@ jobs:
           uv build
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
+
+      # Raspberry Pi OS 向け sysroot の代表 header と manifest が展開されているか確認する
+      - if: ${{ matrix.platform.name == 'raspberry-pi-os_armv8' }}
+        name: Verify Raspberry Pi OS sysroot contents
+        run: |
+          set -eux
+          root="_install/raspberry-pi-os_armv8/rootfs"
+          test -f "$root/usr/include/aarch64-linux-gnu/sys/stat.h"
+          test -f "$root/usr/include/c++/14/vector"
+          test -f "$root/usr/include/libcamera/libcamera/camera.h"
+          test -f "$root/usr/include/alsa/asoundlib.h"
+          test -f "$root/usr/include/pulse/pulseaudio.h"
+          test -f "$root/usr/include/nss/nss.h"
+          python3 -c "import json; m=json.load(open('$root/.webrtc-build-sysroot.json')); assert len(m['deb_files']) >= 10, m['deb_files']"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -206,10 +235,9 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev
+      # arm64 native runner でも現行踏襲で aarch64 の binutils を install する
       - run: |
-          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
+          sudo apt-get -y install binutils-aarch64-linux-gnu
       # clang-19
       - name: Install clang-19
         run: |
