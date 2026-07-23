@@ -3,7 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-21
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: GPT-5
 - Branch: feature/add-debug-build-workflow
 - Polished: 2026-07-17
@@ -103,10 +103,11 @@ workflow の shell log は英語、workflow 内のコメントは日本語にす
 
 ## 解決方法
 
-1. `fetch_deps.cmake` に local dependency mode と path 検証を追加する。
-2. 通常 build で同 mode が無効であることを確認する CMake integration test を追加する。
-3. `.github/workflows/build-debug.yml` を新設し、外部 2 repository の source build と Debug wheel build を接続する。
-4. 全 Python matrix の wheel、CMake cache、ELF、version、install 後 smoke test を検証する。
+実装せず closed にする。
+
+scikit-build-core 化を複数回試みたが難しく、方針としてあきらめることにした。
+build backend の移行は行わず、現行の setuptools / `run.py` 経路を維持する。
+sysroot 化は 0074 で現行経路向けに切り直す。
 
 ## ロールバック
 
