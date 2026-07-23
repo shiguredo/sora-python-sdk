@@ -3,7 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-23
 - Model: Fable 5
 - Branch: feature/change-scikit-build-core-native-deps
 - Polished: 2026-07-23
@@ -263,42 +263,11 @@ canary.py の tag push は継続してよい。 `publish_wheel` / `create-releas
 
 ## 解決方法
 
-各セクションは「設計方針」の決定に従い最小差分で適用する。 コミット順序は次を基本とする: (1) backend 切替 + fetch_deps.cmake + CMakeLists.txt + src/sora.cpp + build.yml 再構成をまとめて green にする → (2) 開発ツールの調整 → (3) レガシーファイル削除 → (4) CHANGES.md。 build.yml は feature ブランチの push でも走るため、 backend 切替と CI 再構成を別コミットに割ると中間コミットが red になる。
+実装せず closed にする。
 
-個別ファイル:
-
-- **pyproject.toml**: `[build-system]` 置換、 末尾に `[tool.scikit-build]` 系セクション追記、 `[dependency-groups] dev` から `nanobind==2.13.0` のみ削除。 `uv lock` で uv.lock を更新。
-- **DEPS**: `CMAKE_VERSION` 行を削除（他 4 キーは維持）。
-- **cmake/scripts/fetch_deps.cmake**: 「設計方針 → fetch_deps.cmake の入出力契約 / メインスクリプト / 各取得関数 / SORA_PYTHON_SDK_PLATFORM 自動検出」を満たすよう新設。
-- **CMakeLists.txt**: 「設計方針 → CMakeLists.txt の変更点」（バージョン注入の `file(READ)` 追加を含む）の差分適用。
-- **src/sora.cpp**: 「設計方針 → バージョン注入と src/sora.cpp」の差分適用。
-- **canary.py / prek.toml / scripts/**: 「設計方針 → 開発ツールの調整」の 4 箇所を変更。
-- **レガシービルドスクリプト 5 ファイル**: `git rm` で削除。
-- **.gitignore**: 末尾 `/smallproj` 行の直前に `/_deps` を追加し、`/_install` / `/_source` / `/_package` を削除する。
-- **.github/workflows/build.yml**: 「設計方針 → wheel と CI」の指示に従い job 削除 / matrix 縮小 / step 再構成 / env 削減 / `paths-ignore` 修正 / `slack_notify.needs` 変更。
-- **.github/workflows/build-debug.yml**: `git rm` で削除。
-- **.github/actions/download/**: `git rm -r` で削除。
-- **.github/workflows/e2e-test.yml**: 全 job を `if: false` にする（追加または置換）。
-
-### CHANGES.md
-
-`## develop` セクションの整理:
-
-- 既存 `[UPDATE] wheel を ~=0.47 に上げる` / `[UPDATE] setuptools を ~=83.0 に上げる` の 2 エントリは削除する（`[build-system] requires` から両者が消えるため）。
-- 既存 `[UPDATE] Sora C++ SDK のバージョンを 2026.2.0-canary.23 に上げる` エントリの `CMAKE_VERSION を 4.3.2 に上げる` サブ箇条を削除する（`DEPS` から `CMAKE_VERSION` が消えるため）。 他のサブ箇条は触らない。
-- `[CHANGE]` グループ（既存 `[CHANGE] SoraTransformableFrame のタイポ ...` エントリの直後）に追加:
-
-```
-- [CHANGE] build backend を setuptools から scikit-build-core に切り替える
-  - `uv build --wheel` だけで依存の取得からビルドまで完結する
-  - WebRTC / Sora C++ SDK / Boost / OpenH264 / LLVM は CMake configure 時に自動取得する
-  - @voluntas
-- [CHANGE] レガシービルドスクリプト (run.py / buildbase.py / pypath.py / setup.py / MANIFEST.in) を削除する
-  - フォーマットは prek の ruff-format / clang-format フックを利用する
-  - @voluntas
-```
-
-移行期間中の CI 一時 disable や job 削除、 開発ツールの調整等の実装詳細はリリースノートに含めない。
+scikit-build-core 化を複数回試みたが難しく、方針としてあきらめることにした。
+build backend の移行は行わず、現行の setuptools / `run.py` 経路を維持する。
+sysroot 化は 0074 で現行経路向けに切り直す。
 
 ## ロールバック
 
