@@ -36,7 +36,6 @@ test = [
   "pyjwt",
   "pytest",
   "pytest-repeat",
-  "pytest-timeout~=2.4.0",
   "pytest-xdist",
 ]
 
@@ -48,9 +47,6 @@ build-backend = "setuptools.build_meta"
 # テスト探索のルートディレクトリ
 # https://docs.pytest.org/en/stable/reference/reference.html#confval-testpaths
 testpaths = ["tests"]
-# リポジトリルート直下の sysroot_builder.py を tests から import 可能にする
-# https://docs.pytest.org/en/stable/reference/reference.html#confval-pythonpath
-pythonpath = ["."]
 # xfail マーカ付きのテストが期待に反して pass した場合をエラー扱いにする
 # https://docs.pytest.org/en/stable/reference/reference.html#confval-xfail_strict
 xfail_strict = true
