@@ -39,6 +39,10 @@ class SoraVideoSource : public SoraTrackInterface {
       webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track);
   ~SoraVideoSource();
 
+  // publisher 破棄時にワーカスレッドを待機解除可能な状態へ遷移させる
+  // (join 自体はデストラクタで行う)
+  void Disposed() override;
+
   /**
    * Sora に映像データとして送るフレームを渡します。
    *

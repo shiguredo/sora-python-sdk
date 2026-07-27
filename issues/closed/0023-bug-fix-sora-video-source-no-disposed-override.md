@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-sora-video-source-no-disposed-override
 
@@ -75,3 +76,11 @@ SoraVideoSource::~SoraVideoSource() {
 - publisher 側を先に破棄しても、 `Python` 側参照がある間にスレッドが「待機解除可能な状態」になり、最終的なデストラクタで安全に `join` されることが確認できる。
 - 既存テスト ( `tests/` 配下) が全て通ること。
 - `SoraVideoSource` の寿命やスレッド停止に関する挙動が、 publisher 側破棄が先でも後でも変わらないことを確認する。
+
+## 解決方法
+
+`SoraVideoSource::Disposed()` を override し、`finished_.exchange(true)` と `queue_cond_.notify_all()` でワーカスレッドを待機解除可能な状態にする。
+`join` は GIL 保持下のデッドロックを避けるためデストラクタに残す。
+
+デストラクタは `Disposed()` 済みでも `thread_` があれば必ず `join` するよう整理した
+（以前は `finished_` が既に true だと `join` をスキップしていた）。
