@@ -52,6 +52,9 @@
 - [FIX] `disconnect()` が `OnDisconnect` 待ちで永久ブロックしうる問題を修正する
   - 最大 10 秒の有限待ちにし、待ち中の `KeyboardInterrupt` でも抜けられるようにする
   - @voluntas
+- [FIX] `rtc_log()` が `PyFrame_GetCode` の新参照を解放せず参照リークする問題を修正する
+  - 使い終わった `PyCodeObject` を `Py_DECREF` し、Python C-API 呼び出しを GIL 保持下に揃える
+  - @voluntas
 - [FIX] `Sora` の破棄順序が原因で GC のタイミング次第にプロセスが SIGSEGV でクラッシュしうる問題を修正する
   - `Sora::~Sora` が `PeerConnectionFactory` を先に破棄した後に io_context を破棄していたため、io_context に残った handler が握る `sora::SoraSignaling` の破棄が破棄済みの signaling スレッドへ Marshal して use-after-free になっていた
   - 破棄順序を「子への破棄通知 → io_context の停止・破棄 → factory の破棄」に修正する
