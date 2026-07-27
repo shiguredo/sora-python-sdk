@@ -331,7 +331,8 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
   } else if (nb::isinstance<bool>(value)) {
     return nb::cast<bool>(value);
   } else if (nb::isinstance<int>(value)) {
-    return nb::cast<int>(value);
+    // Python int は任意精度。int32 範囲を超える JWT exp 等を通すため int64_t にする
+    return nb::cast<int64_t>(value);
   } else if (nb::isinstance<float>(value)) {
     return nb::cast<float>(value);
   } else if (nb::isinstance<const char*>(value)) {
