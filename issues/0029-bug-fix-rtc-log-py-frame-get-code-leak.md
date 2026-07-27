@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-rtc-log-py-frame-get-code-leak
 
@@ -52,3 +53,19 @@ void RtcLog(webrtc::LoggingSeverity severity, const std::string& message) {
 - 修正後に `RtcLog` を高頻度で呼んでも RSS が単調増加し続けないこと (長時間稼働や反復実行で確認)。
 - libwebrtc 側の非 Python スレッドからの呼び出し経路がある場合は、GIL 保持の整合が取れていること (`gil_scoped_acquire` の付与など)。
 - 既存の e2e テストおよびユニットテストが引き続き通ること。
+
+## 解決方法
+
+`RtcLog` で `PyFrame_GetCode` が返す新参照を、ログ組み立て後に `Py_DECREF` するようにした。
+
+- `PyUnicode_AsUTF8` のポインタは `code` 生存期間に紐付くため、`filename` を先に `std::string` へコピーしてから解放する
+- Python C-API 呼び出し全体を `gil_scoped_acquire` で囲む
+- 呼び出し元を精査したところ、`RtcLog` は Python 公開 API (`rtc_log`) 経由のみで、C++ 内部スレッドからの直接呼び出しは無かった
+
+追加したテスト:
+
+- `tests/test_rtc_log_refcount.py`
+  - `rtc_log` を 1000 回呼んでも呼び出し元 `PyCodeObject` の `sys.getrefcount` が増えないことを検証する
+  - 修正前は 100 回で +100、修正後は delta 0 を手元で確認した
+
+変更履歴は `CHANGES.md` の `## develop` に `[FIX]` として追記した。
