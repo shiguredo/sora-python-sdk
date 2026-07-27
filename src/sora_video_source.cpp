@@ -21,13 +21,23 @@ SoraVideoSource::SoraVideoSource(
 }
 
 SoraVideoSource::~SoraVideoSource() {
-  // finished_ を立てて待機中のワーカを起こし、join する
+  // Disposed() 済みでも未呼び出しでも、ここで finished_ を立てて起こす
   if (!finished_.exchange(true)) {
     queue_cond_.notify_all();
+  }
+  if (thread_) {
     gil_scoped_release release;
     thread_->join();
     thread_ = nullptr;
   }
+}
+
+void SoraVideoSource::Disposed() {
+  // GIL 保持下で join するとデッドロックしうるため、停止シグナルだけ送る
+  if (!finished_.exchange(true)) {
+    queue_cond_.notify_all();
+  }
+  SoraTrackInterface::Disposed();
 }
 
 void SoraVideoSource::OnCaptured(
