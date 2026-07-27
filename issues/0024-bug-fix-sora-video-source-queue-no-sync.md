@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-sora-video-source-queue-no-sync
 
@@ -75,3 +76,11 @@ bool SoraVideoSource::SendFrameProcess() {
 - `finished_` が `std::atomic<bool>` であり、書き換え・読み取りが明示的に同期されていること。
 - 既存のフレーム送出機能 (フレーム順序、終了時の安全な停止) が回帰しないこと。
 - GIL とミューテックスの取得順序が文書化され、デッドロックの可能性が排除されていること。
+
+## 解決方法
+
+`queue_mtx_` (`std::mutex`) を追加し、`OnCaptured` の push と `SendFrameProcess` の pop / 空判定をロック下で行うようにした。
+`finished_` は `std::atomic<bool>` に変更し、デストラクタでは `exchange(true)` で立ててから `notify_all` / `join` する。
+
+ワーカスレッドの待機は既存の `GILMutexLock` を使い、ロック順序を「GIL 取得 → `queue_mtx_`」に統一する。
+待機中は両方解放され、起床時に両方再取得される。
