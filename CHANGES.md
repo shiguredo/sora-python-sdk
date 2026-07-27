@@ -71,7 +71,7 @@
   - `Disposed()` で `finished_` を立てて待機解除し、`join` はデストラクタに残す
   - @voluntas
 - [FIX] `Sora::ConvertJsonValue` が Python 整数を `int` にキャストして int32 範囲超で例外になる問題を修正する
-  - `nb::cast<int64_t>` に切り替え、JWT の `exp` など大きな整数を通せるようにする
+  - `PyLong_Check` と `nb::cast<int64_t>` で大きな整数を通し、`bool` 分岐は先に維持する
   - @voluntas
 - [FIX] `Sora` の破棄順序が原因で GC のタイミング次第にプロセスが SIGSEGV でクラッシュしうる問題を修正する
   - `Sora::~Sora` が `PeerConnectionFactory` を先に破棄した後に io_context を破棄していたため、io_context に残った handler が握る `sora::SoraSignaling` の破棄が破棄済みの signaling スレッドへ Marshal して use-after-free になっていた
