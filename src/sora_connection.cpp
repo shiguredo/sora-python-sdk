@@ -138,10 +138,24 @@ void SoraConnection::SetVideoSenderFrameTransformer(
 
 bool SoraConnection::SendDataChannel(const std::string& label,
                                      nb::bytes& data) {
+  // Disconnect() 後は conn_ が nullptr になる。ガード無しで呼ぶと
+  // nullptr dereference で SEGV するため、Connect() と同様に例外へ落とす。
+  if (conn_ == nullptr) {
+    throw std::runtime_error(
+        "Already disconnected. Please create another Sora instance to "
+        "establish a new connection.");
+  }
   return conn_->SendDataChannel(label, std::string(data.c_str(), data.size()));
 }
 
 std::string SoraConnection::GetStats() {
+  // Disconnect() 後は conn_ が nullptr になる。pc の null チェックだけでは
+  // conn_ 自体の参照で SEGV するため、Connect() と同様に例外へ落とす。
+  if (conn_ == nullptr) {
+    throw std::runtime_error(
+        "Already disconnected. Please create another Sora instance to "
+        "establish a new connection.");
+  }
   auto pc = conn_->GetPeerConnection();
   if (pc == nullptr) {
     return "[]";
@@ -265,8 +279,7 @@ void SoraConnection::OnTrack(
     }
     auto receiver = transceiver->receiver();
     if (receiver == nullptr) {
-      RTC_LOG(LS_WARNING)
-          << "OnTrack received transceiver with null receiver";
+      RTC_LOG(LS_WARNING) << "OnTrack received transceiver with null receiver";
       return;
     }
     nb::ref<SoraMediaTrack> track = new SoraMediaTrack(this, receiver);
