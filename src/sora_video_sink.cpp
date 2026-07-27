@@ -28,8 +28,11 @@ SoraVideoFrame::SoraVideoFrame(
 nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>> SoraVideoFrame::Data() {
   size_t shape[3] = {static_cast<size_t>(height_), static_cast<size_t>(width_),
                      3};
-  return nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>>(
-      argb_data_.get(), 3, shape, nb::handle());
+  // argb_data_ は this が所有する。owner を空にすると Python 側でフレームが
+  // GC されたあとに ndarray だけが残り、解放済みメモリを参照して UAF になる。
+  nb::object owner = nb::find(*this);
+  return nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>>(argb_data_.get(),
+                                                               3, shape, owner);
 }
 
 SoraVideoSinkImpl::SoraVideoSinkImpl(nb::ref<SoraTrackInterface> track)

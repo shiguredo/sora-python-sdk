@@ -46,6 +46,9 @@
 - [FIX] `disconnect()` 後の `send_data_channel()` / `get_stats()` が `conn_` の null チェック無しで SEGV する問題を修正する
   - `Connect()` と同じ `RuntimeError` を返すようにする
   - @voluntas
+- [FIX] `SoraVideoFrame` / `SoraAudioFrame` / `SoraTransformableFrame` の ndarray が親フレームへの参照を持たず UAF しうる問題を修正する
+  - `data()` / `get_data()` が返す ndarray の owner に親フレームを紐付ける
+  - @voluntas
 - [FIX] `Sora` の破棄順序が原因で GC のタイミング次第にプロセスが SIGSEGV でクラッシュしうる問題を修正する
   - `Sora::~Sora` が `PeerConnectionFactory` を先に破棄した後に io_context を破棄していたため、io_context に残った handler が握る `sora::SoraSignaling` の破棄が破棄済みの signaling スレッドへ Marshal して use-after-free になっていた
   - 破棄順序を「子への破棄通知 → io_context の停止・破棄 → factory の破棄」に修正する

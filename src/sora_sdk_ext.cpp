@@ -471,7 +471,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_ro("sample_rate_hz", &SoraAudioFrame::sample_rate_hz)
       .def_prop_ro("absolute_capture_timestamp_ms",
                    &SoraAudioFrame::absolute_capture_timestamp_ms)
-      .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference);
+      // reference_internal で self を ndarray の owner にし、フレーム破棄後の UAF を防ぐ
+      .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference_internal);
 
   nb::class_<SoraAudioStreamSinkImpl>(m, "SoraAudioStreamSinkImpl",
                                       nb::type_slots(audio_stream_sink_slots))
@@ -485,7 +486,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("analyze", &SoraVAD::Analyze, "frame"_a);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
-      .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);
+      // reference_internal で self を ndarray の owner にし、フレーム破棄後の UAF を防ぐ
+      .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference_internal);
 
   nb::class_<SoraVideoSinkImpl>(m, "SoraVideoSinkImpl",
                                 nb::type_slots(video_sink_slots))
