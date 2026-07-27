@@ -75,16 +75,49 @@ void SoraConnection::Disconnect() {
   if (conn_) {
     Disposed();
     conn_->Disconnect();
-    // OnDisconnect が来るまで待つ
+    // OnDisconnect を有限時間待つ。永久 wait だと OnDisconnect が来ない異常時に
+    // Python プロセスが永久ブロックし、Ctrl+C でも抜けられなくなる。
+    // 100ms 間隔で wait_for し、各周回でシグナルを取り込み、上限は 10 秒とする。
     {
+      constexpr auto kDisconnectTimeout = std::chrono::seconds(10);
+      constexpr auto kPollInterval = std::chrono::milliseconds(100);
+      const auto deadline =
+          std::chrono::steady_clock::now() + kDisconnectTimeout;
+
       GILLock lock;
-      on_disconnect_cv_.wait(lock,
-                             [this]() -> bool { return on_disconnected_; });
+      while (!on_disconnected_) {
+        const auto now = std::chrono::steady_clock::now();
+        if (now >= deadline) {
+          RTC_LOG(LS_ERROR)
+              << "Timed out waiting for OnDisconnect after Disconnect()";
+          break;
+        }
+
+        auto remaining = deadline - now;
+        auto slice = std::chrono::steady_clock::duration(kPollInterval);
+        if (remaining < slice) {
+          slice = remaining;
+        }
+
+        on_disconnect_cv_.wait_for(
+            lock, slice, [this]() -> bool { return on_disconnected_; });
+
+        // wait 中の Ctrl+C を取り込む。PyErr_CheckSignals は冪等でないため、
+        // 後段の throw 判定は PyErr_Occurred を使う。
+        if (PyErr_CheckSignals() != 0) {
+          break;
+        }
+      }
     }
-    // Connection から生成したものは、ここで消す
+    // Connection から生成したものは、ここで消す。
+    // タイムアウトやシグナルで抜けた場合もクリーンアップは必ず実行する。
     audio_sender_ = nullptr;
     video_sender_ = nullptr;
     conn_ = nullptr;
+
+    if (PyErr_Occurred()) {
+      throw nb::python_error();
+    }
   }
 }
 
