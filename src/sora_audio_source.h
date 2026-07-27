@@ -20,7 +20,7 @@ namespace nb = nanobind;
 
 /**
  * SoraAudioSourceInterface は SoraAudioSource の実体です。
- * 
+ *
  * 実装上の留意点：webrtc::Notifier<webrtc::AudioSourceInterface> を継承しているクラスは
  * nanobind で直接的な紐付けを行うとエラーが出るため SoraAudioSource とはクラスを分けました。
  */
@@ -49,6 +49,7 @@ class SoraAudioSourceInterface
   void Add10MsData(const int16_t* data, std::optional<int64_t> timestamp);
 
   std::list<AudioObserver*> audio_observers_;
+  webrtc::Mutex observer_lock_;
   webrtc::Mutex sink_lock_;
   std::list<webrtc::AudioTrackSinkInterface*> sinks_;
 
@@ -63,7 +64,7 @@ class SoraAudioSourceInterface
 
 /**
  * Sora に音声データを送る受け口である SoraAudioSource です。
- * 
+ *
  * AudioSource に音声データを渡すことで、 Sora に音声を送ることができます。
  * AudioSource は MediaStreamTrack として振る舞うため、
  * AudioSource と同一の Sora インスタンスから生成された複数の Connection で共用できます。
@@ -79,7 +80,7 @@ class SoraAudioSource : public SoraTrackInterface {
 
   /**
    * Sora に送る音声データを渡します。
-   * 
+   *
    * @param data 送信する 16bit PCM データの参照
    * @param samples_per_channel チャンネルごとのサンプル数
    * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
@@ -89,16 +90,16 @@ class SoraAudioSource : public SoraTrackInterface {
               double timestamp);
   /**
    * Sora に送る音声データを渡します。
-   * 
+   *
    * タイムスタンプは先に受け取ったデータと連続になっていると想定してサンプル数から自動生成します。
-   * 
+   *
    * @param data 送信する 16bit PCM データの参照
    * @param samples_per_channel チャンネルごとのサンプル数
    */
   void OnData(const int16_t* data, size_t samples_per_channel);
   /**
    * Sora に送る音声データを渡します。
-   * 
+   *
    * @param ndarray NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
    * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
    */
@@ -108,9 +109,9 @@ class SoraAudioSource : public SoraTrackInterface {
       double timestamp);
   /**
    * Sora に送る音声データを渡します。
-   * 
+   *
    * タイムスタンプは先に受け取ったデータと連続になっていると想定してサンプル数から自動生成します。
-   * 
+   *
    * @param ndarray NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
    */
   void OnData(

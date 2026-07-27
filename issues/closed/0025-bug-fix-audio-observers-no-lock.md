@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-audio-observers-no-lock
 
@@ -69,3 +70,10 @@ void SoraAudioSourceInterface::RemoveSink(
 - `sinks_` と `audio_observers_` の保護方針が対称になり、片方だけがロックされる構造的不整合が解消されること。
 - observer コールバック中の再エントリでデッドロックしないことが、実装または明示的なテスト/コメントで確認できる。
 - 既存テストが回帰しないこと。
+
+## 解決方法
+
+`observer_lock_` (`webrtc::Mutex`) を追加し、`RegisterAudioObserver` / `UnregisterAudioObserver` をロック下で操作するようにした。
+
+`SetVolume` はロック下で `audio_observers_` のスナップショットをコピーし、ロックを外してから `OnSetVolume` を呼ぶ。
+コールバック中に Register / Unregister が再入してもデッドロックしない。

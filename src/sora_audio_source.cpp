@@ -102,17 +102,26 @@ bool SoraAudioSourceInterface::remote() const {
 }
 
 void SoraAudioSourceInterface::SetVolume(double volume) {
-  for (auto* observer : audio_observers_) {
+  // OnSetVolume 中に Register / Unregister が再入してもデッドロックしないよう、
+  // ロック下では observer リストのコピーだけ取り、ロック外でコールバックする
+  std::list<AudioObserver*> observers;
+  {
+    webrtc::MutexLock lock(&observer_lock_);
+    observers = audio_observers_;
+  }
+  for (auto* observer : observers) {
     observer->OnSetVolume(volume);
   }
 }
 
 void SoraAudioSourceInterface::RegisterAudioObserver(AudioObserver* observer) {
+  webrtc::MutexLock lock(&observer_lock_);
   audio_observers_.push_back(observer);
 }
 
 void SoraAudioSourceInterface::UnregisterAudioObserver(
     AudioObserver* observer) {
+  webrtc::MutexLock lock(&observer_lock_);
   audio_observers_.remove(observer);
 }
 
