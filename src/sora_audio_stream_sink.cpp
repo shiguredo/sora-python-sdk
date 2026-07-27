@@ -110,8 +110,11 @@ nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>> SoraAudioFrame::Data()
   // Data はまだ vector の時は返せてない
   size_t shape[2] = {static_cast<size_t>(samples_per_channel()),
                      static_cast<size_t>(num_channels())};
-  return nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>(
-      (int16_t*)RawData(), 2, shape, nb::handle());
+  // RawData() の実体は this が所有する。owner を空にすると Python 側でフレームが
+  // GC されたあとに ndarray だけが残り、解放済みメモリを参照して UAF になる。
+  nb::object owner = nb::find(*this);
+  return nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>((int16_t*)RawData(),
+                                                            2, shape, owner);
 }
 
 const int16_t* SoraAudioFrame::RawData() const {
