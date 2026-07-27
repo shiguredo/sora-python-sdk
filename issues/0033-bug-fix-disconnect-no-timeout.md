@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-disconnect-no-timeout
 
@@ -64,3 +65,18 @@ void SoraConnection::Disconnect() {
 - 正常系での `Disconnect` の挙動 (応答到着で即 return する) が従来と変わらないこと。
 - タイムアウトで抜けた場合に `RTC_LOG(LS_ERROR)` などで「OnDisconnect が来なかった」事実がログに残ること。
 - 既存の e2e テスト・ユニットテストが引き続き通ること。
+
+## 解決方法
+
+`Disconnect` の `on_disconnect_cv_.wait` を、最大 10 秒・100ms 間隔の `wait_for` ループに置き換えた。
+
+- 各周回で `PyErr_CheckSignals` を呼び、待ち中の `KeyboardInterrupt` でも抜けられるようにした
+- タイムアウト時は `RTC_LOG(LS_ERROR)` で `OnDisconnect` 未到着を記録し、その後も `audio_sender_` / `video_sender_` / `conn_` のクリーンアップは必ず実行する
+- シグナルで抜けた場合はクリーンアップ後に `nb::python_error` を投げる
+
+追加したテスト:
+
+- `tests/test_disconnect_timeout.py`
+  - 正常系の `disconnect()` が数秒以内に戻ることを検証する（異常経路はモック禁止のためコード上の有限 wait で担保）
+
+変更履歴は `CHANGES.md` の `## develop` に `[FIX]` として追記した。
