@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-ndarray-no-parent-reference
 
@@ -87,3 +88,22 @@ print(data.sum())  # ここでクラッシュしない
 - 3 関数のいずれかが返す `ndarray` の owner が空 (`nb::handle()`) のままになっていないこと。
 - 既存の e2e テスト・ユニットテストが引き続き通ること。
 - 必要であれば「`ndarray` を保持したままフレームを解放する」テストケースを追加し、SEGV しないことを確認する。
+
+## 解決方法
+
+3 箇所の `nb::ndarray` 構築で、空の `nb::handle()` の代わりに `nb::find(*this)` で得た親フレームの Python オブジェクトを owner に渡した。
+
+- `src/sora_video_sink.cpp` の `SoraVideoFrame::Data`
+- `src/sora_audio_stream_sink.cpp` の `SoraAudioFrame::Data`
+- `src/sora_frame_transformer.h` の `SoraTransformableFrame::GetData`
+
+あわせて、`SoraAudioFrame` / `SoraVideoFrame` の `data` バインディングを `nb::rv_policy::reference` から `nb::rv_policy::reference_internal` に変更し、戻り ndarray の owner を self に揃えた（`GetData` はもともと `reference_internal`）。
+
+追加したテスト:
+
+- `tests/test_ndarray_parent_reference.py`
+  - 映像 / 音声フレームで `data()` の戻りを保持したままフレームを破棄し、`gc.collect()` 後も要素アクセスできることを検証する
+
+CI では `tests/**` 変更だけで起動する e2e-test が古い wheel を取るレースを避けるため、ソース修正を先に push して build 成功を待ってからテストを追加した。
+
+変更履歴は `CHANGES.md` の `## develop` に `[FIX]` として追記した。
