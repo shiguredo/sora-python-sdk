@@ -330,8 +330,10 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
     return nullptr;
   } else if (nb::isinstance<bool>(value)) {
     return nb::cast<bool>(value);
-  } else if (nb::isinstance<int>(value)) {
-    return nb::cast<int>(value);
+  } else if (PyLong_Check(value.ptr())) {
+    // nb::isinstance<int> は C++ int に収まらない Python int で false になるため
+    // PyLong_Check で任意精度整数を受け取り、int64_t へ変換する
+    return nb::cast<int64_t>(value);
   } else if (nb::isinstance<float>(value)) {
     return nb::cast<float>(value);
   } else if (nb::isinstance<const char*>(value)) {
