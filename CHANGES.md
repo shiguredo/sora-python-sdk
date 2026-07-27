@@ -55,6 +55,9 @@
 - [FIX] `rtc_log()` が `PyFrame_GetCode` の新参照を解放せず参照リークする問題を修正する
   - 使い終わった `PyCodeObject` を `Py_DECREF` し、Python C-API 呼び出しを GIL 保持下に揃える
   - @voluntas
+- [FIX] `SoraAudioSource::OnData` の 1 オーバーロードだけ `track_` の null チェックが抜けていた問題を修正する
+  - 他オーバーロードと同様に publisher 破棄後は no-op にする
+  - @voluntas
 - [FIX] `Sora` の破棄順序が原因で GC のタイミング次第にプロセスが SIGSEGV でクラッシュしうる問題を修正する
   - `Sora::~Sora` が `PeerConnectionFactory` を先に破棄した後に io_context を破棄していたため、io_context に残った handler が握る `sora::SoraSignaling` の破棄が破棄済みの signaling スレッドへ Marshal して use-after-free になっていた
   - 破棄順序を「子への破棄通知 → io_context の停止・破棄 → factory の破棄」に修正する
