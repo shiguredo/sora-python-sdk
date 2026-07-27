@@ -1,6 +1,7 @@
 #ifndef SORA_VIDEO_SOURCE_H_
 #define SORA_VIDEO_SOURCE_H_
 
+#include <atomic>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -24,7 +25,7 @@ namespace nb = nanobind;
 
 /**
  * Sora に映像データを送る受け口である SoraVideoSource です。
- * 
+ *
  * VideoSource にフレームデータを渡すことで、 Sora に映像を送ることができます。
  * 送信時通信状況によってはフレームのリサイズやドロップが行われます。
  * VideoSource は MediaStreamTrack として振る舞うため、
@@ -40,10 +41,10 @@ class SoraVideoSource : public SoraTrackInterface {
 
   /**
    * Sora に映像データとして送るフレームを渡します。
-   * 
+   *
    * この関数が呼び出された時点のタイムスタンプでフレームを送信します。
    * 映像になるように一定のタイミングで呼び出さない場合、受信側でコマ送りになります。
-   * 
+   *
    * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    */
   void OnCaptured(
@@ -51,12 +52,12 @@ class SoraVideoSource : public SoraTrackInterface {
           ndarray);
   /**
    * Sora に映像データとして送るフレームを渡します。
-   * 
+   *
    * timestamp 引数で渡されたタイムスタンプでフレームを送信します。
    * フレームのタイムスタンプを指定できるようにするため用意したオーバーロードです。
    * timestamp が映像になるように一定の時間差がない場合、受信側で正しく表示されない場合があります。
    * 表示側で音声データの timestamp と同期を取るため遅延が発生する場合があります。
-   * 
+   *
    * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    * @param timestamp Python の time.time() で取得できるエポック秒で表されるフレームのタイムスタンプ
    */
@@ -66,12 +67,12 @@ class SoraVideoSource : public SoraTrackInterface {
       double timestamp);
   /**
    * Sora に映像データとして送るフレームを渡します。
-   * 
+   *
    * timestamp_us 引数で渡されたマイクロ秒精度の整数で表されるタイムスタンプでフレームを送信します。
    * libWebRTC のタイムスタンプはマイクロ秒精度のため用意したオーバーロードです。
    * timestamp が映像になるように一定の時間差がない場合、受信側で正しく表示されない場合があります。
    * 表示側で音声データの timestamp と同期を取るため遅延が発生する場合があります。
-   * 
+   *
    * @param ndarray NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    * @param timestamp_us マイクロ秒単位の整数で表されるフレームのタイムスタンプ
    */
@@ -100,9 +101,12 @@ class SoraVideoSource : public SoraTrackInterface {
   const int kMsToRtpTimestamp = 90;
   webrtc::scoped_refptr<sora::ScalableVideoTrackSource> source_;
   std::unique_ptr<std::thread> thread_;
+  // queue_ / finished_ を保護する。SendFrameProcess では GILMutexLock 経由で
+  // 「GIL 取得 → queue_mtx_」の順を一貫させ、待機中は両方解放する
+  std::mutex queue_mtx_;
   std::condition_variable_any queue_cond_;
   std::queue<std::unique_ptr<Frame>> queue_;
-  bool finished_;
+  std::atomic<bool> finished_;
 };
 
 #endif
