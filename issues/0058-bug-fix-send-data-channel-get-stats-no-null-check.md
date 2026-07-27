@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-send-data-channel-get-stats-no-null-check
 
@@ -120,3 +121,16 @@ std::string SoraConnection::GetStats() {
 - `disconnect()` 後の `get_stats()` 呼び出しが SEGV ではなく Python 例外 (`RuntimeError`) として観測されること。
 - 既存の正常系動作 (connect 中の `send_data_channel` / `get_stats`) が変わらないこと。
 - 同種の経路 (`SetAudioTrack` 等) で `conn_` を触る箇所がないかをレビューし、必要なら追加でガードすること。
+
+## 解決方法
+
+`SoraConnection::SendDataChannel` と `SoraConnection::GetStats` の冒頭に、`Connect()` と同じ `conn_ == nullptr` チェックを追加した。`nullptr` のときは SEGV せず `std::runtime_error` (`Already disconnected. Please create another Sora instance to establish a new connection.`) を投げる。
+
+公開 API で `conn_` を直接触る経路はこの 2 つだけであることを確認した。`OnSetOffer` 内の参照はシグナリング中コールバックであり、`disconnect()` 後に Python から呼べる経路ではない。
+
+追加したテスト:
+
+- `tests/test_send_data_channel_get_stats_after_disconnect.py`
+  - `disconnect()` 後の `send_data_channel()` / `get_stats()` が `RuntimeError` になることを検証する
+
+変更履歴は `CHANGES.md` の `## develop` に `[FIX]` として追記した。
