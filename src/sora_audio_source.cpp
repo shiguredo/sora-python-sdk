@@ -146,6 +146,10 @@ void SoraAudioSource::OnData(const int16_t* data,
 }
 
 void SoraAudioSource::OnData(const int16_t* data, size_t samples_per_channel) {
+  // 他オーバーロードと同様、publisher 破棄後 (track_ == nullptr) は no-op にする
+  if (!track_) {
+    return;
+  }
   source_->OnData(data, samples_per_channel, std::nullopt);
 }
 

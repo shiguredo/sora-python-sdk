@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-audio-source-on-data-no-null-check
 
@@ -86,3 +87,13 @@ void SoraAudioSource::OnData(
 - 148-150 行のオーバーロードに `track_` の null チェックが追加され、 4 オーバーロード全てが対称になっていること。
 - 既存テスト ( `tests/` 配下) が引き続き通ること。
 - `track_` が `nullptr` の状態で 4 オーバーロードのいずれを呼んでも、 SDK が安全に no-op で返ることが確認できる。
+
+## 解決方法
+
+`OnData(const int16_t* data, size_t samples_per_channel)` の先頭に、他オーバーロードと同じ `if (!track_) { return; }` を追加した。
+
+Python から publisher だけを先に破棄して `track_ == nullptr` を観測するテストは追加しなかった。
+`SoraAudioSource` は生成時に `CountedPublisher::AddSubscriber` で `Sora` の参照を増やすため、
+`AudioSource` が生きている間は `Sora` の C++ オブジェクトが破棄されず、`PublisherDisposed` 経由で
+`track_` が nullptr になる経路を Python からは再現できない。
+完了条件の対称性は 4 オーバーロードすべてに同一ガードがあることで確認した。
