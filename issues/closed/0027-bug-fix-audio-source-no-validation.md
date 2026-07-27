@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-27
 - Model: Opus 4.7
 - Branch: feature/fix-audio-source-no-validation
 
@@ -57,3 +58,13 @@ SoraAudioSourceInterface::SoraAudioSourceInterface(size_t channels,
 - 例外メッセージから、ユーザーが原因 (どの引数が無効か) を即座に判別できること。
 - 既存の正当なパラメータ ( 48000 Hz / 2ch など) では動作が変わらないこと。
 - バリデーションを追加したことに伴うテスト (無効値で例外が出るケース) が `tests/` に追加されること。
+
+## 解決方法
+
+`SoraAudioSourceInterface` コンストラクタで `new` の前に最小値を検査し、無効なら `std::invalid_argument` を投げるようにした。
+nanobind がこれを Python の `ValueError` に変換する。
+
+- `sample_rate < 100` → `"sample_rate must be at least 100 Hz, got <value>"`
+- `channels < 1` → `"channels must be at least 1, got <value>"`
+
+`tests/test_audio_source_invalid_params.py` で上記 2 ケースを検証した。

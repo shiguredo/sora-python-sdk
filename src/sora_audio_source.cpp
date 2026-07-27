@@ -1,5 +1,8 @@
 #include "sora_audio_source.h"
 
+#include <stdexcept>
+#include <string>
+
 SoraAudioSourceInterface::SoraAudioSourceInterface(size_t channels,
                                                    int sample_rate)
     : channels_(channels),
@@ -8,6 +11,15 @@ SoraAudioSourceInterface::SoraAudioSourceInterface(size_t channels,
       buffer_size_(sample_rate / 100 * channels),
       buffer_used_(0),
       last_timestamp_(0) {
+  // 10 ms バッファ (sample_rate / 100) が 0 になると後続の送出で未定義動作になる
+  if (sample_rate < 100) {
+    throw std::invalid_argument("sample_rate must be at least 100 Hz, got " +
+                                std::to_string(sample_rate));
+  }
+  if (channels < 1) {
+    throw std::invalid_argument("channels must be at least 1, got " +
+                                std::to_string(channels));
+  }
   buffer_ = new int16_t[buffer_size_];
 }
 
