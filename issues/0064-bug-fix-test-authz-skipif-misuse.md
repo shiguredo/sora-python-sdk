@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-test-authz-skipif-misuse
+- Polished: 2026-07-28
 
 ## 目的
 
