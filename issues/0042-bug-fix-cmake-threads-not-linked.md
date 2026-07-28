@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-cmake-threads-not-linked
+- Polished: 2026-07-28
 
 ## 目的
 
@@ -29,7 +30,7 @@ if(NOT TARGET_OS STREQUAL "windows")
 endif()
 ```
 
-しかし `target_link_libraries` (`CMakeLists.txt:201-202`):
+しかし `target_link_libraries` (`CMakeLists.txt:193-194`):
 
 ```cmake
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
@@ -55,8 +56,9 @@ CMake の `find_package(Threads REQUIRED)` は import target `Threads::Threads` 
    - 意図が明示され、`Sora::sora` の依存変化に左右されない。
    - `find_package(Threads REQUIRED)` の意図と整合する。
 2. **`find_package(Threads)` を削除する**
-   - 直接 pthread API を呼んでいないなら、`Sora::sora` の transitive に任せる方針。
+   - `Sora::sora` の transitive に任せる方針。
    - ただし「Sora::sora は pthread を引き続ける」ことに依存する暗黙の前提が残る。
+   - 実際には `src/sora.cpp:19` と `src/sora_video_source.cpp:16` で `std::thread` を直接利用しており、Linux では pthread に依存するため、この選択肢は不適切。
 3. 現状維持
    - 推奨しない。意図と実装がずれた状態が残り、将来の謎リンクエラーの種になる。
 
@@ -65,5 +67,6 @@ CMake の `find_package(Threads REQUIRED)` は import target `Threads::Threads` 
 ## 完了条件
 
 - `find_package(Threads REQUIRED)` を残すなら `target_link_libraries(sora_sdk_ext PRIVATE Threads::Threads)` (Windows 以外) が CMakeLists.txt に追加されていること。
+- `nanobind-static` へのリンク要否を判断し、不要ならその理由を CMake コメントに残すこと。
 - 不要と判断した場合は `find_package(Threads REQUIRED)` を削除し、その判断理由を CMake コメントに残すこと。
 - 各プラットフォーム (macos / ubuntu / jetson / raspberry-pi-os / windows) でビルドが通ること。
