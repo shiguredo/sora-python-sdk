@@ -220,6 +220,9 @@ void SoraConnection::OnSetOffer(std::string offer) {
       if (audio_sender_frame_transformer_) {
         audio_sender_->SetFrameTransformer(audio_sender_frame_transformer_);
       }
+    } else {
+      RTC_LOG(LS_ERROR) << "Failed to add audio track: "
+                        << audio_result.error().message();
     }
   }
   if (video_source_) {
@@ -231,6 +234,9 @@ void SoraConnection::OnSetOffer(std::string offer) {
       if (video_sender_frame_transformer_) {
         video_sender_->SetFrameTransformer(video_sender_frame_transformer_);
       }
+    } else {
+      RTC_LOG(LS_ERROR) << "Failed to add video track: "
+                        << video_result.error().message();
     }
   }
   if (on_set_offer_) {

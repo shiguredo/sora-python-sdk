@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-28
 - Model: Opus 4.7
 - Branch: feature/fix-on-set-offer-add-track-no-log
 - Polished: 2026-07-28
@@ -70,3 +71,7 @@ void SoraConnection::OnSetOffer(std::string offer) {
 - 正常系の挙動が一切変わらないこと。
 - 既存の e2e テスト・ユニットテストが引き続き通ること。
 - 可能であれば `AddTrack` を意図的に失敗させて手元再現し、ログが期待通りに出ることを確認する (再現が難しければ運用上の確認で代替してよい)。
+
+## 解決方法
+
+`src/sora_connection.cpp` の `OnSetOffer` 内、`audio_result.ok()` / `video_result.ok()` の `if` 節にそれぞれ `else` 節を追加し、`RTC_LOG(LS_ERROR) << "Failed to add audio track: " << audio_result.error().message();` および同様の video 版を出力するようにした。libwebrtc のログ規約に合わせた英語メッセージで、track 種別と `webrtc::RTCError::message()` の失敗理由を記録する。正常系の挙動は変更していない。
