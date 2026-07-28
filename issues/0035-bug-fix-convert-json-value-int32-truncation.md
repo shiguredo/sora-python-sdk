@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-28
 - Model: Opus 4.7
 - Branch: feature/fix-convert-json-value-int32-truncation
 
@@ -57,3 +58,7 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
 - `bool` の `True` / `False` が引き続き bool として変換され、`0` / `1` の整数として誤分類されないこと。
 - 既存の e2e テスト・ユニットテストが引き続き通ること。
 - 必要であれば `ConvertJsonValue` 経路を直接呼ぶ Python テストを追加し、大きな整数値の往復が壊れないことを確認する。
+
+## 解決方法
+
+コミット `1636221` (PR #345) で `src/sora.cpp:336` の `nb::cast<int>(value)` を `nb::cast<int64_t>(value)` に変更済み。`bool` 分岐は先に維持されている。CHANGES.md の develop セクションに `[FIX]` エントリ記載済み。
