@@ -22,11 +22,7 @@
 #include "dynamic_h264_encoder.h"
 #endif
 
-#include <exception>
-#include <iostream>
-
-#include <exception>
-#include <iostream>
+#include <stdexcept>
 
 SoraFactory::SoraFactory(
     std::optional<std::string> openh264,
@@ -62,7 +58,9 @@ SoraFactory::SoraFactory(
       };
   context_ = sora::SoraClientContext::Create(context_config);
   if (context_ == nullptr) {
-    throw std::exception();
+    throw std::runtime_error(
+        "Failed to create SoraClientContext. Check that OpenH264 library "
+        "path is correct and codec dependencies are available");
   }
 }
 

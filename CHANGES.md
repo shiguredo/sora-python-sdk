@@ -124,6 +124,9 @@
   - `VectorData()` / `__getstate__` / `__setstate__` の全経路を `std::vector<int16_t>` に統一する
   - pickle の後方互換性は切り捨てる（プロセス内一時データのため）
   - @voluntas
+- [FIX] `SoraFactory` コンストラクタの `throw std::exception()` をメッセージ付き `std::runtime_error` に置き換える
+  - Python 側で `RuntimeError` として初期化失敗の原因が読み取れるようにする
+  - @voluntas
 
 ### misc
 
