@@ -120,6 +120,10 @@
 - [FIX] `client_cert` / `client_key` / `ca_cert` を `nb::bytes::c_str()` で渡しており NUL バイトで切り詰められる問題を修正する
   - `std::string(c_str(), size())` でバイト列を忠実に伝搬する
   - @voluntas
+- [FIX] `SoraAudioFrame` の pickle 経路で `int16_t` を `uint16_t` に詰め替えている型不整合を修正する
+  - `VectorData()` / `__getstate__` / `__setstate__` の全経路を `std::vector<int16_t>` に統一する
+  - pickle の後方互換性は切り捨てる（プロセス内一時データのため）
+  - @voluntas
 
 ### misc
 
