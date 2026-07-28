@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-wait-notify-timeout-too-short
+- Polished: 2026-07-28
 
 ## 目的
 
@@ -43,13 +44,13 @@ def wait_notify(self, pred: Callable[[dict], bool], timeout: int | None = 5):
 
 問題:
 
-1. `timeout` のデフォルトが 5 秒で、テスト側で明示していない。5 秒は `connection.destroyed` の伝搬として一般的に十分だが、CI 負荷時には不足し得る。
+1. `timeout` のデフォルトが 5 秒で、テスト側で明示していない。`connection.destroyed` の伝搬は WebSocket 経由のためネットワーク状況によりばらつきがあり、CI 負荷時には 5 秒では不足し得る。
 2. `wait_notify` は while ループ内で「述語にマッチしない notify」を捨てているが、タイムアウト時にどの notify を消費したか・残っていたかが分からない。`queue.Empty` だけが起こり、デバッグ情報が乏しい。
-3. `connection.destroyed` の伝搬は WebSocket 経由のため、ネットワーク状況によりばらつきがある。固定 5 秒では再現性が低い。
 
 ## 設計方針
 
-- `tests/test_signaling_notify.py` の各 `wait_notify` 呼び出しに明示的なタイムアウトを指定する。`connection.destroyed` を待つ箇所は、たとえば 15 秒など余裕を持った値にする (定数化を検討)。
+- 変更対象ファイル: `tests/client.py`、`tests/test_signaling_notify.py`
+- `tests/test_signaling_notify.py` の各 `wait_notify` 呼び出し (4 箇所: 15, 26, 33, 38 行目) に明示的なタイムアウトを指定する。`connection.destroyed` を待つ箇所は 15 秒、`connection.created` を待つ箇所は 10 秒とする。
 - `wait_notify` のシグネチャに「タイムアウト時のエラーメッセージ用ラベル」を追加できるようにする。例:
   ```python
   def wait_notify(self, pred, timeout=5, label: str | None = None):
@@ -61,11 +62,11 @@ def wait_notify(self, pred: Callable[[dict], bool], timeout: int | None = 5):
           )
   ```
 - `wait_notify` が捨てた notify の `event_type` をリストで覚えておき、タイムアウト時の assert メッセージに含める。これにより「どこまで受信していたか」が分かる。
-- 既存の呼び出し側にも label を順次追加する (本 issue では `test_signaling_notify.py` 中心、他は別 issue でもよい)。
+- `wait_notify` の呼び出しは現状 `test_signaling_notify.py` の 4 箇所のみであり、全箇所に label を付ける。
+- issue 0038 (`refactor-replace-time-sleep-with-polling`) の `wait_*` ヘルパ追加時に label 相当のパラメータを整合させること。0038 とは独立に実装可能。
 
 ## 完了条件
 
 - `tests/test_signaling_notify.py` の `wait_notify` 呼び出しすべてに明示的なタイムアウトと用途が分かる label が付くこと。
-- `wait_notify` がタイムアウトしたとき、待っていた条件と、それまでに受信した `event_type` のリストが assert メッセージに含まれること。
+- `wait_notify` がタイムアウトしたとき、label と、それまでに受信した `event_type` のリストが assert メッセージに含まれること。
 - 既存のテストがすべて pass すること。
-- CI で `tests/test_signaling_notify.py` の flake が発生しないこと (定性確認でよい)。
