@@ -127,6 +127,9 @@
 - [FIX] `SoraFactory` コンストラクタの `throw std::exception()` をメッセージ付き `std::runtime_error` に置き換える
   - Python 側で `RuntimeError` として初期化失敗の原因が読み取れるようにする
   - @voluntas
+- [FIX] `SoraConnection::OnSetOffer` で `AddTrack` 失敗時にエラーを握りつぶしていた問題を修正する
+  - `RTC_LOG(LS_ERROR)` で失敗内容を出力し運用切り分け情報を残す
+  - @voluntas
 
 ### misc
 
