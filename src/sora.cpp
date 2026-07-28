@@ -215,13 +215,13 @@ nb::ref<SoraConnection> Sora::CreateConnection(
     config.insecure = *insecure;
   }
   if (client_cert) {
-    config.client_cert = client_cert->c_str();
+    config.client_cert = std::string(client_cert->c_str(), client_cert->size());
   }
   if (client_key) {
-    config.client_key = client_key->c_str();
+    config.client_key = std::string(client_key->c_str(), client_key->size());
   }
   if (ca_cert) {
-    config.ca_cert = ca_cert->c_str();
+    config.ca_cert = std::string(ca_cert->c_str(), ca_cert->size());
   }
   if (proxy_url) {
     config.proxy_url = *proxy_url;
