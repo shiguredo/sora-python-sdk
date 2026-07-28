@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-on-set-offer-add-track-no-log
+- Polished: 2026-07-28
 
 ## 目的
 
@@ -59,7 +60,7 @@ void SoraConnection::OnSetOffer(std::string offer) {
 ## 設計方針
 
 - `audio_result.ok()` / `video_result.ok()` それぞれに `else` 節を追加し、`RTC_LOG(LS_ERROR) << "Failed to add audio track: " << audio_result.error().message();` のように失敗内容を英語メッセージで出力する。
-- ログメッセージは libwebrtc のスタイル (`<モジュール名>: <現象>: <理由>` 程度) に揃える。AGENTS.md の規約に従い英語で書く。
+- ログメッセージは本リポジトリの既存パターン (`"Failed to create OpenH264 encoder"` 等) に揃え、モジュール名プレフィックスなしの英語メッセージとする。AGENTS.md の規約に従い英語で書く。
 - 失敗時に例外を投げるか単にログだけにするかは、本リポジトリの既存方針 (どこまでユーザにエラーを伝えるか) に合わせる。`OnSetOffer` は libwebrtc 内部スレッドからのコールバック経路にあるため、例外を投げると上位で扱えず落ちる可能性がある。最初のステップではログのみとし、必要なら `on_disconnect_` などへの通知も検討する。
 - video / audio で同じパターンになるため、必要なら共通のローカルヘルパに切り出してもよいが、まずは素直に 2 箇所追記する方針で十分。
 
