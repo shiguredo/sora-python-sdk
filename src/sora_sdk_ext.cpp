@@ -459,7 +459,7 @@ NB_MODULE(sora_sdk_ext, m) {
            })
       .def("__setstate__",
            [](SoraAudioFrame& frame,
-              const std::tuple<std::vector<uint16_t>, size_t, size_t, int,
+              const std::tuple<std::vector<int16_t>, size_t, size_t, int,
                                std::optional<int64_t>>& state) {
              // picke から戻す際に呼び出されるので、 tuple から SoraAudioFrame に戻します。
              new (&frame) SoraAudioFrame(std::get<0>(state), std::get<1>(state),

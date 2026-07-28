@@ -21,8 +21,8 @@ const int16_t* SoraAudioFrameDefaultImpl::RawData() const {
   return audio_frame_->data();
 }
 
-std::vector<uint16_t> SoraAudioFrameDefaultImpl::VectorData() const {
-  std::vector<uint16_t> vector(
+std::vector<int16_t> SoraAudioFrameDefaultImpl::VectorData() const {
+  std::vector<int16_t> vector(
       audio_frame_->data(),
       audio_frame_->data() +
           audio_frame_->samples_per_channel() * audio_frame_->num_channels());
@@ -53,7 +53,7 @@ SoraAudioFrameDefaultImpl::absolute_capture_timestamp_ms() const {
 }
 
 SoraAudioFrameVectorImpl::SoraAudioFrameVectorImpl(
-    std::vector<uint16_t> vector,
+    std::vector<int16_t> vector,
     size_t samples_per_channel,
     size_t num_channels,
     int sample_rate_hz,
@@ -65,10 +65,10 @@ SoraAudioFrameVectorImpl::SoraAudioFrameVectorImpl(
       absolute_capture_timestamp_ms_(absolute_capture_timestamp_ms) {}
 
 const int16_t* SoraAudioFrameVectorImpl::RawData() const {
-  return (const int16_t*)vector_.data();
+  return vector_.data();
 }
 
-std::vector<uint16_t> SoraAudioFrameVectorImpl::VectorData() const {
+std::vector<int16_t> SoraAudioFrameVectorImpl::VectorData() const {
   return vector_;
 }
 
@@ -95,7 +95,7 @@ SoraAudioFrame::SoraAudioFrame(
 }
 
 SoraAudioFrame::SoraAudioFrame(
-    std::vector<uint16_t> vector,
+    std::vector<int16_t> vector,
     size_t samples_per_channel,
     size_t num_channels,
     int sample_rate_hz,
@@ -118,10 +118,10 @@ nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>> SoraAudioFrame::Data()
 }
 
 const int16_t* SoraAudioFrame::RawData() const {
-  return (const int16_t*)impl_->RawData();
+  return impl_->RawData();
 }
 
-std::vector<uint16_t> SoraAudioFrame::VectorData() const {
+std::vector<int16_t> SoraAudioFrame::VectorData() const {
   return impl_->VectorData();
 }
 
