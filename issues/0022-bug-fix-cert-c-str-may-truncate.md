@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-cert-c-str-may-truncate
+- Polished: 2026-07-28
 
 ## 目的
 
@@ -21,7 +22,7 @@ Medium とする。
 
 ## 現状
 
-`src/sora.cpp` 191-198 行:
+`src/sora.cpp` 217-225 行:
 
 ```cpp
 if (client_cert) {
@@ -42,12 +43,12 @@ PEM 形式 (Base64 + ヘッダ/フッタのテキスト) は NUL を含まない
 
 ## 設計方針
 
-- `nb::bytes` のバイト列をサイズ込みで `std::string` に詰め直して `config.client_cert` 等に渡す。具体的には `std::string(client_cert->c_str(), client_cert->size())` を用いる。
+- `nb::bytes` のバイト列をサイズ込みで `std::string` に詰め直して `config.client_cert` 等に渡す。具体的には `std::string(client_cert->c_str(), client_cert->size())` を用いる。このパターンは `sora_connection.cpp:181` の `SendDataChannel` で既に使われている既存慣習と一致する。
 - 同じパターンが 3 箇所 ( `client_cert` / `client_key` / `ca_cert` ) にあるため、それぞれ同様に修正する。
-- 受け側 (`sora::SoraSignalingConfig`) の型がバイナリ列を正しく扱えるかを確認し、必要であれば API の整合性も確認する。
+- 受け側 (`sora::SoraSignalingConfig`) の `client_cert` / `client_key` / `ca_cert` は `std::optional<std::string>` 型であり、NUL バイトを含むバイナリ列を保持できる。追加の API 変更は不要。
 
 ## 完了条件
 
-- DER 形式のバイナリ証明書 (途中に NUL バイトを含むもの) を渡しても、切り詰められずに Sora C++ SDK に伝搬されることをコードレベルで確認できる。
+- DER 形式のバイナリ証明書 (途中に NUL バイトを含むもの) を渡しても、切り詰められずに Sora C++ SDK に伝搬されることをコードレビューで確認できる。
 - PEM 形式の証明書を用いた既存の接続テストが引き続き成功すること。
 - `client_cert` / `client_key` / `ca_cert` の 3 経路すべてが同じ方針で修正されていること。
