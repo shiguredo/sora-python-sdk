@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-28
 - Model: Opus 4.7
 - Branch: feature/fix-audio-frame-pickle-uint16-mismatch
 - Polished: 2026-07-28
@@ -99,3 +100,7 @@ const int16_t* SoraAudioFrameVectorImpl::RawData() const {
 - `RawData()` の reinterpret_cast 相当のキャストおよび `SoraAudioFrame::RawData()` の冗長キャストが撤廃されること。
 - pickle / unpickle 経路のラウンドトリップを検証するテストを追加し、音声データが破損しないことを確認できること。
 - 既存テスト ( `tests/` 配下) が引き続き通り、リソースリークやクラッシュが発生しないこと。
+
+## 解決方法
+
+`src/sora_audio_stream_sink.h`、`src/sora_audio_stream_sink.cpp`、`src/sora_sdk_ext.cpp` の 3 ファイルで、`SoraAudioFrameImpl` 抽象基底クラスの純粋仮想宣言、`SoraAudioFrameDefaultImpl::VectorData()`、`SoraAudioFrameVectorImpl` のコンストラクタ・メンバ・`VectorData()`・`RawData()`、`SoraAudioFrame` のコンストラクタ・`VectorData()`・`RawData()`、および `__setstate__` のタプル型を全て `std::vector<int16_t>` に統一した。`RawData()` の C スタイルキャスト (`(const int16_t*)vector_.data()` および `(const int16_t*)impl_->RawData()`) を撤廃し、型安全な直接返却に変更した。
