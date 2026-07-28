@@ -117,6 +117,9 @@
   - `DisposePublisher::Disposed()` に `std::atomic<bool> disposed_` による冪等性ガードを追加する
   - デストラクタ内の重複 `Disposed()` 呼び出しを削除し 1 回に集約する
   - @voluntas
+- [FIX] `client_cert` / `client_key` / `ca_cert` を `nb::bytes::c_str()` で渡しており NUL バイトで切り詰められる問題を修正する
+  - `std::string(c_str(), size())` でバイト列を忠実に伝搬する
+  - @voluntas
 
 ### misc
 

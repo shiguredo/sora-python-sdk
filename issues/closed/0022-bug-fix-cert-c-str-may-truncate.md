@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-28
 - Model: Opus 4.7
 - Branch: feature/fix-cert-c-str-may-truncate
 - Polished: 2026-07-28
@@ -52,3 +53,7 @@ PEM 形式 (Base64 + ヘッダ/フッタのテキスト) は NUL を含まない
 - DER 形式のバイナリ証明書 (途中に NUL バイトを含むもの) を渡しても、切り詰められずに Sora C++ SDK に伝搬されることをコードレビューで確認できる。
 - PEM 形式の証明書を用いた既存の接続テストが引き続き成功すること。
 - `client_cert` / `client_key` / `ca_cert` の 3 経路すべてが同じ方針で修正されていること。
+
+## 解決方法
+
+`src/sora.cpp` の `client_cert` / `client_key` / `ca_cert` の 3 箇所について、`nb::bytes::c_str()` による `const char*` 取得から `std::string(c_str(), size())` によるサイズ込みのバイト列構築に変更した。これにより NUL バイトを含む DER 形式のバイナリ証明書でも切り詰められずに Sora C++ SDK に伝搬される。既存の `SendDataChannel` (`sora_connection.cpp`) と同じパターンに統一した。
