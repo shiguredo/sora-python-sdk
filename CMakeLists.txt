@@ -192,6 +192,11 @@ endif()
 
 target_link_libraries(sora_sdk_ext PRIVATE Sora::sora)
 target_link_libraries(nanobind-static PRIVATE Sora::sora)
+# nanobind-static は nanobind 自身の静的ライブラリであり src/ の std::thread 使用は
+# 全て sora_sdk_ext のソースにあるため、Threads::Threads は sora_sdk_ext にのみリンクする
+if(NOT TARGET_OS STREQUAL "windows")
+  target_link_libraries(sora_sdk_ext PRIVATE Threads::Threads)
+endif()
 
 install(TARGETS sora_sdk_ext LIBRARY DESTINATION .)
 if (SORA_GEN_PYI)
