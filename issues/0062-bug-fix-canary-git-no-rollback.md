@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-canary-git-no-rollback
+- Polished: 2026-07-28
 
 ## 目的
 
@@ -24,6 +25,8 @@ Medium とする。
 
 ## 現状
 
+`canary.py` の `main()` は `update_version` → `run_uv_sync` → `git_operations` の順に呼び出す。`run_uv_sync` (canary.py:53) が `git add uv.lock` を実行済みであるため、`git_operations` の `git commit` は VERSION と uv.lock の両方をコミットする。
+
 `canary.py:65-72` の実装は次の通り。
 
 ```python
@@ -38,13 +41,13 @@ else:
 ```
 
 各ステップは `check=True` のため、失敗するとそこで例外が上がり後続は実行されない。
-失敗パターンと残骸の関係は以下のとおり。
+失敗パターンと残骸の関係は以下のとおり (uv.lock は `run_uv_sync` により既に staged)。
 
 | 失敗ステップ        | ローカルに残る残骸                          | リモート反映 |
 |---------------------|---------------------------------------------|--------------|
-| `git add`           | (なし)                                      | 無し         |
-| `git commit`        | staged 状態の VERSION                       | 無し         |
-| `git tag`           | コミット 1 個                               | 無し         |
+| `git add VERSION`   | staged 状態の uv.lock                       | 無し         |
+| `git commit`        | staged 状態の VERSION + uv.lock             | 無し         |
+| `git tag`           | コミット 1 個 (VERSION + uv.lock)           | 無し         |
 | `git push`          | コミット 1 個 + ローカルタグ                | 無し         |
 | `git push --tags`   | コミット 1 個 + ローカルタグ + push 済 HEAD | コミットのみ |
 
@@ -52,23 +55,24 @@ else:
 
 ## 設計方針
 
-以下を組み合わせる。最終的などちらか / 両方の採否は実装時に決定する (本 issue では断定しない)。
+方針 1 (事前検証) + 方針 2 (順序変更) を採用する。方針 3 (自動ロールバック) は採用しない。
 
-1. push 可能性を事前確認してから commit / tag を行う
-   - `git fetch origin` で上流の HEAD を取得し、ローカルがリモートに対して fast-forward 可能な状態 (= ローカル HEAD が remote HEAD のちょうど 1 つ進めれば追いつける状態) であることを確認してから `git add` / `git commit` / `git tag` を行う。
-   - 整合しない場合は早期に `print` + `sys.exit(1)` し、コミット・タグを一切作らない。
-2. タグ作成を push 成功後に移動する
+1. push 可能性を事前確認してから commit / tag を行う (採用)
+   - `git fetch origin` で上流の HEAD を取得し、ローカルがリモートに対して fast-forward 可能な状態 (リモート HEAD がローカル HEAD の祖先であること) を確認してから `git add` / `git commit` / `git tag` を行う。
+   - 整合しない場合は早期にエラーメッセージ (「リモートが先行しています。git pull --rebase してから再実行してください」) を出力し、`sys.exit(1)` でコミット・タグを一切作らずに終了する。
+2. タグ作成を push 成功後に移動する (採用)
    - 順序を `git add` → `git commit` → `git push` → `git tag` → `git push --tags` に変える。
    - これによりコミット push 失敗時はローカルタグが残らない。
-3. 失敗時のロールバック処理を追加する
-   - `git push` 失敗時はそれまでに作ったローカルタグ (`git tag -d <tag>`) と HEAD (`git reset --hard HEAD~1`) を巻き戻す。
-   - ただし `git reset --hard` は破壊的なため、巻き戻し前にユーザー確認を取るか、`--auto-rollback` のような明示フラグでガードする。
+3. 失敗時のロールバック処理 (不採用)
+   - `git reset --hard` は破壊的であり、ユーザーの作業を破壊するリスクがあるため採用しない。
+   - 代わりに、`git push --tags` 失敗時には「コミットは push 済みだがタグが未 push です。git push --tags を手動で実行してください」という復旧手順を表示する。
 
-実装時にはエラーメッセージで「何が残ったか」「どう戻すか」をユーザーに明示することを優先する。
-ロールバックを自動化しすぎてユーザーの作業を破壊しないこと。
+エラーメッセージでは「何が残ったか」「どう戻すか」をユーザーに明示することを優先する。
 
 ## 完了条件
 
-- `canary.py` の `git_operations` が途中失敗したときに、ローカルとリモートの整合が壊れない (または、壊れた場合にユーザーが復旧できる十分な情報を表示する)。
-- `git push` 失敗の代表的なケース (リモートが先行している状態) を再現するテストまたは手順を CHANGES.md / PR 本文に記載する。
+- `canary.py` の `git_operations` が `git fetch` による事前検証を行い、fast-forward 不可能な場合はコミット・タグを作らずにエラー終了すること。
+- タグ作成が `git push` 成功後に実行されること。
+- 各ステップ失敗時に「何が残ったか」「どう復旧するか」のエラーメッセージが表示されること。
+- `git push` 失敗の代表的なケース (リモートが先行している状態) の再現手順を PR 本文に記載すること。
 - dry-run 経路の挙動は変えない。
