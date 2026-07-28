@@ -3,7 +3,7 @@
 - Priority: High
 - Created: 2026-06-23
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-28
 - Model: GPT-5
 - Branch: feature/fix-restore-e2e-release-gate
 - Polished: 2026-07-17
@@ -108,3 +108,11 @@ build しない `ubuntu-22.04_x86_64` と、0072 の専用実機経路で検証�
 ## ロールバック
 
 本 issue を revert する場合は E2E failure を無視して publish せず、0066 の publish / release job も停止する。旧「publish だけ継続」の状態へは戻さない。forward fix で E2E を復旧してから release を再開する。
+
+## 解決方法
+
+実装せず closed にする。
+
+前提の 0001 (scikit-build-core 移行) が「実装せず closed」になり、E2E workflow の一時停止 (`if: false`) も実際には行われなかった。本 issue の設計は scikit-build-core の artifact 契約を前提としており、現状の setuptools ベースのビルドシステムと整合しないため破棄する。
+
+E2E を release gate として整備する必要が生じた場合は、現状のビルドシステムを前提とした新しい issue を起票すること。
