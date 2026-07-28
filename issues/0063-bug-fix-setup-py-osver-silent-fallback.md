@@ -3,7 +3,7 @@
 - Priority: Medium
 - Created: 2026-06-23
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-28
 - Model: Opus 4.7
 - Branch: feature/fix-setup-py-osver-silent-fallback
 - Polished: 2026-07-17
@@ -33,3 +33,11 @@
 ## ロールバック
 
 0001 を revert する場合も silent fallback を持つ `setup.py` を復活させない。Linux wheel release を一時停止し、scikit-build-core / auditwheel 経路を forward fix する。
+
+## 解決方法
+
+実装せず closed にする。
+
+前提の 0001 (scikit-build-core 移行) が「実装せず closed」になったため、本 issue の設計全体が成立しなくなった。build backend は setuptools のまま維持される方針であり、`setup.py` の削除を前提とした本 issue の設計は破棄する。
+
+Ubuntu tag の silent fallback 問題が将来必要になった場合は、setuptools ベースのビルドシステムを前提とした新しい issue を起票すること。
