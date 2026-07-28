@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-client-disconnect-attr-not-initialized
+- Polished: 2026-07-28
 
 ## 目的
 
@@ -11,7 +12,7 @@
 
 - `__init__` (200-201 行) では `_disconnect_error_code` / `_disconnect_error_message` を `None` で初期化する。
 - 一方 `_on_disconnect` (477-478 行) では別名 `_disconnect_code` / `_disconnect_reason` に代入する。
-- `disconnect_code` / `disconnect_reason` の `property` (357-362 行) も同じく `_disconnect_code` / `_disconnect_reason` を参照する。
+- `disconnect_code` / `disconnect_reason` の `property` (356-362 行) も同じく `_disconnect_code` / `_disconnect_reason` を参照する。
 
 このため、`_on_disconnect` が呼ばれる前に property を読むと **AttributeError** で落ちる。
 さらに `__init__` で初期化される `_disconnect_error_code` / `_disconnect_error_message` は読み出し箇所が 1 つも無く、完全なデッドコードになっている。
@@ -24,7 +25,7 @@
 
 Medium とする。
 
-- 現状のテストは「`_on_disconnect` 後に property を読む」「`offer` 受信後に `_offer_ignore_disconnect_websocket` を読む」運用で偶然成立しているため、ほとんどのテストは通る。
+- 現状のテストは「`_on_disconnect` 後に property を読む」運用で偶然成立しているため、ほとんどのテストは通る。`_offer_ignore_disconnect_websocket` は現時点で書き込みのみで読み出し箇所は無いが、将来の参照で AttributeError になる。
 - ただし、これからテストを追加する開発者が「disconnect 前に状態を確認したい」「offer 待たずに値を確認したい」といった素直なテストを書いた瞬間に AttributeError で落ちる。テストヘルパとして「初期状態でも安全に読める」ことは基本要件。
 - デッドコード (`_disconnect_error_code` / `_disconnect_error_message`) を残すと、「名前が違う属性に何かを期待している」誤読を将来の編集者が起こしうる。Broken Window として早期に潰すべき。
 - 一方、現に CI を赤くしているわけではないので High ではない。
