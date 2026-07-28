@@ -3,7 +3,7 @@
 - Priority: Medium
 - Created: 2026-06-23
 - Updated: 2026-07-17
-- Completed: -
+- Completed: 2026-07-28
 - Model: GPT-5
 - Branch: feature/fix-sdist-build-fragile
 - Polished: 2026-07-17
@@ -97,3 +97,11 @@ repository checkout の source や `_deps` を参照しない一時 directory �
 ## ロールバック
 
 本 issue の squash commit を `git revert <squash-commit>` すると sdist artifact が無くなる。旧 wheel matrix への相乗り方式は復活させず、0066 の sdist publish / release を停止して forward fix する。
+
+## 解決方法
+
+実装せず closed にする。
+
+前提の 0001 (scikit-build-core 移行) が「実装せず closed」になったため、本 issue の設計全体が成立しなくなった。build backend は setuptools のまま維持される方針であり、scikit-build-core の sdist 生成・検証を前提とした本 issue の設計は破棄する。
+
+sdist の生成・検証が将来必要になった場合は、setuptools ベースのビルドシステムを前提とした新しい issue を起票すること。
