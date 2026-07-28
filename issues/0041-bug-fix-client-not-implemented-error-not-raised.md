@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-client-not-implemented-error-not-raised
+- Polished: 2026-07-28
 
 ## 目的
 
@@ -43,9 +44,7 @@ case _:
 ## 設計方針
 
 - `NotImplementedError(...)` を `raise NotImplementedError(...)` に修正する。
-- エラーメッセージは現状の `f"Unknown signaling message type: {message['type']}"` を残しつつ、規約 (AGENTS.md L13「テストのログメッセージは全て日本語にすること」) を考慮するか検討する。
-  - assert 失敗時に出る exception message は「ログメッセージ」というよりも「テストの assert メッセージ」に近いが、テスト側で出るユーザ向け文字列という意味で日本語化が望ましい。例: `f"未知のシグナリングメッセージ種別: {message['type']}"`。
-  - 本 issue の主目的は「raise が抜けている」点の修正なので、文字列の日本語化は同時に行うか別 issue とするかは実装時に判断する。
+- エラーメッセージの日本語化は issue 0037 (`0037-refactor-test-logs-to-japanese`) のスコープであり、本 issue では行わない。
 - 同じパターン (`NotImplementedError(...)` を raise せず呼んでいる箇所) が他に無いか `rg -n "NotImplementedError\(" tests/ src/` で確認する。
 - 修正後、敢えて未知 type を流すテストは不要 (SDK 経由でしか来ないため)。レビューで読み取れるだけで十分。
 
