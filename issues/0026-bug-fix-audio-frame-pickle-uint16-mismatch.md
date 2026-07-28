@@ -4,11 +4,12 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-audio-frame-pickle-uint16-mismatch
+- Polished: 2026-07-28
 
 ## 目的
 
 `SoraAudioFrame` の音声データは符号付き 16 bit (`int16_t`) であるにもかかわらず、 `VectorData()` の戻り型および pickle 復元用コンストラクタ `SoraAudioFrameVectorImpl` の引数型が `std::vector<uint16_t>` (符号なし) になっている。
-`RawData()` 内で `(const int16_t*)vector_.data()` と reinterpret_cast 相当のキャストを行っており、 strict aliasing 規則に対してグレーな扱いとなる。実用上は同サイズの整数型なので動作しているが、型としての意味が崩れており、最適化条件によっては不正なコード生成のリスクがある。
+`RawData()` 内で `(const int16_t*)vector_.data()` と C スタイルキャストを行っており、型としての意味が崩れている。signed/unsigned の対応する整数型同士の alias は C++ の strict aliasing rule で明示的に許可されているため UB ではないが、型の意味が不一致であり、静的解析ツールや LLM に対しても誤解を生じる「broken window」である。
 扱う型を `std::vector<int16_t>` に統一し、型の意味と実装を一致させる。
 
 ## 優先度根拠
@@ -21,7 +22,7 @@ Medium とする。
 
 ## 現状
 
-`src/sora_audio_stream_sink.cpp` 23-29 行 ( `SoraAudioFrameDefaultImpl::VectorData` ):
+`src/sora_audio_stream_sink.cpp` 24-30 行 ( `SoraAudioFrameDefaultImpl::VectorData` ):
 
 ```cpp
 std::vector<uint16_t> SoraAudioFrameDefaultImpl::VectorData() const {
@@ -35,7 +36,7 @@ std::vector<uint16_t> SoraAudioFrameDefaultImpl::VectorData() const {
 
 `audio_frame_->data()` の戻りは `const int16_t*` だが、 `std::vector<uint16_t>` に詰め直されている。
 
-同 96-105 行 ( `SoraAudioFrame` の pickle 復元コンストラクタ):
+同 97-106 行 ( `SoraAudioFrame` の pickle 復元コンストラクタ):
 
 ```cpp
 SoraAudioFrame::SoraAudioFrame(
@@ -50,7 +51,7 @@ SoraAudioFrame::SoraAudioFrame(
 }
 ```
 
-同 66-68 行 ( `SoraAudioFrameVectorImpl::RawData` ):
+同 67-69 行 ( `SoraAudioFrameVectorImpl::RawData` ):
 
 ```cpp
 const int16_t* SoraAudioFrameVectorImpl::RawData() const {
@@ -84,15 +85,17 @@ const int16_t* SoraAudioFrameVectorImpl::RawData() const {
 
 ## 設計方針
 
-- `SoraAudioFrameDefaultImpl::VectorData()` / `SoraAudioFrameVectorImpl::VectorData()` / `SoraAudioFrame::VectorData()` の戻り型を全て `std::vector<int16_t>` に統一する。
+- 変更対象ファイル: `src/sora_audio_stream_sink.h`、`src/sora_audio_stream_sink.cpp`、`src/sora_sdk_ext.cpp`
+- `SoraAudioFrameImpl` (抽象基底クラス) の純粋仮想宣言 (`sora_audio_stream_sink.h:27`)、`SoraAudioFrameDefaultImpl::VectorData()` / `SoraAudioFrameVectorImpl::VectorData()` / `SoraAudioFrame::VectorData()` の戻り型を全て `std::vector<int16_t>` に統一する。
 - `SoraAudioFrameVectorImpl` および `SoraAudioFrame` の Vector 受け取りコンストラクタの引数型も `std::vector<int16_t>` に変更する。
 - `sora_sdk_ext.cpp` の `__getstate__` / `__setstate__` のタプル型も `std::vector<int16_t>` に揃える。
-- 内部メンバ `vector_` 自体も `std::vector<int16_t>` に変更し、 `RawData()` の reinterpret_cast を撤廃する。
-- 既存の pickle データとの後方互換性は基本的に問題ないはず ( int16 と uint16 のビットパターンは同じ) だが、 numpy 等で型情報を持ち越す場合に差異が出ないか確認する。
+- 内部メンバ `vector_` 自体も `std::vector<int16_t>` に変更し、 `RawData()` の reinterpret_cast を撤廃する。`SoraAudioFrame::RawData()` (`sora_audio_stream_sink.cpp:120-122`) の冗長な C スタイルキャストも同時に除去する。なお `SoraAudioFrame::Data()` (`sora_audio_stream_sink.cpp:116`) の `(int16_t*)RawData()` は const_cast であり本変更の対象外。
+- ヘッダの doc コメント (`sora_audio_stream_sink.h:117,121`) の `uint16_t` 記述も `int16_t` に更新する。
+- pickle 後方互換性について: nanobind は `std::vector<uint16_t>` を Python の int リスト (0〜65535) として直列化する。変更後の `__setstate__` は `std::vector<int16_t>` を期待するため、旧 pickle データの 32768 以上の値は int16_t への変換時にオーバーフローしうる。ただし pickle データはプロセス内の一時データであり、バージョンをまたいで永続化する用途はないため、後方互換性は切り捨てる。この方針を CHANGES.md に記載する。
 
 ## 完了条件
 
 - `VectorData()` / `__getstate__` / `__setstate__` / `SoraAudioFrameVectorImpl` の全経路で型が `std::vector<int16_t>` に統一されること。
-- `RawData()` の reinterpret_cast 相当のキャストが撤廃されること。
-- 既存テスト ( `tests/` 配下) が引き続き通り、 pickle / unpickle 経路で音声データが破損しないことが確認できる。
-- ABI / pickle 形式の互換性に影響があれば、その旨を CHANGES.md に記載する判断ができる状態にする。
+- `RawData()` の reinterpret_cast 相当のキャストおよび `SoraAudioFrame::RawData()` の冗長キャストが撤廃されること。
+- pickle / unpickle 経路のラウンドトリップを検証するテストを追加し、音声データが破損しないことを確認できること。
+- 既存テスト ( `tests/` 配下) が引き続き通り、リソースリークやクラッシュが発生しないこと。
