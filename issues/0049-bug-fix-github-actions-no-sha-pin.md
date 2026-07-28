@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-github-actions-no-sha-pin
+- Polished: 2026-07-28
 
 ## 目的
 
@@ -21,15 +22,15 @@ Medium とする。
 
 ## 現状
 
-該当箇所は以下のとおり (パスと行は実装時に再確認する)。
+該当箇所は以下のとおり。
 
 - `.github/workflows/build.yml`:
-  - 335 行: `uses: shiguredo/github-actions/.github/actions/slack-notify@main # main`
-  - 397 行: `uses: shiguredo/github-actions/.github/actions/slack-notify@main # main`
-  - 497 行: `uses: shiguredo/github-actions/.github/actions/slack-notify@main # main`
+  - 363 行: `uses: shiguredo/github-actions/.github/actions/slack-notify@main # main`
+  - 425 行: `uses: shiguredo/github-actions/.github/actions/slack-notify@main # main`
+  - 525 行: `uses: shiguredo/github-actions/.github/actions/slack-notify@main # main`
 - `.github/workflows/e2e-test.yml`:
-  - 198 行: `uses: shiguredo/github-actions/.github/actions/download-openh264@main # main`
-  - 253 行付近: `uses: shiguredo/github-actions/.github/actions/slack-notify@main # main`
+  - 197 行: `uses: shiguredo/github-actions/.github/actions/download-openh264@main # main`
+  - 252 行: `uses: shiguredo/github-actions/.github/actions/slack-notify@main # main`
 
 他のアクションは以下のように pin されている (例)。
 
