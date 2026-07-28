@@ -130,6 +130,9 @@
 - [FIX] `SoraConnection::OnSetOffer` で `AddTrack` 失敗時にエラーを握りつぶしていた問題を修正する
   - `RTC_LOG(LS_ERROR)` で失敗内容を出力し運用切り分け情報を残す
   - @voluntas
+- [FIX] `find_package(Threads REQUIRED)` を呼んでいるが `Threads::Threads` をリンクしていなかった問題を修正する
+  - `sora_sdk_ext` に `Threads::Threads` を明示リンクし `Sora::sora` の transitive 依存に左右されないようにする
+  - @voluntas
 
 ### misc
 
