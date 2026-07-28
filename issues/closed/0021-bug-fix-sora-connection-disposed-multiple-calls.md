@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-28
 - Model: Opus 4.7
 - Branch: feature/fix-sora-connection-disposed-multiple-calls
 - Polished: 2026-07-28
@@ -117,3 +118,11 @@ SoraConnection::~SoraConnection() {
 - `conn_ == nullptr` 経路 (Init 未呼び出し) でも `Disposed()` が 1 回呼ばれ、subscriber への通知が行われることを確認できる。
 - `DisposePublisher::Disposed()` が複数回呼ばれても subscriber 通知が重複しないことが、実装とテストで確認できる。
 - 既存テスト ( `tests/` 配下) が全て通り、リソースリークやクラッシュが発生しないこと。
+
+## 解決方法
+
+`src/dispose_listener.h` の `DisposePublisher::Disposed()` に `std::atomic<bool> disposed_` フラグを追加し、`disposed_.exchange(true)` により subscriber 通知ループを最大 1 回に抑止する冪等性ガードを実装した。
+
+`src/sora_connection.cpp` の `SoraConnection::~SoraConnection()` から重複する `Disposed()` 呼び出し (2 箇所) を削除し、`Disconnect()` 後の 1 回に集約した。`conn_ == nullptr` 時 (Init 未呼び出し・明示的 disconnect 後) は `Disconnect()` が `Disposed()` を呼ばないため、デストラクタの 1 回が subscriber 通知を担保する。
+
+派生クラス側の既存ガード (`video_source_` / `audio_source_` の nullptr チェック、`SoraVideoSource::finished_.exchange(true)`、`SoraTrackInterface` の nullptr 代入の冪等性) はそのまま維持し、基底フラグは subscriber 通知の重複防止に責務を限定した。

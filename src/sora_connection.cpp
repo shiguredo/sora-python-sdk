@@ -34,11 +34,14 @@ SoraConnection::SoraConnection(CountedPublisher* publisher,
 
 SoraConnection::~SoraConnection() {
   Disconnect();
+  // subscriber 通知は基底クラスの disposed_ フラグで冪等ガード済み。
+  // video_source_ / audio_source_ は nullptr チェックで no-op になる。
+  // conn_ == nullptr 時 (Init 未呼び出し・明示的 disconnect 後) は
+  // Disconnect() が Disposed() を呼ばないため、ここで 1 回呼ぶ必要がある。
   Disposed();
   if (publisher_) {
     publisher_->RemoveSubscriber(this);
   }
-  Disposed();
 }
 
 void SoraConnection::Disposed() {
