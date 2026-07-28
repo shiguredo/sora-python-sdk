@@ -232,16 +232,25 @@ jobs:
         shell: bash
 
       # E2E テストの実行
+      # self-hosted runner は一時的なネットワーク断で失敗することがあるためリトライする
       - name: Run E2E tests
         run: |
-          # UV_NO_SYNC=1 を指定する理由:
-          # uv run はデフォルトで実行前に pyproject.toml/uv.lock と環境を同期する
-          # この同期により、uv pip install でインストールした wheel が削除され、
-          # 元のソースコードの sora-sdk がインストールされてしまう
-          # UV_NO_SYNC=1 で同期をスキップし、インストール済みの wheel を使用する
-          uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v --durations=0 ${{ steps.pytest-args.outputs.pytest_extra_args }}
-        env:
-          UV_NO_SYNC: 1
+          PYTEST_CMD="uv run pytest ${{ matrix.platform.test_target || 'tests/' }} -v --durations=0 ${{ steps.pytest-args.outputs.pytest_extra_args }}"
+          if [ "${{ runner.environment }}" == "self-hosted" ]; then
+            for attempt in 1 2 3; do
+              echo "::group::Attempt $attempt/3"
+              if UV_NO_SYNC=1 $PYTEST_CMD; then
+                echo "::endgroup::"
+                exit 0
+              fi
+              echo "::endgroup::"
+              [ $attempt -lt 3 ] && echo "::warning::Attempt $attempt failed, retrying..." && sleep 10
+            done
+            exit 1
+          else
+            UV_NO_SYNC=1 $PYTEST_CMD
+          fi
+        shell: bash
 
   slack_notify:
     needs: [e2e_test]
