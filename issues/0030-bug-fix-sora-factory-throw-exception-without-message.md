@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-28
 - Model: Opus 4.7
 - Branch: feature/fix-sora-factory-throw-exception-without-message
 - Polished: 2026-07-28
@@ -45,3 +46,7 @@ if (context_ == nullptr) {
 - `SoraClientContext::Create` が `nullptr` を返したケースで投げられる例外が、Python 側で `RuntimeError` として上がり、メッセージから「Sora の初期化に失敗したこと」が読み取れること。
 - `src/` 全体に `throw std::exception();` (メッセージ無し) が残っていないこと。
 - 既存の動作 (正常系) に影響がないこと。
+
+## 解決方法
+
+`src/sora_factory.cpp` の `throw std::exception();` を `throw std::runtime_error("Failed to create SoraClientContext. Check that OpenH264 library path is correct and codec dependencies are available");` に置き換えた。nanobind が `std::runtime_error` を Python の `RuntimeError` に自動変換するため、Python 側で `try/except RuntimeError as e: print(e)` により具体的なメッセージを得られる。また、重複していた `#include <exception>` / `#include <iostream>` を `#include <stdexcept>` に整理した。`src/` 全体に `throw std::exception()` の残存がないことを確認済み。
