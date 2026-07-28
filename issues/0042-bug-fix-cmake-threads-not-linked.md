@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
+- Completed: 2026-07-28
 - Model: Opus 4.7
 - Branch: feature/fix-cmake-threads-not-linked
 - Polished: 2026-07-28
@@ -70,3 +71,7 @@ CMake の `find_package(Threads REQUIRED)` は import target `Threads::Threads` 
 - `nanobind-static` へのリンク要否を判断し、不要ならその理由を CMake コメントに残すこと。
 - 不要と判断した場合は `find_package(Threads REQUIRED)` を削除し、その判断理由を CMake コメントに残すこと。
 - 各プラットフォーム (macos / ubuntu / jetson / raspberry-pi-os / windows) でビルドが通ること。
+
+## 解決方法
+
+`CMakeLists.txt` の `target_link_libraries` 直後に、Windows 以外で `target_link_libraries(sora_sdk_ext PRIVATE Threads::Threads)` を追加した。`nanobind-static` は nanobind 自身の静的ライブラリであり、`src/` の `std::thread` 使用は全て `sora_sdk_ext` のソース (`sora.cpp`, `sora_video_source.cpp`) にあるため、`Threads::Threads` のリンクは `sora_sdk_ext` にのみ必要。この判断理由を CMake コメントに残した。
