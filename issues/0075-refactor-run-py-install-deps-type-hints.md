@@ -5,7 +5,7 @@
 - Completed: -
 - Model: Opus 4.7
 - Branch: feature/refactor-run-py-install-deps-type-hints
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-07-30
 
 ## 目的
 
@@ -21,7 +21,7 @@ Low とする。
 
 ## 現状
 
-`run.py` L64-74（`0735755` 時点）の `install_deps()` シグネチャ：
+`run.py` の `install_deps()` シグネチャ：
 
 ```python
 def install_deps(
@@ -38,8 +38,8 @@ def install_deps(
 ```
 
 - `source_dir` / `build_dir` / `install_dir` / `debug` の 4 引数と戻り値に型注釈が無い
-- 同じファイル内の `_build()` (L254-) は既に `debug: bool` / `relwithdebinfo: bool` などが型付けされており、`install_deps` だけ未対応の状態
-- 呼び出し元 `_build()` L240-249 の `install_deps(platform, source_dir, build_dir, install_dir, debug, ...)` からは、 `source_dir` / `build_dir` / `install_dir` は `os.path.join(...)` 由来の `str` 、 `debug` は argparse 由来の `bool` が渡っている
+- 同じファイル内の `_build()` は既に `debug: bool` / `relwithdebinfo: bool` などが型付けされており、`install_deps` だけ未対応の状態
+- 呼び出し元 `_build()` の `install_deps(platform, source_dir, build_dir, install_dir, debug, ...)` からは、 `source_dir` / `build_dir` / `install_dir` は `os.path.join(...)` 由来の `str` 、 `debug` は argparse 由来の `bool` が渡っている
 - `install_deps()` は同ファイル外から呼ばれない（`run.py` は独立実行スクリプト）
 
 ## 設計方針
@@ -52,7 +52,7 @@ def install_deps(
 - `debug: bool`
 - 戻り値: `-> None`
 
-隣接する `install_sysroot()` (L40) は既に型付け済みなので触らない。 `install_deps()` 以外に未型の関数（例: `_find_clang_binary` / `_get_platform` / `_build` / `_format` / `main`）が残っていないかは実装時に軽く確認し、同時に対応するかは別 issue との切り分けを検討する。基本は本 issue の対象を `install_deps()` に限定する。
+隣接する `install_sysroot()` は既に型付け済みなので触らない。 `install_deps()` 以外に未型の関数（例: `_find_clang_binary` / `_get_platform` / `_build` / `_format` / `main`）が残っていないかは実装時に軽く確認し、同時に対応するかは別 issue との切り分けを検討する。基本は本 issue の対象を `install_deps()` に限定する。
 
 ## 完了条件
 
