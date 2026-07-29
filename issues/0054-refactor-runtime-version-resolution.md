@@ -6,7 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/refactor-runtime-version-resolution
-- Polished: 2026-07-17
+- Polished: 2026-07-30
 
 ## 目的
 
@@ -69,10 +69,10 @@ mock / stub や `importlib.metadata.version` の monkeypatch は使わず、clea
 1. runtime version 解決を `importlib.metadata` に限定する。
 2. wheel / editable / metadata 無し source import の実物 test を追加する。
 3. wheel 内容に version 複製 file が無いことを確認する。
-4. `CHANGES.md` の `## develop` に次を追加する。
+4. `CHANGES.md` の `## develop` → `### misc` に次を追加する。
 
 ```
-- [REFACTOR] runtime version 解決を distribution metadata に統一する
+- [UPDATE] runtime version 解決を distribution metadata に統一する
   - @voluntas
 ```
 
