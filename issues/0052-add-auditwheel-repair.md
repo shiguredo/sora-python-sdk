@@ -6,7 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/add-auditwheel-repair
-- Polished: 2026-07-17
+- Polished: 2026-07-30
 
 ## 目的
 
@@ -16,7 +16,7 @@ setup.py の文字列置換で tag だけを付ける旧方式は 0001 で削除
 
 ## 優先度根拠
 
-- 0001 / 0003 の未修復 `linux_*` wheel は PyPI の汎用 Linux 配布物として完成しておらず、0066 の publish 再開前に必要である。
+- 0001 / 0003 の未修復 `linux_*` wheel は PyPI の汎用 Linux 配布物として完成していない。0066 の release artifact pipeline は完了済みだが、manylinux tag 付き wheel の生成はまだ導入されていない。配布品质の必須工程なので High とする。
 - 特に Ubuntu arm64 wheel は x86_64 host で cross build されるため、host library を誤って同梱しない検証が必要である。配布前の必須工程なので High とする。
 
 ## 前提
