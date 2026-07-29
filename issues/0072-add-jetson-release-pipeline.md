@@ -6,7 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/add-jetson-release-pipeline
-- Polished: 2026-07-17
+- Polished: 2026-07-30
 
 ## 目的
 
