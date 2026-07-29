@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-changes-md-missing-e2e-schedule-entry
+- Polished: 2026-07-30
 
 ## 目的
 
@@ -21,7 +22,7 @@ Medium とする。
 
 ## 現状
 
-`.github/workflows/e2e-test.yml` の 18-21 行は以下のようにコメントアウトされている。
+`.github/workflows/e2e-test.yml` の `on:` セクションで `schedule` が以下のようにコメントアウトされている。
 
 ```yaml
   # schedule:
@@ -36,7 +37,7 @@ Medium とする。
 12032d2 e2e-test のスケジュール実行を無効化する
 ```
 
-ところが `CHANGES.md` の `## develop` (12-61 行) には、この変更に対応するエントリが存在しない。
+ところが `CHANGES.md` の `## develop` セクションには、この変更に対応するエントリが存在しない。
 `### misc` セクションには Slack 通知の切り替えや `pyproject.toml` 修正のエントリは記載されているが、e2e-test schedule の無効化だけ抜けている。
 
 ## 設計方針
@@ -51,11 +52,10 @@ Medium とする。
   ```
 
 - 追加位置は `### misc` セクション末尾でよい。既存エントリの順序は維持する。
-- 同セクション内の他の漏れがないかも併せて確認し、あれば同じコミットでまとめて追記する。
 
 ## 完了条件
 
 - `CHANGES.md` の `## develop` セクションに e2e-test の schedule 実行を無効化したことが分かるエントリが含まれていること。
-- 全角・半角間スペースの規約 (AGENTS.md L9) を満たしていること。
+- 全角・半角間スペースの規約 (AGENTS.md「全角と半角の間には半角スペースを入れる」) を満たしていること。
 - `shiguredo-changelog` 規約に準拠した形式・配置になっていること。
 - 既存エントリの内容・順序が壊れていないこと。
