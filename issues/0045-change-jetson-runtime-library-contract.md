@@ -6,7 +6,7 @@
 - Completed: -
 - Model: Opus 4.7
 - Branch: feature/change-jetson-runtime-library-contract
-- Polished: 2026-07-17
+- Polished: 2026-07-30
 
 ## 目的
 
