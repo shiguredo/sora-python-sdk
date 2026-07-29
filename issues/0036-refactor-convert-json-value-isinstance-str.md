@@ -1,25 +1,26 @@
-# Sora::ConvertJsonValue で nb::isinstance<const char*> を nb::isinstance<nb::str> に置き換える
+# Sora::ConvertJsonValue の文字列判定・取得を nb::str / std::string ベースに統一する
 
 - Priority: Medium
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/refactor-convert-json-value-isinstance-str
+- Polished: 2026-07-30
 
 ## 目的
 
-`src/sora.cpp` の `Sora::ConvertJsonValue` は文字列判定に `nb::isinstance<const char*>(value)` を使い、続けて `nb::cast<const char*>(value)` で値を取り出している。nanobind の慣用としては Python オブジェクトの型判定には `nb::isinstance<nb::str>` を使うべきで、`const char*` での判定は意図が読み取りづらい上、取り出した `const char*` のライフタイムが Python 側 `str` オブジェクトの生存期間に縛られて危険な書き方になりやすい。`boost::json::value` への代入時には内部でコピーされるはずだが、依存はせず明示的に `std::string` でコピーを取った方が安全で読みやすい。本 issue では型判定と値取得を `nb::str` ベースに書き換え、関数全体を nanobind の慣用に揃える。
+`src/sora.cpp` の `Sora::ConvertJsonValue` は文字列の型判定に `nb::isinstance<const char*>(value)` を、値取得に `nb::cast<const char*>(value)` を使っている。nanobind では Python オブジェクトの型判定に `nb::isinstance<nb::str>` を使うのが慣用であり、`const char*` での判定は意図が読み取りづらい。また `nb::cast<const char*>` が返すポインタのライフタイムは Python 側 `str` オブジェクトに依存するため、コード読者にとって安全性が自明でない。本 issue では型判定と値取得を `nb::str` / `std::string` ベースに書き換え、nanobind の慣用に揃えて可読性を上げる。
 
 ## 優先度根拠
 
 Medium とする。
 
-- 直ちにバグを引き起こす書き方ではないが、`const char*` のライフタイムは Python オブジェクトに紐付くため、保持の仕方を間違えると即時クラッシュにつながる脆い書き方。
-- nanobind の慣用と乖離しているため、後続の修正者が読み解きづらく、同種の脆さを他の場所にコピーされやすい。
-- 修正自体は型と cast を 2 行差し替える程度で済み、リスクが低い。観測される実害ゼロでも、`const char*` のライフタイム管理のような潜在的に危険な書き方は早期に潰すべきため High ではなく Medium とする。
+- 現行コードでは `nb::cast<const char*>` の戻り値を同一フル式内で `boost::json::value` に渡しており、`boost::json::value(string_view)` が即座にコピーを取るため、ライフタイムバグは成立しない。直ちに変更しなければ壊れるわけではない。
+- 一方で nanobind の慣用と乖離した書き方は後続の修正者が読み解きづらく、同種の書き方が他の場所にコピーされやすい。可読性・一貫性の観点から早期に揃える価値がある。
+- 修正は 3 箇所の型・cast 差し替えで済み、振る舞いが変わらないためリスクが低い。
 
 ## 現状
 
-`src/sora.cpp` の該当箇所は以下の通り。
+`src/sora.cpp` の `Sora::ConvertJsonValue` 関数の該当箇所は以下の通り。
 
 ```cpp
 } else if (nb::isinstance<const char*>(value)) {
@@ -29,16 +30,13 @@ Medium とする。
 
 加えて同関数内の dict の key 取得でも `nb::cast<const char*>(k)` が使われており、文字列の扱いに `const char*` が散在している。
 
-- `nb::isinstance<const char*>(value)` は nanobind 上は動作するが、`nb::isinstance` の慣用テンプレート引数として `nb::str` を渡すのが nanobind 流である。
-- `nb::cast<const char*>(value)` で取り出した `const char*` は `value` (= 元の `nb::str`) が生存している間しか有効でなく、`boost::json::value` への代入で内部コピーが取られるかどうかはコード読者にとって自明でない。明示的に `std::string` を経由した方が安全で読みやすい。
-- 同関数内の dict の key も同じ書き方で、まとめて整理した方が一貫性が出る。
-
 ## 設計方針
 
 - 型判定: `nb::isinstance<const char*>(value)` を `nb::isinstance<nb::str>(value)` に変更する。
-- 値取得: `nb::cast<const char*>(value)` を `nb::cast<std::string>(value)` に変更し、`std::string` でコピーを取る。`boost::json::value` は `std::string` も `string_view` 経由で受け取れるため、`boost::json::value(nb::cast<std::string>(value))` のような形でそのまま代入可能 (本実装でも `return` 文の文脈で成立)。
-- dict の key 取得 (`nb::cast<const char*>(k)`) も同様に `nb::cast<std::string>(k)` に揃える。`boost::json::object::emplace` は `string_view` を受けるため、引数として `std::string` を渡しても問題ない。
-- 振る舞いは型レベルで変わらないが、Python の `bytes` を渡してきた場合に分岐がどう動くかなど、エッジケースの挙動を変えないよう注意する。`nb::str` は `bytes` を受けないため、本来意図されていない `bytes` 入力は最後の `throw nb::type_error(error_message)` に落ちる挙動になる (これは妥当)。
+- 値取得: `nb::cast<const char*>(value)` を `nb::cast<std::string>(value)` に変更し、`std::string` で明示的にコピーを取る。`std::string` は `boost::json::value(string_view)` コンストラクタへの暗黙変換でそのまま代入可能。
+- dict の key 取得 (`nb::cast<const char*>(k)`) も同様に `nb::cast<std::string>(k)` に揃える。
+- 振る舞いは変わらない。現行の `nb::isinstance<const char*>` も内部的に `PyUnicode_Check` を使うため `str` のみを受け付け、`bytes` は既に `throw nb::type_error` に落ちる。`nb::isinstance<nb::str>` も同様に `str` のみを受け付けるため、`bytes` 入力の挙動は変更前後で同一である。
+- 関数シグネチャの `const char* error_message` パラメータは C 文字列リテラルであり、Python オブジェクトの `const char*` 扱いとは無関係のため本 issue の対象外。
 
 ## 完了条件
 
