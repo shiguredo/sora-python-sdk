@@ -6,7 +6,7 @@
 - Completed: -
 - Model: Opus 4.7
 - Branch: feature/change-jetson-platform
-- Polished: 2026-07-17
+- Polished: 2026-07-30
 
 ## 目的
 
@@ -19,7 +19,7 @@ distribution 名は PyPI の通常 Ubuntu arm64 wheel と衝突しない `sora_s
 ## 優先度根拠
 
 - README は JetPack 6 を対応 platform としているが、現行 `develop` の通常 build target には Jetson がなく、残存する cross 設定は Python 3.10 固定で package metadata と矛盾する。
-- 0001 は legacy `run.py` / `buildbase.py` と到達不能な Jetson multistrap 分岐を削除するため、本 issue で新構成へ明示的に追加しない限り Jetson build は復活しない。
+- 0001 は scikit-build-core への移行を完了したが、legacy `run.py` / `buildbase.py` と到達不能な Jetson multistrap 分岐はまだ残存している。本 issue で新構成へ明示的に追加しない限り Jetson build は復活しない。
 - Jetson は通常の PyPI release matrix とは分離して配布しており、0003 / 0004 の一般 Linux arm64 対応より利用範囲が限定されるため Medium とする。
 
 ## 前提
@@ -40,7 +40,7 @@ distribution 名は PyPI の通常 Ubuntu arm64 wheel と衝突しない `sora_s
 - `buildbase.py` の `libnvbuf_fdmap.so` compatibility symlink 補正は legacy `install_rootfs()` 内だけにあり、生成形式の契約として test されていない。
 - Jetson target は通常 branch の `AVAILABLE_TARGETS` に存在せず、古い分岐だけが残る dead code になっている。
 
-0001 は legacy multistrap conf と dead code を削除する。本 issue はそれらを移植せず、0003 後の scikit-build-core / sysroot builder 構成へ Jetson support を新規追加する。
+0001 は scikit-build-core への移行を完了したが、legacy `run.py` / `buildbase.py` / `multistrap/ubuntu-22.04_armv8_jetson.conf` はまだ残存している。本 issue はそれらを移植せず、0003 後の scikit-build-core / sysroot builder 構成へ Jetson support を新規追加する。
 
 ## 設計方針
 
