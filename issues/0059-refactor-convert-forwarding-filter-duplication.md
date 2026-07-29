@@ -3,7 +3,8 @@
 - Priority: Medium
 - Created: 2026-06-23
 - Model: Opus 4.7
-- Branch: feature/convert-forwarding-filter-dedup
+- Branch: feature/refactor-convert-forwarding-filter-dedup
+- Polished: 2026-07-30
 
 ## 目的
 
@@ -20,7 +21,7 @@ Medium とする。
 
 ## 現状
 
-### 単一フィルタ (`src/sora.cpp:382-428`)
+### 単一フィルタ (`src/sora.cpp` の `Sora::ConvertForwardingFilter`)
 
 ```cpp
 std::optional<sora::SoraSignalingConfig::ForwardingFilter>
@@ -72,15 +73,17 @@ Sora::ConvertForwardingFilter(const nb::handle value) {
 }
 ```
 
-### 配列フィルタ (`src/sora.cpp:330-380`)
+### 配列フィルタ (`src/sora.cpp` の `Sora::ConvertForwardingFilters`)
 
 配列版は `forwarding_filter_value.as_array()` をループするだけで、ループの中身は単一版の `try` ブロックと完全一致する。`action` / `rules` / `version` / `metadata` / `name` / `priority` のいずれのパース処理も同じ式で書かれている。
 
 ## 設計方針
 
-`ConvertSingleForwardingFilter(const boost::json::value&)` を private ヘルパとして切り出す。
+`src/sora.cpp` 内の匿名名前空間に `ConvertSingleForwardingFilter(const boost::json::value&)` をフリー関数として切り出す (既存の `Convert*` メンバ関数群は `nb::handle` を受け取るが、ヘルパは JSON パース済み値を受け取るためメンバである必要がない)。
 
 ```cpp
+namespace {
+
 sora::SoraSignalingConfig::ForwardingFilter ConvertSingleForwardingFilter(
     const boost::json::value& v) {
   sora::SoraSignalingConfig::ForwardingFilter filter;
@@ -95,6 +98,8 @@ sora::SoraSignalingConfig::ForwardingFilter ConvertSingleForwardingFilter(
   }
   return filter;
 }
+
+}  // namespace
 ```
 
 呼び出し側:
@@ -116,7 +121,7 @@ Sora::ConvertForwardingFilters(const nb::handle value) {
     return std::nullopt;
   }
   std::vector<sora::SoraSignalingConfig::ForwardingFilter> result;
-  for (auto& elem : v.as_array()) {
+  for (const auto& elem : v.as_array()) {
     result.push_back(ConvertSingleForwardingFilter(elem));
   }
   return result;
@@ -131,7 +136,7 @@ Sora::ConvertForwardingFilters(const nb::handle value) {
 
 ## 完了条件
 
-- フィルタ 1 件分のパース処理が `ConvertSingleForwardingFilter` (または同等の private ヘルパ) に 1 か所だけ存在する状態になっていること。
+- フィルタ 1 件分のパース処理が `ConvertSingleForwardingFilter` (匿名名前空間内のフリー関数) に 1 か所だけ存在する状態になっていること。
 - `ConvertForwardingFilter` / `ConvertForwardingFilters` がそのヘルパを呼び出すだけの薄いラッパになっていること。
 - 既存テスト (forwarding_filter / forwarding_filters を使う E2E 含む) が通ること。
 - フィルタの新しいフィールドを追加するときに修正箇所が 1 か所で済むこと。
