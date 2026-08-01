@@ -6,6 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/refactor-cache-build-dependencies
+- Completed: 2026-08-01
 - Polished: 2026-07-30
 
 ## 目的
@@ -124,3 +125,9 @@ CI の内部性能だけを変更し、SDK の機能・公開 API・対応 platf
 ## ロールバック
 
 cache step だけを revert しても dependency fetch の正しさは維持される。本 issue の squash commit を `git revert <squash-commit>` し、cache miss 状態で全 build が green になることを確認する。GitHub 上に残った旧 cache は key schema version を上げて参照不能にし、手動削除を必須にしない。
+
+## 解決方法
+
+実装せず closed にする。
+
+本 issue は scikit-build-core 移行後の `fetch_deps.cmake` / `_deps/` layout を前提にしていたが、0001 の scikit-build-core 化は方針としてあきらめ、現行の setuptools / `run.py` 経路を維持することにした。前提となる layout が存在しないため、本 issue の前提が崩れた。
