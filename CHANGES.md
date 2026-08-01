@@ -148,6 +148,9 @@
   - @voluntas
 - [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP", "PT"]` を追加する
   - @voluntas
+- [UPDATE] `Sora::ConvertJsonValue` の文字列判定・取得を `nb::isinstance<nb::str>` / `nb::cast<std::string>` ベースに統一する
+  - Python 側 `str` の内部バッファに依存しない `std::string` への明示コピーに変更する
+  - @voluntas
 
 ## 2025.5.2
 

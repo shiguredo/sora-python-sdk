@@ -4,6 +4,9 @@
 
 #include "gil.h"
 
+// nanobind
+#include <nanobind/stl/string.h>
+
 // Boost
 #include <boost/preprocessor/stringize.hpp>
 
@@ -336,8 +339,10 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
     return nb::cast<int64_t>(value);
   } else if (nb::isinstance<float>(value)) {
     return nb::cast<float>(value);
-  } else if (nb::isinstance<const char*>(value)) {
-    return nb::cast<const char*>(value);
+  } else if (nb::isinstance<nb::str>(value)) {
+    // nb::cast<std::string> で明示的にコピーを取る
+    std::string s = nb::cast<std::string>(value);
+    return boost::json::value(boost::json::string(s));
   } else if (nb::isinstance<nb::list>(value)) {
     nb::list nb_list = nb::cast<nb::list>(value);
     boost::json::array json_array;
@@ -348,7 +353,7 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
     nb::dict nb_dict = nb::cast<nb::dict>(value);
     boost::json::object json_object;
     for (auto [k, v] : nb_dict)
-      json_object.emplace(nb::cast<const char*>(k),
+      json_object.emplace(nb::cast<std::string>(k),
                           ConvertJsonValue(v, error_message));
     return json_object;
   }
