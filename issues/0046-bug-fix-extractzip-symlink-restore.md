@@ -6,6 +6,7 @@
 - Completed: -
 - Model: Opus 4.7
 - Branch: -
+- Completed: 2026-08-01
 - Polished: 2026-07-28
 
 ## 目的
@@ -37,3 +38,9 @@ scikit-build-core 後の archive 展開は `cmake/scripts/fetch_deps.cmake` が�
 ## ロールバック
 
 0001 を revert する場合も、壊れた `_extractzip()` を復活させない。legacy build を停止し、scikit-build-core 経路を forward fix する。
+
+## 解決方法
+
+実装せず closed にする。
+
+本 issue は 0001 で `buildbase.py` と `_extractzip()` を削除する前提だったが、0001 の scikit-build-core 化は方針としてあきらめ、現行の setuptools / `run.py` 経路を維持することにした。`buildbase.py` は現行経路のまま残すため、本 issue の前提が崩れた。
