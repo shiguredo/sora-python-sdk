@@ -6,6 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/add-auditwheel-repair
+- Completed: 2026-08-01
 - Polished: 2026-07-30
 
 ## 目的
@@ -123,6 +124,12 @@ AArch64 repair job は raw input の source SHA / platform / ABI / wheel digest 
 ## ロールバック
 
 問題が発生した場合は本 issue の squash commit を `git revert <squash-commit>` し、Ubuntu の publish を停止する。未修復の `linux_*` wheel を PyPI へ公開する fallback は認めず、forward fix 後に publish を再開する。
+
+## 解決方法
+
+実装せず closed にする。
+
+本 issue は 0001 / 0003 が生成する scikit-build-core 経路の wheel を対象にしていたが、0001 の scikit-build-core 化は方針としてあきらめ、現行の setuptools / `run.py` 経路を維持することにした。前提となる wheel 生成経路が無くなったため、本 issue の前提が崩れた。
 
 ## 参照（一次資料）
 
