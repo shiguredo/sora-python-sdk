@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-github-actions-no-sha-pin
+- Completed: 2026-08-01
 - Polished: 2026-07-28
 
 ## 目的
@@ -55,3 +56,9 @@ Medium とする。
 - pin した SHA が対応する tag を確かに指しており、ワークフローが従来どおり成功すること (CI 上で動作確認)。
 - `shiguredo/github-actions` 側に必要な tag が無い場合は、tag を切る運用への切り替えが合意されていること (合意先は別途記録する)。
 - pin 後の CI が build / e2e-test の両方で通ること。
+
+## 解決方法
+
+実装せず closed にする。
+
+`shiguredo/github-actions` の社内アクションは `@main` ブランチ参照のまま維持する方針を決めた。時雨堂内のコントロール下にあり破壊的変更は社内で管理でき、社外アクションとはリスク特性が異なるため、ハッシュ固定せずブランチ追従運用を継続する。
