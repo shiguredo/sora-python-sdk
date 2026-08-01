@@ -6,6 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/change-release-artifact-pipeline
+- Completed: 2026-08-01
 - Polished: 2026-07-30
 
 ## 目的
@@ -137,3 +138,9 @@ macOS E2E runner は canonical な `macos-15_arm64` input を使用する。down
 外部公開前なら本 issue の squash commit を `git revert <squash-commit>` し、publish / release を停止する。
 
 PyPI へ 1 file でも公開済みなら同じ version を再利用しない。問題の file / version を PyPI で yank し、GitHub Release は削除せず問題と後継 version を注記する。修正版 version を発行する forward fix を必須とする。
+
+## 解決方法
+
+実装せず closed にする。
+
+本 issue は scikit-build-core 移行後の全 wheel / sdist artifact 契約を前提にしていたが、0001 の scikit-build-core 化は方針としてあきらめ、現行の setuptools / `run.py` 経路を維持することにした。前提となる backend 移行が行われないため、本 issue の前提が崩れた。
