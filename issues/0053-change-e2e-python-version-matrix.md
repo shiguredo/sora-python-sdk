@@ -6,6 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/change-e2e-python-version-matrix
+- Completed: 2026-08-01
 - Polished: 2026-07-30
 
 ## 目的
@@ -96,3 +97,9 @@ mock / stub は使わず、実際に生成した各 wheel artifact を対応す�
 ## ロールバック
 
 本 issue を revert する場合は Python 3.13 の 0067 gate へ戻す。全 ABI を検証せずに release を継続する判断は自動化せず、3.12 / 3.14 の公開を一時停止して forward fix する。
+
+## 解決方法
+
+実装せず closed にする。
+
+本 issue は 0001 〜 0005 の scikit-build-core 移行完了後に実装する前提だったが、0001 の scikit-build-core 化は方針としてあきらめ、現行の setuptools / `run.py` 経路を維持することにした。前提となる backend 移行が行われないため、本 issue の前提が崩れた。
