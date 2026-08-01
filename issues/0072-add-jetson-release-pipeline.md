@@ -124,3 +124,7 @@ draft release を作成してから asset を追加し、全 asset の server-si
 ## ロールバック
 
 workflow と manifest validation を revert し、Jetson の新規 release を停止する。既に公開した正しい digest の release は削除・上書きせず、重大な問題がある場合は release body で利用停止を明示し、artifact revision を増やした修正版を新しい tag で公開する。
+
+## pending にした理由
+
+Jetson 対応を一旦保留する方針になったため pending にする。対応を再開するときは reopened にしてから実装を進める。
