@@ -196,3 +196,7 @@ RPATH または E2E workflow に regression が出た場合は新規 Jetson rele
 - [NVIDIA Jetson Linux r36.4 Developer Guide](https://docs.nvidia.com/jetson/archives/r36.4/DeveloperGuide/)
 - [JetPack 6.1 / Jetson Linux 36.4](https://developer.nvidia.com/embedded/jetpack-sdk-61)
 - [JetPack 6.2 / Jetson Linux 36.4.3](https://developer.nvidia.com/embedded/jetpack-sdk-62)
+
+## pending にした理由
+
+Jetson 対応を一旦保留する方針になったため pending にする。対応を再開するときは reopened にしてから実装を進める。
