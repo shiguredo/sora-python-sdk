@@ -247,3 +247,7 @@ parser / manifest test は local metadata と小さな実 `.deb` fixture を使�
 - [JetPack 6.1 / Jetson Linux 36.4](https://developer.nvidia.com/embedded/jetpack-sdk-61)
 - [JetPack 6.2 / Jetson Linux 36.4.3](https://developer.nvidia.com/embedded/jetpack-sdk-62)
 - [NVIDIA Jetson APT repository](https://repo.download.nvidia.com/jetson/)
+
+## pending にした理由
+
+Jetson 対応を一旦保留する方針になったため pending にする。対応を再開するときは reopened にしてから実装を進める。
