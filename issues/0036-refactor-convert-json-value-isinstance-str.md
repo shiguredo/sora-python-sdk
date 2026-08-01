@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/refactor-convert-json-value-isinstance-str
+- Completed: 2026-08-01
 - Polished: 2026-07-30
 
 ## 目的
@@ -45,3 +46,14 @@ Medium とする。
 - dict の key も同様に `std::string` 経由になっていること。
 - 既存の e2e テスト・ユニットテストが引き続き通ること。
 - Python 側のユースケース (`metadata` などに任意の文字列キー・値を渡すケース) で挙動が変わらないこと。
+
+## 解決方法
+
+`Sora::ConvertJsonValue` の文字列判定・取得を `nb::isinstance<nb::str>` / `nb::cast<std::string>` ベースに統一した。
+
+- 型判定: `nb::isinstance<const char*>(value)` を `nb::isinstance<nb::str>(value)` に変更した。
+- 値取得: `nb::cast<const char*>(value)` を `nb::cast<std::string>` に変更し、`std::string` で明示的にコピーを取るようにした。
+- dict の key 取得 (`nb::cast<const char*>(k)`) も `nb::cast<std::string>(k)` に揃えた。
+- `nanobind/stl/string.h` をインクルードした (`nb_cast.h` には `std::string` の caster が無いため)。
+- 設計方針の「`std::string` は `boost::json::value(string_view)` コンストラクタへの暗黙変換でそのまま代入可能」は誤りだった。`std::string` → `string_view` → `value` は 2 段階のユーザー定義変換になりコンパイルできないため、`boost::json::string` を明示的に挟んで `boost::json::value(boost::json::string(s))` とした。
+- `CHANGES.md` の `## develop` → `### misc` に [UPDATE] を追記した。
