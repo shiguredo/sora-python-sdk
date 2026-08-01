@@ -6,6 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/refactor-runtime-version-resolution
+- Completed: 2026-08-01
 - Polished: 2026-07-30
 
 ## 目的
@@ -79,3 +80,9 @@ mock / stub や `importlib.metadata.version` の monkeypatch は使わず、clea
 ## ロールバック
 
 問題がある場合も親 directory を探索する旧 fallback は復活させない。supported install 経路の metadata 生成を forward fix し、metadata を同梱できない bundle は support 対象外として明示する。
+
+## 解決方法
+
+実装せず closed にする。
+
+本 issue は 0001 の scikit-build-core dynamic version provider と 0051 の sdist 検証を前提にしていたが、0001 の scikit-build-core 化は方針としてあきらめ、現行の setuptools / `run.py` 経路を維持することにした。前提となる backend 移行が行われないため、本 issue の前提が崩れた。
