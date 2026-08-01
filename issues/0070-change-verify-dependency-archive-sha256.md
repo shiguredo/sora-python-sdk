@@ -6,6 +6,7 @@
 - Completed: -
 - Model: GPT-5
 - Branch: feature/change-verify-dependency-archive-sha256
+- Completed: 2026-08-01
 - Polished: 2026-07-30
 
 ## 目的
@@ -119,3 +120,9 @@ test 専用 failpoint は test 実行時にだけ明示的に有効化でき、�
 ## ロールバック
 
 問題が digest 値 1 件の誤りなら正しい値へ forward fix する。transaction / recovery の根本設計を revert する場合は、SHA-256 検証無しの新しい release を行わず publish を停止する。0043 が実装済みなら Jetson release を停止し、0072、0045、0043 の逆順で revert または workflow を無効化してから、本 issue の squash commit を `git revert <squash-commit>` する。通常 platform も修正版が入るまで publish を再開しない。
+
+## 解決方法
+
+実装せず closed にする。
+
+本 issue は 0001 の `fetch_deps.cmake` を前提にしていたが、0001 の scikit-build-core 化は方針としてあきらめ、現行の setuptools / `run.py` 経路を維持することにした。前提となる `fetch_deps.cmake` が存在しないため、本 issue の前提が崩れた。
