@@ -111,7 +111,7 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Tailscale のセットアップ（self-hosted runner 以外）
       - if: ${{ runner.environment != 'self-hosted' }}
@@ -133,7 +133,7 @@ jobs:
       # macOS self-hosted runner: Homebrew セットアップ
       - name: Setup Homebrew
         if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
-        uses: Homebrew/actions/setup-homebrew@100978dc923ea73ee9ed454d1d5c4fcf3ee14a9e # master
+        uses: Homebrew/actions/setup-homebrew@5037c6f1012cc5ea0b9f03fedbaf9955ed9e51e0 # master
 
       # macOS self-hosted runner: GitHub CLI インストール
       - name: Install GitHub CLI
@@ -141,7 +141,7 @@ jobs:
         run: brew install gh
 
       # UV のセットアップ
-      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: false
           # Python バージョンの設定
