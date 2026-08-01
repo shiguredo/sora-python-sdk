@@ -145,3 +145,7 @@ release artifact や SDK runtime を変更せず、CI security boundary だけ�
 - [GitHub Actions: `workflow_dispatch`](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onworkflow_dispatch)
 - [GitHub Actions: self-hosted runner access](https://docs.github.com/en/enterprise-cloud@latest/actions/how-tos/manage-runners/self-hosted-runners/manage-access)
 - [GitHub Actions: secure use](https://docs.github.com/en/actions/reference/security/secure-use)
+
+## pending にした理由
+
+Jetson 対応を一旦保留する方針になったため pending にする。対応を再開するときは reopened にしてから実装を進める。
