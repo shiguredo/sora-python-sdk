@@ -142,20 +142,14 @@
 
 ### misc
 
-- [UPDATE] actions/checkout を v7.0.0 に上げる
-  - @voluntas
-- [UPDATE] astral-sh/setup-uv を v8.3.2 に上げる
-  - @voluntas
-- [UPDATE] tailscale/github-action を v4.1.3 に上げる
-  - @voluntas
-- [UPDATE] Homebrew/actions/setup-homebrew を最新の master に追従する
-  - @voluntas
 - [UPDATE] Slack 通知を `rtCamp/action-slack-notify` から `shiguredo/github-actions/slack-notify` に切り替える
   - @voluntas
 - [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP", "PT"]` を追加する
   - @voluntas
 - [UPDATE] `Sora::ConvertJsonValue` の文字列判定・取得を `nb::isinstance<nb::str>` / `nb::cast<std::string>` ベースに統一する
   - Python 側 `str` の内部バッファに依存しない `std::string` への明示コピーに変更する
+  - @voluntas
+- [UPDATE] e2e-test の schedule 実行を無効化する
   - @voluntas
 
 ## 2025.5.2
