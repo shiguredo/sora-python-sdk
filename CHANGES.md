@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] Ubuntu 22.04 LTS のサポートを終了する
+  - 対応プラットフォームを Ubuntu 26.04 LTS / Ubuntu 24.04 LTS に変更する
+  - @voluntas
 - [CHANGE] `SoraTransformableFrame` のタイポ `mine_type` を `mime_type` に修正する
   - 誤った公開プロパティ名をそのまま残さない
   - `mine_type` は削除する（alias は残さない）
@@ -22,6 +25,9 @@
   - wheel の manylinux tag （`manylinux_2_35_aarch64`）は本変更では変更しない
   - Jetson の rootfs 生成は本変更の対象外とし、既存経路のまま残す
   - 既存の `_install/<target>/rootfs` を持つローカル環境では、初回 build 前に該当 rootfs と `_install/<target>/rootfs.version` を手動削除する（sysroot builder は由来不明の既存 rootfs を `--force` 無しで拒否する）
+  - @voluntas
+- [ADD] Ubuntu 26.04 LTS のビルド・リリース・E2E テストに対応する
+  - manylinux_2_39 の wheel を生成する
   - @voluntas
 - [UPDATE] wheel を `~=0.47` に上げる
   - `0.47.x` を許可する

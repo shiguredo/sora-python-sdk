@@ -86,24 +86,24 @@ jobs:
       fail-fast: false
       matrix:
         platform:
+          - name: ubuntu-26.04_x86_64
+            target: ubuntu-26.04_x86_64
+            runs_on: ubuntu-26.04
+            os: ubuntu
+            arch: x86_64
           - name: ubuntu-24.04_x86_64
             target: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
             os: ubuntu
             arch: x86_64
-          - name: ubuntu-22.04_x86_64
-            target: ubuntu-22.04_x86_64
-            runs_on: ubuntu-22.04
+          - name: ubuntu-26.04_armv8
+            target: ubuntu-26.04_armv8
+            runs_on: ubuntu-26.04
             os: ubuntu
-            arch: x86_64
+            arch: armv8
           - name: ubuntu-24.04_armv8
             target: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04
-            os: ubuntu
-            arch: armv8
-          - name: ubuntu-22.04_armv8
-            target: ubuntu-22.04_armv8
-            runs_on: ubuntu-22.04
             os: ubuntu
             arch: armv8
           - name: raspberry-pi-os_armv8
@@ -207,12 +207,6 @@ jobs:
             target: ubuntu-24.04_armv8
             # arm64 でビルド
             runs_on: ubuntu-24.04-arm
-            os: ubuntu
-            arch: armv8
-          - name: ubuntu-22.04_armv8
-            target: ubuntu-22.04_armv8
-            # arm64 でビルド
-            runs_on: ubuntu-22.04-arm
             os: ubuntu
             arch: armv8
         python_version:
@@ -381,8 +375,8 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - name: ubuntu-22.04_x86_64
-          - name: ubuntu-22.04_armv8
+          - name: ubuntu-26.04_x86_64
+          - name: ubuntu-26.04_armv8
           - name: macos-15_arm64
           - name: macos-14_arm64
           - name: windows-2025_x86_64
@@ -444,11 +438,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
+        with: { "platform": "ubuntu-26.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
+        with: { "platform": "ubuntu-26.04_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.14" }
+        with: { "platform": "ubuntu-26.04_x86_64", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
@@ -456,11 +450,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.14" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.12" }
+        with: { "platform": "ubuntu-26.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.13" }
+        with: { "platform": "ubuntu-26.04_armv8", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.14" }
+        with: { "platform": "ubuntu-26.04_armv8", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download

@@ -119,10 +119,10 @@ PyPI 経由ではインストールできません。
 
 ## 対応プラットフォーム
 
+- Ubuntu 26.04 LTS x86_64
+- Ubuntu 26.04 LTS arm64
 - Ubuntu 24.04 LTS x86_64
 - Ubuntu 24.04 LTS arm64
-- Ubuntu 22.04 LTS x86_64
-- Ubuntu 22.04 LTS arm64
 - macOS Tahoe 26 arm64
 - macOS Sequoia 15 arm64
 - macOS Ventura 14 arm64

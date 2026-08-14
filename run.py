@@ -92,7 +92,11 @@ def install_deps(
         install_rootfs(**install_rootfs_args)
     elif (
         platform.target.package_name
-        in ("raspberry-pi-os_armv8", "ubuntu-22.04_armv8", "ubuntu-24.04_armv8")
+        in (
+            "raspberry-pi-os_armv8",
+            "ubuntu-24.04_armv8",
+            "ubuntu-26.04_armv8",
+        )
         and platform.build.arch != platform.target.arch
     ):
         # x86_64 host からの cross build のときだけ sysroot を構築する。
@@ -208,10 +212,10 @@ def install_deps(
 AVAILABLE_TARGETS = [
     "windows_x86_64",
     "macos_arm64",
-    "ubuntu-22.04_x86_64",
     "ubuntu-24.04_x86_64",
-    "ubuntu-22.04_armv8",
+    "ubuntu-26.04_x86_64",
     "ubuntu-24.04_armv8",
+    "ubuntu-26.04_armv8",
     "ubuntu-22.04_armv8_jetson",
     "raspberry-pi-os_armv8",
 ]
@@ -234,14 +238,14 @@ def _get_platform(target: str) -> Platform:
         platform = Platform("macos", get_macos_osver(), "x86_64")
     elif target == "macos_arm64":
         platform = Platform("macos", get_macos_osver(), "arm64")
-    elif target == "ubuntu-22.04_x86_64":
-        platform = Platform("ubuntu", "22.04", "x86_64")
     elif target == "ubuntu-24.04_x86_64":
         platform = Platform("ubuntu", "24.04", "x86_64")
-    elif target == "ubuntu-22.04_armv8":
-        platform = Platform("ubuntu", "22.04", "armv8")
+    elif target == "ubuntu-26.04_x86_64":
+        platform = Platform("ubuntu", "26.04", "x86_64")
     elif target == "ubuntu-24.04_armv8":
         platform = Platform("ubuntu", "24.04", "armv8")
+    elif target == "ubuntu-26.04_armv8":
+        platform = Platform("ubuntu", "26.04", "armv8")
     elif target == "ubuntu-22.04_armv8_jetson":
         platform = Platform("jetson", None, "armv8", "ubuntu-22.04")
     elif target == "raspberry-pi-os_armv8":

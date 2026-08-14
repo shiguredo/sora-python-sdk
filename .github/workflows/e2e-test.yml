@@ -36,18 +36,18 @@ jobs:
       fail-fast: false
       matrix:
         platform:
+          - name: ubuntu-26.04_x86_64
+            runs_on: ubuntu-26.04
+            wheel_platform: ubuntu-26.04_x86_64
           - name: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
             wheel_platform: ubuntu-24.04_x86_64
-          - name: ubuntu-22.04_x86_64
-            runs_on: ubuntu-22.04
-            wheel_platform: ubuntu-22.04_x86_64
+          - name: ubuntu-26.04_armv8
+            runs_on: ubuntu-26.04-arm
+            wheel_platform: ubuntu-26.04_armv8
           - name: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04-arm
             wheel_platform: ubuntu-24.04_armv8
-          - name: ubuntu-22.04_armv8
-            runs_on: ubuntu-22.04-arm
-            wheel_platform: ubuntu-22.04_armv8
           - name: macos-15_arm64
             runs_on: macos-15
             wheel_platform: macos-15_arm64
