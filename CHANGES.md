@@ -146,6 +146,8 @@
 
 ### misc
 
+- [UPDATE] `canary.py` を `dev.py` にリネームする
+  - @voluntas
 - [UPDATE] Slack 通知を `rtCamp/action-slack-notify` から `shiguredo/github-actions/slack-notify` に切り替える
   - @voluntas
 - [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP", "PT"]` を追加する
