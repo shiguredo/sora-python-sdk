@@ -40,6 +40,8 @@
   - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
   - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
   - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2026.2.1` に上げる
+  - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.2.0` に上げる
   - BOOST_VERSION を `1.92.0` に上げる
   - CMAKE_VERSION を `4.4.2` に上げる
