@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2026.1.0
+
+**リリース日**: 2026-08-19
+
 - [CHANGE] Ubuntu 22.04 LTS のサポートを終了する
   - 対応プラットフォームを Ubuntu 26.04 LTS / Ubuntu 24.04 LTS に変更する
   - @voluntas
@@ -41,8 +45,6 @@
   - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.2.1` に上げる
-  - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0` に上げる
   - BOOST_VERSION を `1.92.0` に上げる
   - CMAKE_VERSION を `4.4.2` に上げる
   - @voluntas
