@@ -29,13 +29,13 @@
 - [ADD] Ubuntu 26.04 LTS のビルド・リリース・E2E テストに対応する
   - manylinux_2_39 の wheel を生成する
   - @voluntas
-- [UPDATE] wheel を `~=0.47` に上げる
-  - `0.47.x` を許可する
+- [UPDATE] wheel を `~=0.48` に上げる
+  - `0.48.x` を許可する
   - @voluntas
-- [UPDATE] setuptools を `~=83.0` に上げる
-  - `83.0.x` を許可する
+- [UPDATE] setuptools を `~=84.0` に上げる
+  - `84.0.x` を許可する
   - @voluntas
-- [UPDATE] nanobind を `2.13.0` に上げる
+- [UPDATE] nanobind を `2.15.0` に上げる
   - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要
   - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
   - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
@@ -188,7 +188,7 @@
   - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.6.1` に上げる
-  - LIBWEBRTC_VERSIONを `m143.7499.1.0` に上げる
+  - LIBWEBRTC_VERSION を `m143.7499.1.0` に上げる
   - CMAKE_VERSION を `4.1.2` に上げる
   - @voluntas @melpon @torikizi
 - [UPDATE] `simulcast_request_rid` をシグナリング接続時に指定できるようにする
