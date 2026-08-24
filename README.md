@@ -169,6 +169,7 @@ PyPI 経由ではインストールできません。
 
 ### 優先実装が可能な機能一覧
 
+- Ubuntu 22.04 対応
 - Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6.1)
 
 ## サポートについて
