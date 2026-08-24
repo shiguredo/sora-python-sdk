@@ -125,7 +125,6 @@ PyPI 経由ではインストールできません。
 - Ubuntu 24.04 LTS arm64
 - macOS Tahoe 26 arm64
 - macOS Sequoia 15 arm64
-- macOS Ventura 14 arm64
 - Windows 11 x86_64
 - Windows Server 2025 x86_64
 - Raspberry Pi OS armv8
