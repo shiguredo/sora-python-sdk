@@ -25,7 +25,7 @@ Source = "https://github.com/shiguredo/sora-python-sdk"
 
 [dependency-groups]
 dev = [
-  "nanobind==2.15.0",
+  "nanobind==3.0.0",
   { include-group = "lint" },
   { include-group = "test" },
 ]
