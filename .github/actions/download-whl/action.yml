@@ -62,12 +62,12 @@ runs:
           # プラットフォームごとのパターンを設定
           case "${{ inputs.platform_name }}" in
             ubuntu-*_x86_64)
-              # manylinux_2_38 に固定
-              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_38_x86_64.whl"
+              # manylinux_2_35 に固定
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_35_x86_64.whl"
               ;;
             ubuntu-*_armv8)
-              # manylinux_2_38 に固定
-              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_38_aarch64.whl"
+              # manylinux_2_35 に固定
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_35_aarch64.whl"
               ;;
             raspberry-pi-os_armv8)
               # Raspberry Pi OS 用（sora_sdk_rpi prefix、manylinux_2_35）
