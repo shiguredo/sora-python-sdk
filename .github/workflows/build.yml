@@ -29,23 +29,6 @@ env:
   OPENH264_VERSION: 2.6.0
 
 jobs:
-  # VERSION ファイルからバージョン情報を取得
-  get_sdk_version:
-    runs-on: ubuntu-slim
-    outputs:
-      sdk_version: ${{ steps.version.outputs.sdk_version }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          sparse-checkout: |
-            VERSION
-          sparse-checkout-cone-mode: false
-      - id: version
-        run: |
-          SDK_VERSION=$(cat VERSION)
-          echo "sdk_version=$SDK_VERSION" >> $GITHUB_OUTPUT
-          echo "SDK Version: $SDK_VERSION"
-
   # まず pyi を生成する
   # クロスコンパイル環境だと pyi が生成できないので、
   # １箇所で pyi を生成してアーティファクトにアップロードして、
