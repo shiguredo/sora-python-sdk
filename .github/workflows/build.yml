@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: |
           sudo apt-get -y install libx11-dev
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -142,7 +142,7 @@ jobs:
           506b815cbb32d9b6066b4a2aa524071e071761e7e7f68c3ac74f3061ba852017  debian-archive-keyring.gpg
           76603890d82a492175caf17aba68dc73acb1189c9fd58ec0c19145dfa3866d56  raspberrypi-archive-keyring.asc
           EOF
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -214,7 +214,7 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -257,7 +257,7 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
