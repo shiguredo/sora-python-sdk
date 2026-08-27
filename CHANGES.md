@@ -11,10 +11,14 @@
 
 ## develop
 
+## 2026.1.0
+
+**リリース日**: 2026-08-27
+
 - [CHANGE] Ubuntu 22.04 LTS のサポートを終了する
   - 対応プラットフォームを Ubuntu 26.04 LTS / Ubuntu 24.04 LTS に変更する
   - @voluntas
-- [CHANGE] macOS Ventura 14 のサポートを終了する
+- [CHANGE] macOS Sonoma 14 のサポートを終了する
   - 対応プラットフォームを macOS Tahoe 26 / macOS Sequoia 15 に変更する
   - @voluntas
 - [CHANGE] `SoraTransformableFrame` のタイポ `mine_type` を `mime_type` に修正する
@@ -29,10 +33,12 @@
   - Jetson の rootfs 生成は本変更の対象外とし、既存経路のまま残す
   - 既存の `_install/<target>/rootfs` を持つローカル環境では、初回 build 前に該当 rootfs と `_install/<target>/rootfs.version` を手動削除する（sysroot builder は由来不明の既存 rootfs を `--force` 無しで拒否する）
   - @voluntas
-- [ADD] Ubuntu 26.04 LTS のビルド・リリース・E2E テストに対応する
-  - manylinux_2_39 の wheel を生成する
+- [ADD] Ubuntu 26.04 LTS のビルド・E2E テストに対応する
+  - PyPI / GitHub Release への公開は Ubuntu 24.04 向け `manylinux_2_38` wheel で賄う
   - @voluntas
 - [ADD] macOS Tahoe 26 のビルド・リリース・E2E テストに対応する
+  - @voluntas
+- [UPDATE] Ubuntu 24.04 向け wheel の manylinux tag を `manylinux_2_35` から `manylinux_2_38` に上げる
   - @voluntas
 - [UPDATE] wheel を `~=0.48` に上げる
   - @voluntas
