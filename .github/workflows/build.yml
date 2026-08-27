@@ -29,23 +29,6 @@ env:
   OPENH264_VERSION: 2.6.0
 
 jobs:
-  # VERSION ファイルからバージョン情報を取得
-  get_sdk_version:
-    runs-on: ubuntu-slim
-    outputs:
-      sdk_version: ${{ steps.version.outputs.sdk_version }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          sparse-checkout: |
-            VERSION
-          sparse-checkout-cone-mode: false
-      - id: version
-        run: |
-          SDK_VERSION=$(cat VERSION)
-          echo "sdk_version=$SDK_VERSION" >> $GITHUB_OUTPUT
-          echo "SDK Version: $SDK_VERSION"
-
   # まず pyi を生成する
   # クロスコンパイル環境だと pyi が生成できないので、
   # １箇所で pyi を生成してアーティファクトにアップロードして、
@@ -64,7 +47,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: |
           sudo apt-get -y install libx11-dev
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -159,7 +142,7 @@ jobs:
           506b815cbb32d9b6066b4a2aa524071e071761e7e7f68c3ac74f3061ba852017  debian-archive-keyring.gpg
           76603890d82a492175caf17aba68dc73acb1189c9fd58ec0c19145dfa3866d56  raspberrypi-archive-keyring.asc
           EOF
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -198,57 +181,6 @@ jobs:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
 
-  build_ubuntu_arm:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: ubuntu-24.04_armv8
-            target: ubuntu-24.04_armv8
-            # arm64 でビルド
-            runs_on: ubuntu-24.04-arm
-            os: ubuntu
-            arch: armv8
-        python_version:
-          - "3.12"
-          - "3.13"
-          - "3.14"
-    needs: [build_pyi]
-    runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-      - run: |
-          cp sora_sdk/py.typed src/sora_sdk/py.typed
-          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
-      - run: |
-          sudo apt-get update
-          sudo apt-get -y install libx11-dev
-      # arm64 native runner でも現行踏襲で aarch64 の binutils を install する
-      - run: |
-          sudo apt-get -y install binutils-aarch64-linux-gnu
-      # clang-19
-      - name: Install clang-19
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod a+x llvm.sh
-          sudo ./llvm.sh 19
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-        with:
-          enable-cache: false
-          python-version: ${{ matrix.python_version }}
-      - run: uv sync
-      - run: |
-          uv run python run.py build ${{ matrix.platform.target }}
-          uv build
-        env:
-          SORA_SDK_TARGET: ${{ matrix.platform.target }}
-
   build_macos:
     strategy:
       fail-fast: false
@@ -260,11 +192,11 @@ jobs:
             os: macos
             python_host_platform: "macosx-15.0-arm64"
             archflags: "-arch arm64"
-          - name: macos-14_arm64
+          - name: macos-26_arm64
             target: macos_arm64
-            runs_on: macos-14
+            runs_on: macos-26
             os: macos
-            python_host_platform: "macosx-14.0-arm64"
+            python_host_platform: "macosx-26.0-arm64"
             archflags: "-arch arm64"
         python_version:
           - "3.12"
@@ -282,7 +214,7 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -325,7 +257,7 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -349,7 +281,7 @@ jobs:
     secrets: inherit
 
   slack_notify:
-    needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
+    needs: [build_ubuntu, build_macos, build_windows]
     runs-on: ubuntu-slim
     if: ${{ !cancelled() }}
     steps:
@@ -375,10 +307,10 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - name: ubuntu-26.04_x86_64
-          - name: ubuntu-26.04_armv8
+          - name: ubuntu-24.04_x86_64
+          - name: ubuntu-24.04_armv8
           - name: macos-15_arm64
-          - name: macos-14_arm64
+          - name: macos-26_arm64
           - name: windows-2025_x86_64
           - name: raspberry-pi-os_armv8
         python_version:
@@ -438,23 +370,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-26.04_x86_64", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-26.04_x86_64", "python_version": "3.13" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-26.04_x86_64", "python_version": "3.14" }
-      - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.14" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-26.04_armv8", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-26.04_armv8", "python_version": "3.13" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-26.04_armv8", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
@@ -468,11 +388,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.14" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.12" }
+        with: { "platform": "macos-26_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.13" }
+        with: { "platform": "macos-26_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.14" }
+        with: { "platform": "macos-26_arm64", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2025_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download

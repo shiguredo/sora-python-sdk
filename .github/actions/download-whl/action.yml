@@ -31,7 +31,7 @@ runs:
 
         if [ -n "$RUN_ID" ]; then
           echo "Found successful build: $RUN_ID"
-          
+
           # artifact をダウンロード（エラーを無視）
           if gh run download "$RUN_ID" \
             --name "${{ inputs.platform_name }}_python-${{ inputs.python_version }}" \
@@ -46,28 +46,36 @@ runs:
         # artifact が取得できなかった場合は release から取得
         if [ -z "$RUN_ID" ] || [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
           echo "Downloading from release..."
-          
+
           # VERSION ファイルからバージョンを取得
           VERSION=$(cat VERSION)
           echo "Version from VERSION file: $VERSION"
-          
+
           # プラットフォーム名から wheel ファイル名を構築
           # Python バージョンから cp タグを作成 (例: 3.11 -> cp311)
           PY_TAG="cp$(echo ${{ inputs.python_version }} | tr -d '.')"
-          
+
           # dist ディレクトリを作成
           mkdir -p dist
-          
+
           # release から wheel をダウンロード（パターンマッチング）
           # プラットフォームごとのパターンを設定
           case "${{ inputs.platform_name }}" in
-            ubuntu-*_x86_64)
-              # manylinux_2_31 に固定
-              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_31_x86_64.whl"
+            ubuntu-24.04_x86_64)
+              # Ubuntu 24.04 用の wheel は setup.py の manylinux_2_38 に追従
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_38_x86_64.whl"
               ;;
-            ubuntu-*_armv8)
-              # manylinux_2_31 に固定
-              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_31_aarch64.whl"
+            ubuntu-26.04_x86_64)
+              # Ubuntu 26.04 用の wheel は setup.py の manylinux_2_43 に追従
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_43_x86_64.whl"
+              ;;
+            ubuntu-24.04_armv8)
+              # Ubuntu 24.04 用の wheel は setup.py の manylinux_2_38 に追従
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_38_aarch64.whl"
+              ;;
+            ubuntu-26.04_armv8)
+              # Ubuntu 26.04 用の wheel は setup.py の manylinux_2_43 に追従
+              WHEEL_PATTERN="sora_sdk-${VERSION}-${PY_TAG}-${PY_TAG}-manylinux_2_43_aarch64.whl"
               ;;
             raspberry-pi-os_armv8)
               # Raspberry Pi OS 用（sora_sdk_rpi prefix、manylinux_2_35）
@@ -84,7 +92,7 @@ runs:
               exit 1
               ;;
           esac
-          
+
           echo "Downloading wheel matching pattern: ${WHEEL_PATTERN} from release ${VERSION}..."
           gh release download "${VERSION}" \
             --pattern "${WHEEL_PATTERN}" \

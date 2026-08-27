@@ -25,7 +25,7 @@ Source = "https://github.com/shiguredo/sora-python-sdk"
 
 [dependency-groups]
 dev = [
-  "nanobind==2.13.0",
+  "nanobind==3.0.0",
   { include-group = "lint" },
   { include-group = "test" },
 ]
@@ -40,7 +40,7 @@ test = [
 ]
 
 [build-system]
-requires = ["setuptools~=83.0", "wheel~=0.47"]
+requires = ["setuptools~=84.0", "wheel~=0.48"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]

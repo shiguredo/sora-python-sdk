@@ -18,6 +18,9 @@
 - [CHANGE] Ubuntu 22.04 LTS のサポートを終了する
   - 対応プラットフォームを Ubuntu 26.04 LTS / Ubuntu 24.04 LTS に変更する
   - @voluntas
+- [CHANGE] macOS Ventura 14 のサポートを終了する
+  - 対応プラットフォームを macOS Tahoe 26 / macOS Sequoia 15 に変更する
+  - @voluntas
 - [CHANGE] `SoraTransformableFrame` のタイポ `mine_type` を `mime_type` に修正する
   - 誤った公開プロパティ名をそのまま残さない
   - `mine_type` は削除する（alias は残さない）
@@ -33,29 +36,29 @@
 - [ADD] Ubuntu 26.04 LTS のビルド・リリース・E2E テストに対応する
   - manylinux_2_39 の wheel を生成する
   - @voluntas
-- [UPDATE] wheel を `~=0.47` に上げる
-  - `0.47.x` を許可する
+- [ADD] macOS Tahoe 26 のビルド・リリース・E2E テストに対応する
   - @voluntas
-- [UPDATE] setuptools を `~=83.0` に上げる
-  - `83.0.x` を許可する
+- [UPDATE] wheel を `~=0.48` に上げる
   - @voluntas
-- [UPDATE] nanobind を `2.13.0` に上げる
-  - ABI バージョン 19 から 20 への変更に伴い拡張の再コンパイルが必要
-  - オブジェクト構築、ndarray 交換、関数呼び出し、安定 ABI ディスパッチのパフォーマンスが大幅に改善
-  - 数多くのクラッシュ、未定義動作、メモリリーク、free-threading のデータ競合が修正
+- [UPDATE] setuptools を `~=84.0` に上げる
+  - @voluntas
+- [UPDATE] nanobind を `3.0.0` に上げる
+  - ABI バージョン 21 から 22 への変更に伴い拡張の再コンパイルが必要
+  - split mode の導入と、内紐化文字列キー・iteration・sequence 構築の高速化などのパフォーマンス改善が含まれる
+  - `NB_TRAMPOLINE` の Size 引数が不要になる、`nb::none()` がラッパー型になる、`nb::gil_scoped_acquire` に `is_valid()` が追加されるなどの API 変更がある
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.2.1` に上げる
+  - WEBRTC_BUILD_VERSION を `m150.7871.3.1` に上げる
   - BOOST_VERSION を `1.92.0` に上げる
   - CMAKE_VERSION を `4.4.2` に上げる
+  - Sora C++ SDK で切断タイマーが null の websocket に対して `Cancel()` を呼び SIGSEGV でクラッシュする問題の修正が含まれる
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.2.0-canary.25` に上げる
-  - WEBRTC_BUILD_VERSION を `m150.7871.3.1` に上げる
-  - CMAKE_VERSION を `4.3.2` に上げる
-  - BOOST_VERSION を `1.91.0` に上げる
+- [UPDATE] `Sora::ConvertJsonValue` の文字列判定・取得を `nb::isinstance<nb::str>` / `nb::cast<std::string>` ベースに統一する
+  - Python 側 `str` の内部バッファに依存しない `std::string` への明示コピーに変更する
   - @voluntas
 - [UPDATE] libwebrtc m148 で `ArrayView` が C++ 標準の `std::span` に移行したため追従する
   - 参考リンク : libwebrtc の `ArrayView` 移行の issue
-    - https://issuetracker.google.com/issues/439801349
+    - <https://issuetracker.google.com/issues/439801349>
   - @torikizi
 - [FIX] `disconnect()` 後の `send_data_channel()` / `get_stats()` が `conn_` の null チェック無しで SEGV する問題を修正する
   - `Connect()` と同じ `RuntimeError` を返すようにする
@@ -156,9 +159,6 @@
   - @voluntas
 - [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP", "PT"]` を追加する
   - @voluntas
-- [UPDATE] `Sora::ConvertJsonValue` の文字列判定・取得を `nb::isinstance<nb::str>` / `nb::cast<std::string>` ベースに統一する
-  - Python 側 `str` の内部バッファに依存しない `std::string` への明示コピーに変更する
-  - @voluntas
 - [UPDATE] e2e-test の schedule 実行を無効化する
   - @voluntas
 
@@ -190,7 +190,7 @@
   - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.6.1` に上げる
-  - LIBWEBRTC_VERSIONを `m143.7499.1.0` に上げる
+  - LIBWEBRTC_VERSION を `m143.7499.1.0` に上げる
   - CMAKE_VERSION を `4.1.2` に上げる
   - @voluntas @melpon @torikizi
 - [UPDATE] `simulcast_request_rid` をシグナリング接続時に指定できるようにする

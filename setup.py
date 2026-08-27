@@ -26,14 +26,14 @@ def run_setup(build_platform, target_platform):
         plat = "manylinux_2_17_aarch64.manylinux2014_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "armv8":
         if target_platform.osver == "24.04":
-            plat = "manylinux_2_35_aarch64"
+            plat = "manylinux_2_38_aarch64"
         if target_platform.osver == "26.04":
-            plat = "manylinux_2_39_aarch64"
+            plat = "manylinux_2_43_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "x86_64":
         if target_platform.osver == "24.04":
-            plat = "manylinux_2_35_x86_64"
+            plat = "manylinux_2_38_x86_64"
         if target_platform.osver == "26.04":
-            plat = "manylinux_2_39_x86_64"
+            plat = "manylinux_2_43_x86_64"
     elif target_platform.os == "raspberry-pi-os":
         plat = "manylinux_2_35_aarch64"
         additional_files += ["libcamerac.so"]

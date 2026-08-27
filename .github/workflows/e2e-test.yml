@@ -51,6 +51,9 @@ jobs:
           - name: macos-15_arm64
             runs_on: macos-15
             wheel_platform: macos-15_arm64
+          - name: macos-26_arm64
+            runs_on: macos-26
+            wheel_platform: macos-26_arm64
           - name: windows-2025_x86_64
             runs_on: windows-2025
             wheel_platform: windows-2025_x86_64
@@ -133,7 +136,7 @@ jobs:
       # macOS self-hosted runner: Homebrew セットアップ
       - name: Setup Homebrew
         if: ${{ runner.environment == 'self-hosted' && contains(matrix.platform.runs_on.labels, 'macOS') }}
-        uses: Homebrew/actions/setup-homebrew@5037c6f1012cc5ea0b9f03fedbaf9955ed9e51e0 # master
+        uses: Homebrew/actions/setup-homebrew@8f3d1ec8a696b3b9d9a6c3696b6c73033cab69e4 # 2026.08.14.1
 
       # macOS self-hosted runner: GitHub CLI インストール
       - name: Install GitHub CLI
@@ -141,7 +144,7 @@ jobs:
         run: brew install gh
 
       # UV のセットアップ
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           # Python バージョンの設定

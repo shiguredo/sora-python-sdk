@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-23
-- Updated: 2026-07-17
+- Updated: 2026-08-19
 - Completed: -
 - Model: Opus 4.7
 - Branch: feature/change-jetson-platform
@@ -10,37 +10,39 @@
 
 ## 目的
 
-0003 で導入する `sysroot_builder.py`、JSON 設定、共通 AArch64 toolchain を拡張し、ubuntu-24.04 x86_64 host から NVIDIA Jetson JetPack 6 向け wheel を Python 3.12 / 3.13 / 3.14 で生成できるようにする。
+0074 で導入した `sysroot_builder.py` と `sysroot/*.json` 構成を拡張し、ubuntu-24.04 x86_64 host から NVIDIA Jetson JetPack 6 向け wheel を Python 3.12 / 3.13 / 3.14 で生成できるようにする。
 
-対象は Jetson Linux r36.4 系、Ubuntu 22.04 rootfs、T234 の Jetson Orin family とする。sysroot の system Python 3.10 を extension ABI の決定に使わず、scikit-build-core の build environment が提供する対象 CPython の header と ABI suffix を使う。これにより、現行の `python3.10` / `cpython-310` hardcode と `requires-python >= 3.12` の矛盾を解消する。
+対象は Jetson Linux r36.4 系、Ubuntu 22.04 rootfs、T234 の Jetson Orin family とする。sysroot の system Python 3.10 を extension ABI の決定に使わず、`run.py` が build 実行時の host CPython から解決する `Python_INCLUDE_DIR` / `Python_EXECUTABLE` と `NB_SUFFIX` を使う。これにより、現行の `python3.10` / `cpython-310` hardcode と `requires-python >= 3.12` の矛盾を解消する。
 
 distribution 名は PyPI の通常 Ubuntu arm64 wheel と衝突しない `sora_sdk_jetson`、import package 名は既存どおり `sora_sdk` とする。本 issue は同一 run 内で入力を固定し、解決した package と digest の由来を追跡可能な Jetson wheel build artifact の生成までを扱う。repository の将来時点まで同一解決結果を再現する APT lock は本 issue の対象外とする。実機での runtime library 解決は 0045、GitHub Release での配布と E2E release gate は後続 issue で扱う。
 
+なお、通常 Ubuntu arm64 wheel は 26.04 / 24.04 のみをサポートし 22.04 は `CHANGES.md` でサポート終了済みだが、本 issue の `ubuntu-22.04_armv8_jetson` という target 名は Jetson Linux r36.4 の Jammy rootfs 由来の互換対象名であり、通常 Ubuntu wheel の対応終了とは矛盾しない。
+
 ## 優先度根拠
 
-- README は JetPack 6 を対応 platform としているが、現行 `develop` の通常 build target には Jetson がなく、残存する cross 設定は Python 3.10 固定で package metadata と矛盾する。
-- 0001 は scikit-build-core への移行を完了したが、legacy `run.py` / `buildbase.py` と到達不能な Jetson multistrap 分岐はまだ残存している。本 issue で新構成へ明示的に追加しない限り Jetson build は復活しない。
-- Jetson は通常の PyPI release matrix とは分離して配布しており、0003 / 0004 の一般 Linux arm64 対応より利用範囲が限定されるため Medium とする。
+- README は JetPack 6 を対応 platform としているが、通常 build target には Jetson がなく、残存する Jetson multistrap 分岐は Python 3.10 固定で package metadata と矛盾する。
+- 0001 / 0003 / 0004 は実装せず closed され、0074 が `run.py` + `sysroot_builder.py` 経路で Ubuntu arm64 / Raspberry Pi OS の sysroot 置換を完了した。Jetson は 0074 で multistrap 経路のまま残置されたため、本 issue で新構成へ明示的に追加しない限り Jetson build は復元しない。
+- Jetson は通常の PyPI release matrix とは分離して配布しており、0074 の一般 Linux arm64 対応より利用範囲が限定されるため Medium とする。
 
 ## 前提
 
-- 0001、0003、0004、0070 の完了後に実装する。0004 が追加する repository pinning と検証付き distribution metadata 書き換えを再利用する。
-- 対象 `DEPS` version について、Sora C++ SDK release が `ubuntu-22.04_armv8_jetson` の Sora / Boost asset を公開済みであることを外部前提とする。asset が無い現行 version のまま generic arm64 asset へ代替せず、0043 の実装を開始しない。
-- 0003 の `sysroot_builder.py` と `cmake/toolchains/linux-aarch64-cross.cmake` を再利用し、Jetson 専用 builder、`sysroot.py`、`install_rootfs.sh` は追加しない。
+- 0074 の完了後に実装する。0074 が追加した `sysroot_builder.py` の `RepositoryConfig.pin_priority` / `install_sysroot()` / `sysroot/*.json` / `sysroot/keyrings/` 構成と、検証付き distribution metadata 書き換えの手順を再利用する。0001 / 0003 / 0004 は scikit-build-core 前提で実装せず closed されており、0070 の依存 archive SHA-256 検証も `fetch_deps.cmake` が存在しないため未実装である。本 issue は `buildbase.py` が提供する archive 取得の既存経路をそのまま使い、archive の SHA-256 検証は別途導入されるまで対象外とする。
+- 対象 `DEPS` version について、Sora C++ SDK release が `ubuntu-22.04_armv8_jetson` の Sora / Boost asset を公開済みであることを外部前提とする。asset が無い現行 version のまま generic arm64 asset へ代替せず、0043 の実装を開始しない（本 check は PR 作成前に `DEPS` の `SORA_CPP_SDK_VERSION` に対応する GitHub Release asset の存在で確認する）。
+- 0074 の `sysroot_builder.py` を再利用し、Jetson 専用 builder、`sysroot.py`、`install_rootfs.sh`、`cmake/toolchains/` は追加しない。cross compile の compiler / sysroot 設定は 0074 と同様に `run.py` の `CMAKE_SYSROOT` / `CMAKE_FIND_ROOT_PATH` 直指定を維持する。
 - NVIDIA の APT package は、同じ Jetson Linux release の root filesystem と組み合わせることを前提に提供される。Ubuntu Jammy と NVIDIA r36.4 の repository を混在させるのではなく、1 つの Jetson r36.4 sysroot を構成する入力として一体で固定・検証する。
 - 0045 は本 issue の wheel を JetPack 6 実機へ install したときの runtime library search path を扱う。本 issue では link 時に必要な library と SONAME の解決までを検証する。
 
 ## 現状
 
-現行の legacy Jetson 分岐には次の問題がある。
+現行の Jetson 分岐には次の問題がある。
 
 - `run.py` が `Python_ROOT_DIR=<rootfs>/usr/include/python3.10` と `NB_SUFFIX=.cpython-310-aarch64-linux-gnu.so` を固定する一方、`pyproject.toml` は Python 3.12 以上だけを対応対象としている。
-- `multistrap/ubuntu-22.04_armv8_jetson.conf` は `noauth=true` を使い、Ubuntu Ports を HTTP で参照し、NVIDIA repository の `signed-by` を指定しない。
+- `multistrap/ubuntu-22.04_armv8_jetson.conf` は `noauth=true` を使い、Ubuntu Ports を HTTP で参照し、NVIDIA repository の `signed-by` を指定しない（現行 conf は `r36.3` / `libstdc++-10-dev` / `nvidia-jetpack` の旧構成のまま）。
 - `nvidia-jetpack`、`nvidia-l4t-camera`、`nvidia-l4t-multimedia` の解決 version と署名鍵が build manifest に残らない。
 - `buildbase.py` の `libnvbuf_fdmap.so` compatibility symlink 補正は legacy `install_rootfs()` 内だけにあり、生成形式の契約として test されていない。
-- Jetson target は通常 branch の `AVAILABLE_TARGETS` に存在せず、古い分岐だけが残る dead code になっている。
+- `run.py` の `AVAILABLE_TARGETS` には `ubuntu-22.04_armv8_jetson` が残るが、`install_deps()` は Jetson だけ旧 `multistrap` + `install_rootfs()` 経路のままであり、0074 で導入した署名検証付き sysroot 経路へ移行していない。
 
-0001 は scikit-build-core への移行を完了したが、legacy `run.py` / `buildbase.py` / `multistrap/ubuntu-22.04_armv8_jetson.conf` はまだ残存している。本 issue はそれらを移植せず、0003 後の scikit-build-core / sysroot builder 構成へ Jetson support を新規追加する。
+0074 は Ubuntu arm64 と Raspberry Pi OS の rootfs 生成を `sysroot_builder.py` へ移行したが、Jetson の `multistrap/ubuntu-22.04_armv8_jetson.conf` と `run.py` / `buildbase.py` の Jetson rootfs 分岐は意図的に残置された。本 issue はそれらを移植せず、0074 後の `run.py` + `sysroot_builder.py` 構成へ Jetson support を新規追加する。
 
 ## 設計方針
 
@@ -53,11 +55,11 @@ build target は既存契約との互換性のため `ubuntu-22.04_armv8_jetson`
 | `SORA_SDK_TARGET` / dependency root | `ubuntu-22.04_armv8_jetson` |
 | `TARGET_OS` | `jetson` |
 | sysroot config | `sysroot/ubuntu-22.04_armv8_jetson.json` |
-| sysroot destination | `${DEPS_ROOT}/ubuntu-22.04_armv8_jetson/rootfs` |
+| sysroot destination | `_install/ubuntu-22.04_armv8_jetson/rootfs` |
 | WebRTC archive platform | `ubuntu-22.04_armv8` |
 | Sora / Boost archive platform | `ubuntu-22.04_armv8_jetson` |
 
-`fetch_deps.cmake` の platform allowlist、`_sora_fetch_sysroot()` dispatch、target OS mapping を Jetson target へ拡張する。WebRTC だけは legacy Jetson 契約どおり generic Ubuntu 22.04 arm64 asset と 0070 の既存 digest key を使う。Sora / Boost は Jetson 専用 asset だけを許可し、generic arm64 asset へ fallback しない。
+`run.py` の `AVAILABLE_TARGETS` / `install_deps()` dispatch と `buildbase.py` の archive 取得 dispatch、CMake の `TARGET_OS` 判定を Jetson target へ拡張する。WebRTC だけは legacy Jetson 契約どおり generic Ubuntu 22.04 arm64 asset を使う。Sora / Boost は Jetson 専用 asset だけを許可し、generic arm64 asset へ fallback しない。archive の SHA-256 検証は 0070 が未実装のため、本 issue では既存の `buildbase.py` 経路の download 検証をそのまま用いる。
 
 - target OS: `jetson`
 - architecture: `aarch64`
@@ -75,7 +77,7 @@ Jetson Linux r36.4 の point release は APT が取得した `.deb` filename と
 
 ### sysroot JSON と署名検証
 
-`sysroot/ubuntu-22.04_armv8_jetson.json` を追加する。基本 schema は 0003、repository pinning は 0004 の拡張を再利用する。
+`sysroot/ubuntu-22.04_armv8_jetson.json` を追加する。基本 schema は 0074 の `sysroot/ubuntu-24.04_armv8.json` / `sysroot/raspberry-pi-os_armv8.json`、repository pinning は 0074 の `pin_priority` 拡張を再利用する。
 
 repository は次の 3 件だけを許可する。
 
@@ -112,28 +114,26 @@ package 集合は legacy conf の意図を維持し、次を明示する。
 
 APT の download 前に `--print-uris` と package metadata から package 数 / download bytes / installed size を集計し、job summary と build manifest に記録する。runner の開始時空き容量から download、展開、一時領域を差し引いて 5 GiB 以上残らない見積もりなら download 前に失敗する。workflow timeout は 60 分とし、超過時に timeout を延ばす前に package 集合を再調査する。
 
-APT が architecture 不一致、未署名 package、release metadata の不一致、依存解決不能を報告した場合は失敗させる。package script、chroot、QEMU、root 権限は使わず、0003 と同じく download した `.deb` を `dpkg-deb --extract` する。
+APT が architecture 不一致、未署名 package、release metadata の不一致、依存解決不能を報告した場合は失敗させる。package script、chroot、QEMU、root 権限は使わず、0074 と同じく download した `.deb` を `dpkg-deb --extract` する。
 
 ### Jetson 後処理
 
-0003 の汎用 symlink 相対化後に、Jetson sysroot だけ次を検証する。
+0074 の汎用 symlink 相対化後に、Jetson sysroot だけ次を検証する。
 
 - `usr/lib/aarch64-linux-gnu/tegra` または `usr/lib/aarch64-linux-gnu/nvidia` に `libnvbuf_fdmap.so.1.0.0` がある。
 - 同じ directory の `libnvbuf_fdmap.so` が無い場合だけ、basename を target とする相対 symlink を作る。
 - link が既に存在する場合は、sysroot 内の実在する同一 SONAME を指すことを検証する。異なる target、dangling link、通常 file の上書きは拒否する。
 
-この後処理は config 名を文字列比較する場当たり的な分岐にせず、JSON の allowlist 済み `postprocess` 値 `jetson-r36` で選択する。未知値は config validation で拒否し、fingerprint に含める。生成形式が変わるため、0003 の `MANIFEST_VERSION` を更新し、Ubuntu / Raspberry Pi OS の後処理が変わらない regression test を追加する。
+この後処理は config 名を文字列比較する場当たり的な分岐にせず、JSON の allowlist 済み `postprocess` 値 `jetson-r36` で選択する。未知値は config validation で拒否し、fingerprint に含める。生成形式が変わるため、`sysroot_builder.py` の `MANIFEST_VERSION` を `1` から `2` へ更新し、Ubuntu / Raspberry Pi OS の後処理が変わらない regression test を追加する。
 
 ### Python ABI と CMake
 
-sysroot の `/usr/include/python3.10` は使用しない。cross build 用 Python 情報は 0003 の host Python discovery 契約をそのまま使う。
+sysroot の `/usr/include/python3.10` は使用しない。cross build 用 Python 情報は 0074 と同様に `run.py` の host Python 解決契約をそのまま使う。
 
-- scikit-build-core の isolated build environment にある `Python_EXECUTABLE`、`Python_INCLUDE_DIR`、nanobind CMake directory を host program / build input として解決する。
-- `Python_ROOT_DIR` を Jetson sysroot へ向けない。
-- 全 Python override で `inherit.cmake.define = "append"` と `cmake.define.TARGET_OS = "jetson"` を明示し、0001 の基底値 `ubuntu` を上書きする。
-- Python version ごとに `NB_SUFFIX=.cpython-3XY-aarch64-linux-gnu.so` と `wheel.tags=["cp3XY-cp3XY-linux_aarch64"]` を明示する。
-- `SORA_GEN_PYI=OFF` とし、AArch64 extension を x86_64 host 上で実行しない。
-- 0003 の `type-stubs_python-<version>` artifact を manifest / SHA-256 検証後に同梱する。
+- `pypath.get_python_include_dir()` / `pypath.get_python_version()` と `sys.executable` を host program / build input として解決する。
+- `Python_ROOT_DIR` を Jetson sysroot へ向けない（`run.py` の Jetson 分岐から `Python_ROOT_DIR=.../python3.10` の hardcode を削除する）。
+- `run.py` の `install_deps()` と CMake 呼び出しで `TARGET_OS=jetson` を明示し、`NB_SUFFIX` を Python version から動的に `".cpython-{XY}-aarch64-linux-gnu.so"` として組み立てる（例: 3.12 → `312`）。
+- `SORA_GEN_PYI` は cross では host 上で実行できないため付与せず、型情報は 0074 と同様に native `build_pyi` で生成した `sora_sdk/py.typed` / `sora_sdk/sora_sdk_ext.pyi` を manifest / SHA-256 検証後に `src/sora_sdk/` へ配置して同梱する。
 
 `CMakeLists.txt` の Jetson 分岐は NVIDIA library の link directory を sysroot 内の `tegra` / `nvidia` に限定する。どちらか一方しか存在しない場合は存在する directory だけを追加し、両方無い場合は configure error にする。host の `/usr/lib/aarch64-linux-gnu` や `LD_LIBRARY_PATH` へ fallback しない。
 
@@ -141,41 +141,35 @@ sysroot の `/usr/include/python3.10` は使用しない。cross build 用 Pytho
 
 ### dependency archive の検証
 
-0070 の必須集合へ `SORA_SHA256_UBUNTU_22_04_ARMV8_JETSON` と `BOOST_SHA256_UBUNTU_22_04_ARMV8_JETSON` の 2 key を追加する。WebRTC は既存の `WEBRTC_SHA256_UBUNTU_22_04_ARMV8` を再利用し、重複 key を追加しない。Jetson 専用 Sora / Boost asset のいずれかが存在しない version では generic package を流用せず、本 issue を block して対応 asset の release を待つ。
+0070 は `fetch_deps.cmake` が存在しないため未実装であり、本 issue では `buildbase.py` の既存 archive 取得をそのまま使う。Jetson 用 Sora / Boost は `ubuntu-22.04_armv8_jetson` platform の専用 asset だけを許可し、generic `ubuntu-22.04_armv8` asset へ fallback しない。WebRTC は legacy 契約どおり generic `ubuntu-22.04_armv8` asset を使う。Jetson 専用 Sora / Boost asset のいずれかが存在しない `DEPS` version では generic package を流用せず、本 issue を block して対応 asset の release を待つ。将来 0070 相当の SHA-256 検証が導入された際は、`SORA_SHA256_UBUNTU_22_04_ARMV8_JETSON` と `BOOST_SHA256_UBUNTU_22_04_ARMV8_JETSON` の 2 key を必須集合へ追加し、WebRTC は既存 key を再利用する。
 
-0071 の cache は正しさの前提にしない。0071 が先に完了している場合も、本 issue では Jetson target を cache 対象へ追加せず、cache 未使用で build する。Jetson の取得時間が問題になる場合は、0043 完了後に 0071 と同じ検証契約で別の performance issue を起票する。
+0071 の cache は正しさの前提にしない。0071 は 2026-07-23 に closed 済みで `sysroot/*.json` / `sysroot_builder.py` を cache key に含む。本 issue では Jetson JSON 追加に合わせて cache key を更新するが、Jetson の取得時間が問題になる場合は、0043 完了後に別 issue で cache 戦略を再検討する。
 
 ### CI
 
-`.github/workflows/build-jetson.yml` を `workflow_call` / `workflow_dispatch` の両方に対応させて追加し、通常 push / pull request の必須 matrix には含めない。
+`.github/workflows/build-jetson.yml` を `workflow_dispatch`（必要に応じて `workflow_call`）で追加し、通常 push / pull request の必須 matrix には含めない。0073 の trusted dispatcher が存在する場合は本 workflow を dispatcher から呼ぶ形を優先し、PR 内の workflow 改変で self-hosted runner を直接起動できない境界を維持する。ログ / エラーは英語、コメント / test 説明は日本語とする。
 
-型情報 producer は `scripts/build_pyi_ci.py`、Jetson build は `scripts/build_jetson_ci.py` の明示 CLI に集約し、workflow YAML に同じ shell 手順を複製しない。前者は source root、Python version、artifact staging directory、後者は source root、output root、Python version、型情報 artifact / manifest、artifact staging directory を引数に取る。`build-jetson.yml` と 0073 の trusted dispatcher は両 CLI を同じ checkout 済み source SHA から順に呼ぶ。ログ / エラーは英語、コメント / test 説明は日本語とする。
+先行する `build_pyi` job は既存 `.github/workflows/build.yml` の `build_pyi` と同じ手順で ubuntu-24.04 x86_64 上で Python 3.12 / 3.13 / 3.14 の型情報 artifact `sora_sdk_3.12` / `sora_sdk_3.13` / `sora_sdk_3.14` を生成する。本 workflow 内で再実装する場合は `uv run python run.py build ubuntu-24.04_x86_64` + `.pyi` / `py.typed` 抽出の同一手順を用い、同一 workflow run / source SHA に 3 artifact を生成する。Jetson build job は `needs: [build_pyi]` で開始し、3 artifact の存在と SHA を検証する。
 
-両 script は top-level に `JETSON_CI_CONTRACT = {...}` という literal assignment を厳密に 1 件持つ。contract は schema version、script kind `build-pyi` / `build-jetson`、CLI argument の名前 / 型 / required、output manifest schema version だけを含み、値は Python literal とする。import や関数呼び出しを必要とする式、unknown key、重複 assignment は許可しない。0073 は script を実行せず `ast` / `ast.literal_eval` でこの declaration を検査する。
+Jetson build は 1 つの ubuntu-24.04 x86_64 job 内で Python 3.12、3.13、3.14 を順次 build し、workspace と sysroot を共有する。ABI ごとの matrix job には分割しない。「同一 job」の契約は Jetson cross build 3 ABI に適用し、先行する native `build_pyi` job とは分離する。1 つの sysroot を 3 ABI で再利用することで、同一 fingerprint / package 集合での再現性を担保する。
 
-先行する `build_pyi` job は 0003 と同じ native ubuntu-24.04 x86_64 build を Python 3.12 / 3.13 / 3.14 で行い、同じ workflow run / source SHA に `type-stubs_python-3.12` / `type-stubs_python-3.13` / `type-stubs_python-3.14` を生成する。Jetson build job は `needs: [build_pyi]` で開始し、3 artifact の manifest / SHA-256 を検証する。standalone dispatch と 0073 trusted dispatcher の direct CLI 経路の両方で producer を省略しない。
+Jetson build loop の開始前に、0074 の契約を使って `pyproject.toml` の distribution 名を `sora_sdk` から `sora_sdk_jetson` へ 1 回だけ検証付きで変更する。変更前の値が 1 件、変更後の値が 1 件であることを確認する。各 ABI の build 前は変更後の値が 1 件であることだけを再検証し、再置換しない（0074 の Raspberry Pi OS と同じ検証手順）。
 
-Jetson build は 1 つの ubuntu-24.04 x86_64 job 内で Python 3.12、3.13、3.14 を順次 build し、workspace と sysroot を共有する。ABI ごとの matrix job には分割しない。「同一 job」の契約は Jetson cross build 3 ABI に適用し、先行する native `build_pyi` job とは分離する。
+ABI ごとに loop 内で次を行う（0074 の `build_ubuntu` と同じ `run.py` 経路を用い、scikit-build-core の `uv build --python` 形式は使わない）。
 
-Jetson build loop の開始前に、0004 の契約を使って distribution 名を `sora_sdk` から `sora_sdk_jetson` へ 1 回だけ検証付きで変更する。変更前の値が 1 件、変更後の値が 1 件であることを確認する。各 ABI の build 前は変更後の値が 1 件であることだけを再検証し、再置換しない。
+1. 対応 `sora_sdk_<version>` artifact の `py.typed` / `sora_sdk_ext.pyi` を SHA-256 検証後に `src/sora_sdk/` へ配置する。前 ABI の file が残っていれば除去してから配置し、配置後の file SHA-256 が artifact と一致することを確認する。
+2. 対応 Python version の `uv` toolchain で `SORA_SDK_TARGET=ubuntu-22.04_armv8_jetson uv run python run.py build ubuntu-22.04_armv8_jetson` と `uv build` を実行する（`uv build --out-dir` ではなく `dist/` 固定。ABI ごとに `dist/` を空にしてから build し、生成物が 1 件だけであることを確認してから staging へ退避する）。
+3. 各 build 直後に wheel filename / extension suffix / `METADATA` / `WHEEL` が指定 ABI と `sora_sdk_jetson` に一致することを検証する。次 ABI の build 前に `_build` と `dist` / `src/sora_sdk/*.so` が前 ABI の混入無しであることを確認する。
 
-ABI ごとに空の出力 directory を作り、次の形式で interpreter と出力先を明示する。
-
-```
-SORA_SDK_TARGET=ubuntu-22.04_armv8_jetson uv build --wheel --python <3.12|3.13|3.14> --out-dir <ABI 固有 directory>
-```
-
-各 build の直後に wheel が 1 件だけであること、filename / extension suffix / `METADATA` / `WHEEL` が指定 ABI と `sora_sdk_jetson` に一致することを検証してから artifact staging directory へ移す。次 ABI の build 前に build-dir と出力 directory の target / ABI が一致し、前 ABI の wheel が混入していないことを確認する。生成物は次の完全名で ABI ごとに分離する。
-
-ABI loop の各回で、対応する `type-stubs_python-<version>` の manifest / file SHA-256 を再検証する。前 ABI の `.pyi` / `py.typed` を staging source から除去してから対象 ABI の 2 file を `src/sora_sdk/` へ配置し、wheel 内 file の SHA-256 が型情報 manifest と一致することを確認する。Jetson build manifest に型情報 artifact 名、manifest SHA-256、`.pyi` / `py.typed` の SHA-256 を記録する。
+生成物は次の完全名で ABI ごとに分離する。
 
 - `jetson-build-python-3.12`
 - `jetson-build-python-3.13`
 - `jetson-build-python-3.14`
 
-各 artifact は wheel 1 件と `jetson-build-manifest.json` 1 件だけを含む。0043 は `sysroot_builder.py` の manifest schema を拡張し、正規化済み package 一覧へ package 名、epoch を含む exact version、architecture、`.deb` filename / SHA-256、origin URL / suite を記録する。
+各 artifact は wheel 1 件と `jetson-build-manifest.json` 1 件だけを含む。本 issue で `sysroot_builder.py` の manifest に正規化済み package 一覧（package 名、epoch を含む exact version、architecture、`.deb` filename / SHA-256、origin URL / suite）を追加し、fingerprint 対象も拡張する。旧 sysroot は `MANIFEST_VERSION=1` のまま拒否される。
 
-build manifest は source commit SHA、workflow run ID、Python version / ABI、wheel filename / size / SHA-256、0070 の WebRTC / Sora / Boost digest、sysroot manifest filename / SHA-256 / fingerprint、NVIDIA keyring digest、基準 `nvidia-l4t-core` exact version、正規化済み package 一覧、package 集合 digest、package 数、download bytes、installed size を持つ。sysroot manifest 自体を配布 artifact に含めず、後続が必要とする非機密 metadata を build manifest へ複製する。3 artifact の sysroot fingerprint、sysroot manifest SHA-256、package 集合 digest、`nvidia-l4t-core` exact version が完全一致しなければ upload 前に失敗する。
+build manifest は source commit SHA、workflow run ID、Python version / ABI、wheel filename / size / SHA-256、WebRTC / Sora / Boost の archive 入手元（URL と `DEPS` version、将来 SHA-256 検証が入れば digest も含む）、sysroot manifest filename / SHA-256 / fingerprint、NVIDIA keyring digest、基準 `nvidia-l4t-core` exact version、正規化済み package 一覧、package 集合 digest、package 数、download bytes、installed size を持つ。sysroot manifest 自体を配布 artifact に含めず、後続が必要とする非機密 metadata を build manifest へ複製する。3 artifact の sysroot fingerprint、sysroot manifest SHA-256、package 集合 digest、`nvidia-l4t-core` exact version が完全一致しなければ upload 前に失敗する。
 
 次を機械検証する。
 
@@ -189,14 +183,13 @@ build manifest は source commit SHA、workflow run ID、Python version / ABI、
 - sysroot manifest に config fingerprint、keyring digest、APT が解決した全 `.deb` filename がある。
 - `nvidia-l4t-core` と全 `nvidia-l4t-*` package が同じ exact r36.4 point release であり、別 minor / point release が混入しない。
 - `libnvbuf_fdmap.so` compatibility link と target が sysroot 内で完結する。
-- 3 ABI の build manifest が同じ source SHA、dependency digest、sysroot fingerprint、sysroot manifest SHA-256、package 集合 digest、基準 `nvidia-l4t-core` exact version を持つ。
-- standalone / 0073 direct CLI の両経路で、同一 run / source SHA の 3 ABI 型情報 artifact が生成・検証される。
+- 3 ABI の build manifest が同じ source SHA、sysroot fingerprint、sysroot manifest SHA-256、package 集合 digest、基準 `nvidia-l4t-core` exact version を持つ。
 
-cross wheel は x86_64 host へ install せず、pytest や import を実行しない。実機 import は 0045 の acceptance test とする。
+cross wheel は x86_64 host へ install せず、pytest や import を実行しない。実機 import は 0045 の acceptance test とする。0073 が存在する場合の `workflow_call` 経路でも同一検証を通す。
 
 ## テスト
 
-`tests/test_sysroot_builder.py` に、network、mock、stub を使わず次を追加する。
+`tests/sysroot_builder/test_sysroot_builder.py` に、network、mock、stub を使わず次を追加する。現行 0074 の unit test は `pytest --confcutdir=tests/sysroot_builder` で実行し、親 `tests/conftest.py` の `sora_sdk` import を回避する運用を維持する。
 
 - `postprocess` の省略、`jetson-r36`、未知値の validation と fingerprint 差分。
 - temporary sysroot fixture に対する `libnvbuf_fdmap.so` link の作成、正しい既存 link の再利用、誤 target / dangling link / 通常 file の拒否。
@@ -211,23 +204,23 @@ parser / manifest test は local metadata と小さな実 `.deb` fixture を使�
 
 ## 完了条件
 
-- `sysroot.py` や Jetson 専用 builder を追加せず、0003 の `sysroot_builder.py` と共通 AArch64 toolchain を再利用している。
+- `sysroot.py` や Jetson 専用 builder、`cmake/toolchains/` を追加せず、0074 の `sysroot_builder.py` を再利用している。
 - Jetson JSON が Jammy / NVIDIA r36.4 common / t234 の HTTPS repository と `signed_by` を使用し、署名検証を迂回する option が無い。
 - NVIDIA keyring 内容が検証されて sysroot fingerprint に含まれる。解決済み package version / `.deb` SHA-256 は正規化 package 一覧と package 集合 digest に記録・検証される。
 - Python 3.10 hardcode がなく、Python 3.12 / 3.13 / 3.14 ごとに ABI と wheel tag が一致する。
 - `sora_sdk_jetson` wheel 3 件が生成され、AArch64 ELF、型情報、dependency、host contamination の検査を通る。
 - `nvidia-jetpack` meta-package を sysroot へ展開せず、必要 package の closure、容量、download bytes が build manifest に記録される。
 - Jetson 固有 symlink 後処理が安全かつ再現可能で、他 platform の sysroot 生成を変えない。
-- WebRTC は generic Ubuntu 22.04 arm64、Sora / Boost は Jetson 専用 asset という dependency mapping を維持し、0070 の SHA-256 必須検証付きで cache 無しに build できる。
+- WebRTC は generic Ubuntu 22.04 arm64、Sora / Boost は Jetson 専用 asset という dependency mapping を維持し、0070 相当の SHA-256 検証が未導入の間は既存 `buildbase.py` の取得検証のまま build できる。
 - 0045 の実機検証に渡せる build artifact と manifest が保存される。
 - legacy Jetson multistrap conf、`run.py` / `buildbase.py` の Jetson rootfs 分岐、`python3.10` / `cpython-310` hardcode が復活しない。
 
 ## 解決方法
 
 1. NVIDIA r36.4 repository key と package metadata を一次資料・実 repository で確認する。
-2. Jetson JSON、vendored keyring、`postprocess=jetson-r36` とテストを追加する。
-3. scikit-build-core override、CMake link directory、distribution 名変更を追加する。
-4. 0070 の許可済み `(dependency, archive platform)` pair 集合へ Jetson 用 Sora / Boost の 2 pair を追加する。
+2. Jetson JSON、vendored keyring、`postprocess=jetson-r36` とテストを追加する。（同時に `multistrap/ubuntu-22.04_armv8_jetson.conf` を削除する）。
+3. `run.py` の Jetson 分岐と `CMakeLists.txt` の link directory 限定、distribution 名変更を追加する。
+4. `buildbase.py` の Jetson 専用 Sora / Boost 取得分岐を追加し、generic fallback を禁止する（将来 0070 相当の SHA-256 検証が入れば allowlist へ Jetson 2 pair を追加する）。
 5. Python 3.12 / 3.13 / 3.14 の手動 CI build と artifact 検査を行う。
 6. `CHANGES.md` の `## develop` に次を追加する。
 
@@ -238,7 +231,7 @@ parser / manifest test は local metadata と小さな実 `.deb` fixture を使�
 
 ## ロールバック
 
-0045 / 0072 が未実装なら、Jetson target、JSON、keyring、scikit-build-core override、手動 CI job を 1 つの squash commit として revert する。0045 / 0072 が実装済みなら新規 Jetson release を停止し、0072、0045、0043 の逆順で revert または workflow を無効化する。0003 / 0004 の共通 builder、toolchain、通常 Linux arm64 build は巻き戻さない。公開済み artifact は利用停止を明示し、修正版が実機検証を通るまで再配布しない。
+0045 / 0072 が未実装なら、Jetson target、JSON、keyring、`run.py` の Jetson 対応、手動 CI job を 1 つの squash commit として revert する。0045 / 0072 が実装済みなら新規 Jetson release を停止し、0072、0045、0043 の逆順で revert または workflow を無効化する。0074 の共通 builder、通常 Linux arm64 build は巻き戻さない。公開済み artifact は利用停止を明示し、修正版が実機検証を通るまで再配布しない。
 
 ## 参考資料
 
