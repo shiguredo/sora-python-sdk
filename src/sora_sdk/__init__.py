@@ -3,7 +3,7 @@ from .sora_sdk_ext import *  # noqa: F401,F403
 # インストールされたパッケージの場合は importlib.metadata から取得
 # 開発環境の場合は VERSION ファイルから取得
 try:
-    from importlib.metadata import version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError, version
 
     try:
         __version__ = version("sora_sdk")
@@ -15,7 +15,7 @@ try:
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "VERSION"
         )
         if os.path.exists(_version_file):
-            with open(_version_file, "r") as f:
+            with open(_version_file) as f:
                 __version__ = f.read().strip()
         else:
             __version__ = "unknown"
@@ -31,7 +31,7 @@ sink はそれぞれ track が必要で参照を保持する必要がある
 """
 
 
-class SoraAudioSink(SoraAudioSinkImpl):
+class SoraAudioSink(SoraAudioSinkImpl):  # noqa: F405
     def __init__(self, track, output_frequency, output_channels):
         super().__init__(track, output_frequency, output_channels)
         self.__track = track
@@ -41,7 +41,7 @@ class SoraAudioSink(SoraAudioSinkImpl):
         del self.__track
 
 
-class SoraAudioStreamSink(SoraAudioStreamSinkImpl):
+class SoraAudioStreamSink(SoraAudioStreamSinkImpl):  # noqa: F405
     def __init__(self, track, output_frequency, output_channels):
         super().__init__(track, output_frequency, output_channels)
         self.__track = track
@@ -51,7 +51,7 @@ class SoraAudioStreamSink(SoraAudioStreamSinkImpl):
         del self.__track
 
 
-class SoraVideoSink(SoraVideoSinkImpl):
+class SoraVideoSink(SoraVideoSinkImpl):  # noqa: F405
     def __init__(self, track):
         super().__init__(track)
         self.__track = track

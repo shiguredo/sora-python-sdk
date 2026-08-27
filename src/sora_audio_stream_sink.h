@@ -24,7 +24,7 @@ class SoraAudioFrameImpl {
  public:
   virtual ~SoraAudioFrameImpl() {}
   virtual const int16_t* RawData() const = 0;
-  virtual std::vector<uint16_t> VectorData() const = 0;
+  virtual std::vector<int16_t> VectorData() const = 0;
   virtual size_t samples_per_channel() const = 0;
   virtual size_t num_channels() const = 0;
   virtual int sample_rate_hz() const = 0;
@@ -41,7 +41,7 @@ class SoraAudioFrameDefaultImpl : public SoraAudioFrameImpl {
   SoraAudioFrameDefaultImpl(std::unique_ptr<webrtc::AudioFrame> audio_frame);
 
   const int16_t* RawData() const override;
-  std::vector<uint16_t> VectorData() const override;
+  std::vector<int16_t> VectorData() const override;
   size_t samples_per_channel() const override;
   size_t num_channels() const override;
   int sample_rate_hz() const override;
@@ -59,21 +59,21 @@ class SoraAudioFrameDefaultImpl : public SoraAudioFrameImpl {
 class SoraAudioFrameVectorImpl : public SoraAudioFrameImpl {
  public:
   SoraAudioFrameVectorImpl(
-      std::vector<uint16_t> vector,
+      std::vector<int16_t> vector,
       size_t samples_per_channel,
       size_t num_channels,
       int sample_rate_hz,
       std::optional<int64_t> absolute_capture_timestamp_ms);
 
   const int16_t* RawData() const override;
-  std::vector<uint16_t> VectorData() const override;
+  std::vector<int16_t> VectorData() const override;
   size_t samples_per_channel() const override;
   size_t num_channels() const override;
   int sample_rate_hz() const override;
   std::optional<int64_t> absolute_capture_timestamp_ms() const override;
 
  private:
-  std::vector<uint16_t> vector_;
+  std::vector<int16_t> vector_;
   size_t samples_per_channel_;
   size_t num_channels_;
   int sample_rate_hz_;
@@ -94,7 +94,7 @@ class SoraAudioFrame {
   // SoraAudioStreamSinkImpl から生成する際のコンストラクタ
   SoraAudioFrame(std::unique_ptr<webrtc::AudioFrame> audio_frame);
   // pickle した状態から __setstate__ で戻す際に使うコンストラクタ
-  SoraAudioFrame(std::vector<uint16_t> vector,
+  SoraAudioFrame(std::vector<int16_t> vector,
                  size_t samples_per_channel,
                  size_t num_channels,
                  int sample_rate_hz,
@@ -114,13 +114,13 @@ class SoraAudioFrame {
    */
   const int16_t* RawData() const;
   /**
-   * SoraAudioFrame 内の音声データを std::vector<uint16_t> で返します。
+   * SoraAudioFrame 内の音声データを std::vector<int16_t> で返します。
    * 
    * Python SDK 内で使う関数で pickle 化するために使います。
    * 
-   * @return 音声データの std::vector<uint16_t>
+   * @return 音声データの std::vector<int16_t>
    */
-  std::vector<uint16_t> VectorData() const;
+  std::vector<int16_t> VectorData() const;
   /**
    * チャネルあたりのサンプル数を返します。
    * 

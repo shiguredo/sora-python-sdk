@@ -1,6 +1,7 @@
 #ifndef DISPOSE_LISTENER_H_
 #define DISPOSE_LISTENER_H_
 
+#include <atomic>
 #include <vector>
 
 // nonobind
@@ -64,10 +65,17 @@ class DisposePublisher {
   }
   /**
    * Subscriber に破棄されたことを通知する際に呼ぶ関数です。
-   * 
+   *
+   * disposed_ フラグにより subscriber 通知は最大 1 回に抑止される。
+   * 2 回目以降の呼び出しは subscriber 通知ループをスキップする。
+   * exchange(true) を使うことで check-then-set の TOCTOU 競合を排除する。
+   *
    * TODO(tnoho): 役割的に protected にして良いのでは。
    */
   virtual void Disposed() {
+    if (disposed_.exchange(true)) {
+      return;
+    }
     for (DisposeSubscriber* subscriber : subscribers_) {
       subscriber->PublisherDisposed();
     }
@@ -75,6 +83,8 @@ class DisposePublisher {
 
  private:
   std::vector<DisposeSubscriber*> subscribers_;
+  // subscriber 通知の重複防止フラグ。free-threading 対応を見据えた防御的選択
+  std::atomic<bool> disposed_{false};
 };
 
 class CountedPublisher : public DisposePublisher, public nb::intrusive_base {

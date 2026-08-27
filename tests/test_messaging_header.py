@@ -37,8 +37,8 @@ def test_messaging_header(settings):
     assert messaging_sendonly.switched
     assert messaging_recvonly.switched
 
-    message1 = "spam".encode("utf-8")
-    message2 = "はむ".encode("utf-8")
+    message1 = b"spam"
+    message2 = "はむ".encode()
 
     messaging_sendonly.send_message(messaging_label, message1)
     messaging_sendonly.send_message(messaging_label, message2)

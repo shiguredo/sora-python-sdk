@@ -1,11 +1,13 @@
 #include "sora_audio_sink.h"
 
 #include <chrono>
+#include <span>
 
 // WebRTC
 #include <api/audio/channel_layout.h>
 #include <modules/audio_mixer/audio_frame_manipulator.h>
 
+#include "gil.h"
 #include "sora_call.h"
 
 SoraAudioSinkImpl::SoraAudioSinkImpl(nb::ref<SoraTrackInterface> track,
@@ -38,7 +40,14 @@ void SoraAudioSinkImpl::Disposed() {
   if (track_ && track_->GetTrack()) {
     webrtc::AudioTrackInterface* audio_track =
         static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
-    audio_track->RemoveSink(this);
+    // 音声スレッドは sink のロックを保持して callback を呼ぶため、
+    // RemoveSink() の待機中に GIL を保持すると callback 側と相互待ちになる。
+    if (PyGILState_Check()) {
+      gil_scoped_release release;
+      audio_track->RemoveSink(this);
+    } else {
+      audio_track->RemoveSink(this);
+    }
   }
   track_ = nullptr;
 }
@@ -102,6 +111,8 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
                                    int sample_rate,
                                    size_t number_of_channels,
                                    size_t number_of_frames) {
+  gil_scoped_acquire acq;
+  size_t callback_number_of_channels = 0;
   {
     std::unique_lock<std::mutex> lock(buffer_mtx_);
 
@@ -115,8 +126,10 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
       }
     }
 
+    callback_number_of_channels = number_of_channels_;
+
     const size_t num_elements = number_of_channels_ * number_of_frames;
-    buffer_.AppendData(num_elements, [&](webrtc::ArrayView<int16_t> buf) {
+    buffer_.AppendData(num_elements, [&](std::span<int16_t> buf) {
       memcpy(buf.data(), audio_data, num_elements * sizeof(int16_t));
       return num_elements;
     });
@@ -125,7 +138,7 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
   }
 
   if (on_data_) {
-    size_t shape[2] = {number_of_frames, number_of_channels_};
+    size_t shape[2] = {number_of_frames, callback_number_of_channels};
     auto data = nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>(
         (void*)audio_data, 2, shape, nb::handle());
     /* まだ使ったことながない。現状 Python 側で on_frame と同じ感覚でコールバックの外に値を持ち出すと落ちるはず。 */
@@ -134,29 +147,38 @@ void SoraAudioSinkImpl::AppendData(const int16_t* audio_data,
 }
 
 nb::tuple SoraAudioSinkImpl::Read(size_t frames, float timeout) {
-  std::unique_lock<std::mutex> lock(buffer_mtx_);
+  // 前提として、Read は呼び出された時点で GIL を保持している。
+  // このまま下の wait_for の待機中もずっと GIL を握り続けると、同一プロセスの
+  // 他の Python スレッドを最大 timeout 秒飢餓させてしまう。
+  // そこで GILMutexLock を使う。これは待機中に GIL と buffer_mtx_ の両方を解放し、
+  // 起床時に両方を取り直すため、待機中も他の Python スレッドが進める (仕組みの
+  // 詳細は gil.h の GILMutexLock のコメントを参照)。
+  GILMutexLock lock(buffer_mtx_);
 
   size_t num_of_samples;
   if (frames > 0) {
     // フレーム数のリクエストがある場合はリクエスト分が貯まるまで待つ
-    if (!buffer_cond_.wait_for(
-            lock,
-            std::chrono::nanoseconds(
-                // Python の流儀に合わせて秒を float で受け取っているので換算
-                (int64_t)((double)timeout * 1000. * 1000. * 1000.)),
-            [&] {
-              return (number_of_channels_ > 0 &&
-                      buffer_.size() >= frames * number_of_channels_) ||
-                     PyErr_CheckSignals() != 0;
-            })) {
-      // タイムアウトで返す
+    bool ready = buffer_cond_.wait_for(
+        lock,
+        std::chrono::nanoseconds(
+            // Python の流儀に合わせて秒を float で受け取っているので換算
+            (int64_t)((double)timeout * 1000. * 1000. * 1000.)),
+        [&] {
+          return (number_of_channels_ > 0 &&
+                  buffer_.size() >= frames * number_of_channels_) ||
+                 PyErr_CheckSignals() != 0;
+        });
+    // 待機を抜けた後にエラー指示子が立っていれば握り潰さず伝播する。待機条件で
+    // 呼んだ PyErr_CheckSignals() は冪等でなく再呼び出しでは検出できないため、冪等な
+    // PyErr_Occurred() で判定する。タイムアウト判定より前に置き取りこぼさないようにする。
+    if (PyErr_Occurred()) {
+      throw nb::python_error();
+    }
+    if (!ready) {
+      // 要求フレーム数が貯まらないままタイムアウトしたので (false, None) を返す
       return nb::make_tuple(false, nb::none());
     }
-    if (PyErr_CheckSignals() != 0) {
-      // Signals で wait を抜けた時は返す
-      return nb::make_tuple(false, nb::none());
-    }
-    // std::condition_variable::wait_for の待機中に number_of_channels_ が更新される可能性があるため、
+    // wait_for の待機中に number_of_channels_ が更新される可能性があるため、
     // 起床後に num_of_samples を計算する必要がある
     num_of_samples = frames * number_of_channels_;
   } else {

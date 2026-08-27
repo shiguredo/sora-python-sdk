@@ -34,11 +34,14 @@ SoraConnection::SoraConnection(CountedPublisher* publisher,
 
 SoraConnection::~SoraConnection() {
   Disconnect();
+  // subscriber 通知は基底クラスの disposed_ フラグで冪等ガード済み。
+  // video_source_ / audio_source_ は nullptr チェックで no-op になる。
+  // conn_ == nullptr 時 (Init 未呼び出し・明示的 disconnect 後) は
+  // Disconnect() が Disposed() を呼ばないため、ここで 1 回呼ぶ必要がある。
   Disposed();
   if (publisher_) {
     publisher_->RemoveSubscriber(this);
   }
-  Disposed();
 }
 
 void SoraConnection::Disposed() {
@@ -75,16 +78,49 @@ void SoraConnection::Disconnect() {
   if (conn_) {
     Disposed();
     conn_->Disconnect();
-    // OnDisconnect が来るまで待つ
+    // OnDisconnect を有限時間待つ。永久 wait だと OnDisconnect が来ない異常時に
+    // Python プロセスが永久ブロックし、Ctrl+C でも抜けられなくなる。
+    // 100ms 間隔で wait_for し、各周回でシグナルを取り込み、上限は 10 秒とする。
     {
+      constexpr auto kDisconnectTimeout = std::chrono::seconds(10);
+      constexpr auto kPollInterval = std::chrono::milliseconds(100);
+      const auto deadline =
+          std::chrono::steady_clock::now() + kDisconnectTimeout;
+
       GILLock lock;
-      on_disconnect_cv_.wait(lock,
-                             [this]() -> bool { return on_disconnected_; });
+      while (!on_disconnected_) {
+        const auto now = std::chrono::steady_clock::now();
+        if (now >= deadline) {
+          RTC_LOG(LS_ERROR)
+              << "Timed out waiting for OnDisconnect after Disconnect()";
+          break;
+        }
+
+        auto remaining = deadline - now;
+        auto slice = std::chrono::steady_clock::duration(kPollInterval);
+        if (remaining < slice) {
+          slice = remaining;
+        }
+
+        on_disconnect_cv_.wait_for(
+            lock, slice, [this]() -> bool { return on_disconnected_; });
+
+        // wait 中の Ctrl+C を取り込む。PyErr_CheckSignals は冪等でないため、
+        // 後段の throw 判定は PyErr_Occurred を使う。
+        if (PyErr_CheckSignals() != 0) {
+          break;
+        }
+      }
     }
-    // Connection から生成したものは、ここで消す
+    // Connection から生成したものは、ここで消す。
+    // タイムアウトやシグナルで抜けた場合もクリーンアップは必ず実行する。
     audio_sender_ = nullptr;
     video_sender_ = nullptr;
     conn_ = nullptr;
+
+    if (PyErr_Occurred()) {
+      throw nb::python_error();
+    }
   }
 }
 
@@ -138,10 +174,24 @@ void SoraConnection::SetVideoSenderFrameTransformer(
 
 bool SoraConnection::SendDataChannel(const std::string& label,
                                      nb::bytes& data) {
+  // Disconnect() 後は conn_ が nullptr になる。ガード無しで呼ぶと
+  // nullptr dereference で SEGV するため、Connect() と同様に例外へ落とす。
+  if (conn_ == nullptr) {
+    throw std::runtime_error(
+        "Already disconnected. Please create another Sora instance to "
+        "establish a new connection.");
+  }
   return conn_->SendDataChannel(label, std::string(data.c_str(), data.size()));
 }
 
 std::string SoraConnection::GetStats() {
+  // Disconnect() 後は conn_ が nullptr になる。pc の null チェックだけでは
+  // conn_ 自体の参照で SEGV するため、Connect() と同様に例外へ落とす。
+  if (conn_ == nullptr) {
+    throw std::runtime_error(
+        "Already disconnected. Please create another Sora instance to "
+        "establish a new connection.");
+  }
   auto pc = conn_->GetPeerConnection();
   if (pc == nullptr) {
     return "[]";
@@ -170,6 +220,9 @@ void SoraConnection::OnSetOffer(std::string offer) {
       if (audio_sender_frame_transformer_) {
         audio_sender_->SetFrameTransformer(audio_sender_frame_transformer_);
       }
+    } else {
+      RTC_LOG(LS_ERROR) << "Failed to add audio track: "
+                        << audio_result.error().message();
     }
   }
   if (video_source_) {
@@ -181,6 +234,9 @@ void SoraConnection::OnSetOffer(std::string offer) {
       if (video_sender_frame_transformer_) {
         video_sender_->SetFrameTransformer(video_sender_frame_transformer_);
       }
+    } else {
+      RTC_LOG(LS_ERROR) << "Failed to add video track: "
+                        << video_result.error().message();
     }
   }
   if (on_set_offer_) {
@@ -206,6 +262,7 @@ void SoraConnection::OnNotify(std::string text) {
 }
 
 void SoraConnection::OnPush(std::string text) {
+  gil_scoped_acquire acq;
   if (on_push_) {
     call_python(on_push_, text);
   }
@@ -252,7 +309,21 @@ void SoraConnection::OnTrack(
     webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   gil_scoped_acquire acq;
   if (on_track_) {
+    // transceiver / receiver が null のまま OnTrack が発火する経路があり得る
+    // （送信専用 transceiver や receiver 未確定のタイミングなど）。
+    // SoraMediaTrack のコンストラクタは receiver->track() を呼ぶため、
+    // ここで弾かないと null ポインタ参照で SIGSEGV になる。
+    // モック禁止かつ Python から OnTrack を注入できないため、
+    // null 分岐の低レベルテストは設けずコード検査とこの再現条件で担保する。
+    if (transceiver == nullptr) {
+      RTC_LOG(LS_WARNING) << "OnTrack received null transceiver";
+      return;
+    }
     auto receiver = transceiver->receiver();
+    if (receiver == nullptr) {
+      RTC_LOG(LS_WARNING) << "OnTrack received transceiver with null receiver";
+      return;
+    }
     nb::ref<SoraMediaTrack> track = new SoraMediaTrack(this, receiver);
     call_python(on_track_, track);
   }

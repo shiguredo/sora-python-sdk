@@ -1,5 +1,8 @@
 #include "sora_audio_source.h"
 
+#include <stdexcept>
+#include <string>
+
 SoraAudioSourceInterface::SoraAudioSourceInterface(size_t channels,
                                                    int sample_rate)
     : channels_(channels),
@@ -8,6 +11,15 @@ SoraAudioSourceInterface::SoraAudioSourceInterface(size_t channels,
       buffer_size_(sample_rate / 100 * channels),
       buffer_used_(0),
       last_timestamp_(0) {
+  // 10 ms バッファ (sample_rate / 100) が 0 になると後続の送出で未定義動作になる
+  if (sample_rate < 100) {
+    throw std::invalid_argument("sample_rate must be at least 100 Hz, got " +
+                                std::to_string(sample_rate));
+  }
+  if (channels < 1) {
+    throw std::invalid_argument("channels must be at least 1, got " +
+                                std::to_string(channels));
+  }
   buffer_ = new int16_t[buffer_size_];
 }
 
@@ -90,17 +102,26 @@ bool SoraAudioSourceInterface::remote() const {
 }
 
 void SoraAudioSourceInterface::SetVolume(double volume) {
-  for (auto* observer : audio_observers_) {
+  // OnSetVolume 中に Register / Unregister が再入してもデッドロックしないよう、
+  // ロック下では observer リストのコピーだけ取り、ロック外でコールバックする
+  std::list<AudioObserver*> observers;
+  {
+    webrtc::MutexLock lock(&observer_lock_);
+    observers = audio_observers_;
+  }
+  for (auto* observer : observers) {
     observer->OnSetVolume(volume);
   }
 }
 
 void SoraAudioSourceInterface::RegisterAudioObserver(AudioObserver* observer) {
+  webrtc::MutexLock lock(&observer_lock_);
   audio_observers_.push_back(observer);
 }
 
 void SoraAudioSourceInterface::UnregisterAudioObserver(
     AudioObserver* observer) {
+  webrtc::MutexLock lock(&observer_lock_);
   audio_observers_.remove(observer);
 }
 
@@ -146,6 +167,10 @@ void SoraAudioSource::OnData(const int16_t* data,
 }
 
 void SoraAudioSource::OnData(const int16_t* data, size_t samples_per_channel) {
+  // 他オーバーロードと同様、publisher 破棄後 (track_ == nullptr) は no-op にする
+  if (!track_) {
+    return;
+  }
   source_->OnData(data, samples_per_channel, std::nullopt);
 }
 

@@ -10,6 +10,7 @@
 #include <modules/audio_processing/agc2/rnn_vad/common.h>
 #include <modules/audio_processing/include/audio_frame_view.h>
 
+#include "gil.h"
 #include "sora_call.h"
 
 SoraAudioFrameDefaultImpl::SoraAudioFrameDefaultImpl(
@@ -20,8 +21,8 @@ const int16_t* SoraAudioFrameDefaultImpl::RawData() const {
   return audio_frame_->data();
 }
 
-std::vector<uint16_t> SoraAudioFrameDefaultImpl::VectorData() const {
-  std::vector<uint16_t> vector(
+std::vector<int16_t> SoraAudioFrameDefaultImpl::VectorData() const {
+  std::vector<int16_t> vector(
       audio_frame_->data(),
       audio_frame_->data() +
           audio_frame_->samples_per_channel() * audio_frame_->num_channels());
@@ -52,7 +53,7 @@ SoraAudioFrameDefaultImpl::absolute_capture_timestamp_ms() const {
 }
 
 SoraAudioFrameVectorImpl::SoraAudioFrameVectorImpl(
-    std::vector<uint16_t> vector,
+    std::vector<int16_t> vector,
     size_t samples_per_channel,
     size_t num_channels,
     int sample_rate_hz,
@@ -64,10 +65,10 @@ SoraAudioFrameVectorImpl::SoraAudioFrameVectorImpl(
       absolute_capture_timestamp_ms_(absolute_capture_timestamp_ms) {}
 
 const int16_t* SoraAudioFrameVectorImpl::RawData() const {
-  return (const int16_t*)vector_.data();
+  return vector_.data();
 }
 
-std::vector<uint16_t> SoraAudioFrameVectorImpl::VectorData() const {
+std::vector<int16_t> SoraAudioFrameVectorImpl::VectorData() const {
   return vector_;
 }
 
@@ -94,7 +95,7 @@ SoraAudioFrame::SoraAudioFrame(
 }
 
 SoraAudioFrame::SoraAudioFrame(
-    std::vector<uint16_t> vector,
+    std::vector<int16_t> vector,
     size_t samples_per_channel,
     size_t num_channels,
     int sample_rate_hz,
@@ -109,15 +110,18 @@ nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>> SoraAudioFrame::Data()
   // Data はまだ vector の時は返せてない
   size_t shape[2] = {static_cast<size_t>(samples_per_channel()),
                      static_cast<size_t>(num_channels())};
-  return nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>(
-      (int16_t*)RawData(), 2, shape, nb::handle());
+  // RawData() の実体は this が所有する。owner を空にすると Python 側でフレームが
+  // GC されたあとに ndarray だけが残り、解放済みメモリを参照して UAF になる。
+  nb::object owner = nb::find(*this);
+  return nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>>((int16_t*)RawData(),
+                                                            2, shape, owner);
 }
 
 const int16_t* SoraAudioFrame::RawData() const {
-  return (const int16_t*)impl_->RawData();
+  return impl_->RawData();
 }
 
-std::vector<uint16_t> SoraAudioFrame::VectorData() const {
+std::vector<int16_t> SoraAudioFrame::VectorData() const {
   return impl_->VectorData();
 }
 
@@ -164,7 +168,14 @@ void SoraAudioStreamSinkImpl::Disposed() {
   if (track_ && track_->GetTrack()) {
     webrtc::AudioTrackInterface* audio_track =
         static_cast<webrtc::AudioTrackInterface*>(track_->GetTrack().get());
-    audio_track->RemoveSink(this);
+    // 音声スレッドは sink のロックを保持して callback を呼ぶため、
+    // RemoveSink() の待機中に GIL を保持すると callback 側と相互待ちになる。
+    if (PyGILState_Check()) {
+      gil_scoped_release release;
+      audio_track->RemoveSink(this);
+    } else {
+      audio_track->RemoveSink(this);
+    }
   }
   track_ = nullptr;
 }
@@ -206,6 +217,7 @@ void SoraAudioStreamSinkImpl::OnData(
     webrtc::RemixFrame(output_channels_, tuned_frame.get());
   }
 
+  gil_scoped_acquire acq;
   call_python(on_frame_,
               std::make_shared<SoraAudioFrame>(std::move(tuned_frame)));
 }

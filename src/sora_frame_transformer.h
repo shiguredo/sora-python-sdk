@@ -1,6 +1,10 @@
 #ifndef SORA_TRANSFORMER_H_
 #define SORA_TRANSFORMER_H_
 
+// Python.h を他ヘッダより先に読み込むため、gil.h を先頭に置く
+#include "gil.h"
+
+#include <span>
 #include <unordered_map>
 
 // nonobind
@@ -21,7 +25,7 @@ class SoraTransformFrameCallback {
 
 /**
  * webrtc::FrameTransformerInterface を継承する SoraFrameTransformerInterface です。
- * 
+ *
  * webrtc::FrameTransformerInterface は rtc::scoped_refptr なので、
  * nanobind で直接のハンドリングが難しいので用意しました。
  */
@@ -95,10 +99,10 @@ class SoraFrameTransformerInterface : public webrtc::FrameTransformerInterface {
 /**
  * Transform で渡される webrtc::TransformableFrameInterface を格納する SoraTransformableFrame です。
  * エンコード済みのフレームデータを格納します。
- * 
+ *
  * コピーすることはできません。
  * enqueue に渡した時点で所有権を失うため利用できなくなるので注意してください。
- * 
+ *
  * Audio, Video で共通する部分をここに実装して、それぞれで継承して利用します。
  */
 class SoraTransformableFrame {
@@ -115,7 +119,7 @@ class SoraTransformableFrame {
 
   /**
    * フレームデータを取得する関数です。
-   * 
+   *
    * @return NumPy の配列 numpy.ndarray のフレームデータ
    */
   const nb::ndarray<nb::numpy, const uint8_t, nb::shape<-1>> GetData() const {
@@ -123,19 +127,21 @@ class SoraTransformableFrame {
 
     // pybind11 なら memoryview があるが、 nanobind にはなく ndarray に const をつけて ReadOnly にする
     size_t shape[1] = {static_cast<size_t>(view.size())};
-    return nb::ndarray<nb::numpy, const uint8_t, nb::shape<-1>>(
-        view.data(), 1, shape, nb::handle());
+    // view.data() は frame_ が所有する。owner を空にすると Python 側でフレームが
+    // GC されたあとに ndarray だけが残り、解放済みメモリを参照して UAF になる。
+    nb::object owner = nb::find(*this);
+    return nb::ndarray<nb::numpy, const uint8_t, nb::shape<-1>>(view.data(), 1,
+                                                                shape, owner);
   }
   /**
    * フレームデータを入れ替える関数です。
-   * 
+   *
    * @param data 入れ替える NumPy の配列 numpy.ndarray のフレームデータ
    */
   void SetData(
       nb::ndarray<const uint8_t, nb::shape<-1>, nb::c_contig, nb::device::cpu>
           data) {
-    frame_->SetData(
-        webrtc::ArrayView<const uint8_t>(data.data(), data.shape(0)));
+    frame_->SetData(std::span<const uint8_t>(data.data(), data.shape(0)));
   }
   const uint8_t GetPayloadType() const { return frame_->GetPayloadType(); }
   const uint32_t GetSsrc() const { return frame_->GetSsrc(); }
@@ -162,7 +168,7 @@ class SoraTransformableFrame {
 
 /**
  * Encoded Transform を行う SoraFrameTransformer です。
- * 
+ *
  * Audio, Video で共通する部分をここに実装して、それぞれで継承して利用します。
  */
 class SoraFrameTransformer : public SoraTransformFrameCallback {
@@ -175,10 +181,10 @@ class SoraFrameTransformer : public SoraTransformFrameCallback {
   void Del() { interface_->ReleaseTransformer(); }
   /**
    * SoraTransformableFrame をストリームに戻す関数です。
-   * 
+   *
    * この関数を呼び出すと SoraTransformableFrame の所有権がライブラリに渡るため、
    * 以後 SoraTransformableFrame を操作することはできません。
-   * 
+   *
    * @param frame on_transform で渡された SoraTransformableFrame
    */
   void Enqueue(std::unique_ptr<SoraTransformableFrame> frame) {
@@ -187,7 +193,7 @@ class SoraFrameTransformer : public SoraTransformFrameCallback {
   void StartShortCircuiting() { interface_->StartShortCircuiting(); }
   /**
    * SoraFrameTransformerInterface を取り出すため Python SDK 内で使う関数です。
-   * 
+   *
    * @return webrtc::scoped_refptr<SoraFrameTransformerInterface>
    */
   const webrtc::scoped_refptr<SoraFrameTransformerInterface>
@@ -201,7 +207,7 @@ class SoraFrameTransformer : public SoraTransformFrameCallback {
 
 /**
  * エンコード済みの Audio フレームデータを格納します。
- * 
+ *
  * 様々なパラメータが取得できますが optional になっているのもは、
  * Direction によっては実装されていない、
  * もしくは RTP Extension など他の依存から None を返す場合があります。
@@ -250,7 +256,7 @@ class SoraTransformableAudioFrame : public SoraTransformableFrame {
 
 /**
  * Audio の Encoded Transform を行う SoraAudioFrameTransformer です。
- * 
+ *
  * on_transform_ コールバックで SoraTransformableAudioFrame を渡してくるので、
  * 必要な処理を行った上で enqueue に返してください。
  */
@@ -260,6 +266,8 @@ class SoraAudioFrameTransformer : public SoraFrameTransformer {
 
   void Transform(std::unique_ptr<webrtc::TransformableFrameInterface>
                      transformable_frame) override {
+    // libwebrtc のワーカースレッドから呼ばれるため、Python callback の前に GIL を取る
+    gil_scoped_acquire acq;
     on_transform_(std::make_unique<SoraTransformableAudioFrame>(
         std::move(transformable_frame)));
   }
@@ -269,7 +277,7 @@ class SoraAudioFrameTransformer : public SoraFrameTransformer {
 
 /**
  * エンコード済みの Video フレームデータを格納します。
- * 
+ *
  * 様々なパラメータが取得できますが optional になっているのもは、
  * Direction によっては実装されていない、
  * もしくは RTP Extension など他の依存から None を返す場合があります。
@@ -317,7 +325,7 @@ class SoraTransformableVideoFrame : public SoraTransformableFrame {
 
 /**
  * Video の Encoded Transform を行う SoraAudioFrameTransformer です。
- * 
+ *
  * on_transform_ コールバックで SoraTransformableVideoFrame を渡してくるので、
  * 必要な処理を行った上で enqueue に返してください。
  */
@@ -327,6 +335,8 @@ class SoraVideoFrameTransformer : public SoraFrameTransformer {
 
   void Transform(std::unique_ptr<webrtc::TransformableFrameInterface>
                      transformable_frame) override {
+    // libwebrtc のワーカースレッドから呼ばれるため、Python callback の前に GIL を取る
+    gil_scoped_acquire acq;
     on_transform_(std::make_unique<SoraTransformableVideoFrame>(
         std::move(transformable_frame)));
   }

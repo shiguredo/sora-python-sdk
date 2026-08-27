@@ -49,7 +49,7 @@ def test_sendonly_recvonly_audio(settings):
 
 
 @pytest.mark.parametrize(
-    "video_codec_type, encoder_implementation, decoder_implementation",
+    ("video_codec_type", "encoder_implementation", "decoder_implementation"),
     [
         ("VP8", "libvpx", "libvpx"),
         ("VP9", "libvpx", "libvpx"),

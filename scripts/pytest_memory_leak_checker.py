@@ -19,7 +19,6 @@ Exit codes:
 
 import subprocess
 import sys
-import re
 
 
 def run_pytest_and_check_for_leaks(pytest_args):

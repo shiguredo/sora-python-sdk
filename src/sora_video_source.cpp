@@ -21,13 +21,23 @@ SoraVideoSource::SoraVideoSource(
 }
 
 SoraVideoSource::~SoraVideoSource() {
-  if (!finished_) {
-    finished_ = true;
+  // Disposed() 済みでも未呼び出しでも、ここで finished_ を立てて起こす
+  if (!finished_.exchange(true)) {
     queue_cond_.notify_all();
+  }
+  if (thread_) {
     gil_scoped_release release;
     thread_->join();
     thread_ = nullptr;
   }
+}
+
+void SoraVideoSource::Disposed() {
+  // GIL 保持下で join するとデッドロックしうるため、停止シグナルだけ送る
+  if (!finished_.exchange(true)) {
+    queue_cond_.notify_all();
+  }
+  SoraTrackInterface::Disposed();
 }
 
 void SoraVideoSource::OnCaptured(
@@ -49,23 +59,28 @@ void SoraVideoSource::OnCaptured(
     int64_t timestamp_us) {
   int width = ndarray.shape(1);
   int height = ndarray.shape(0);
-  std::unique_ptr<uint8_t> data(new uint8_t[width * height * 3]);
+  std::unique_ptr<uint8_t[]> data(new uint8_t[width * height * 3]);
   memcpy(data.get(), ndarray.data(), width * height * 3);
 
-  if (finished_) {
-    return;
+  {
+    std::lock_guard<std::mutex> lock(queue_mtx_);
+    if (finished_.load()) {
+      return;
+    }
+    queue_.push(
+        std::make_unique<Frame>(std::move(data), width, height, timestamp_us));
   }
-  queue_.push(
-      std::make_unique<Frame>(std::move(data), width, height, timestamp_us));
   queue_cond_.notify_all();
 }
 
 bool SoraVideoSource::SendFrameProcess() {
   std::unique_ptr<Frame> frame;
   {
-    GILLock lock;
-    queue_cond_.wait(lock, [&] { return !queue_.empty() || finished_; });
-    if (finished_) {
+    // ワーカスレッドはループ入場時に GIL を保持している。
+    // GILMutexLock は「GIL → queue_mtx_」の順で取り、待機中は両方解放する。
+    GILMutexLock lock(queue_mtx_);
+    queue_cond_.wait(lock, [&] { return !queue_.empty() || finished_.load(); });
+    if (finished_.load()) {
       return false;
     }
     frame = std::move(queue_.front());

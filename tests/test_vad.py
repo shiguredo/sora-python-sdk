@@ -47,6 +47,8 @@ class VAD:
         self._connected: Event = Event()
         # 終了
         self._disconnected = Event()
+        # 音声フレームを受け取り、VAD の解析が完了したことを通知する
+        self._frame_received: Event = Event()
 
         self._audio_output_frequency: int = 24000
         self._audio_output_channels: int = 1
@@ -112,6 +114,7 @@ class VAD:
             print(f"Voice! voice_probability={voice_probability}")
         else:
             pass
+        self._frame_received.set()
 
     def _on_track(self, track: SoraMediaTrack):
         if track.kind == "audio":
@@ -129,18 +132,29 @@ def test_vad(settings):
         audio=True,
         video=False,
     )
-    sendonly.connect(fake_audio=True)
-
     vad = VAD(settings)
-    vad.connect()
+    sendonly_started = False
+    vad_started = False
+    try:
+        sendonly_started = True
+        sendonly.connect(fake_audio=True)
+        vad_started = True
+        vad.connect()
 
-    time.sleep(5)
+        # on_frame callback が実際に発火し、VAD の解析まで完了することを確認する
+        assert vad._frame_received.wait(30), "音声フレームの callback が発火しなかった"
+        # 接続統計が揃うまで既存の観測時間を確保する
+        time.sleep(5)
 
-    sendonly_stats = sendonly.get_stats()
-    vad_stats = vad.get_stats()
-
-    sendonly.disconnect()
-    vad.disconnect()
+        sendonly_stats = sendonly.get_stats()
+        vad_stats = vad.get_stats()
+    finally:
+        try:
+            if vad_started:
+                vad.disconnect()
+        finally:
+            if sendonly_started:
+                sendonly.disconnect()
 
     # codec が無かったら StopIteration 例外が上がる
     sendonly_codec_stats = next(s for s in sendonly_stats if s.get("type") == "codec")

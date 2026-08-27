@@ -29,7 +29,8 @@ def test_capability(settings):
             has_internal = True
         if engine.name == SoraVideoCodecImplementation.CISCO_OPENH264:
             has_openh264 = True
-    assert has_internal and has_openh264
+    assert has_internal
+    assert has_openh264
 
 
 def test_preference(settings):

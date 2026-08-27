@@ -8,15 +8,16 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     target-branch: develop
+    cooldown:
+      default-days: 7
     allow:
       - dependency-name: "actions/checkout"
       - dependency-name: "astral-sh/setup-uv"
       - dependency-name: "actions/upload-artifact"
       - dependency-name: "actions/download-artifact"
       - dependency-name: "actions/cache"
-      - dependency-name: "rtCamp/action-slack-notify"
       - dependency-name: "pypa/gh-action-pypi-publish"
       - dependency-name: "anthropics/claude-code-action"
       - dependency-name: "shiguredo/github-actions"
@@ -26,5 +27,7 @@ updates:
   - package-ecosystem: uv
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     target-branch: develop
+    cooldown:
+      default-days: 7

@@ -2,6 +2,14 @@
 
 #include "sora.h"
 
+#include "gil.h"
+
+// nanobind
+#include <nanobind/stl/string.h>
+
+// Boost
+#include <boost/preprocessor/stringize.hpp>
+
 // WebRTC
 #include <rtc_base/crypto_random.h>
 
@@ -18,14 +26,39 @@ Sora::Sora(std::optional<std::string> openh264,
 }
 
 Sora::~Sora() {
-  factory_.reset();
-  if (thread_) {
-    ioc_->stop();
-    thread_->join();
-    thread_ = nullptr;
-    ioc_ = nullptr;
-  }
+  // 破棄順序が生死を分けるので変更してはならない。
+  //
+  // 1. まず Disposed() で子 (SoraConnection や各種 source) に破棄を通知し、
+  //    factory_ のリソースを使う活動を止める。
+  // 2. 次に io_context を停止・破棄する。io_context のキューには
+  //    sora::SoraSignaling の shared_ptr を握った handler (例えば
+  //    DoInternalDisconnect のタイマー) が abandoned のまま残っていることがあり、
+  //    ioc_ の破棄で走る ~SoraSignaling は SoraSignalingConfig::pc_factory 経由で
+  //    PeerConnectionFactory のプロキシを解放し、factory_ の signaling スレッドへ
+  //    Marshal する。このとき factory_ が生きている必要がある。
+  // 3. 最後に factory_ を破棄する。
+  //
+  // factory_ を先に破棄すると、手順 2 の Marshal が破棄済みスレッドを触って
+  // use-after-free になり、GC のタイミング次第でプロセスが SEGV する。
   Disposed();
+  // io スレッドの handler や signaling スレッドのタスクは GIL を取得することが
+  // あるため、GIL を保持したまま join や Marshal の完了を待つと相互待ちになる。
+  // スレッドの終了とネイティブリソースの破棄の間だけ GIL を解放する。
+  auto teardown = [this]() {
+    if (thread_) {
+      ioc_->stop();
+      thread_->join();
+      thread_ = nullptr;
+      ioc_ = nullptr;
+    }
+    factory_.reset();
+  };
+  if (PyGILState_Check()) {
+    gil_scoped_release release;
+    teardown();
+  } else {
+    teardown();
+  }
 }
 
 nb::ref<SoraConnection> Sora::CreateConnection(
@@ -185,13 +218,13 @@ nb::ref<SoraConnection> Sora::CreateConnection(
     config.insecure = *insecure;
   }
   if (client_cert) {
-    config.client_cert = client_cert->c_str();
+    config.client_cert = std::string(client_cert->c_str(), client_cert->size());
   }
   if (client_key) {
-    config.client_key = client_key->c_str();
+    config.client_key = std::string(client_key->c_str(), client_key->size());
   }
   if (ca_cert) {
-    config.ca_cert = ca_cert->c_str();
+    config.ca_cert = std::string(ca_cert->c_str(), ca_cert->size());
   }
   if (proxy_url) {
     config.proxy_url = *proxy_url;
@@ -213,7 +246,7 @@ nb::ref<SoraConnection> Sora::CreateConnection(
   } else {
     // 無指定時はデフォルトの User-Agent を設定する
     config.user_agent = std::optional<std::string>(
-        "Mozilla 5.0 (Sora Unity SDK/" BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION) ")");
+        "Mozilla 5.0 (Sora Python SDK/" BOOST_PP_STRINGIZE(SORA_PYTHON_SDK_VERSION) ")");
   }
 
   config.network_manager = factory_->default_network_manager();
@@ -300,12 +333,16 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
     return nullptr;
   } else if (nb::isinstance<bool>(value)) {
     return nb::cast<bool>(value);
-  } else if (nb::isinstance<int>(value)) {
-    return nb::cast<int>(value);
+  } else if (PyLong_Check(value.ptr())) {
+    // nb::isinstance<int> は C++ int に収まらない Python int で false になるため
+    // PyLong_Check で任意精度整数を受け取り、int64_t へ変換する
+    return nb::cast<int64_t>(value);
   } else if (nb::isinstance<float>(value)) {
     return nb::cast<float>(value);
-  } else if (nb::isinstance<const char*>(value)) {
-    return nb::cast<const char*>(value);
+  } else if (nb::isinstance<nb::str>(value)) {
+    // nb::cast<std::string> で明示的にコピーを取る
+    std::string s = nb::cast<std::string>(value);
+    return boost::json::value(boost::json::string(s));
   } else if (nb::isinstance<nb::list>(value)) {
     nb::list nb_list = nb::cast<nb::list>(value);
     boost::json::array json_array;
@@ -316,7 +353,7 @@ boost::json::value Sora::ConvertJsonValue(nb::handle value,
     nb::dict nb_dict = nb::cast<nb::dict>(value);
     boost::json::object json_object;
     for (auto [k, v] : nb_dict)
-      json_object.emplace(nb::cast<const char*>(k),
+      json_object.emplace(nb::cast<std::string>(k),
                           ConvertJsonValue(v, error_message));
     return json_object;
   }

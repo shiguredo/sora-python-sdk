@@ -104,8 +104,8 @@ PyPI 経由ではインストールできません。
 
 直近 2 バージョンの Sora をサポートします
 
+- Sora 2026.1.x
 - Sora 2025.2.x
-- Sora 2025.1.x
 
 ## Python サポートポリシー
 
@@ -119,13 +119,12 @@ PyPI 経由ではインストールできません。
 
 ## 対応プラットフォーム
 
+- Ubuntu 26.04 LTS x86_64
+- Ubuntu 26.04 LTS arm64
 - Ubuntu 24.04 LTS x86_64
 - Ubuntu 24.04 LTS arm64
-- Ubuntu 22.04 LTS x86_64
-- Ubuntu 22.04 LTS arm64
 - macOS Tahoe 26 arm64
 - macOS Sequoia 15 arm64
-- macOS Ventura 14 arm64
 - Windows 11 x86_64
 - Windows Server 2025 x86_64
 - Raspberry Pi OS armv8
@@ -149,13 +148,13 @@ PyPI 経由ではインストールできません。
 - Ubuntu 22.04 LTS arm64 (NVIDIA Jetson JetPack SDK 6)
   - PyPI からではなくパッケージファイルを利用してください
 
-### macOS の対応バージョン
-
-直近の 2 バージョンをサポートします。
-
 ### Ubuntu の対応バージョン
 
 直近の LTS 2 バージョンをサポートします。
+
+### macOS の対応バージョン
+
+直近の 2 バージョンをサポートします。
 
 ## 優先実装
 
@@ -170,6 +169,7 @@ PyPI 経由ではインストールできません。
 
 ### 優先実装が可能な機能一覧
 
+- Ubuntu 22.04 対応
 - Ubuntu 22.04 arm64 (NVIDIA Jetson JetPack SDK 6.1)
 
 ## サポートについて
@@ -193,9 +193,9 @@ Discord へお願いします。
 Apache License 2.0
 
 ```text
-Copyright 2023-2025, tnoho (Original Author)
-Copyright 2023-2025, Wandbox LLC (Original Author)
-Copyright 2023-2025, Shiguredo Inc.
+Copyright 2023 tnoho (Original Author)
+Copyright 2023 Wandbox LLC (Original Author)
+Copyright 2023 Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

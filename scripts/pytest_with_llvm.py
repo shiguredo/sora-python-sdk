@@ -21,7 +21,7 @@ def test(debugger, command, result, internal_dict):
         state = process.GetState()
 
         if state == lldb.eStateExited:
-            exit_status = process.GetExitStatus()
+            _ = process.GetExitStatus()
             # debugger.HandleCommand(f"exit {exit_status}")
             # sys.exit(exit_status)
             debugger.HandleCommand("exit 0")

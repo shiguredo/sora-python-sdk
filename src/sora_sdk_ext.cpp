@@ -238,8 +238,8 @@ int connection_tp_traverse(PyObject* self, visitproc visit, void* arg) {
   }
 
   if (conn->on_signaling_message_) {
-    nb::object on_disconnect = nb::find(conn->on_signaling_message_);
-    Py_VISIT(on_disconnect.ptr());
+    nb::object on_signaling_message = nb::find(conn->on_signaling_message_);
+    Py_VISIT(on_signaling_message.ptr());
   }
 
   if (conn->on_notify_) {
@@ -293,6 +293,7 @@ int connection_tp_clear(PyObject* self) {
   conn->on_notify_ = nullptr;
   conn->on_push_ = nullptr;
   conn->on_message_ = nullptr;
+  conn->on_rpc_ = nullptr;
   conn->on_switched_ = nullptr;
   conn->on_track_ = nullptr;
   conn->on_data_channel_ = nullptr;
@@ -458,7 +459,7 @@ NB_MODULE(sora_sdk_ext, m) {
            })
       .def("__setstate__",
            [](SoraAudioFrame& frame,
-              const std::tuple<std::vector<uint16_t>, size_t, size_t, int,
+              const std::tuple<std::vector<int16_t>, size_t, size_t, int,
                                std::optional<int64_t>>& state) {
              // picke から戻す際に呼び出されるので、 tuple から SoraAudioFrame に戻します。
              new (&frame) SoraAudioFrame(std::get<0>(state), std::get<1>(state),
@@ -470,7 +471,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_ro("sample_rate_hz", &SoraAudioFrame::sample_rate_hz)
       .def_prop_ro("absolute_capture_timestamp_ms",
                    &SoraAudioFrame::absolute_capture_timestamp_ms)
-      .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference);
+      // reference_internal で self を ndarray の owner にし、フレーム破棄後の UAF を防ぐ
+      .def("data", &SoraAudioFrame::Data, nb::rv_policy::reference_internal);
 
   nb::class_<SoraAudioStreamSinkImpl>(m, "SoraAudioStreamSinkImpl",
                                       nb::type_slots(audio_stream_sink_slots))
@@ -484,7 +486,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("analyze", &SoraVAD::Analyze, "frame"_a);
 
   nb::class_<SoraVideoFrame>(m, "SoraVideoFrame")
-      .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference);
+      // reference_internal で self を ndarray の owner にし、フレーム破棄後の UAF を防ぐ
+      .def("data", &SoraVideoFrame::Data, nb::rv_policy::reference_internal);
 
   nb::class_<SoraVideoSinkImpl>(m, "SoraVideoSinkImpl",
                                 nb::type_slots(video_sink_slots))
@@ -531,7 +534,7 @@ NB_MODULE(sora_sdk_ext, m) {
       .def_prop_rw("rtp_timestamp", &SoraTransformableFrame::GetTimestamp,
                    &SoraTransformableFrame::SetRTPTimestamp)
       .def_prop_ro("direction", &SoraTransformableFrame::GetDirection)
-      .def_prop_ro("mine_type", &SoraTransformableFrame::GetMimeType);
+      .def_prop_ro("mime_type", &SoraTransformableFrame::GetMimeType);
 
   nb::enum_<webrtc::TransformableAudioFrameInterface::FrameType>(
       m, "SoraTransformableAudioFrameType", nb::is_arithmetic())
@@ -744,7 +747,8 @@ NB_MODULE(sora_sdk_ext, m) {
            "video_h265_params"_a = nb::none(),
            "audio_opus_params"_a = nb::none(), "simulcast"_a = nb::none(),
            "spotlight"_a = nb::none(), "spotlight_number"_a = nb::none(),
-           "simulcast_rid"_a = nb::none(), "simulcast_request_rid"_a = nb::none(),
+           "simulcast_rid"_a = nb::none(),
+           "simulcast_request_rid"_a = nb::none(),
            "spotlight_focus_rid"_a = nb::none(),
            "spotlight_unfocus_rid"_a = nb::none(),
            "forwarding_filter"_a = nb::none(),

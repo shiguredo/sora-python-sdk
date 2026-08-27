@@ -11,6 +11,159 @@
 
 ## develop
 
+## 2026.1.0
+
+**リリース日**: 2026-08-27
+
+- [CHANGE] Ubuntu 22.04 LTS のサポートを終了する
+  - 対応プラットフォームを Ubuntu 26.04 LTS / Ubuntu 24.04 LTS に変更する
+  - @voluntas
+- [CHANGE] macOS Sonoma 14 のサポートを終了する
+  - 対応プラットフォームを macOS Tahoe 26 / macOS Sequoia 15 に変更する
+  - @voluntas
+- [CHANGE] `SoraTransformableFrame` のタイポ `mine_type` を `mime_type` に修正する
+  - 誤った公開プロパティ名をそのまま残さない
+  - `mine_type` は削除する（alias は残さない）
+  - @voluntas
+- [CHANGE] Ubuntu arm64 と Raspberry Pi OS の rootfs 生成を multistrap から署名検証付き sysroot builder に切り替える
+  - insecure な `multistrap` / `--no-auth` / `AllowInsecureRepositories` への依存を撤去する
+  - Raspberry Pi OS wheel の動作対象を Trixie 以降に変更する（Bookworm 以前は非対応）
+  - libstdc++ 依存を 14 に引き上げ、`GLIBCXX_3.4.32` 未満の環境を動作対象外とする
+  - wheel の manylinux tag （`manylinux_2_35_aarch64`）は本変更では変更しない
+  - Jetson の rootfs 生成は本変更の対象外とし、既存経路のまま残す
+  - 既存の `_install/<target>/rootfs` を持つローカル環境では、初回 build 前に該当 rootfs と `_install/<target>/rootfs.version` を手動削除する（sysroot builder は由来不明の既存 rootfs を `--force` 無しで拒否する）
+  - @voluntas
+- [ADD] Ubuntu 26.04 LTS のビルド・E2E テストに対応する
+  - PyPI / GitHub Release への公開は Ubuntu 24.04 向け `manylinux_2_38` wheel で賄う
+  - @voluntas
+- [ADD] macOS Tahoe 26 のビルド・リリース・E2E テストに対応する
+  - @voluntas
+- [UPDATE] Ubuntu 24.04 向け wheel の manylinux tag を `manylinux_2_35` から `manylinux_2_38` に上げる
+  - @voluntas
+- [UPDATE] wheel を `~=0.48` に上げる
+  - @voluntas
+- [UPDATE] setuptools を `~=84.0` に上げる
+  - @voluntas
+- [UPDATE] nanobind を `3.0.0` に上げる
+  - ABI バージョン 21 から 22 への変更に伴い拡張の再コンパイルが必要
+  - split mode の導入と、内紐化文字列キー・iteration・sequence 構築の高速化などのパフォーマンス改善が含まれる
+  - `NB_TRAMPOLINE` の Size 引数が不要になる、`nb::none()` がラッパー型になる、`nb::gil_scoped_acquire` に `is_valid()` が追加されるなどの API 変更がある
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2026.2.1` に上げる
+  - WEBRTC_BUILD_VERSION を `m150.7871.3.1` に上げる
+  - BOOST_VERSION を `1.92.0` に上げる
+  - CMAKE_VERSION を `4.4.2` に上げる
+  - Sora C++ SDK で切断タイマーが null の websocket に対して `Cancel()` を呼び SIGSEGV でクラッシュする問題の修正が含まれる
+  - @voluntas
+- [UPDATE] `Sora::ConvertJsonValue` の文字列判定・取得を `nb::isinstance<nb::str>` / `nb::cast<std::string>` ベースに統一する
+  - Python 側 `str` の内部バッファに依存しない `std::string` への明示コピーに変更する
+  - @voluntas
+- [UPDATE] libwebrtc m148 で `ArrayView` が C++ 標準の `std::span` に移行したため追従する
+  - 参考リンク : libwebrtc の `ArrayView` 移行の issue
+    - <https://issuetracker.google.com/issues/439801349>
+  - @torikizi
+- [FIX] `disconnect()` 後の `send_data_channel()` / `get_stats()` が `conn_` の null チェック無しで SEGV する問題を修正する
+  - `Connect()` と同じ `RuntimeError` を返すようにする
+  - @voluntas
+- [FIX] `SoraVideoFrame` / `SoraAudioFrame` / `SoraTransformableFrame` の ndarray が親フレームへの参照を持たず UAF しうる問題を修正する
+  - `data()` / `get_data()` が返す ndarray の owner に親フレームを紐付ける
+  - @voluntas
+- [FIX] `disconnect()` が `OnDisconnect` 待ちで永久ブロックしうる問題を修正する
+  - 最大 10 秒の有限待ちにし、待ち中の `KeyboardInterrupt` でも抜けられるようにする
+  - @voluntas
+- [FIX] `rtc_log()` が `PyFrame_GetCode` の新参照を解放せず参照リークする問題を修正する
+  - 使い終わった `PyCodeObject` を `Py_DECREF` し、Python C-API 呼び出しを GIL 保持下に揃える
+  - @voluntas
+- [FIX] `SoraAudioSource::OnData` の 1 オーバーロードだけ `track_` の null チェックが抜けていた問題を修正する
+  - 他オーバーロードと同様に publisher 破棄後は no-op にする
+  - @voluntas
+- [FIX] `SoraAudioSourceInterface` が不正な `sample_rate` / `channels` を検査せずクラッシュしうる問題を修正する
+  - `sample_rate < 100` または `channels < 1` のとき `ValueError` を返す
+  - @voluntas
+- [FIX] `SoraAudioSourceInterface` の `audio_observers_` がロックなしで操作される問題を修正する
+  - `observer_lock_` で保護し、`SetVolume` はスナップショット後にロック外でコールバックする
+  - @voluntas
+- [FIX] `SoraVideoSource` の `queue_` / `finished_` に明示的な同期が無い問題を修正する
+  - `queue_mtx_` と `std::atomic<bool> finished_` で保護し、待機は `GILMutexLock` を使う
+  - @voluntas
+- [FIX] `SoraVideoSource` に `Disposed` override が無くワーカスレッド停止がデストラクタ依存だった問題を修正する
+  - `Disposed()` で `finished_` を立てて待機解除し、`join` はデストラクタに残す
+  - @voluntas
+- [FIX] `Sora::ConvertJsonValue` が Python 整数を `int` にキャストして int32 範囲超で例外になる問題を修正する
+  - `PyLong_Check` と `nb::cast<int64_t>` で大きな整数を通し、`bool` 分岐は先に維持する
+  - @voluntas
+- [FIX] `Sora` の破棄順序が原因で GC のタイミング次第にプロセスが SIGSEGV でクラッシュしうる問題を修正する
+  - `Sora::~Sora` が `PeerConnectionFactory` を先に破棄した後に io_context を破棄していたため、io_context に残った handler が握る `sora::SoraSignaling` の破棄が破棄済みの signaling スレッドへ Marshal して use-after-free になっていた
+  - 破棄順序を「子への破棄通知 → io_context の停止・破棄 → factory の破棄」に修正する
+  - io スレッドや signaling スレッドとの相互待ちを防ぐため、スレッドの終了待ちの間は GIL を解放する
+  - e2e テストの `test_audio_sink_callbacks` などで flaky に発生していた SEGV クラッシュの原因
+  - @voluntas
+- [FIX] `gil_scoped_acquire` / `gil_scoped_release` が `Py_IsInitialized()` が偽のときに未初期化メンバをデストラクタで読む未定義動作を修正する
+  - メンバをデフォルト初期化し、early return 経路でもデストラクタが確定した値を読むようにする
+  - @voluntas
+- [FIX] `SoraVideoFrame` / `SoraVideoSource` が配列確保メモリを非配列 `unique_ptr` で保持していた未定義動作を修正する
+  - `std::unique_ptr<uint8_t[]>` に直し、破棄時に `delete[]` が呼ばれるようにする
+  - @voluntas
+- [FIX] `SoraConnection::OnTrack` で `transceiver` / `receiver` が null のときに SIGSEGV しうる問題を修正する
+  - `SoraMediaTrack` 構築時の null 参照によるプロセスクラッシュを防ぐ
+  - null 時は警告ログのみ出し Python コールバックは呼ばない
+  - @voluntas
+- [FIX] Encoded Transform の `Transform` が GIL を取得せずに Python を呼び出していた問題を修正する
+  - `SoraAudioFrameTransformer` / `SoraVideoFrameTransformer` の `Transform` を GIL 保持下で実行する
+  - @voluntas
+- [FIX] デフォルト User-Agent が `Sora Unity SDK` になっていたのを `Sora Python SDK` に修正する
+  - `user_agent` 未指定時のコピペ残骸で、Sora サーバ側のクライアント識別が誤っていた
+  - @voluntas
+- [FIX] `SoraConnection::OnPush` が GIL を取得せずに Python コールバックを呼んでいた問題を修正する
+  - GIL 非保持の内部スレッドから Python C API を呼ぶ未定義動作であり、参照カウント競合によるメモリ破壊で `push` 受信時にプロセスが SIGSEGV でクラッシュしうる問題があった
+  - @sile
+- [FIX] 音声コールバックが GIL を取得せずに Python を呼び出していた問題を修正する
+  - `SoraAudioSink` と `SoraAudioStreamSink` の音声コールバックを GIL 保持下で実行する
+  - @voluntas
+- [FIX] `SoraConnection` の `connection_tp_clear` が `on_rpc_` を解放していなかった問題を修正する
+  - `connection_tp_traverse` は `on_rpc_` を `Py_VISIT` で GC に報告しているのに `connection_tp_clear` が解放しておらず、traverse/clear が非対称で CPython の循環 GC の契約に反していた
+  - `on_rpc` ハンドラを含む参照循環を循環 GC が断ち切れず接続オブジェクトのグラフ全体がリークしうる問題があった
+  - @sile
+- [FIX] `SoraAudioSink.read()` が待機中に GIL を解放していなかった問題を修正する
+  - `read()` はデータを待つ間ずっと GIL を保持しており、`read(timeout=T)` がブロックする間、同一プロセスの他の Python スレッドが最大 T 秒間停止していた
+  - @sile
+- [FIX] `SoraAudioSink.read()` がシグナル割り込み時に Python 例外を握り潰していた問題を修正する
+  - メインスレッドで `read()` の待機中にシグナル (Ctrl-C による SIGINT 等) を受け取ると、シグナルハンドラが送出した例外を呼び出し側へ伝播せず握り潰していた
+  - 加えて、シグナルで待機を抜けた際に要求フレーム数に満たないバッファをそのまま読み出し、バッファ外アクセスによってプロセスのクラッシュやメモリ破壊に至りうる問題もあった
+  - いずれもメインスレッドで `read()` を呼んだ場合にのみ発生し、ワーカースレッドなどメインスレッド以外で `read()` を呼ぶ一般的な使い方では影響しない
+  - @sile
+- [FIX] `SoraConnection` のデストラクタで `Disposed()` が最大 3 回呼ばれ subscriber 通知が重複しうる問題を修正する
+  - `DisposePublisher::Disposed()` に `std::atomic<bool> disposed_` による冪等性ガードを追加する
+  - デストラクタ内の重複 `Disposed()` 呼び出しを削除し 1 回に集約する
+  - @voluntas
+- [FIX] `client_cert` / `client_key` / `ca_cert` を `nb::bytes::c_str()` で渡しており NUL バイトで切り詰められる問題を修正する
+  - `std::string(c_str(), size())` でバイト列を忠実に伝搬する
+  - @voluntas
+- [FIX] `SoraAudioFrame` の pickle 経路で `int16_t` を `uint16_t` に詰め替えている型不整合を修正する
+  - `VectorData()` / `__getstate__` / `__setstate__` の全経路を `std::vector<int16_t>` に統一する
+  - pickle の後方互換性は切り捨てる（プロセス内一時データのため）
+  - @voluntas
+- [FIX] `SoraFactory` コンストラクタの `throw std::exception()` をメッセージ付き `std::runtime_error` に置き換える
+  - Python 側で `RuntimeError` として初期化失敗の原因が読み取れるようにする
+  - @voluntas
+- [FIX] `SoraConnection::OnSetOffer` で `AddTrack` 失敗時にエラーを握りつぶしていた問題を修正する
+  - `RTC_LOG(LS_ERROR)` で失敗内容を出力し運用切り分け情報を残す
+  - @voluntas
+- [FIX] `find_package(Threads REQUIRED)` を呼んでいるが `Threads::Threads` をリンクしていなかった問題を修正する
+  - `sora_sdk_ext` に `Threads::Threads` を明示リンクし `Sora::sora` の transitive 依存に左右されないようにする
+  - @voluntas
+
+### misc
+
+- [UPDATE] `canary.py` を `dev.py` にリネームする
+  - @voluntas
+- [UPDATE] Slack 通知を `rtCamp/action-slack-notify` から `shiguredo/github-actions/slack-notify` に切り替える
+  - @voluntas
+- [UPDATE] `pyproject.toml` の `[tool.ruff.lint]` に `extend-select = ["I", "UP", "PT"]` を追加する
+  - @voluntas
+- [UPDATE] e2e-test の schedule 実行を無効化する
+  - @voluntas
+
 ## 2025.5.2
 
 **リリース日**: 2025-12-22
@@ -39,7 +192,7 @@
   - CMP0167: FindBoost モジュールの廃止に対応し、Boost の検索を Config モードに移行
   - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2025.6.1` に上げる
-  - LIBWEBRTC_VERSIONを `m143.7499.1.0` に上げる
+  - LIBWEBRTC_VERSION を `m143.7499.1.0` に上げる
   - CMAKE_VERSION を `4.1.2` に上げる
   - @voluntas @melpon @torikizi
 - [UPDATE] `simulcast_request_rid` をシグナリング接続時に指定できるようにする

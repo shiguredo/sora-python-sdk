@@ -29,23 +29,6 @@ env:
   OPENH264_VERSION: 2.6.0
 
 jobs:
-  # VERSION ファイルからバージョン情報を取得
-  get_sdk_version:
-    runs-on: ubuntu-latest
-    outputs:
-      sdk_version: ${{ steps.version.outputs.sdk_version }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            VERSION
-          sparse-checkout-cone-mode: false
-      - id: version
-        run: |
-          SDK_VERSION=$(cat VERSION)
-          echo "sdk_version=$SDK_VERSION" >> $GITHUB_OUTPUT
-          echo "SDK Version: $SDK_VERSION"
-
   # まず pyi を生成する
   # クロスコンパイル環境だと pyi が生成できないので、
   # １箇所で pyi を生成してアーティファクトにアップロードして、
@@ -61,10 +44,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: |
           sudo apt-get -y install libx11-dev
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -76,7 +59,7 @@ jobs:
           cp src/sora_sdk/py.typed sora_sdk/
           cp src/sora_sdk/sora_sdk_ext.pyi sora_sdk/
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -86,24 +69,24 @@ jobs:
       fail-fast: false
       matrix:
         platform:
+          - name: ubuntu-26.04_x86_64
+            target: ubuntu-26.04_x86_64
+            runs_on: ubuntu-26.04
+            os: ubuntu
+            arch: x86_64
           - name: ubuntu-24.04_x86_64
             target: ubuntu-24.04_x86_64
             runs_on: ubuntu-24.04
             os: ubuntu
             arch: x86_64
-          - name: ubuntu-22.04_x86_64
-            target: ubuntu-22.04_x86_64
-            runs_on: ubuntu-22.04
+          - name: ubuntu-26.04_armv8
+            target: ubuntu-26.04_armv8
+            runs_on: ubuntu-26.04
             os: ubuntu
-            arch: x86_64
+            arch: armv8
           - name: ubuntu-24.04_armv8
             target: ubuntu-24.04_armv8
             runs_on: ubuntu-24.04
-            os: ubuntu
-            arch: armv8
-          - name: ubuntu-22.04_armv8
-            target: ubuntu-22.04_armv8
-            runs_on: ubuntu-22.04
             os: ubuntu
             arch: armv8
           - name: raspberry-pi-os_armv8
@@ -119,8 +102,8 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -139,12 +122,27 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get -y install libx11-dev
+      # armv8 向け cross build で aarch64 の binutils を用意する
       - if: ${{ matrix.platform.arch == 'armv8' }}
         run: |
-          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
-      - uses: astral-sh/setup-uv@v7
+          sudo apt-get -y install binutils-aarch64-linux-gnu
+      # Ubuntu armv8 用の Ubuntu archive keyring を明示 install し、
+      # runner image 変更で pre-install が外れる将来の回帰を防ぐ
+      - if: ${{ matrix.platform.os == 'ubuntu' && matrix.platform.arch == 'armv8' }}
+        run: |
+          sudo apt-get -y install ubuntu-keyring
+          test -f /usr/share/keyrings/ubuntu-archive-keyring.gpg
+      # Raspberry Pi OS 用の vendored keyring は SHA-256 が固定値と一致することを確認する
+      - if: ${{ matrix.platform.name == 'raspberry-pi-os_armv8' }}
+        name: Verify vendored keyrings
+        run: |
+          set -eux
+          cd sysroot/keyrings
+          sha256sum -c <<'EOF'
+          506b815cbb32d9b6066b4a2aa524071e071761e7e7f68c3ac74f3061ba852017  debian-archive-keyring.gpg
+          76603890d82a492175caf17aba68dc73acb1189c9fd58ec0c19145dfa3866d56  raspberrypi-archive-keyring.asc
+          EOF
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -163,69 +161,25 @@ jobs:
         env:
           SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
+      # Raspberry Pi OS 向け sysroot の代表 header と manifest が展開されているか確認する
+      - if: ${{ matrix.platform.name == 'raspberry-pi-os_armv8' }}
+        name: Verify Raspberry Pi OS sysroot contents
+        run: |
+          set -eux
+          root="_install/raspberry-pi-os_armv8/rootfs"
+          test -f "$root/usr/include/aarch64-linux-gnu/sys/stat.h"
+          test -f "$root/usr/include/c++/14/vector"
+          test -f "$root/usr/include/libcamera/libcamera/camera.h"
+          test -f "$root/usr/include/alsa/asoundlib.h"
+          test -f "$root/usr/include/pulse/pulseaudio.h"
+          test -f "$root/usr/include/nss/nss.h"
+          python3 -c "import json; m=json.load(open('$root/.webrtc-build-sysroot.json')); assert len(m['deb_files']) >= 10, m['deb_files']"
+
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
-
-  build_ubuntu_arm:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: ubuntu-24.04_armv8
-            target: ubuntu-24.04_armv8
-            # arm64 でビルド
-            runs_on: ubuntu-24.04-arm
-            os: ubuntu
-            arch: armv8
-          - name: ubuntu-22.04_armv8
-            target: ubuntu-22.04_armv8
-            # arm64 でビルド
-            runs_on: ubuntu-22.04-arm
-            os: ubuntu
-            arch: armv8
-        python_version:
-          - "3.12"
-          - "3.13"
-          - "3.14"
-    needs: [build_pyi]
-    runs-on: ${{ matrix.platform.runs_on }}
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
-        with:
-          name: sora_sdk_${{ matrix.python_version }}
-          path: sora_sdk/
-      - run: |
-          cp sora_sdk/py.typed src/sora_sdk/py.typed
-          cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      # libx11-dev は Ubuntu 24.04 の時に必要になる模様
-      - run: |
-          sudo apt-get update
-          sudo apt-get -y install libx11-dev
-      - run: |
-          sudo apt-get -y install multistrap binutils-aarch64-linux-gnu
-          # multistrap に insecure なリポジトリからの取得を許可する設定を入れる
-          sudo sed -e 's/Apt::Get::AllowUnauthenticated=true/Apt::Get::AllowUnauthenticated=true";\n$config_str .= " -o Acquire::AllowInsecureRepositories=true/' -i /usr/sbin/multistrap
-      # clang-19
-      - name: Install clang-19
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod a+x llvm.sh
-          sudo ./llvm.sh 19
-      - uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: false
-          python-version: ${{ matrix.python_version }}
-      - run: uv sync
-      - run: |
-          uv run python run.py build ${{ matrix.platform.target }}
-          uv build
-        env:
-          SORA_SDK_TARGET: ${{ matrix.platform.target }}
 
   build_macos:
     strategy:
@@ -238,11 +192,11 @@ jobs:
             os: macos
             python_host_platform: "macosx-15.0-arm64"
             archflags: "-arch arm64"
-          - name: macos-14_arm64
+          - name: macos-26_arm64
             target: macos_arm64
-            runs_on: macos-14
+            runs_on: macos-26
             os: macos
-            python_host_platform: "macosx-14.0-arm64"
+            python_host_platform: "macosx-26.0-arm64"
             archflags: "-arch arm64"
         python_version:
           - "3.12"
@@ -252,15 +206,15 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -273,7 +227,7 @@ jobs:
           ARCHFLAGS: ${{ matrix.platform.archflags }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: "dist/"
@@ -294,8 +248,8 @@ jobs:
     runs-on: ${{ matrix.platform.runs_on }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sora_sdk_${{ matrix.python_version }}
           path: sora_sdk/
@@ -303,7 +257,7 @@ jobs:
       - run: |
           cp sora_sdk/py.typed src/sora_sdk/py.typed
           cp sora_sdk/sora_sdk_ext.pyi src/sora_sdk/sora_sdk_ext.pyi
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
           python-version: ${{ matrix.python_version }}
@@ -313,24 +267,10 @@ jobs:
           uv build
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist/
-
-  # slack_notify_succeeded:
-  #   needs: [build_ubuntu, build_ubuntu_arm, build_macos, build_windows]
-  #   runs-on: ubuntu-24.04
-  #   if: success()
-  #   steps:
-  #    - name: Slack Notification
-  #      uses: rtCamp/action-slack-notify@v2
-  #      env:
-  #        SLACK_CHANNEL: sora-python-sdk
-  #        SLACK_COLOR: good
-  #        SLACK_TITLE: SUCCEEDED
-  #        SLACK_ICON_EMOJI: ":star-struck:"
-  #        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
   # E2E テストの実行
   e2e_test:
@@ -340,20 +280,20 @@ jobs:
       from_build: true
     secrets: inherit
 
-  slack_notify_failed:
-    needs:
-      [build_ubuntu, build_ubuntu_arm, build_macos, build_windows, e2e_test]
-    runs-on: ubuntu-24.04
-    if: failure()
+  slack_notify:
+    needs: [build_ubuntu, build_macos, build_windows]
+    runs-on: ubuntu-slim
+    if: ${{ !cancelled() }}
     steps:
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main # main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: sora-python-sdk
+          notify_mode: failure_and_fixed
         env:
-          SLACK_CHANNEL: sora-python-sdk
-          SLACK_COLOR: danger
-          SLACK_TITLE: "FAILED"
-          SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          GH_TOKEN: ${{ github.token }}
 
   publish_wheel:
     if: contains(github.ref, 'tags/202')
@@ -367,10 +307,10 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - name: ubuntu-22.04_x86_64
-          - name: ubuntu-22.04_armv8
+          - name: ubuntu-24.04_x86_64
+          - name: ubuntu-24.04_armv8
           - name: macos-15_arm64
-          - name: macos-14_arm64
+          - name: macos-26_arm64
           - name: windows-2025_x86_64
           - name: raspberry-pi-os_armv8
         python_version:
@@ -383,7 +323,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ matrix.platform.name }}_python-${{ matrix.python_version }}
           path: dist
@@ -397,23 +337,25 @@ jobs:
 
       # テスト用
       # - name: Publish package to TestPyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
       #   with:
       #     repository-url: https://test.pypi.org/legacy/
       #     verbose: true
 
       # 本番用
       - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
 
       - name: Slack Notification
         if: failure()
-        uses: rtCamp/action-slack-notify@v2
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main # main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: sora-python-sdk
+          notify_mode: all
         env:
-          SLACK_CHANNEL: sora-python-sdk
-          SLACK_COLOR: danger
-          SLACK_TITLE: Build failed
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          GH_TOKEN: ${{ github.token }}
 
   create-release:
     if: contains(github.ref, 'tags/202')
@@ -426,25 +368,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.13" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_x86_64", "python_version": "3.14" }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.13" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_x86_64", "python_version": "3.14" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.12" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.13" }
-      - uses: ./.github/actions/download
-        with: { "platform": "ubuntu-22.04_armv8", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "ubuntu-24.04_armv8", "python_version": "3.12" }
       - uses: ./.github/actions/download
@@ -458,11 +388,11 @@ jobs:
       - uses: ./.github/actions/download
         with: { "platform": "macos-15_arm64", "python_version": "3.14" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.12" }
+        with: { "platform": "macos-26_arm64", "python_version": "3.12" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.13" }
+        with: { "platform": "macos-26_arm64", "python_version": "3.13" }
       - uses: ./.github/actions/download
-        with: { "platform": "macos-14_arm64", "python_version": "3.14" }
+        with: { "platform": "macos-26_arm64", "python_version": "3.14" }
       - uses: ./.github/actions/download
         with: { "platform": "windows-2025_x86_64", "python_version": "3.12" }
       - uses: ./.github/actions/download
@@ -506,10 +436,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - name: Slack Notification
         if: failure()
-        uses: rtCamp/action-slack-notify@v2
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main # main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: sora-python-sdk
+          notify_mode: all
         env:
-          SLACK_CHANNEL: sora-python-sdk
-          SLACK_COLOR: danger
-          SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_TITLE: Release failed
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          GH_TOKEN: ${{ github.token }}

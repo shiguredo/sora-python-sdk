@@ -13,7 +13,7 @@ from buildbase import PlatformTarget, cd, get_build_platform  # noqa: E402
 
 
 def run_setup(build_platform, target_platform):
-    with open(os.path.join(BASE_DIR, "VERSION"), "r") as f:
+    with open(os.path.join(BASE_DIR, "VERSION")) as f:
         version = f.read().strip()
 
     build_profile = os.getenv("BUILD_PROFILE")
@@ -25,15 +25,15 @@ def run_setup(build_platform, target_platform):
     if target_platform.os == "jetson":
         plat = "manylinux_2_17_aarch64.manylinux2014_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "armv8":
-        if target_platform.osver == "22.04":
-            plat = "manylinux_2_31_aarch64"
         if target_platform.osver == "24.04":
-            plat = "manylinux_2_35_aarch64"
+            plat = "manylinux_2_38_aarch64"
+        if target_platform.osver == "26.04":
+            plat = "manylinux_2_43_aarch64"
     elif target_platform.os == "ubuntu" and target_platform.arch == "x86_64":
-        if target_platform.osver == "22.04":
-            plat = "manylinux_2_31_x86_64"
         if target_platform.osver == "24.04":
-            plat = "manylinux_2_35_x86_64"
+            plat = "manylinux_2_38_x86_64"
+        if target_platform.osver == "26.04":
+            plat = "manylinux_2_43_x86_64"
     elif target_platform.os == "raspberry-pi-os":
         plat = "manylinux_2_35_aarch64"
         additional_files += ["libcamerac.so"]
@@ -69,10 +69,10 @@ def main():
     target = os.getenv("SORA_SDK_TARGET")
     if target is None:
         target_platform = build_platform
-    elif target == "ubuntu-22.04_armv8":
-        target_platform = PlatformTarget("ubuntu", "22.04", "armv8")
     elif target == "ubuntu-24.04_armv8":
         target_platform = PlatformTarget("ubuntu", "24.04", "armv8")
+    elif target == "ubuntu-26.04_armv8":
+        target_platform = PlatformTarget("ubuntu", "26.04", "armv8")
     elif target == "ubuntu-22.04_armv8_jetson":
         target_platform = PlatformTarget("jetson", None, "armv8", "ubuntu-22.04")
     elif target == "raspberry-pi-os_armv8":
