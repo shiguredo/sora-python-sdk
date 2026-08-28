@@ -4,11 +4,11 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-client-not-implemented-error-not-raised
-- Polished: 2026-07-28
+- Polished: 2026-08-28
 
 ## 目的
 
-`tests/client.py:429-430` の `case _:` 分岐で `NotImplementedError(...)` を **生成しているだけで `raise` していない**。未知のシグナリングメッセージが silent に通過してしまい、テストが「知らないメッセージ種別」を見逃す。
+`tests/client.py` の `_on_signaling_message` 内の `case _:` 分岐で `NotImplementedError(...)` を **生成しているだけで `raise` していない**。未知のシグナリングメッセージが silent に通過してしまい、テストが「知らないメッセージ種別」を見逃す。
 
 実装意図は明らかに「未知メッセージで失敗する」ことなので、`raise NotImplementedError(...)` に修正する。
 
@@ -22,7 +22,7 @@ Medium とする。
 
 ## 現状
 
-該当箇所 (`tests/client.py:421-430`):
+該当箇所 (`tests/client.py` の `_on_signaling_message` 内の `disconnect` 以降):
 
 ```python
 case "disconnect":
@@ -44,12 +44,12 @@ case _:
 ## 設計方針
 
 - `NotImplementedError(...)` を `raise NotImplementedError(...)` に修正する。
-- エラーメッセージの日本語化は issue 0037 (`0037-refactor-test-logs-to-japanese`) のスコープであり、本 issue では行わない。
+- エラーメッセージは英語のままとする。例外メッセージ (`NotImplementedError` 等) は issue 0037 (`0037-refactor-test-logs-to-japanese`) の対象外であり、エラーメッセージは英語にすべき規約に従うため日本語化しない。
 - 同じパターン (`NotImplementedError(...)` を raise せず呼んでいる箇所) が他に無いか `rg -n "NotImplementedError\(" tests/ src/` で確認する。
 - 修正後、敢えて未知 type を流すテストは不要 (SDK 経由でしか来ないため)。レビューで読み取れるだけで十分。
 
 ## 完了条件
 
-- `tests/client.py:429-430` の `NotImplementedError(...)` が `raise NotImplementedError(...)` に修正されていること。
-- `rg -n "(?<!raise )NotImplementedError\(" tests/ src/` で同種のミスが他に検出されないこと (擬似コードなので grep 表現は適宜)。
+- `tests/client.py` の `_on_signaling_message` 内の `case _:` 分岐で、`NotImplementedError(...)` が `raise NotImplementedError(...)` に修正されていること。
+- `rg --pcre2 -n "(?<!raise )NotImplementedError\(" tests/ src/` で同種のミスが他に検出されないこと。
 - 既存のテストがすべて pass すること。
