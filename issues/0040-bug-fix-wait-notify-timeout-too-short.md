@@ -4,7 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-wait-notify-timeout-too-short
-- Polished: 2026-07-28
+- Polished: 2026-08-28
 
 ## 目的
 
@@ -25,14 +25,13 @@ Medium とする。
 該当箇所:
 
 ```python
-# tests/test_signaling_notify.py:37-40
 # c1 に c2 の connection.destroyed が通知される
 notify = c1.wait_notify(lambda notify: notify["event_type"] == "connection.destroyed")
 assert notify["connection_id"] == c2.connection_id
 assert notify["channel_connections"] == 1
 ```
 
-`wait_notify` の定義 (`tests/client.py:510-514`):
+`wait_notify` の定義 (`tests/client.py` の `SoraClient.wait_notify` メソッド):
 
 ```python
 def wait_notify(self, pred: Callable[[dict], bool], timeout: int | None = 5):
@@ -50,7 +49,7 @@ def wait_notify(self, pred: Callable[[dict], bool], timeout: int | None = 5):
 ## 設計方針
 
 - 変更対象ファイル: `tests/client.py`、`tests/test_signaling_notify.py`
-- `tests/test_signaling_notify.py` の各 `wait_notify` 呼び出し (4 箇所: 15, 26, 33, 38 行目) に明示的なタイムアウトを指定する。`connection.destroyed` を待つ箇所は 15 秒、`connection.created` を待つ箇所は 10 秒とする。
+- `tests/test_signaling_notify.py` の `test_signaling_notify` 内の各 `wait_notify` 呼び出し (4 箇所: `connection.created` を待つ 3 箇所と `connection.destroyed` を待つ 1 箇所) に明示的なタイムアウトを指定する。`connection.destroyed` を待つ箇所は 15 秒、`connection.created` を待つ箇所は 10 秒とする。
 - `wait_notify` のシグネチャに「タイムアウト時のエラーメッセージ用ラベル」を追加できるようにする。例:
   ```python
   def wait_notify(self, pred, timeout=5, label: str | None = None):
