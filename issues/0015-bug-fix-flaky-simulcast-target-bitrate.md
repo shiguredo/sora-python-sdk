@@ -4,11 +4,11 @@
 - Created: 2026-06-05
 - Model: Opus 4.8
 - Branch: feature/fix-flaky-simulcast-target-bitrate
-- Polished: 2026-07-28
+- Polished: 2026-08-28
 
 ## 目的
 
-CI の e2e-test で `tests/test_authz_simulcast.py::test_authz_simulcast_r2_and_r1_active_false[VP8-libvpx-240-135]` が flaky に失敗した。11 プラットフォーム中 `ubuntu-22.04_armv8` の 1 つのみが失敗し、同一アーキの `ubuntu-24.04_armv8` を含む他は全て成功している。
+CI の e2e-test で `tests/test_authz_simulcast.py::test_authz_simulcast_r2_and_r1_active_false[VP8-libvpx-240-135]` が flaky に失敗した。10 プラットフォーム中 `ubuntu-22.04_armv8` の 1 つのみが失敗し、同一アーキの `ubuntu-24.04_armv8` を含む他は全て成功している。
 
 - CI run: https://github.com/shiguredo/sora-python-sdk/actions/runs/26993739301/job/79659113836 (develop への push でトリガー)
 - 失敗内容: `AssertionError: assert 30000 >= 45000.0` (`45000.0 = expect_target_bitrate('VP8', 240, 128)`)
@@ -21,14 +21,14 @@ CI の e2e-test で `tests/test_authz_simulcast.py::test_authz_simulcast_r2_and_
 Low とする。
 
 - 製品コードのバグではなく、テスト側の期待値 (閾値) の構造的なミスキャリブレーションであり、メモリ破壊やクラッシュ等の実害は無い。
-- 再現は低頻度。11 環境中 1 環境のみで、低速・制約のある ARM ランナー (`ubuntu-22.04_armv8`) のビットレート立ち上がり遅延に依存する。再実行すれば通ることが多い。
+- 再現は低頻度。10 環境中 1 環境のみで、低速・制約のある ARM ランナー (`ubuntu-22.04_armv8`) のビットレート立ち上がり遅延に依存する。再実行すれば通ることが多い。
 - ただし flaky 失敗は CI を赤くしてマージを妨げ、再実行の常態化が本物の失敗を覆い隠す副作用があるため放置はしない。頻度が上がるようなら優先度を見直す。
 
 ## 現状
 
 ### 失敗するアサーション
 
-`tests/test_authz_simulcast.py` の 300-302 行:
+`tests/test_authz_simulcast.py` の `test_authz_simulcast_r2_and_r1_active_false` 内の targetBitrate アサーション:
 
 ```python
 assert s["targetBitrate"] >= expect_target_bitrate(
@@ -36,7 +36,7 @@ assert s["targetBitrate"] >= expect_target_bitrate(
 )
 ```
 
-直前の 293-294 行に `qualityLimitationReason != "none"` なら `pytest.skip` する緩衝策があるが、今回は `reason == "none"` だったため skip されずに失敗した。
+その直前に `qualityLimitationReason != "none"` なら `pytest.skip` する緩衝策があるが、今回は `reason == "none"` だったため skip されずに失敗した。
 
 ### パラメータ
 
@@ -53,7 +53,7 @@ expect_target_bitrate = simulcast_format(codec, w, h) * 1000 * MIN_TARGET_BITRAT
 - VP8 / 240x128 では `simulcast_format_vp8` が `240*128 = 30720 <= 240*135 = 32400` の分岐に入り `150` を返す。これは 320x180 の target 値 (150 kbps) をそのまま流用した仮定値であり、240x135 は 320x180 よりピクセル数が約 44% 少なく補間領域 (target → 0 へ収束) にあるため、過大推定になっている。
 - よって期待床 = `150 * 1000 * 0.3 = 45000`。
 - 一方 WebRTC の VP8 サイマルキャストテーブル (`simulcast.py` の docstring に転記されている `kSimulcastFormatsVP8`) では、320x180 の target は 150 kbps、{0,0} の target は 0 kbps で、その間は線形補間される。240x135 のピクセル数 32400 は 320x180 の 57600 の約 56% であり、補間による steady-state target は約 84 kbps と推定される。min の 30 kbps 床はキャップとして存在するが、84 > 30 なので通常は発動しない。
-- 実測 `targetBitrate = 30000` は、低速な ARM ランナー (`ubuntu-22.04_armv8`) で 10 秒以内にビットレートのランプアップが完了しなかった過渡値である可能性が高い。1/11 環境のみ失敗し他環境では成功するという事実は、timing が主因であることを示唆する。
+- 実測 `targetBitrate = 30000` は、低速な ARM ランナー (`ubuntu-22.04_armv8`) で 10 秒以内にビットレートのランプアップが完了しなかった過渡値である可能性が高い。1/10 環境のみ失敗し他環境では成功するという事実は、timing が主因であることを示唆する。
 - ただし「テストが仮定した期待床 45000」が「補間による steady-state 約 84000」の 30% (= 25200) ではなく、320x180 の target をそのまま使った過大値であることも事実であり、閾値自体のミスキャリブレーションと timing の両方が flaky に寄与している。
 
 ### VP9 / AV1 240x135 の同種リスク
@@ -81,7 +81,7 @@ AV1 も `simulcast_format_vp9` を使うため同様。テストの parametrize 
 
 ### issue 0038 との関係
 
-issue 0038 (`0038-refactor-replace-time-sleep-with-polling`) は `tests/` 配下の `time.sleep()` をポーリングに置換するリファクタリングであり、`test_authz_simulcast.py:235` の `time.sleep(10)` もその対象に該当する。0038 が先に実装された場合、timing 側の flaky トリガー構造が変わるため、本 issue の候補 4 は不要になる。VP8 は候補 1 単独で解決し、VP9 / AV1 も 0038 のポーリングが候補 4 を代替するため、閾値の補正 (候補 1) と 0038 のポーリングだけで十分になる可能性がある。0038 とは独立に実装可能だが、0038 実装後に本 issue の設計を再評価すること。
+issue 0038 (`0038-refactor-replace-time-sleep-with-polling`) は `tests/` 配下の `time.sleep()` をポーリングに置換するリファクタリングであり、`test_authz_simulcast_r2_and_r1_active_false` 内の `time.sleep(10)` もその対象に該当する。0038 が先に実装された場合、timing 側の flaky トリガー構造が変わるため、本 issue の候補 4 のうちポーリング部分は 0038 で代替される。ただし 0038 のポーリングはタイムアウト時に `AssertionError` を raise する設計であり、候補 4 が持つ「タイムアウト時は `pytest.skip`」の逃げ道は持たない。このため VP8 は候補 1 単独で解決する一方、VP9 / AV1 は候補 1 では解決できず、min 床 (30000) に張り付いた steady-state では 0038 のポーリングでも期待床 (30300) に届かず fail し得るため、0038 実装後も閾値側の対処 (候補 3 の ratio 緩和) が引き続き必要である。0038 とは独立に実装可能だが、0038 実装後に本 issue の設計を再評価すること。
 
 ## 完了条件
 
