@@ -82,9 +82,10 @@ jobs:
         with:
           enable-cache: false
       # local フックの clang-format が system 実行のため必要
-      # apt 版だと版が古く差分が出るので、ローカル Homebrew と同じ 22.1.7 を入れる
+      # apt 版だと版が古く差分が出るので、PyPI の 22.1.8 を入れる
+      # (ローカル Homebrew は 22.1.7。PyPI に 22.1.7 は無い)
       - name: Install clang-format
-        run: uv tool install clang-format==22.1.7
+        run: uv tool install clang-format==22.1.8
       - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
 
   build_ubuntu:
