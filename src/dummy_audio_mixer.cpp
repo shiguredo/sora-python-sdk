@@ -20,7 +20,7 @@ void DummyAudioMixer::Mix(size_t number_of_channels,
   for (auto& source_and_status : audio_source_list_) {
     /**
      * webrtc::AudioTrackSinkInterface の OnData はこの関数内で呼ばれる
-     * 
+     *
      * 第一引数の設定値にサンプリングレートがリサンプリングされるが、
      * -1 を指定するとリサンプリングされなくなる。
      * SoraAudioSinkImpl の OnData 内でリサンプリングするため、

@@ -22,7 +22,7 @@ namespace nb = nanobind;
 
 /**
  * 破棄された通知を受ける DisposeSubscriber です。
- * 
+ *
  * これを継承することで、 DisposePublisher から破棄された通知を受け取ることができます。
  */
 class DisposeSubscriber {
@@ -35,7 +35,7 @@ class DisposeSubscriber {
 
 /**
  * 破棄された際に DisposeSubscriber に通知を送る DisposePublisher です。
- * 
+ *
  * 継承して使うことを想定しています。 1 つのインスタンスで複数ので DisposePublisher に破棄を通知することができます。
  */
 class DisposePublisher {
@@ -44,7 +44,7 @@ class DisposePublisher {
 
   /**
    * Subscribe する際に呼ぶ関数です。
-   * 
+   *
    * @param subscriber Subscribe する DisposeSubscriber
    */
   virtual void AddSubscriber(DisposeSubscriber* subscriber) {
@@ -52,7 +52,7 @@ class DisposePublisher {
   }
   /**
    * Subscribe を解除する際に呼ぶ関数です。
-   * 
+   *
    * @param subscriber Subscribe を解除する DisposeSubscriber
    */
   virtual void RemoveSubscriber(DisposeSubscriber* subscriber) {

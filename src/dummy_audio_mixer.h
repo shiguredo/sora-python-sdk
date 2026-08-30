@@ -15,7 +15,7 @@
 
 /**
  * webrtc::AudioMixer を継承した DummyAudioMixer です。
- * 
+ *
  * PeerConnectionFactory 生成時に渡す cricket::MediaEngineDependencies の
  * audio_mixer を指定しない場合 webrtc::AudioMixerImpl が使用されます。
  * これはすべての AudioTrack の出力データのサンプリングレートとチャネル数を揃え、

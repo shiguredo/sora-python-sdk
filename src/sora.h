@@ -24,7 +24,7 @@
 
 /**
  * Sora Python SDK のベースになるクラスです。
- * 
+ *
  * SoraFactory を内包し Connection や AudioSource、VideoSource を生成します。
  * 一つの Sora インスタンスから複数の Connection、AudioSource、VideoSource が生成できます。
  * 同じ Sora インスタンス内でしか Connection や AudioSource、VideoSource を共有できないので、
@@ -34,7 +34,7 @@ class Sora : public CountedPublisher {
  public:
   /**
    * このタイミングで SoraFactory の生成まで行うため SoraFactory の生成にあたって必要な引数はここで設定します。
-   * 
+   *
    * @param openh264 (オプション) OpenH264 ライブラリへのパス
    * @param video_codec_preference (オプション) 利用するエンコーダ/デコーダの実装の設定
    * @param force_i420_conversion (オプション) エンコーダに渡す前に I420 に変換するかどうかの設定
@@ -46,10 +46,10 @@ class Sora : public CountedPublisher {
 
   /**
    * Sora と接続する Connection を生成します。
-   * 
+   *
    * 実装上の留意点：Sora C++ SDK が observer に std::weak_ptr を要求するためポインタで返す Source とは異なり、
    * std::shared_ptr で返しますが Python での扱いは変わりません。
-   * 
+   *
    * @param signaling_urls シグナリングに使用する URL のリスト
    * @param role ロール recvonly | sendonly | sendrecv
    * @param channel_id チャネル ID
@@ -157,11 +157,11 @@ class Sora : public CountedPublisher {
 
   /**
    * Sora に音声データを送る受け口である SoraAudioSource を生成します。
-   * 
+   *
    * AudioSource に音声データを渡すことで、 Sora に音声を送ることができます。
    * AudioSource は MediaStreamTrack として振る舞うため、
    * AudioSource と同一の Sora インスタンスから生成された複数の Connection で共用できます。
-   * 
+   *
    * @param channels AudioSource に入力する音声データのチャネル数
    * @param sample_rate AudioSource に入力する音声データのサンプリングレート
    * @return SoraAudioSource インスタンス
@@ -169,11 +169,11 @@ class Sora : public CountedPublisher {
   nb::ref<SoraAudioSource> CreateAudioSource(size_t channels, int sample_rate);
   /**
    * Sora に映像データを送る受け口である SoraVideoSource を生成します。
-   * 
+   *
    * VideoSource にフレームデータを渡すことで、 Sora に映像を送ることができます。
    * VideoSource は MediaStreamTrack として振る舞うため、
    * VideoSource と同一の Sora インスタンスから生成された複数の Connection で共用できます。
-   * 
+   *
    * @return SoraVideoSource インスタンス
    */
   nb::ref<SoraVideoSource> CreateVideoSource();
@@ -190,10 +190,10 @@ class Sora : public CountedPublisher {
  private:
   /**
    * Python で渡された値を boost::json::value に変換します。
-   * 
+   *
    * metadata のように JSON の値として扱える内容であれば自由に指定できるものを、
    * nanobind::handle で受け取って Sora C++ SDK で使っている boost::json::value に変換します。
-   * 
+   *
    * @param value Python から渡された値の nanobind::handle
    * @param error_message 変換に失敗した際に nanobind::type_error で返す際のエラーメッセージ
    * @return boost::json::value

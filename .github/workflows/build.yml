@@ -29,11 +29,25 @@ env:
   OPENH264_VERSION: 2.6.0
 
 jobs:
+  # フォーマット・lint・型チェックをビルドより先に実行する
+  prek:
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # local フックの clang-format が system 実行のため必要
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install clang-format
+      - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
+
   # まず pyi を生成する
   # クロスコンパイル環境だと pyi が生成できないので、
   # １箇所で pyi を生成してアーティファクトにアップロードして、
   # それを各ビルドで利用する形にする。
   build_pyi:
+    needs: [prek]
     strategy:
       fail-fast: false
       matrix:

@@ -11,7 +11,7 @@
 
 /**
  * webrtc::MediaStreamTrackInterface を格納する SoraTrackInterface です。
- * 
+ *
  * webrtc::MediaStreamTrackInterface は rtc::scoped_refptr なので、
  * nanobind で直接のハンドリングが難しいので用意しました。
  */
@@ -43,7 +43,7 @@ class SoraTrackInterface : public CountedPublisher, public DisposeSubscriber {
 
   /**
    * webrtc::MediaStreamTrackInterface の実体を取り出すため Python SDK 内で使う関数です。
-   * 
+   *
    * @return webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface>
    */
   webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> GetTrack() {
@@ -67,7 +67,7 @@ class SoraTrackInterface : public CountedPublisher, public DisposeSubscriber {
 
 /**
  * SoraConnection の on_track で渡されるリモートトラックを格納する SoraTrackInterface です。
- * 
+ *
  * webrtc::MediaStreamTrackInterface のメンバーにはない stream_id を on_track で渡すために追加しました。
  */
 class SoraMediaTrack : public SoraTrackInterface {
@@ -82,7 +82,7 @@ class SoraMediaTrack : public SoraTrackInterface {
 
   /**
    * この Track の Stream ID を std::string で返します。
-   * 
+   *
    * Python で呼び出すための関数です。
    * 本来 Track には複数の Stream ID を紐づけることができるのですが、
    * Sora の使用上 Track には Stream ID が 1 つしか紐づかないため Track のメンバーとしました。
@@ -91,7 +91,7 @@ class SoraMediaTrack : public SoraTrackInterface {
 
   /**
    * 受信側の Encoded Transform を設定します。
-   * 
+   *
    * @param transformer エンコードされたフレームが経由する SoraFrameTransformer
    */
   void SetFrameTransformer(SoraFrameTransformer* transformer) {

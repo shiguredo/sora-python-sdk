@@ -19,7 +19,7 @@ runs:
       shell: bash
       run: |
         VERSION="${{ inputs.openh264_version }}"
-        
+
         # プラットフォームごとの設定
         case "${{ inputs.platform_name }}" in
           ubuntu-*_x86_64)
@@ -61,18 +61,18 @@ runs:
             exit 1
             ;;
         esac
-        
+
         # Linux/macOS の場合の処理
         if [[ "$RUNNER_OS" != "Windows" ]]; then
           echo "Downloading from: ${URL}"
           curl -LO "${URL}"
-          
+
           echo "Extracting ${FILENAME}.bz2"
           bzip2 -d "${FILENAME}.bz2"
-          
+
           echo "Renaming to ${TARGET}"
           mv "${FILENAME}" "${TARGET}"
-          
+
           OPENH264_PATH="$(pwd)/${TARGET}"
           echo "OpenH264 library path: ${OPENH264_PATH}"
           echo "openh264_path=${OPENH264_PATH}" >> $GITHUB_OUTPUT

@@ -33,7 +33,7 @@ class SoraAudioFrameImpl {
 
 /**
  * SoraAudioFrame を SoraAudioStreamSinkImpl から生成した際にデータを持つクラスです。
- * 
+ *
  * libwebrtc でオーディオデータを扱う際の単位である webrtc::AudioFrame のまま扱います。
  */
 class SoraAudioFrameDefaultImpl : public SoraAudioFrameImpl {
@@ -53,7 +53,7 @@ class SoraAudioFrameDefaultImpl : public SoraAudioFrameImpl {
 
 /**
  * SoraAudioFrame を pickle した状態から __setstate__ で戻した場合にデータを持つクラスです。
- * 
+ *
  * nanobind でハンドリングできる型のみでコンストラクタを構成しています。
  */
 class SoraAudioFrameVectorImpl : public SoraAudioFrameImpl {
@@ -82,7 +82,7 @@ class SoraAudioFrameVectorImpl : public SoraAudioFrameImpl {
 
 /**
  * 受信した 10ms 単位の音声データを保持する SoraAudioFrame です。
- * 
+ *
  * SoraAudioStreamSinkImpl から生成するための webrtc::AudioFrame を引数にもつコンストラクタと
  * pickle に対応するための Python から生成ためのコンストラクタが存在します。
  * それぞれでデータの持ち方が異なるため実際のデータは SoraAudioFrameImpl の impl_ 内にもっていて、
@@ -101,47 +101,47 @@ class SoraAudioFrame {
                  std::optional<int64_t> absolute_capture_timestamp_ms);
   /**
    * SoraAudioFrame 内の音声データへの numpy.ndarray での参照を返します。
-   * 
+   *
    * @return NumPy の配列 numpy.ndarray で サンプル数 x チャンネル数 になっている音声データ
    */
   nb::ndarray<nb::numpy, int16_t, nb::shape<-1, -1>> Data() const;
   /**
    * SoraAudioFrame 内の音声データへの直接参照を返します。
-   * 
+   *
    * Python SDK 内で使う関数です。
-   * 
+   *
    * @return 音声データの int16_t* ポインタ
    */
   const int16_t* RawData() const;
   /**
    * SoraAudioFrame 内の音声データを std::vector<int16_t> で返します。
-   * 
+   *
    * Python SDK 内で使う関数で pickle 化するために使います。
-   * 
+   *
    * @return 音声データの std::vector<int16_t>
    */
   std::vector<int16_t> VectorData() const;
   /**
    * チャネルあたりのサンプル数を返します。
-   * 
+   *
    * @return チャネルあたりのサンプル数
    */
   size_t samples_per_channel() const;
   /**
    * チャネル数を返します。
-   * 
+   *
    * @return チャネル数
    */
   size_t num_channels() const;
   /**
    * サンプリングレートを返します。
-   * 
+   *
    * @return サンプリングレート
    */
   int sample_rate_hz() const;
   /**
    * キャプチャした際のタイムスタンプがあればミリ秒で返します。
-   * 
+   *
    * @return キャプチャした際のタイムスタンプ
    */
   std::optional<int64_t> absolute_capture_timestamp_ms() const;
@@ -152,14 +152,14 @@ class SoraAudioFrame {
 
 /**
  * Sora からの音声を受け取る SoraAudioStreamSinkImpl です。
- * 
+ *
  * Connection の OnTrack コールバックから渡されるリモート Track から音声を取り出すことができます。
  * Track からの音声はコンストラクタで設定したサンプリングレートとチャネル数に変換し、
  * SoraAudioFrame に格納した上でコールバックで Python に音声データを渡します。
  * コールバックは libwebrtc 内部での扱いから 10ms 間隔で呼び出されるため、
  * コールバックは速やかに処理を返すことが求められます。 10ms 単位の高いリアルタム性を求めないのであれば、
  * 内部にバッファを持ち任意のタイミングで音声を取り出すことができる SoraAudioSink の利用を推奨します。
- * 
+ *
  * 実装上の留意点：Track の参照保持のための Impl のない SoraAudioStreamSink を __init__.py に定義しています。
  * SoraAudioStreamSinkImpl を直接 Python から呼び出すことは想定していません。
  */
@@ -183,7 +183,7 @@ class SoraAudioStreamSinkImpl : public webrtc::AudioTrackSinkInterface,
               std::optional<int64_t> absolute_capture_timestamp_ms) override;
   /**
    * 音声データが来るたびに呼び出されるコールバック変数です。
-   * 
+   *
    * Track から音声データが渡される 10ms 間隔で呼び出されます。このコールバック関数内では重い処理は行わないでください。
    * 渡される SoraAudioFrame は pickle が利用可能のため別プロセスなどにオフロードすることを推奨します。
    * また、この関数はメインスレッドから呼び出されないため留意してください。

@@ -22,7 +22,7 @@ namespace nb = nanobind;
 
 /**
  * Sora からのフレームを格納する SoraVideoFrame です。
- * 
+ *
  * on_frame_ コールバックで直接フレームデータの ndarray を返してしまうとメモリーリークしてしまうため、
  * フレームデータを Python で適切にハンドリングできるようにするために用意しました。
  */
@@ -32,7 +32,7 @@ class SoraVideoFrame {
 
   /**
    * SoraVideoFrame 内のフレームデータへの numpy.ndarray での参照を渡します。
-   * 
+   *
    * @return NumPy の配列 numpy.ndarray で H x W x BGR になっているフレームデータ
    */
   nb::ndarray<nb::numpy, uint8_t, nb::shape<-1, -1, 3>> Data();
@@ -46,7 +46,7 @@ class SoraVideoFrame {
 
 /**
  * Sora からの映像を受け取る SoraVideoSinkImpl です。
- * 
+ *
  * Connection の OnTrack コールバックから渡されるリモート Track から映像を取り出すことができます。
  * 実装上の留意点：Track の参照保持のための Impl のない SoraVideoSink を __init__.py に定義しています。
  * SoraVideoSinkImpl を直接 Python から呼び出すことは想定していません。
@@ -67,9 +67,9 @@ class SoraVideoSinkImpl : public webrtc::VideoSinkInterface<webrtc::VideoFrame>,
 
   /**
    * VideoTrack からフレームデータが来るたびに呼び出される関数です。
-   * 
+   *
    * 継承している webrtc::VideoSinkInterface で定義されています。
-   * 
+   *
    * @param frame VideoTrack から渡されるフレームデータ
    */
   void OnFrame(const webrtc::VideoFrame& frame) override;
@@ -79,7 +79,7 @@ class SoraVideoSinkImpl : public webrtc::VideoSinkInterface<webrtc::VideoFrame>,
 
   /**
    * フレームデータが来るたびに呼び出されるコールバック変数です。
-   * 
+   *
    * フレームが受信される度に呼び出されます。
    * このコールバック関数内では重い処理は行わないでください。サンプルを参考に queue を利用するなどの対応を推奨します。
    * また、この関数はメインスレッドから呼び出されないため、関数内で cv2.imshow を実行しても macOS の場合は表示されません。

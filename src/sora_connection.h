@@ -33,7 +33,7 @@ class SoraSignalingObserver;
 
 /**
  * Sora との接続ごとに生成する SoraConnection です。
- * 
+ *
  * Python に Connection を制御する関数を提供します。
  */
 class SoraConnection : public DisposePublisher,
@@ -53,14 +53,14 @@ class SoraConnection : public DisposePublisher,
 
   /**
    * SoraConnection の初期化を行う関数です。
-   * 
+   *
    * この関数は現在記述されている 1 箇所以外での呼び出しは禁止です。
    * 実際に Sora との接続である sora::SoraSignaling を生成しているのはこの関数です。
    * Python から Connection に各種コールバックを容易に設定できるようにするために、
    * SoraConnection に sora::SoraSignalingObserver を継承させました。
    * しかし sora::SoraSignalingConfig::observer が sora::SoraSignalingObserver の弱参照を要求するので、
    * SoraConnection 生成時には何もせず、ここで sora::SoraSignalingConfig を受け取って初期化するようにしました。
-   * 
+   *
    * @param config Sora への接続設定を持つ sora::SoraSignalingConfig
    */
   void Init(sora::SoraSignalingConfig& config);
@@ -74,41 +74,41 @@ class SoraConnection : public DisposePublisher,
   void Disconnect();
   /**
    * 音声トラックを入れ替える javascript でいう replaceTrack に相当する関数です。
-   * 
+   *
    * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
-   * 
+   *
    * @param audio_source 入れ替える新しい音声トラック
    */
   void SetAudioTrack(nb::ref<SoraTrackInterface> audio_source);
   /**
    * 映像トラックを入れ替える javascript でいう replaceTrack に相当する関数です。
-   * 
+   *
    * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
-   * 
+   *
    * @param audio_source 入れ替える新しい映像トラック
    */
   void SetVideoTrack(nb::ref<SoraTrackInterface> video_source);
   /**
    * 音声送信時の Encoded Transform を設定する関数です。
-   * 
+   *
    * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
-   * 
+   *
    * @param audio_sender_frame_transformer エンコードされたフレームが経由する SoraAudioFrameTransformer
    */
   void SetAudioSenderFrameTransformer(
       SoraAudioFrameTransformer* audio_sender_frame_transformer);
   /**
    * 映像送信時の Encoded Transform を設定する関数です。
-   * 
+   *
    * TODO(tnoho): Python で呼び出すことを想定しているが、動作確認していないため NB_MODULE に定義していない
-   * 
+   *
    * @param video_sender_frame_transformer エンコードされたフレームが経由する SoraVideoFrameTransformer
    */
   void SetVideoSenderFrameTransformer(
       SoraVideoFrameTransformer* video_sender_frame_transformer);
   /**
    * DataChannel でデータを送信する関数です。
-   * 
+   *
    * @param label 送信する DataChannel の label
    * @param data 送信するデータ
    */

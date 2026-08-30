@@ -21,7 +21,7 @@ namespace nb = nanobind;
 
 /**
  * Sora からの音声を受け取る SoraAudioSinkImpl です。
- * 
+ *
  * Connection の OnTrack コールバックから渡されるリモート Track から音声を取り出すことができます。
  * Track からの音声はコンストラクタで設定したサンプリングレートとチャネル数に変換し、
  * SoraAudioSinkImpl 内のバッファに溜め込まれるため、任意のタイミングで音声を取り出すことができます。
@@ -73,7 +73,7 @@ class SoraAudioSinkImpl : public webrtc::AudioTrackSinkInterface,
 
   /**
    * 受信済みのデータをバッファから読み出す
-   * 
+   *
    * @param frames 受け取るチャンネルごとのサンプル数。0 を指定した場合には、受信済みのすべてのサンプルを返す
    * @param timeout 溜まっているサンプル数が frames で指定した数を満たさない場合の待ち時間。秒単位の float で指定する
    * @return Tuple でインデックス 0 には成否が、成功した場合のみインデックス 1 には NumPy の配列 numpy.ndarray で チャンネルごとのサンプル数 x チャンネル数 になっている音声データ
