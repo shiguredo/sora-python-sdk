@@ -102,7 +102,10 @@ def test_audio_sink_read_does_not_block_other_threads(settings):
 
         # read() が想定どおり read_timeout_s 秒ブロックしたことを担保する。
         # 即座に返っていれば GIL 挙動を検証できておらず、再現テストとして無効。
-        assert state["elapsed"] is not None and state["elapsed"] >= read_timeout_s * 0.9, (
+        assert state["elapsed"] is not None, (
+            f"read() の経過時間が記録されていない (read_exc={state['exc']!r})。再現テストとして無効"
+        )
+        assert state["elapsed"] >= read_timeout_s * 0.9, (
             f"read() が想定どおり待機しなかった (read_elapsed={state['elapsed']}, "
             f"read_exc={state['exc']!r})。再現テストとして無効"
         )
