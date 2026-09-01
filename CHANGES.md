@@ -11,6 +11,12 @@
 
 ## develop
 
+### misc
+
+- [FIX] `wait_notify` のタイムアウト時に label と受信済みの event_type 一覧を含む AssertionError を送出するようにする
+  - 何を待っていたかが分かるように、各呼び出しに明示的なタイムアウトと label を指定する
+  - @voluntas
+
 ## 2026.1.0
 
 **リリース日**: 2026-08-27

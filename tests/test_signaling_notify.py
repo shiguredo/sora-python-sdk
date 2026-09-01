@@ -12,7 +12,11 @@ def test_signaling_notify(settings):
         video=True,
     ) as c1:
         # c1 に自分の connection.created が通知される
-        notify = c1.wait_notify(lambda notify: notify["event_type"] == "connection.created")
+        notify = c1.wait_notify(
+            lambda notify: notify["event_type"] == "connection.created",
+            timeout=10,
+            label="c1 の connection.created",
+        )
         assert notify["connection_id"] == c1.connection_id
         assert notify["channel_connections"] == 1
 
@@ -23,18 +27,30 @@ def test_signaling_notify(settings):
             video=True,
         ) as c2:
             # c2 に自分の connection.created が通知される
-            notify = c2.wait_notify(lambda notify: notify["event_type"] == "connection.created")
+            notify = c2.wait_notify(
+                lambda notify: notify["event_type"] == "connection.created",
+                timeout=10,
+                label="c2 の connection.created",
+            )
             assert notify["connection_id"] == c2.connection_id
             assert notify["channel_connections"] == 2
             # data に c1 の connection_id が入ってる
             assert notify["data"][0]["connection_id"] == c1.connection_id
 
             # c1 に c2 の connection.created が通知される
-            notify = c1.wait_notify(lambda notify: notify["event_type"] == "connection.created")
+            notify = c1.wait_notify(
+                lambda notify: notify["event_type"] == "connection.created",
+                timeout=10,
+                label="c1 への c2 の connection.created",
+            )
             assert notify["connection_id"] == c2.connection_id
             assert notify["channel_connections"] == 2
 
         # c1 に c2 の connection.destroyed が通知される
-        notify = c1.wait_notify(lambda notify: notify["event_type"] == "connection.destroyed")
+        notify = c1.wait_notify(
+            lambda notify: notify["event_type"] == "connection.destroyed",
+            timeout=15,
+            label="c1 への c2 の connection.destroyed",
+        )
         assert notify["connection_id"] == c2.connection_id
         assert notify["channel_connections"] == 1
