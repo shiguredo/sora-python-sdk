@@ -507,11 +507,27 @@ class SoraClient:
             self._video_sink = SoraVideoSink(track)
             self._video_sink.on_frame = self._on_video_frame
 
-    def wait_notify(self, pred: Callable[[dict], bool], timeout: int | None = 5):
+    def wait_notify(
+        self,
+        pred: Callable[[dict[str, Any]], bool],
+        timeout: float = 5,
+        label: str | None = None,
+    ) -> dict[str, Any]:
+        # タイムアウト時に「どこまで受信していたか」を切り分けられるように、
+        # 述語にマッチしなかった notify の event_type を記録する
+        received_event_types: list[str] = []
         while True:
-            notify = self._notify_queue.get(block=True, timeout=timeout)
+            try:
+                notify = self._notify_queue.get(block=True, timeout=timeout)
+            except queue.Empty:
+                # タイムアウト時は label と受信済みの event_type 一覧を含めて失敗させる
+                raise AssertionError(
+                    f"notify 待機がタイムアウトしました (label={label}, timeout={timeout}s, "
+                    f"received_event_types={received_event_types})"
+                ) from None
             if pred(notify):
                 return notify
+            received_event_types.append(notify["event_type"])
 
 
 def codec_type_string_to_codec_type(codec_type: str) -> SoraVideoCodecType:
