@@ -4,6 +4,7 @@
 - Created: 2026-06-23
 - Model: Opus 4.7
 - Branch: feature/fix-wait-notify-timeout-too-short
+- Completed: 2026-09-01
 - Polished: 2026-08-28
 
 ## 目的
@@ -69,3 +70,13 @@ def wait_notify(self, pred: Callable[[dict], bool], timeout: int | None = 5):
 - `tests/test_signaling_notify.py` の `wait_notify` 呼び出しすべてに明示的なタイムアウトと用途が分かる label が付くこと。
 - `wait_notify` がタイムアウトしたとき、label と、それまでに受信した `event_type` のリストが assert メッセージに含まれること。
 - 既存のテストがすべて pass すること。
+
+## 解決方法
+
+`tests/client.py` の `SoraClient.wait_notify` に `label` パラメータを追加し、`queue.Empty` によるタイムアウト時に「label・timeout・受信済みの `event_type` 一覧」を含む `AssertionError` を raise するように変更した。
+
+- 述語にマッチしなかった notify の `event_type` を `received_event_types` に記録し、タイムアウト時に「どこまで受信していたか」を確認できるようにした
+- `timeout` の型を `float` にし、デフォルトは従来どおり 5 秒とした
+- `tests/test_signaling_notify.py` の全 4 箇所の `wait_notify` 呼び出しに明示的なタイムアウト（`connection.created` = 10 秒、`connection.destroyed` = 15 秒）と日本語の label を指定した
+- `tests/test_wait_notify.py` を追加し、タイムアウト時の `AssertionError` メッセージ（label・timeout・受信済み `event_type` 一覧・空一覧）を検証するテストを追加した
+- ローカルで `tests/test_wait_notify.py` / `tests/test_signaling_notify.py` の pass を確認した。全スイートは CI（e2e-test）で確認する
