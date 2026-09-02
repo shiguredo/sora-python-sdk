@@ -11,6 +11,10 @@
 
 ## develop
 
+- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.3` に上げる
+  - WEBRTC_BUILD_VERSION を `m152.7977.0.2` に上げる
+  - @voluntas
+
 ## 2026.1.0
 
 **リリース日**: 2026-08-27
