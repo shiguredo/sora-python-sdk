@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Sora Rust SDK ベースの Python プロトタイプ (PyO3 + Maturin)"
 requires-python = ">=3.12"
 license = "Apache-2.0"
-# ビルドバックエンドと同じ版を使うこと
-dependencies = ["maturin==1.14.1"]
+# 実行時依存なし (プロトタイプ単体で完結する)
+dependencies = []
 
 [build-system]
 requires = ["maturin==1.14.1"]
@@ -17,3 +17,15 @@ module-name = "sora_rust_sdk"
 bindings = "pyo3"
 manifest-path = "Cargo.toml"
 python-source = "python"
+
+[tool.pytest.ini_options]
+# 現行テスト群と分離し rust/ 配下だけを対象にする
+testpaths = ["tests"]
+xfail_strict = true
+
+[dependency-groups]
+dev = [
+    # ビルドバックエンドと同じ版を使うこと
+    "maturin==1.14.1",
+    "pytest~=9.1",
+]
