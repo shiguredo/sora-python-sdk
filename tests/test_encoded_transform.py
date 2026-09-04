@@ -8,7 +8,6 @@ from typing import Any
 
 import numpy
 from conftest import Settings
-
 from sora_sdk import (
     Sora,
     SoraAudioFrameTransformer,

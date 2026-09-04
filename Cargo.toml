@@ -1,0 +1,29 @@
+[package]
+# パッケージ名はリポジトリ名にそろえる。版は VERSION ファイルとそろえる。
+name = "sora-python-sdk"
+version = "2026.1.0"
+edition = "2021"
+# 最小 Rust 版 (shiguredo-rust の規約より)
+rust-version = "1.93"
+
+[lib]
+crate-type = ["cdylib"]
+# 拡張モジュール名は公開パッケージ名にそろえる。
+name = "sora_rust_sdk"
+
+[dependencies]
+# numpy 配列の構築 (フレーム受け渡しに使う)
+numpy = "0.29"
+# Python バインディング (PyO3 + Maturin 構成に使う)
+pyo3 = { version = "0.29", features = ["extension-module"] }
+# WebRTC バインディング (Sink / Transformer / 記録制御に直接使う)
+# sora_sdk が canary 系列を要求するため系列を合わせる
+shiguredo_webrtc = "0.152.1-canary.3"
+# Sora Rust SDK 本体 (https://github.com/shiguredo/sora-rust-sdk)
+# canary 系列の固定が必要なため版は省略しない
+sora_sdk = "2026.2.0-canary.2"
+# 非同期ランタイム (接続処理の駆動に使う)
+tokio = {
+  version = "1",
+  features = ["macros", "rt", "rt-multi-thread", "sync", "time"]
+}

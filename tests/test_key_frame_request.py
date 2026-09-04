@@ -7,7 +7,6 @@ from client import (
     SoraRole,
     codec_type_string_to_codec_type,
 )
-
 from sora_sdk import (
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
