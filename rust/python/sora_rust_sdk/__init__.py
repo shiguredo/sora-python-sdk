@@ -1,4 +1,12 @@
 from sora_rust_sdk.sora_rust_sdk import (
+    Sora,
+    SoraAudioFrame,
+    SoraAudioSink,
+    SoraAudioStreamSink,
+    SoraConnection,
+    SoraMediaTrack,
+    SoraVideoFrame,
+    SoraVideoSink,
     __version__,
     connect,
     logging_self_check,
@@ -7,6 +15,14 @@ from sora_rust_sdk.sora_rust_sdk import (
 )
 
 __all__ = [
+    "Sora",
+    "SoraAudioFrame",
+    "SoraAudioSink",
+    "SoraAudioStreamSink",
+    "SoraConnection",
+    "SoraMediaTrack",
+    "SoraVideoFrame",
+    "SoraVideoSink",
     "__version__",
     "connect",
     "logging_self_check",

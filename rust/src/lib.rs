@@ -10,8 +10,14 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use sora_sdk::{Role, SoraConnection, SoraConnectionContext};
 
+mod audio_sink;
+mod connection;
+mod fake_audio_device;
+mod frames;
 mod logging_check;
 mod loopback;
+mod track;
+mod video_sink;
 
 use loopback::{validate_base_args, DiscardingEventHandler};
 
@@ -157,6 +163,20 @@ fn logging_self_check(py: Python<'_>) -> PyResult<Py<PyAny>> {
     })
 }
 
+/// モジュール共有の非同期ランタイム。
+///
+/// 接続の run タスクを駆動する。コールバックは GIL 取得で Python を呼ぶため、
+/// ランタイムスレッド自体は Python に触れない。
+pub(crate) fn runtime() -> &'static tokio::runtime::Runtime {
+    static RUNTIME: std::sync::OnceLock<tokio::runtime::Runtime> = std::sync::OnceLock::new();
+    RUNTIME.get_or_init(|| {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .expect("failed to build async runtime")
+    })
+}
+
 /// プロトタイプモジュール本体。
 #[pymodule(gil_used = false)]
 fn sora_rust_sdk(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -166,5 +186,13 @@ fn sora_rust_sdk(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(loopback_audio_frames, m)?)?;
     m.add_function(wrap_pyfunction!(loopback_video_frames, m)?)?;
     m.add_function(wrap_pyfunction!(logging_self_check, m)?)?;
+    m.add_class::<connection::Sora>()?;
+    m.add_class::<connection::SoraConnection>()?;
+    m.add_class::<track::SoraMediaTrack>()?;
+    m.add_class::<audio_sink::SoraAudioSink>()?;
+    m.add_class::<audio_sink::SoraAudioStreamSink>()?;
+    m.add_class::<video_sink::SoraVideoSink>()?;
+    m.add_class::<frames::SoraAudioFrame>()?;
+    m.add_class::<frames::SoraVideoFrame>()?;
     Ok(())
 }

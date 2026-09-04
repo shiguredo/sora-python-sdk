@@ -61,6 +61,8 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
   実マイク構成 (`AdmConfig::UseBuiltIn`) のループバックで 980 フレーム、
   48 kHz mono を受信した。既定構成 (`AdmConfig::NoAudioDevice`) では
   送信側が無音のため何も流れない。ヘッドレス検証には fake ADM が要る。
+  (追記: 正確には受信引き抜きの駆動不足が原因で、後述の偽デバイスで解決した。
+  詳細は「音声ミキサー駆動」の節を見ること)
 - 映像は `VideoSinkHandler::on_frame` で `VideoFrameRef` が流れることを実証した。
   440 フレーム受信し、寸法 320x240 を取得、`to_i420` と `convert_from_i420` で
   ARGB 変換した結果を numpy 配列として開けることをテストで確認した。
@@ -87,6 +89,19 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
 - `enable_libwebrtc_log` 相当 (ログレベル設定) と `rtc_log` 相当 (任意文言出力) は
   上記の組み合わせで再現できる。動作必須ではないため困り度は低いまま。
 
+## 音声ミキサー駆動
+
+- 既定構成 (`AdmConfig::NoAudioDevice`) では RTP 到達・映像復号は動くが、
+  音声 PCM の引き抜き (`OnData`) が起きないことを実証した。
+  原因は再生ループの欠如で、C++ 版が自前 `DummyAudioMixer` を持つ理由と一致する。
+- `sora_sdk` / `shiguredo_webrtc` の公開 API にミキサー設定はないため、
+  `AudioDeviceModuleHandler` 実装の偽デバイス (`src/fake_audio_device.rs`) で
+  10ms 周期の再生要求を出して駆動する。実マイク不要で受信できる。
+- 注意点 2 件。再生要求はステレオ 48 kHz で出すこと
+  (mono 要求ではエンジン側書き込みで壊れる)。
+  時刻ポインタには有効な変数を渡すこと (null で壊れる)。
+- 録音側は未対応。送信段階で取り込む。
+
 ## PyO3 0.29 での差分
 - `#[pyattr]` は廃止されていたため、関数形式の `#[pymodule]` で
   `m.add("__version__", ...)` する形にした。
@@ -105,8 +120,9 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
   実マイク構成で PCM 980 フレーム (48 kHz mono) を受信した。
 - `loopback_video_frames` で黒フレーム送信のループバックを実証した。
   映像 440 フレーム受信、encoded 変換 440 回通過、ARGB 変換結果の numpy 化を確認した。
-- pytest は `uv run pytest` で 11 件が通る
-  (版参照 1 件、引数検証 7 件、実接続 1 件、ループバック 2 件)。
+- pytest は `uv run pytest` で 15 件が通る
+  (版参照 1 件、引数検証 7 件、実接続 1 件、ループバック 2 件、ログ到達 1 件、
+  新 API 受信 3 件)。
 
 ## 後続作業の洗い出し
 
