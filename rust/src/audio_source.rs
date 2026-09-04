@@ -107,13 +107,51 @@ impl SoraAudioSource {
             .set_enabled(enable)
     }
 
-    /// PCM を投入する。形状は (samples_per_channel, channels) の int16 配列。
-    #[pyo3(signature = (array, timestamp = None))]
-    fn on_data(&self, array: Bound<'_, PyArray2<i16>>, timestamp: Option<f64>) -> PyResult<()> {
-        // 時刻は連続投入の前提で無視する。キューが途切れた箇所は無音で埋まる。
-        let _ = timestamp;
-        let readonly = array.readonly();
-        let shape = readonly.as_array().shape().to_vec();
+    /// PCM を投入する。配列の場合は (samples_per_channel, channels) の
+    /// int16 配列、整数の場合は番地とし、2 番目の引数が
+    /// 1 溝あたりの標本数になる。
+    #[pyo3(signature = (data, second = None, timestamp = None))]
+    fn on_data(
+        &self,
+        data: Bound<'_, PyAny>,
+        second: Option<Bound<'_, PyAny>>,
+        timestamp: Option<f64>,
+    ) -> PyResult<()> {
+        if let Ok(array) = data.cast::<PyArray2<i16>>() {
+            // 時刻は連続投入の前提で無視する。キューが途切れた箇所は無音で埋まる。
+            let _ = (
+                second
+                    .map(|value| value.extract::<f64>())
+                    .transpose()
+                    .map_err(|_| PyValueError::new_err("timestamp must be a float (seconds)"))?,
+                timestamp,
+            );
+            return self.push_array(&array.readonly());
+        }
+        let address = data.extract::<i64>().map_err(|_| {
+            PyValueError::new_err("data must be an int16 ndarray or a raw address int")
+        })?;
+        if address <= 0 {
+            return Err(PyValueError::new_err(format!(
+                "data address must be positive, got {address}"
+            )));
+        }
+        let Some(second) = second else {
+            return Err(PyValueError::new_err(
+                "samples_per_channel is required for raw address input",
+            ));
+        };
+        let samples = second
+            .extract::<i64>()
+            .map_err(|_| PyValueError::new_err("samples_per_channel must be an int"))?;
+        self.push_raw(address as usize, samples, timestamp)
+    }
+}
+
+impl SoraAudioSource {
+    /// 配列 PCM を投入する。
+    fn push_array(&self, array: &numpy::PyReadonlyArray2<i16>) -> PyResult<()> {
+        let shape = array.as_array().shape().to_vec();
         if shape.len() != 2 {
             return Err(PyValueError::new_err(format!(
                 "array must be 2-dimensional (samples_per_channel, channels), got {} dimensions",
@@ -138,11 +176,34 @@ impl SoraAudioSource {
                 shape[0]
             )));
         }
-        let samples = readonly
+        let samples = array
             .as_slice()
             .map_err(|e| PyValueError::new_err(format!("array must be C-contiguous: {e}")))?;
         self.pump
             .push_send(samples, self.channels, self.sample_rate);
+        Ok(())
+    }
+
+    /// 番地指定の PCM を複写して投入する。
+    fn push_raw(&self, address: usize, samples: i64, timestamp: Option<f64>) -> PyResult<()> {
+        // 時刻は連続投入の前提で無視する。キューが途切れた箇所は無音で埋まる。
+        let _ = timestamp;
+        if samples < 1 {
+            return Err(PyValueError::new_err(format!(
+                "samples_per_channel must be at least 1, got {samples}"
+            )));
+        }
+        if samples as usize > self.sample_rate as usize * MAX_PUSH_SECS {
+            return Err(PyValueError::new_err(format!(
+                "samples_per_channel holds too many samples, got {samples}"
+            )));
+        }
+        let count = samples as usize * self.channels;
+        // 番地は呼び出し側が有効な int16 配列を指すことを前提とする。
+        // 長さ検証済みの範囲だけ複写し、所有は持たない。
+        let copied = unsafe { std::slice::from_raw_parts(address as *const i16, count).to_vec() };
+        self.pump
+            .push_send(&copied, self.channels, self.sample_rate);
         Ok(())
     }
 }

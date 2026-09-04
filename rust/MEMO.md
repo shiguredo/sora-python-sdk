@@ -121,6 +121,27 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
 - 差分: ポインタ直渡しの `on_data` 多重定義は未対応 (ndarray 経由のみ)。
   コーデック指定やビットレート等の送信設定は対象外で後続に切り出す。
 
+## 残差 API
+
+- `SoraAudioSource::on_data` は引数の型で配送し、番地指定
+  (番地と 1 溝あたりの標本数、任意の秒時刻) も受け付ける。
+- `create_connection` は送信設定を受け付ける。
+  音声符号化方式と Opus 項目、映像符号化方式とビットレートと方式別項目、
+  同時配信と注視の指定、転送選別器、メッセージ送受信路、
+  路切替と切断継続と各種待ち上限、証明書、接続仲介、利用者代理名に対応する。
+  接続記録への到達は Opus 項目の実証で確認した。
+- `SoraSignalingErrorCode` (0 から 8) を公開し、
+  `on_set_offer` を受信 offer 系記録から合成し、
+  `on_disconnect` を切断完了時の結果から合成する。
+  `send_data_channel` は真偽値で成否を返し、送受信の実証で確認した。
+- `on_rpc` は受け口だけ用意した。到達経路が公開処理器にないため発火しない。
+- 未対応のまま残す設定: 音声 streaming 言語符号、劣化 preference、
+  送信側 simulcast rid、注視人数、路切替待ち上限、
+  音声・映像の frame transformer、libcamera、factory 側の符号化器指定。
+  いずれも組み立て器か処理器に対応する受け口がない。
+- `SoraMediaTrack` の `state` / `stream_id` も受け口がなく対象外のまま。
+  取得口の公開を依頼してから対応する。
+
 ## PyO3 0.29 での差分
 - `#[pyattr]` は廃止されていたため、関数形式の `#[pymodule]` で
   `m.add("__version__", ...)` する形にした。
@@ -139,9 +160,9 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
   実マイク構成で PCM 980 フレーム (48 kHz mono) を受信した。
 - `loopback_video_frames` で黒フレーム送信のループバックを実証した。
   映像 440 フレーム受信、encoded 変換 440 回通過、ARGB 変換結果の numpy 化を確認した。
-- pytest は `uv run pytest` で 19 件が通る
+- pytest は `uv run pytest` で 26 件が通る
   (版参照 1 件、引数検証 7 件、実接続 1 件、ループバック 2 件、ログ到達 1 件、
-  新 API 受信 3 件、新 API 送信 4 件)。
+  新 API 受信 3 件、新 API 送信 6 件、通知と伝送路 5 件)。
 
 ## 後続作業の洗い出し
 

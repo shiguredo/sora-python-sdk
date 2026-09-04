@@ -66,6 +66,55 @@ def test_video_source_rejects_invalid_array() -> None:
         source.on_captured(numpy.zeros((240, 320, 4), dtype=numpy.uint8))
 
 
+def test_audio_source_accepts_raw_address() -> None:
+    """
+    新 API の音声投入が番地指定を受け付けることを確認する。
+    前提は特にない。
+    番地と標本数で投入でき、不正な番地を拒否することを期待する。
+    """
+    sora = sora_rust_sdk.Sora()
+    source = sora.create_audio_source(1, 16000)
+
+    # 番地指定で投入できることを確認する
+    array = numpy.zeros((320, 1), dtype=numpy.int16)
+    source.on_data(array.ctypes.data, 320)
+    source.on_data(array.ctypes.data, 320, 1.5)
+
+    # 不正な番地と不足引数を拒否することを確認する
+    with pytest.raises(ValueError, match="address"):
+        source.on_data(0, 320)
+    with pytest.raises(ValueError, match="samples_per_channel"):
+        source.on_data(array.ctypes.data)
+
+
+def test_create_connection_rejects_invalid_settings() -> None:
+    """
+    新 API の接続設定が不正値を拒否することを確認する。
+    前提は特にない。
+    未対応符号化方式や型違い項目で ValueError になることを期待する。
+    """
+    sora = sora_rust_sdk.Sora()
+    urls = ["wss://127.0.0.1:1/signaling"]
+
+    # 未対応の符号化方式を確認する
+    with pytest.raises(ValueError, match="audio_codec_type"):
+        sora.create_connection(urls, "sendonly", "x", audio_codec_type="G711")
+    with pytest.raises(ValueError, match="video_codec_type"):
+        sora.create_connection(urls, "sendonly", "x", video_codec_type="H266")
+
+    # 型違いの項目を確認する
+    with pytest.raises(ValueError, match="profile_id"):
+        sora.create_connection(
+            urls, "sendonly", "x", video_codec_type="VP9", video_vp9_params={"profile_id": "x"}
+        )
+    with pytest.raises(ValueError, match="label"):
+        sora.create_connection(urls, "sendonly", "x", data_channels=[{"direction": "sendrecv"}])
+
+    # 証明書の非 UTF-8 を確認する
+    with pytest.raises(ValueError, match="client_cert"):
+        sora.create_connection(urls, "sendonly", "x", client_cert=b"\xff\xfe")
+
+
 def test_send_audio_and_video_with_new_api() -> None:
     """
     新 API の送信元で音声・映像フレームを送れることを確認する。

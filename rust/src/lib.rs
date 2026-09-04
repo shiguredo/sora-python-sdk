@@ -17,6 +17,7 @@ mod fake_audio_device;
 mod frames;
 mod logging_check;
 mod loopback;
+mod params;
 mod track;
 mod video_sink;
 mod video_source;
@@ -190,6 +191,7 @@ fn sora_rust_sdk(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(logging_self_check, m)?)?;
     m.add_class::<connection::Sora>()?;
     m.add_class::<connection::SoraConnection>()?;
+    m.add_class::<connection::SoraSignalingErrorCode>()?;
     m.add_class::<track::SoraMediaTrack>()?;
     m.add_class::<audio_sink::SoraAudioSink>()?;
     m.add_class::<audio_sink::SoraAudioStreamSink>()?;
