@@ -1,7 +1,7 @@
 # sora-rust-sdk をベースにした PyO3 + Maturin プロトタイプを作成する
 
 - Created: 2026-09-04
-- Completed: -
+- Completed: 2026-09-04
 - Branch: feature/add-sora-rust-sdk-prototype
 - Polished: 2026-09-04
 
@@ -35,3 +35,12 @@
 - 既存 E2E と同じ環境変数で指定される実 Sora に対して接続と切断が確認できること。
 - 現行の wheel ビルド手順が通ること (現行の nanobind 経路が壊れていないこと)。
 - `rust/` 直下の `MEMO.md` に依存先 URL・版、API 対応メモ、`gil_used` 判定と理由、後続作業の洗い出しが残っていること。
+
+## 解決方法
+
+- `rust/` に maturin + PyO3 の隔離プロトタイプを作り、完了条件をすべて確認した。
+  ビルドと import、版参照 (`__version__` + `Cargo.lock`)、実 Sora への接続と切断、
+  現行 wheel ビルドの非破壊、後続洗い出しのメモ化を満たした。
+- 追加検証として音声 / 映像 Sink 受信、encoded 変換、ログ制御の到達も実証し、
+  pytest 12 件が通る状態にした。VAD は対象外として後続に切り出した。
+- 全面置き換えは別 issue に切り出して続ける。
