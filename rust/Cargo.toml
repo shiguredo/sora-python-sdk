@@ -1,0 +1,18 @@
+[package]
+name = "sora-rust-prototype"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.93"
+
+[lib]
+name = "sora_rust_sdk"
+crate-type = ["cdylib"]
+
+[dependencies]
+# Sora Rust SDK 本体 (https://github.com/shiguredo/sora-rust-sdk)
+# プロトタイプのため最新の canary を使う
+sora_sdk = "2026.2.0-canary.2"
+# 非同期ランタイム (current-thread で接続処理を駆動する)
+tokio = { version = "1", features = ["rt", "macros", "sync", "time"] }
+# Python バインディング
+pyo3 = { version = "0.29", features = ["extension-module"] }

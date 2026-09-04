@@ -1,0 +1,19 @@
+[project]
+name = "sora-rust-prototype"
+version = "0.1.0"
+description = "Sora Rust SDK ベースの Python プロトタイプ (PyO3 + Maturin)"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+# ビルドバックエンドと同じ版を使うこと
+dependencies = ["maturin==1.14.1"]
+
+[build-system]
+requires = ["maturin==1.14.1"]
+build-backend = "maturin"
+
+[tool.maturin]
+# 既存パッケージ sora_sdk と同名衝突を避けるため別名にする
+module-name = "sora_rust_sdk"
+bindings = "pyo3"
+manifest-path = "Cargo.toml"
+python-source = "python"

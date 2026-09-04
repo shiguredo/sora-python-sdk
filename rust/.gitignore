@@ -1,0 +1,3 @@
+/target
+# maturin develop が配置するビルド成果物
+*.so
