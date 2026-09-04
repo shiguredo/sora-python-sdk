@@ -10,6 +10,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use sora_sdk::{Role, SoraConnection, SoraConnectionContext};
 
+mod logging_check;
 mod loopback;
 
 use loopback::{validate_base_args, DiscardingEventHandler};
@@ -144,6 +145,18 @@ where
     runtime.block_on(future)
 }
 
+/// libwebrtc ログ制御の到達確認を実行し、結果を辞書で返す。
+#[pyfunction]
+fn logging_self_check(py: Python<'_>) -> PyResult<Py<PyAny>> {
+    let (initialized, captured) = py.detach(logging_check::logging_self_check)?;
+    Python::attach(|py| {
+        let result = PyDict::new(py);
+        result.set_item("initialized", initialized)?;
+        result.set_item("captured", captured)?;
+        Ok(result.into())
+    })
+}
+
 /// プロトタイプモジュール本体。
 #[pymodule(gil_used = false)]
 fn sora_rust_sdk(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -152,5 +165,6 @@ fn sora_rust_sdk(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(connect, m)?)?;
     m.add_function(wrap_pyfunction!(loopback_audio_frames, m)?)?;
     m.add_function(wrap_pyfunction!(loopback_video_frames, m)?)?;
+    m.add_function(wrap_pyfunction!(logging_self_check, m)?)?;
     Ok(())
 }

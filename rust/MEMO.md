@@ -69,14 +69,17 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
 - デコード済み numpy 加工が要る用途は Sink 経由の自前実装になる。
   送信側への差し戻しは source 側の実装も要る。利用実態の棚卸しが先になる。
 
-### 4. ログ制御: 困り度 低 (公開依頼が必要)
+### 4. ログ制御: 困り度 低 (到達可能と実証済み)
 
-- 当初の「代替できる」は誤りだった。`rtc_base` モジュール自体が非公開で、
-  クレート直下の再 export に logging 系 (`LoggingConfig` / `Severity` /
-  `LogSink` / `initialize_logging`) は含まれず、`sora_sdk` 側にも公開がない。
-  外部クレートからは到達できないことを確認した。
-- 動作に必須ではないため困り度は低いまま。`enable_libwebrtc_log` 相当が
-  要る場合は上流への公開依頼が必要になる。
+- 当初の「代替できる」も、その後の「到達できない」も正確ではなかった。
+  正しくは `shiguredo_webrtc::log` モジュール (`LoggingConfig` / `Severity` /
+  `LogSink` / `LogSinkHandler` / `initialize_logging` / `print`) が
+  クレート直下に再 export されており、外部から使える。
+  (`mod rtc_base` 自体は非公開だが、`log` モジュールが再 export 対象に含まれる)
+- `logging_self_check` で初期化と目印行の取得を実証した。
+  初期化は初回だけ有効で、二重呼び出しでは偽が返る仕様も確認した。
+- `enable_libwebrtc_log` 相当 (ログレベル設定) と `rtc_log` 相当 (任意文言出力) は
+  上記の組み合わせで再現できる。動作必須ではないため困り度は低いまま。
 
 ## PyO3 0.29 での差分
 - `#[pyattr]` は廃止されていたため、関数形式の `#[pymodule]` で
