@@ -27,5 +27,6 @@ xfail_strict = true
 dev = [
     # ビルドバックエンドと同じ版を使うこと
     "maturin==1.14.1",
+    "numpy~=2.5",
     "pytest~=9.1",
 ]

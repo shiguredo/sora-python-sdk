@@ -49,27 +49,34 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
 
 ## Python SDK との差分と困り度
 
-### 1. Sink / フレーム受け渡し: 困り度 中
+### 1. Sink / フレーム受け渡し: 困り度 中 (受信経路は実証済み)
 
-- 音声は `shiguredo_webrtc` の `AudioTrackSinkHandler::on_data` で生 PCM
-  (`&[u8]` + ビット深度 / サンプルレート / チャンネル数 / フレーム数) が取れる。
-  自前キュー + numpy 変換で `read` / `on_data` / `on_frame` 相当は再現できる。
-- 映像は `VideoSinkHandler::on_frame` で `VideoFrameRef` が取れる。
-  I420 から RGB への変換は `shiguredo_webrtc` の `libyuv` 公開物が使える見込み。
-- ただしリサンプルの出力周波数、`read` のタイムアウト、ndarray の所有権管理と
-  UAF 対策は自前設計が必要。毎フレーム GIL とコピーが絡むため性能検討も要る。
+- 音声は `AudioTrackSinkHandler::on_data` で生 PCM が流れることを実証した。
+  実マイク構成 (`AdmConfig::UseBuiltIn`) のループバックで 980 フレーム、
+  48 kHz mono を受信した。既定構成 (`AdmConfig::NoAudioDevice`) では
+  送信側が無音のため何も流れない。ヘッドレス検証には fake ADM が要る。
+- 映像は `VideoSinkHandler::on_frame` で `VideoFrameRef` が流れることを実証した。
+  440 フレーム受信し、寸法 320x240 を取得、`to_i420` と `convert_from_i420` で
+  ARGB 変換した結果を numpy 配列として開けることをテストで確認した。
+- 残作業は現行相当の付加機能 (リサンプル出力周波数、`read` のタイムアウト、
+  ndarray 所有権管理) の自前設計と性能検討である。
 
-### 3. Frame transformer: 困り度 中から高
+### 3. Frame transformer: 困り度 中 (encoded 層は実証済み)
 
-- Rust はエンコード済み加工 (`sender_video_transform` / `receiver_video_transform`、
-  映像のみ) で、Python のデコード済み numpy 加工とは層が違う。
-- デコード済み加工が要る用途は Sink 経由の自前実装に寄せられるが、
+- `sender_video_transform` に通過計数ハンドラを付けて 440 フレームの
+  `transform` 呼び出しを実証した。ハンドラには `Send + Sync` が要求され、
+  エンコーダー / ネットワークスレッド上で呼ばれる。
+- デコード済み numpy 加工が要る用途は Sink 経由の自前実装になる。
   送信側への差し戻しは source 側の実装も要る。利用実態の棚卸しが先になる。
 
-### 4. ログ制御: 困り度 低
+### 4. ログ制御: 困り度 低 (公開依頼が必要)
 
-- `shiguredo_webrtc::rtc_base::logging` に `Severity` / `LoggingConfig` があり代替できる。
-  `rtc_log` 相当の有無は未確認だが小物。
+- 当初の「代替できる」は誤りだった。`rtc_base` モジュール自体が非公開で、
+  クレート直下の再 export に logging 系 (`LoggingConfig` / `Severity` /
+  `LogSink` / `initialize_logging`) は含まれず、`sora_sdk` 側にも公開がない。
+  外部クレートからは到達できないことを確認した。
+- 動作に必須ではないため困り度は低いまま。`enable_libwebrtc_log` 相当が
+  要る場合は上流への公開依頼が必要になる。
 
 ## PyO3 0.29 での差分
 - `#[pyattr]` は廃止されていたため、関数形式の `#[pymodule]` で
@@ -85,6 +92,12 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
 - `check_connect.py` で実 Sora に recvonly 接続し、PeerConnection の Connected と
   DataChannel 群の open を経て切断できることを確認した (終了コード 0)。
   接続設定は既存 E2E と同じ環境変数を使った。
+- `loopback_audio_frames` で同一チャネルへの送受信ループバックを実証した。
+  実マイク構成で PCM 980 フレーム (48 kHz mono) を受信した。
+- `loopback_video_frames` で黒フレーム送信のループバックを実証した。
+  映像 440 フレーム受信、encoded 変換 440 回通過、ARGB 変換結果の numpy 化を確認した。
+- pytest は `uv run pytest` で 11 件が通る
+  (版参照 1 件、引数検証 7 件、実接続 1 件、ループバック 2 件)。
 
 ## 後続作業の洗い出し
 

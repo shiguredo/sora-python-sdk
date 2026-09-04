@@ -30,7 +30,7 @@ def test_version_is_non_empty_string() -> None:
         ),
         (
             {"signaling_urls": ["wss://example.com/signaling"] * 17, "channel_id": "x"},
-            "signaling_urls must contain at most 16 URLs, got 17",
+            "signaling_urls must contain at least 1 URL and at most 16 URLs, got 17",
         ),
         (
             {

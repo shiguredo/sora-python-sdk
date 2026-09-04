@@ -744,6 +744,7 @@ name = "sora-rust-prototype"
 version = "0.1.0"
 dependencies = [
  "pyo3",
+ "shiguredo_webrtc",
  "sora_sdk",
  "tokio",
 ]
