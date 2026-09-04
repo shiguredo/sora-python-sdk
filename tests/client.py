@@ -8,9 +8,8 @@ from threading import Event
 from typing import Any
 
 import numpy
-from conftest import Settings
-
 import sora_sdk
+from conftest import Settings
 from sora_sdk import (
     Sora,
     SoraAudioSink,

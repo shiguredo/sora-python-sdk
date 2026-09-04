@@ -8,7 +8,6 @@ from client import (
     codec_type_string_to_codec_type,
 )
 from simulcast import default_video_bit_rate, expect_target_bitrate
-
 from sora_sdk import (
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,

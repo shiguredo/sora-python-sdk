@@ -5,7 +5,6 @@ from typing import Any
 
 from client import SoraClient, SoraRole
 from conftest import Settings
-
 from sora_sdk import (
     Sora,
     SoraAudioFrame,

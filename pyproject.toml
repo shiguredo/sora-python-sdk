@@ -1,5 +1,6 @@
 [project]
 name = "sora_sdk"
+version = "2026.1.0"
 description = "WebRTC SFU Sora Python SDK"
 readme = "README.md"
 requires-python = ">= 3.12"
@@ -10,36 +11,43 @@ classifiers = [
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX :: Linux",
-  "Programming Language :: C++",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Rust",
 ]
-dynamic = ["version"]
-
-[project.urls]
-Discord = "https://discord.gg/shiguredo"
-Documentation = "https://sora-python-sdk.shiguredo.jp"
-Source = "https://github.com/shiguredo/sora-python-sdk"
+# 実行時依存なし (単体で完結する)
+dependencies = []
 
 [dependency-groups]
 dev = [
-  "nanobind==3.0.0",
-  { include-group = "test" },
+  "httpx",
+  # ビルドバックエンドと同じ版を使うこと
+  "maturin==1.14.1",
+  "numpy~=2.5",
+  "pyjwt",
+  "pytest~=9.1",
+  "pytest-xdist",
 ]
 test = [
   "httpx",
-  "numpy",
+  "numpy~=2.5",
   "pyjwt",
-  "pytest",
-  "pytest-repeat",
+  "pytest~=9.1",
   "pytest-xdist",
 ]
 
 [build-system]
-requires = ["setuptools~=84.0", "wheel~=0.48"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin==1.14.1"]
+build-backend = "maturin"
+
+[tool.maturin]
+bindings = "pyo3"
+manifest-path = "Cargo.toml"
+# 既存パッケージ名を引き継ぐ
+module-name = "sora_sdk"
+python-source = "python"
 
 [tool.pytest.ini_options]
 # テスト探索のルートディレクトリ
@@ -68,14 +76,18 @@ extend-select = [
   # https://docs.astral.sh/ruff/rules/#flake8-pytest-style-pt
   "PT",
   # pyupgrade: 古い Python 構文を target-version に合わせて更新
-  # https://docs.astral.sh/ruff/rules/#pyupgrade-up
+  # https://docs.astral.sh/ruff/settings/#pyupgrade-up
   "UP",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# 生成由来の型スタブは注釈形式を維持する
+"python/sora_sdk/sora_sdk.pyi" = ["C408", "I001"]
 
 [tool.ty.src]
 # 型チェック対象のファイル・ディレクトリ
 # https://docs.astral.sh/ty/reference/configuration/#src-include
-include = ["src", "tests", "sysroot_builder.py"]
+include = ["python", "tests"]
 
 [tool.uv]
 # システム Python ではなく uv 管理下の Python のみを使用する
