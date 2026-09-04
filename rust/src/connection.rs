@@ -11,15 +11,18 @@ use std::time::{Duration, Instant};
 
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
-use shiguredo_webrtc::{RtpReceiver, RtpTransceiver};
+use shiguredo_webrtc::{AudioTrack, RtpReceiver, RtpTransceiver, VideoTrack};
 use sora_sdk::{
-    Role, SignalingDirection, SignalingType, SoraConnectionContext, SoraConnectionEventHandler,
-    SoraConnectionHandle,
+    AdmConfig, Audio, Role, SignalingDirection, SignalingType, SoraConnectionContext,
+    SoraConnectionContextConfig, SoraConnectionEventHandler, SoraConnectionHandle, Video,
 };
 
 use crate::audio_sink::set_callback;
+use crate::audio_source::SoraAudioSource;
+use crate::fake_audio_device::{AudioPumpState, FakeAudioDevice};
 use crate::loopback::validate_base_args;
 use crate::track::SoraMediaTrack;
+use crate::video_source::SoraVideoSource;
 
 // 接続確立の待ち上限 (秒)。既存テストクライアントの既定に合わせる。
 const CONNECT_TIMEOUT_SECS: f64 = 10.0;
@@ -244,25 +247,77 @@ struct LiveConnection {
 }
 
 /// 接続ファクトリ。既存 `Sora` に対応する。
+///
+/// 生成時に送受信駆動用の偽デバイスを持つコンテキストを作り、
+/// 送信元と接続で共有する。
 #[pyclass(module = "sora_rust_sdk")]
-pub(crate) struct Sora;
+pub(crate) struct Sora {
+    /// 送受信で共有するコンテキスト。
+    context: Arc<SoraConnectionContext>,
+    /// 送信 PCM の共有状態。
+    pump: Arc<AudioPumpState>,
+}
 
 #[pymethods]
 impl Sora {
     /// ファクトリを作る。
     #[new]
-    fn new() -> Self {
-        Self
+    fn new() -> PyResult<Self> {
+        let pump = Arc::new(AudioPumpState::new());
+        let context_config = SoraConnectionContextConfig {
+            adm_config: AdmConfig::UseExternal(
+                FakeAudioDevice::with_state(pump.clone()).into_device_module(),
+            ),
+            ..Default::default()
+        };
+        let context = SoraConnectionContext::new_with_config(context_config).map_err(|e| {
+            PyRuntimeError::new_err(format!("failed to create connection context: {e}"))
+        })?;
+        Ok(Self { context, pump })
     }
 
-    /// 接続を作る。受信段階では受信に必要な引数だけを受け付ける。
-    #[pyo3(signature = (signaling_urls, role, channel_id, metadata = None))]
+    /// 音声送信元を作る。
+    fn create_audio_source(&self, channels: i64, sample_rate: i64) -> PyResult<SoraAudioSource> {
+        if channels < 1 {
+            return Err(PyValueError::new_err(format!(
+                "channels must be at least 1, got {channels}"
+            )));
+        }
+        if sample_rate < 100 {
+            return Err(PyValueError::new_err(format!(
+                "sample_rate must be at least 100 Hz, got {sample_rate}"
+            )));
+        }
+        SoraAudioSource::new(
+            self.context.clone(),
+            self.pump.clone(),
+            channels as usize,
+            sample_rate as u32,
+        )
+        .map_err(PyRuntimeError::new_err)
+    }
+
+    /// 映像送信元を作る。
+    fn create_video_source(&self) -> PyResult<SoraVideoSource> {
+        SoraVideoSource::new(self.context.clone()).map_err(PyRuntimeError::new_err)
+    }
+
+    /// 接続を作る。送信元を渡すと送信用トラックとして組み立てる。
+    #[pyo3(
+        signature = (signaling_urls, role, channel_id, metadata = None, audio_source = None, video_source = None, audio = None, video = None)
+    )]
+    #[expect(clippy::too_many_arguments)]
     fn create_connection(
         &self,
+        py: Python<'_>,
         signaling_urls: Vec<String>,
         role: String,
         channel_id: String,
         metadata: Option<String>,
+        audio_source: Option<Py<SoraAudioSource>>,
+        video_source: Option<Py<SoraVideoSource>>,
+        audio: Option<bool>,
+        video: Option<bool>,
     ) -> PyResult<SoraConnection> {
         let args = validate_base_args(signaling_urls, channel_id, metadata, 1.0)?;
         let role = Role::parse(&role).map_err(|_| {
@@ -270,11 +325,35 @@ impl Sora {
                 "invalid role \"{role}\", expected sendonly, recvonly or sendrecv"
             ))
         })?;
+        let audio_track = audio_source
+            .as_ref()
+            .map(|source| source.borrow(py).new_sender_track())
+            .transpose()
+            .map_err(PyRuntimeError::new_err)?;
+        let video_track = video_source
+            .as_ref()
+            .map(|source| source.borrow(py).sender_track());
+        // 送信元があるのに可否指定がない場合は有効として扱う。
+        let audio = match (audio, audio_track.is_some()) {
+            (Some(enabled), _) => Some(Audio::new_bool(enabled)),
+            (None, true) => Some(Audio::new_bool(true)),
+            (None, false) => None,
+        };
+        let video = match (video, video_track.is_some()) {
+            (Some(enabled), _) => Some(Video::new_bool(enabled)),
+            (None, true) => Some(Video::new_bool(true)),
+            (None, false) => None,
+        };
         Ok(SoraConnection::new(
+            self.context.clone(),
             args.signaling_urls,
             role,
             args.channel_id,
             args.metadata,
+            audio_track,
+            video_track,
+            audio,
+            video,
         ))
     }
 }
@@ -282,6 +361,8 @@ impl Sora {
 /// 接続。既存 `SoraConnection` に対応する。
 #[pyclass(module = "sora_rust_sdk")]
 pub(crate) struct SoraConnection {
+    /// 送受信で共有するコンテキスト。生成時に確定する。
+    context: Arc<SoraConnectionContext>,
     /// 接続先 URL 群。
     signaling_urls: Vec<String>,
     /// ロール。
@@ -290,29 +371,48 @@ pub(crate) struct SoraConnection {
     channel_id: String,
     /// メタデータ JSON。
     metadata: Option<sora_sdk::JsonString>,
+    /// 送信音声トラック。接続時に取り出す。
+    audio_track: Mutex<Option<AudioTrack>>,
+    /// 送信映像トラック。接続時に取り出す。
+    video_track: Mutex<Option<VideoTrack>>,
+    /// 音声の送受信設定。
+    audio: Option<Audio>,
+    /// 映像の送受信設定。
+    video: Option<Video>,
     /// コールバック群。
     callbacks: Arc<CallbackSet>,
     /// factory 所有のコンテキスト。Sink 破棄まで factory を生かす。
-    context: Mutex<Option<Arc<SoraConnectionContext>>>,
+    live_context: Mutex<Option<Arc<SoraConnectionContext>>>,
     /// 稼働中の接続。
     live: Mutex<Option<LiveConnection>>,
 }
 
 impl SoraConnection {
     /// 接続を作る。
+    #[expect(clippy::too_many_arguments)]
     fn new(
+        context: Arc<SoraConnectionContext>,
         signaling_urls: Vec<String>,
         role: Role,
         channel_id: String,
         metadata: Option<sora_sdk::JsonString>,
+        audio_track: Option<AudioTrack>,
+        video_track: Option<VideoTrack>,
+        audio: Option<Audio>,
+        video: Option<Video>,
     ) -> Self {
         Self {
+            context,
             signaling_urls,
             role,
             channel_id,
             metadata,
+            audio_track: Mutex::new(audio_track),
+            video_track: Mutex::new(video_track),
+            audio,
+            video,
             callbacks: Arc::new(CallbackSet::new()),
-            context: Mutex::new(None),
+            live_context: Mutex::new(None),
             live: Mutex::new(None),
         }
     }
@@ -330,17 +430,8 @@ impl SoraConnection {
         {
             return Err(PyRuntimeError::new_err("already connected"));
         }
-        // 受信引き抜きの駆動に偽デバイスを使う。既定の Dummy ADM では
-        // 再生ループがなく音声が流れないため。
-        let context_config = sora_sdk::SoraConnectionContextConfig {
-            adm_config: sora_sdk::AdmConfig::UseExternal(
-                crate::fake_audio_device::FakeAudioDevice::new().into_device_module(),
-            ),
-            ..Default::default()
-        };
-        let context = SoraConnectionContext::new_with_config(context_config).map_err(|e| {
-            PyRuntimeError::new_err(format!("failed to create connection context: {e}"))
-        })?;
+        // 送受信の駆動は生成時の偽デバイスが担う。コンテキストは共有する。
+        let context = self.context.clone();
         let mut builder = sora_sdk::SoraConnection::builder(
             context.clone(),
             self.signaling_urls.clone(),
@@ -351,9 +442,31 @@ impl SoraConnection {
                 context: context.clone(),
             },
         );
-        *self.context.lock().expect("connection lock poisoned") = Some(context);
+        *self.live_context.lock().expect("connection lock poisoned") = Some(context);
         if let Some(metadata) = self.metadata.clone() {
             builder = builder.metadata(metadata);
+        }
+        if let Some(track) = self
+            .audio_track
+            .lock()
+            .expect("connection lock poisoned")
+            .take()
+        {
+            builder = builder.sender_audio_track(track);
+        }
+        if let Some(track) = self
+            .video_track
+            .lock()
+            .expect("connection lock poisoned")
+            .take()
+        {
+            builder = builder.sender_video_track(track);
+        }
+        if let Some(audio) = self.audio.clone() {
+            builder = builder.audio(audio);
+        }
+        if let Some(video) = self.video.clone() {
+            builder = builder.video(video);
         }
         let (connection, handle) = builder
             .build()

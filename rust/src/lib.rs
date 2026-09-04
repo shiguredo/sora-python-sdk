@@ -11,6 +11,7 @@ use pyo3::types::PyDict;
 use sora_sdk::{Role, SoraConnection, SoraConnectionContext};
 
 mod audio_sink;
+mod audio_source;
 mod connection;
 mod fake_audio_device;
 mod frames;
@@ -18,6 +19,7 @@ mod logging_check;
 mod loopback;
 mod track;
 mod video_sink;
+mod video_source;
 
 use loopback::{validate_base_args, DiscardingEventHandler};
 
@@ -191,6 +193,8 @@ fn sora_rust_sdk(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<track::SoraMediaTrack>()?;
     m.add_class::<audio_sink::SoraAudioSink>()?;
     m.add_class::<audio_sink::SoraAudioStreamSink>()?;
+    m.add_class::<audio_source::SoraAudioSource>()?;
+    m.add_class::<video_source::SoraVideoSource>()?;
     m.add_class::<video_sink::SoraVideoSink>()?;
     m.add_class::<frames::SoraAudioFrame>()?;
     m.add_class::<frames::SoraVideoFrame>()?;

@@ -102,6 +102,25 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
   時刻ポインタには有効な変数を渡すこと (null で壊れる)。
 - 録音側は未対応。送信段階で取り込む。
 
+## 送信系 API
+
+- `Sora.create_audio_source` / `create_video_source` に対応する
+  `SoraAudioSource` / `SoraVideoSource` を追加した。
+  `Sora` が偽デバイス付きコンテキストを所有し、送信元と接続で共有する
+  (既存 C++ 版の factory 構成に対応)。
+- 音声は `on_data` で受けた PCM を送信キューに積み、偽デバイスの録音側が
+  10ms 周期の取り込み要求 (`RecordedDataIsAvailable`) で送る。
+  不足分は無音で埋め、上限 (10 秒分) を超えた古い分は捨てる。
+  取り込み形式は送信元の形式で報告する (`get_record_audio_parameters`)。
+- 映像は `on_captured` で受けた RGB を ARGB 経由で I420 変換し、
+  `AdaptedVideoTrackSource::on_frame` で投入する。
+  時刻は整数ならマイクロ秒、実数なら秒として扱う (既存の多重定義に対応)。
+- `create_connection` は `audio_source` / `video_source` と
+  `audio` / `video` の可否指定を受け付け、送信トラックと送受信設定を組み立てる。
+  送信元があるのに可否指定がない場合は有効として扱う。
+- 差分: ポインタ直渡しの `on_data` 多重定義は未対応 (ndarray 経由のみ)。
+  コーデック指定やビットレート等の送信設定は対象外で後続に切り出す。
+
 ## PyO3 0.29 での差分
 - `#[pyattr]` は廃止されていたため、関数形式の `#[pymodule]` で
   `m.add("__version__", ...)` する形にした。
@@ -120,9 +139,9 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
   実マイク構成で PCM 980 フレーム (48 kHz mono) を受信した。
 - `loopback_video_frames` で黒フレーム送信のループバックを実証した。
   映像 440 フレーム受信、encoded 変換 440 回通過、ARGB 変換結果の numpy 化を確認した。
-- pytest は `uv run pytest` で 15 件が通る
+- pytest は `uv run pytest` で 19 件が通る
   (版参照 1 件、引数検証 7 件、実接続 1 件、ループバック 2 件、ログ到達 1 件、
-  新 API 受信 3 件)。
+  新 API 受信 3 件、新 API 送信 4 件)。
 
 ## 後続作業の洗い出し
 
