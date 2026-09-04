@@ -47,8 +47,31 @@ sora-rust-sdk ベースへの切り替え可否を判断するための試行記
   `run` は切断までブロックするため、指定秒数後に切断するタスクを spawn した。
 - ランタイムは sora_sdk の利用例と同じ current-thread を使った。
 
-## PyO3 0.29 での差分
+## Python SDK との差分と困り度
 
+### 1. Sink / フレーム受け渡し: 困り度 中
+
+- 音声は `shiguredo_webrtc` の `AudioTrackSinkHandler::on_data` で生 PCM
+  (`&[u8]` + ビット深度 / サンプルレート / チャンネル数 / フレーム数) が取れる。
+  自前キュー + numpy 変換で `read` / `on_data` / `on_frame` 相当は再現できる。
+- 映像は `VideoSinkHandler::on_frame` で `VideoFrameRef` が取れる。
+  I420 から RGB への変換は `shiguredo_webrtc` の `libyuv` 公開物が使える見込み。
+- ただしリサンプルの出力周波数、`read` のタイムアウト、ndarray の所有権管理と
+  UAF 対策は自前設計が必要。毎フレーム GIL とコピーが絡むため性能検討も要る。
+
+### 3. Frame transformer: 困り度 中から高
+
+- Rust はエンコード済み加工 (`sender_video_transform` / `receiver_video_transform`、
+  映像のみ) で、Python のデコード済み numpy 加工とは層が違う。
+- デコード済み加工が要る用途は Sink 経由の自前実装に寄せられるが、
+  送信側への差し戻しは source 側の実装も要る。利用実態の棚卸しが先になる。
+
+### 4. ログ制御: 困り度 低
+
+- `shiguredo_webrtc::rtc_base::logging` に `Severity` / `LoggingConfig` があり代替できる。
+  `rtc_log` 相当の有無は未確認だが小物。
+
+## PyO3 0.29 での差分
 - `#[pyattr]` は廃止されていたため、関数形式の `#[pymodule]` で
   `m.add("__version__", ...)` する形にした。
 - `Python::allow_threads` は廃止されていたため、`Python::detach` を使う。
