@@ -9,7 +9,7 @@
 
 nanobind はバインディング時に `nb::arg("name")` または `"name"_a` で引数名を指定しないと、`help()` やビルド時に生成される型スタブ (`sora_sdk_ext.pyi`) で引数が `arg` または `arg0` / `arg1` として表示される。利用者はエディタ補完や `help()` から引数の意味を読み取れず、キーワード引数も使えない。
 
-2023 年の sora-oss-private#1001 に対して `SoraAudioSource.on_data` / `SoraVideoSource.on_captured` / `SoraVAD.analyze` は PR #35 で名前を付けたが、その後に追加された関数と `def_rw` の setter には引数名未指定が残り、同じ問題が再発している。全箇所に名前を付けて #1001 を close できる状態にする。
+2023 年に `SoraAudioSource.on_data` / `SoraVideoSource.on_captured` / `SoraVAD.analyze` へ PR #35 で引数名を付けたが、その後に追加された関数と `def_rw` の setter には引数名未指定が残り、同じ問題が再発している。本 issue で全箇所に名前を付けて解消する。
 
 ## 現状
 
