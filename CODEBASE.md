@@ -21,7 +21,9 @@ uv run python run.py build <target>
 
 ### .pyi / py.typed の生成
 
-`run.py build` はクロスコンパイルでない環境では `SORA_GEN_PYI=ON` を付けて拡張をビルドし、nanobind の stubgen で `src/sora_sdk/sora_sdk_ext.pyi` と `src/sora_sdk/py.typed` を生成する。どちらもビルド成果物であり `.gitignore` で除外されている。wheel にはビルド時に生成したものを同梱するため、リポジトリにはコミットしない。
+`run.py build` は Windows 以外かつクロスコンパイルでない環境では `SORA_GEN_PYI=ON` を付けて拡張をビルドし、nanobind の stubgen で `src/sora_sdk/sora_sdk_ext.pyi` と `src/sora_sdk/py.typed` を生成する。どちらもビルド成果物であり `.gitignore` で除外されている。
+
+スタブの生成にはビルド済み拡張の import が必要で、拡張は Python の ABI ごとに異なる。そのため CI では 3.12 / 3.13 / 3.14 ごとに生成して各 wheel に同梱している。また C++ のバインディング変更に追随して再生成が必要な派生成果物であり、コミットすると二重管理とドリフトの原因になる。これらを理由にリポジトリへはコミットしない。
 
 ## コミット前の確認
 
