@@ -1,7 +1,6 @@
 import time
 
 from client import SoraClient, SoraRole
-
 from sora_sdk import (
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,

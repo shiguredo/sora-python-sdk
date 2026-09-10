@@ -2,7 +2,6 @@ import time
 
 from api import disconnect_connection_api
 from client import SoraClient, SoraRole
-
 from sora_sdk import SoraSignalingErrorCode
 
 

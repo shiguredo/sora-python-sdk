@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] 実装を Sora C++ SDK から sora-rust-sdk ベース (PyO3 + Maturin) に置き換える
+  - C++ 原始と CMake / setup 系のビルドを取り除く
+  - 公開 API 名称は `sora_sdk` のまま維持する
+  - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.3` に上げる
   - WEBRTC_BUILD_VERSION を `m152.7977.0.2` に上げる
   - @voluntas

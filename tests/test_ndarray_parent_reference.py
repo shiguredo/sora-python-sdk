@@ -12,7 +12,6 @@ import time
 from threading import Event
 
 from client import SoraClient, SoraRole
-
 from sora_sdk import SoraAudioFrame, SoraAudioStreamSink, SoraMediaTrack
 
 

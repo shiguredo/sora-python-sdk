@@ -4,7 +4,6 @@ import time
 
 import pytest
 from client import SoraClient, SoraRole
-
 from sora_sdk import (
     Sora,
     SoraVideoCodecImplementation,

@@ -8,7 +8,6 @@ create_audio_source が不正な sample_rate / channels を ValueError で弾く
 from __future__ import annotations
 
 import pytest
-
 from sora_sdk import Sora
 
 

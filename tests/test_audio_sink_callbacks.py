@@ -7,7 +7,6 @@ import numpy
 from client import SoraClient, SoraRole
 from conftest import Settings
 from numpy.typing import NDArray
-
 from sora_sdk import SoraAudioSink, SoraMediaTrack
 
 

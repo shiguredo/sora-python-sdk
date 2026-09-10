@@ -7,7 +7,7 @@
 [![Actions status](https://github.com/shiguredo/sora-python-sdk/workflows/build/badge.svg)](https://github.com/shiguredo/sora-python-sdk/actions)
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/shiguredo)
 
-Sora Python SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp/) の Python クライアントアプリケーションを開発するためのライブラリです。[Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) をベースにしています。
+Sora Python SDK は [WebRTC SFU Sora](https://sora.shiguredo.jp/) の Python クライアントアプリケーションを開発するためのライブラリです。[sora-rust-sdk](https://github.com/shiguredo/sora-rust-sdk) をベースにしています。
 
 ## About Shiguredo's open source software
 
@@ -31,7 +31,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - Raspberry Pi 向けパッケージ `sora-sdk-rpi` の提供
   - `uv add sora-sdk-rpi` でインストールできる
 - Raspberry Pi 向けに libcamera 用の `create_libcamera_source` を提供
-- [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk) ベース
+- [sora-rust-sdk](https://github.com/shiguredo/sora-rust-sdk) ベース
 - WebRTC 部分の機能は [libwebrtc](https://webrtc.googlesource.com/src/) を採用
 - Windows / macOS / Linux (Ubuntu / Raspberry Pi OS) プラットフォームに対応
 - [WebRTC 統計情報](https://www.w3.org/TR/webrtc-stats/) の取得が可能

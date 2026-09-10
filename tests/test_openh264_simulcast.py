@@ -4,7 +4,6 @@ import time
 import pytest
 from client import SoraClient, SoraRole
 from simulcast import default_video_bit_rate, expect_target_bitrate
-
 from sora_sdk import (
     SoraVideoCodecImplementation,
     SoraVideoCodecPreference,
