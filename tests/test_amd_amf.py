@@ -45,7 +45,6 @@ def test_amd_amf_available(settings):
                         assert c.decoder is True
                         assert c.encoder is False
                     case SoraVideoCodecType.AV1:
-                        # TODO: AV1 decoder は True だが色々課題あり
                         assert c.decoder is True
                         assert c.encoder is True
                     case SoraVideoCodecType.H264:
