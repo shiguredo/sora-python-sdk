@@ -1,7 +1,7 @@
 # Ubuntu の AMD AMF で AV1 デコードが動作するかを定期的に確認する
 
 - Created: 2026-09-11
-- Completed: -
+- Completed: 2026-09-11
 - Branch: feature/test-verify-amd-amf-av1-decode
 - Polished: -
 - Reporter: @sile
@@ -52,3 +52,12 @@ Ubuntu x86_64 の AMD AMF で AV1 デコードが動作するようになった�
 - 元になった報告は社内のリンクのみで、前提をリポジトリ内で確認できない。
 
 再開するときは reopened にしてから実装を進める。
+
+## 解決方法
+
+AMD AMF の E2E テストを定期実行に戻し、Ubuntu x86_64 の AMD AMF で AV1 が動作することを確認した。
+
+- `.github/workflows/e2e-test.yml` の AMD AMF entry (`amd-amf_x86_64`) のコメントを解除し、`build.yml` の平日 schedule と `e2e-test.yml` への push で `tests/test_amd_amf.py` を AMD-AMF runner で実行するようにした。
+- push で起動した E2E (run 34561464756) で AMD AMF の job が success し、`tests/test_amd_amf.py` は 16 passed だった。`test_amd_amf_sendonly_recvonly[AV1]` と `test_amd_amf_available` も通り、Ubuntu の AMD AMF で AV1 のエンコードとデコードが動作することを確認した。
+- `tests/test_amd_amf.py` の `# TODO: AV1 decoder は True だが色々課題あり` は現状に合わないため削除した。
+- `README.md` の AMD AMF の対応表記 (`AV1 エンコードは Windows x86_64 でのみ利用できる`) は、GPU 依存で CI runner 1 台の結果だけでは一般化できないため変更していない。低解像度のサイマルキャストの FIXME も別課題として残している。
