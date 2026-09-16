@@ -142,6 +142,62 @@
 - `README.md` と `skills/sora-python-sdk/SKILL.md` の Sora C++ SDK ベースである旨の記述が実態に合わせて更新されていること。
 - CHANGES.md の `## develop` にエントリが追記されていること。
 
+## 第 1 段の結果
+
+### 受け口不足の再確認 (2026-09-16)
+
+最新版のソースコードを取得して、検討が必要な事項 1〜12 の受け口の有無を確認した。詳細は `docs/sora-rust-sdk-investigation.md` にある。
+
+- `sora_sdk` は安定版 `2026.1.0`、canary 最新 `2026.2.0-canary.6` である。`shiguredo_webrtc` は `0.154.0` が最新で、canary 系列 (`0.152.1-canary.3`) より新しい。
+- 受け口が無いものは 1〜3、5〜10 で、試作時点から解消していない。`on_switched` (4) は受け口があるが引数を取らない。libcamera (11)、`AdmConfig` (12)、`AudioDeviceModuleHandler` (12) は受け口がある。
+- `degradation_preference` と rid は `shiguredo_webrtc` 側に部品 (`DegradationPreference` / `RtpParameters::set_degradation_preference` / `RtpEncodingParameters::set_rid`) があるが、`sora_sdk` が映像送信器を外へ出す API を持たないため使えない。
+- `2026.1.0` と `2026.2.0-canary.6` の差は映像 transform の 2 フィールドのみで、イベントハンドラのトレイトは両版で同一である。canary 化では 1〜4・6 の状況は変わらない。
+
+### 確定した方針
+
+決定事項の一覧は `docs/migration-to-sora-rust-sdk.md` にある。要点は次である。
+
+- 上流に受け口が無い 8 項目のうち 6 項目は sora-rust-sdk へ、3 項目は webrtc-rs へ追加を依頼する。依頼文のドラフトは `docs/migration-to-sora-rust-sdk.md` にある。依頼の起票は別途行う。
+- `force_i420_conversion` は公開 API から削除する。
+- 受信音声は `AudioDeviceModuleHandler` を実装した偽オーディオデバイスで駆動する。`AudioMixer` の露出は依頼しない。
+- free-threading は `#[pymodule(gil_used = false)]` を宣言する。コールバックはキュー経由で専用スレッドへ渡す。
+- 対応プラットフォームは現行 8 プラットフォームを維持し、armv8 系のクロスコンパイルを実証する。成立しないものは実証結果に基づいて落とす。
+- E2E は Python 3.12 / 3.13 / 3.14 の全版を対象にする。
+- Jetson は移行後に再構築する。`issues/pending/` の Jetson 4 件は pending のまま残す。
+- 影響を受ける既存 issue 44 件のうち、`tests/` を前提にする 6 件はテスト移行の 0107 で、残り 38 件は 0108 で 1 件ずつ処遇を判定する。
+
+### 実装単位の issue
+
+第 2 段は次の 11 件で進める。依存関係は各 issue に記載している。
+
+| issue | 内容 | 上流の前提 |
+| --- | --- | --- |
+| 0099 | ビルド基盤を maturin + PyO3 へ置き換える | なし |
+| 0100 | 受信系 API を実装する | G |
+| 0101 | 送信系 API を実装する | E |
+| 0102 | コールバックの Python 中継を実装する | A B C D |
+| 0103 | 接続設定を構造体ベースへ変更し残差 API を実装する | A B C D F |
+| 0104 | 音声リサンプラと VAD を実装する | H I |
+| 0105 | libcamera 入力を実装する | なし |
+| 0106 | CI を maturin 化し wheel とクロスコンパイルを実証する | なし |
+| 0107 | 既存テストを移行し実 Sora に対して通す | 該当機能の依頼 |
+| 0108 | 影響を受ける既存 issue の処遇を確定する | なし |
+| 0109 | README と SKILL.md を追従させる | なし |
+
+上流の依頼の記号 (A〜I) は `docs/migration-to-sora-rust-sdk.md` の依頼一覧に対応する。A〜D と G〜I が受理されるまで 0100 / 0102 / 0103 / 0104 は完了できない。E は音声 encoded transform、F は送信設定 4 項目に対応する。
+
+### 第 1 段の完了条件の達成状況
+
+- 上流へ依頼する項目 (1〜7) の依頼先・依頼内容・受理されない場合の代替方式は `docs/migration-to-sora-rust-sdk.md` で確定した。依頼の起票は未実施である。
+- 方式の選定が必要な項目 (8〜14) の実現方式は確定した。
+- 1〜4・6・7・11 の受け口不足は `sora_sdk 2026.2.0-canary.6` で、5・8・10・12 の露出不足は `shiguredo_webrtc 0.154.0` で成立することを確認した。
+- Python 公開 API の設計方針は確定した。`SoraConnectionConfig` 相当のデータクラスへ変更する。
+- 対応プラットフォーム、wheel の配布方法、E2E の対象 (15、16、18) は確定した。
+- Jetson の扱い (17) は確定した。既存 issue (19) は分類と担当 issue を確定し、1 件ずつの判定は 0107 と 0108 で行う。
+- 実装単位の issue を 11 件起票し、各 issue に変更対象・完了条件・依存関係を書いた。
+
+未実施は上流への依頼の起票である。
+
 ## 解決方法
 
 1. 上流へ依頼する項目 (1〜7) について、依頼先・依頼内容・受理されない場合の代替方式を確定し、必要な依頼を出す。
