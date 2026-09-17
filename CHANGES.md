@@ -19,6 +19,11 @@
 - [UPDATE] nanobind を `3.0.1` に上げる
   - @voluntas
 
+### misc
+
+- [ADD] `WebRTC-Video-PerSsrcKeyframes` の per-SSRC キーフレーム生成を検証する E2E テストを追加する
+  - @voluntas
+
 ## 2026.1.0
 
 **リリース日**: 2026-08-27

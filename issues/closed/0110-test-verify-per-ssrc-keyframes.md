@@ -1,7 +1,7 @@
 # WebRTC-Video-PerSsrcKeyframes の per-SSRC キーフレーム生成を E2E で検証する
 
 - Created: 2026-09-17
-- Completed: -
+- Completed: 2026-09-17
 - Branch: feature/test-verify-per-ssrc-keyframes
 - Polished: 2026-09-17
 
@@ -39,3 +39,15 @@
 
 - `WebRTC-Video-PerSsrcKeyframes` の有無で `keyFramesEncoded` の増加レイヤが変わることを検証するテストが `tests/` に追加され、実 Sora に対して成功すること。
 - フィールドトライアル有効側の接続から `field_trials` の指定を外すと `keyFramesEncoded` は r0 / r1 / r2 すべて増加し、フィールドトライアル有効側の期待（r2 のみ増加）が満たされずテストが失敗すること。フィールドトライアルが効いていない状態をこのテストが検知できることの確認手順とする。
+
+## 解決方法
+
+`WebRTC-Video-PerSsrcKeyframes` の有無で rid を指定したキーフレーム要求の結果が変わることを検証する E2E テストを追加した。
+
+- `tests/api.py` の `request_key_frame_api` にキーワード専用の省略可能な `rid` 引数を追加した。`rid` を指定した場合はその rid の SSRC にのみ PLI が送られ、指定しない場合は従来どおり全登録済み rid が対象になる。未指定のときは body にキー自体を含めない。
+- `tests/test_field_trials.py` に `test_per_ssrc_keyframes` を追加した。VP8 / 3 レイヤのサイマルキャスト送信で `rid=r2` のキーフレーム要求を行い、フィールドトライアル有効時は r2 のみ、無効時は r0 / r1 / r2 すべての `keyFramesEncoded` が増加することを検証する。
+- outbound-rtp 統計を rid ごとに取得する `get_active_video_stats_by_rid` と `get_key_frames_encoded`、VP8 / 3 レイヤの送信クライアントを接続する `connect_sendonly` を追加し、既存の `test_field_trials` も同じヘルパーを使うようにした。
+- 増加しないことを判定するレイヤについては、キーフレーム要求の間に実際にフレームを生成していたことを `framesEncoded` の増分で確認する。`bytesSent` と `framesEncoded` は累積値のため、止まっているレイヤも統計からは消えず、キーフレーム数が変化しないことだけを見ると判定が空虚になるためである。
+- 要求前に 3 レイヤが有効でない場合はテストの前提が成立しないため失敗させる。品質制限がかかっている場合と、増加しないことを判定するレイヤがフレームを生成していない場合は、レイヤの無効化・再有効化によるキーフレーム生成が混ざるため `tests/test_simulcast.py` と同じく skip する。
+- 実 Sora に対して `tests/test_field_trials.py` の 3 テストと `tests/` 全体（75 passed / 98 skipped / 1 xfailed）が成功することを確認した。フィールドトライアル有効側から `field_trials` の指定を外すと `rid=r1 のキーフレーム数が増えている` で失敗することも確認した。
+- `CHANGES.md` の `## develop` の `### misc` に E2E テスト追加のエントリを追加した。
