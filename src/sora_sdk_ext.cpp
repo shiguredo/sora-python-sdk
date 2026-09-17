@@ -729,9 +729,10 @@ NB_MODULE(sora_sdk_ext, m) {
                    }))
       .def(nb::init<std::optional<std::string>,
                     std::optional<sora::VideoCodecPreference>,
-                    std::optional<bool>>(),
+                    std::optional<bool>, std::optional<std::string>>(),
            "openh264"_a = nb::none(), "video_codec_preference"_a = nb::none(),
-           "force_i420_conversion"_a = nb::none())
+           "force_i420_conversion"_a = nb::none(),
+           "field_trials"_a = nb::none())
       .def("create_connection", &Sora::CreateConnection, "signaling_urls"_a,
            "role"_a, "channel_id"_a, "client_id"_a = nb::none(),
            "bundle_id"_a = nb::none(), "metadata"_a = nb::none(),

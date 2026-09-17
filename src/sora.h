@@ -38,10 +38,12 @@ class Sora : public CountedPublisher {
    * @param openh264 (オプション) OpenH264 ライブラリへのパス
    * @param video_codec_preference (オプション) 利用するエンコーダ/デコーダの実装の設定
    * @param force_i420_conversion (オプション) エンコーダに渡す前に I420 に変換するかどうかの設定
+   * @param field_trials (オプション) libwebrtc のフィールドトライアルの設定
    */
   Sora(std::optional<std::string> openh264,
        std::optional<sora::VideoCodecPreference> video_codec_preference,
-       std::optional<bool> force_i420_conversion);
+       std::optional<bool> force_i420_conversion,
+       std::optional<std::string> field_trials);
   ~Sora();
 
   /**

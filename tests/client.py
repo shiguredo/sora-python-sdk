@@ -75,6 +75,7 @@ class SoraClient:
         libcamera_controls: list[tuple[str, str]] | None = None,
         native_frame_output: bool = False,
         force_i420_conversion: bool | None = None,
+        field_trials: str | None = None,
     ):
         self._signaling_urls = settings.signaling_urls
         self._role = role.value
@@ -123,6 +124,7 @@ class SoraClient:
             openh264=settings.openh264_path,
             video_codec_preference=video_codec_preference,
             force_i420_conversion=force_i420_conversion,
+            field_trials=field_trials,
         )
 
         self._fake_audio_thread: threading.Thread | None = None
