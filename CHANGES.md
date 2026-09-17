@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] `Sora` に libwebrtc のフィールドトライアルを指定する `field_trials` 引数を追加する
+  - @voluntas
 - [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.7` に上げる
   - WEBRTC_BUILD_VERSION を `m154.8037.1.2` に上げる
   - @voluntas

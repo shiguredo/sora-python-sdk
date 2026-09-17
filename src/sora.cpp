@@ -15,9 +15,10 @@
 
 Sora::Sora(std::optional<std::string> openh264,
            std::optional<sora::VideoCodecPreference> video_codec_preference,
-           std::optional<bool> force_i420_conversion) {
-  factory_.reset(
-      new SoraFactory(openh264, video_codec_preference, force_i420_conversion));
+           std::optional<bool> force_i420_conversion,
+           std::optional<std::string> field_trials) {
+  factory_.reset(new SoraFactory(openh264, video_codec_preference,
+                                 force_i420_conversion, field_trials));
   ioc_.reset(new boost::asio::io_context(1));
   thread_.reset(new std::thread([this]() {
     auto guard = boost::asio::make_work_guard(*ioc_);

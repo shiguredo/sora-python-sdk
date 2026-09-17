@@ -27,9 +27,15 @@
 SoraFactory::SoraFactory(
     std::optional<std::string> openh264,
     std::optional<sora::VideoCodecPreference> video_codec_preference,
-    std::optional<bool> force_i420_conversion) {
+    std::optional<bool> force_i420_conversion,
+    std::optional<std::string> field_trials) {
   auto env = webrtc::CreateEnvironment();
   sora::SoraClientContextConfig context_config;
+  // libwebrtc のフィールドトライアルを指定する。
+  // 未指定の場合は libwebrtc の既定動作になる。
+  if (field_trials) {
+    context_config.field_trials = *field_trials;
+  }
   context_config.video_codec_factory_config.capability_config.openh264_path =
       openh264;
   if (sora::CudaContext::CanCreate()) {
