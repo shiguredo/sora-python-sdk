@@ -46,7 +46,12 @@ def run_setup(build_platform, target_platform):
         def get_tag(self):
             _, _, plat2 = super().get_tag()
             impl = "cp" + sysconfig.get_config_var("py_version_nodot")
-            return impl, impl, plat if plat is not None else plat2
+            abi = impl
+            # free-threaded ビルド (3.13t 以降) は ABI タグに t を付ける (例: cp313-cp313t)。
+            # interpreter タグは cp313 のままで、t は ABI タグにのみ付く
+            if sysconfig.get_config_var("Py_GIL_DISABLED"):
+                abi += "t"
+            return impl, abi, plat if plat is not None else plat2
 
     setup(
         version=version,
