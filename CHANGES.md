@@ -13,8 +13,10 @@
 
 - [ADD] `Sora` に libwebrtc のフィールドトライアルを指定する `field_trials` 引数を追加する
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.7` に上げる
-  - WEBRTC_BUILD_VERSION を `m154.8037.1.2` に上げる
+- [ADD] `SoraSignalingErrorCode` に `DATACHANNEL_CLOSED` を追加する
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.8` に上げる
+  - WEBRTC_BUILD_VERSION を `m155.8059.4.1` に上げる
   - @voluntas
 - [UPDATE] nanobind を `3.1.0` に上げる
   - @voluntas
