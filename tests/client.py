@@ -286,15 +286,16 @@ class SoraClient:
         映像を受信し始めるまで待つ。
 
         RequestKeyFrame はキーフレームを受け取る相手がいる配信者にだけ PLI を送るため、
-        キーフレーム要求のテストでは視聴側の接続が受信を開始したことを確認してから要求する。
-        受信の開始は inbound-rtp の framesDecoded で判定する。
+        キーフレーム要求のテストでは視聴側の接続が映像を受信し始めたことを確認してから
+        要求する。デコードできない環境もあるため、受信の開始は inbound-rtp の
+        bytesReceived で判定する。
         """
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             if any(
                 s.get("type") == "inbound-rtp"
                 and s.get("kind") == "video"
-                and s.get("framesDecoded", 0) > 0
+                and s.get("bytesReceived", 0) > 0
                 for s in self.get_stats()
             ):
                 return

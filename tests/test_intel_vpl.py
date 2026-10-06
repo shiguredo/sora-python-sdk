@@ -92,8 +92,22 @@ def test_intel_vpl_key_frame_request(settings, video_codec_type):
     sendonly.connect(fake_video=True)
 
     # RequestKeyFrame はキーフレームを受け取る相手がいる配信者にだけ PLI を送るため、
-    # 同じチャンネルに視聴者 (recvonly) を 1 本用意して受信を開始するまで待つ
-    recvonly = SoraClient(settings, SoraRole.RECVONLY, audio=False, video=True)
+    # 同じチャンネルに視聴者 (recvonly) を 1 本用意して受信を開始するまで待つ。
+    # ハードウェアエンコーダの映像はハードウェアデコーダを指定しないと受信できない
+    recvonly = SoraClient(
+        settings,
+        SoraRole.RECVONLY,
+        audio=False,
+        video=True,
+        video_codec_preference=SoraVideoCodecPreference(
+            codecs=[
+                SoraVideoCodecPreference.Codec(
+                    type=codec_type_string_to_codec_type(video_codec_type),
+                    decoder=SoraVideoCodecImplementation.INTEL_VPL,
+                ),
+            ]
+        ),
+    )
     recvonly.connect()
     recvonly.wait_video_received()
 
