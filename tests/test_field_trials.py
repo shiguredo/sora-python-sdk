@@ -81,8 +81,8 @@ def connect_recvonly(settings, simulcast_request_rid: str) -> SoraClient:
     )
     recvonly.connect()
 
-    # 視聴者の downstream が確定するまで固定で 5 秒待つ
-    time.sleep(5)
+    # 視聴者の downstream が確定するまで待つ
+    recvonly.wait_video_received()
 
     return recvonly
 
@@ -107,7 +107,7 @@ def test_field_trials(settings):
         )
 
     sendonly = connect_sendonly(settings, "WebRTC-Video-PerSsrcKeyframes/Enabled/")
-    recvonly = connect_recvonly(settings, "r2")
+    recvonly = connect_recvonly(settings, "r0")
 
     # connection_id は None になり得るため、API 呼び出しに使う前に絞り込む
     assert sendonly.connection_id is not None
@@ -150,7 +150,7 @@ def test_field_trials(settings):
     ("field_trials", "increased_rids"),
     [
         # フィールドトライアル有効時は PLI を受けた rid のレイヤだけがキーフレームを生成する
-        ("WebRTC-Video-PerSsrcKeyframes/Enabled/", {"r2"}),
+        ("WebRTC-Video-PerSsrcKeyframes/Enabled/", {"r0"}),
         # フィールドトライアル無効時はどの rid への PLI でも全レイヤがキーフレームを生成する
         (None, {"r0", "r1", "r2"}),
     ],
@@ -168,7 +168,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
     - RequestKeyFrame API の rid 指定は Sora 2026.2.0-canary.15 以降で利用できる
 
     期待:
-    - フィールドトライアル有効: rid=r2 のキーフレーム要求で r2 のみキーフレーム数が増える
+    - フィールドトライアル有効: rid=r0 のキーフレーム要求で r0 のみキーフレーム数が増える
     - フィールドトライアル無効: r0 / r1 / r2 すべてのキーフレーム数が増える
 
     前提が崩れた場合:
@@ -177,7 +177,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
       いない場合は skip する
     """
     sendonly = connect_sendonly(settings, field_trials)
-    recvonly = connect_recvonly(settings, "r2")
+    recvonly = connect_recvonly(settings, "r0")
 
     # connection_id は None になり得るため、API 呼び出しに使う前に絞り込む
     assert sendonly.connection_id is not None
@@ -188,7 +188,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
 
     # rid を指定すると、その rid の SSRC にのみ PLI が送られる
     response = request_key_frame_api(
-        settings.api_url, sendonly.channel_id, sendonly.connection_id, rid="r2"
+        settings.api_url, sendonly.channel_id, sendonly.connection_id, rid="r0"
     )
 
     # Sora はキーフレームを受け取るまで 1 秒間隔で PLI を再送するため、再送が終わるまで待つ

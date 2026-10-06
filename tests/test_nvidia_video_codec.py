@@ -66,7 +66,7 @@ def test_nvidia_video_codec_sdk_available():
         "H265",
     ],
 )
-def test_intel_vpl_key_frame_request(settings, video_codec_type):
+def test_nvidia_video_codec_key_frame_request(settings, video_codec_type):
     sendonly = SoraClient(
         settings,
         SoraRole.SENDONLY,
@@ -84,7 +84,11 @@ def test_intel_vpl_key_frame_request(settings, video_codec_type):
     )
     sendonly.connect(fake_video=True)
 
-    time.sleep(3)
+    # RequestKeyFrame はキーフレームを受け取る相手がいる配信者にだけ PLI を送るため、
+    # 同じチャンネルに視聴者 (recvonly) を 1 本用意して受信を開始するまで待つ
+    recvonly = SoraClient(settings, SoraRole.RECVONLY, audio=False, video=True)
+    recvonly.connect()
+    recvonly.wait_video_received()
 
     assert sendonly.connection_id is not None
 
@@ -101,6 +105,7 @@ def test_intel_vpl_key_frame_request(settings, video_codec_type):
     sendonly_stats = sendonly.get_stats()
 
     sendonly.disconnect()
+    recvonly.disconnect()
 
     # outbound-rtp が無かったら StopIteration 例外が上がる
     outbound_rtp_stats = next(s for s in sendonly_stats if s.get("type") == "outbound-rtp")

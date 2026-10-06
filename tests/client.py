@@ -281,6 +281,26 @@ class SoraClient:
         raw_stats = self._connection.get_stats()
         return json.loads(raw_stats)
 
+    def wait_video_received(self, timeout: float = 30.0) -> None:
+        """
+        映像を受信し始めるまで待つ。
+
+        RequestKeyFrame はキーフレームを受け取る相手がいる配信者にだけ PLI を送るため、
+        キーフレーム要求のテストでは視聴側の接続が受信を開始したことを確認してから要求する。
+        受信の開始は inbound-rtp の framesDecoded で判定する。
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if any(
+                s.get("type") == "inbound-rtp"
+                and s.get("kind") == "video"
+                and s.get("framesDecoded", 0) > 0
+                for s in self.get_stats()
+            ):
+                return
+            time.sleep(0.5)
+        raise AssertionError(f"映像を受信し始めなかった: timeout={timeout}")
+
     @property
     def role(self) -> str:
         return self._role

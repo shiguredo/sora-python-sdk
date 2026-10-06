@@ -41,11 +41,10 @@ def test_key_frame_request(settings, video_codec_type):
     sendonly.connect(fake_video=True)
 
     # RequestKeyFrame はキーフレームを受け取る相手がいる配信者にだけ PLI を送るため、
-    # 同じチャンネルに視聴者 (recvonly) を 1 本用意する
+    # 同じチャンネルに視聴者 (recvonly) を 1 本用意して受信を開始するまで待つ
     recvonly = SoraClient(settings, SoraRole.RECVONLY, audio=False, video=True)
     recvonly.connect()
-
-    time.sleep(5)
+    recvonly.wait_video_received()
 
     assert sendonly.connection_id is not None
 
