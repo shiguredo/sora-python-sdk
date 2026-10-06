@@ -76,6 +76,7 @@ class SoraClient:
         native_frame_output: bool = False,
         force_i420_conversion: bool | None = None,
         field_trials: str | None = None,
+        simulcast_request_rid: str | None = None,
     ):
         self._signaling_urls = settings.signaling_urls
         self._role = role.value
@@ -160,6 +161,7 @@ class SoraClient:
             role=self._role,
             channel_id=self._channel_id,
             simulcast=simulcast,
+            simulcast_request_rid=simulcast_request_rid,
             spotlight=spotlight,
             metadata=metadata,
             audio=self._audio,
