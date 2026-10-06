@@ -13,8 +13,10 @@
 
 - [ADD] `Sora` に libwebrtc のフィールドトライアルを指定する `field_trials` 引数を追加する
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.7` に上げる
-  - WEBRTC_BUILD_VERSION を `m154.8037.1.2` に上げる
+- [ADD] `SoraSignalingErrorCode` に `DATACHANNEL_CLOSED` を追加する
+  - @voluntas
+- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.8` に上げる
+  - WEBRTC_BUILD_VERSION を `m155.8059.4.1` に上げる
   - @voluntas
 - [UPDATE] nanobind を `3.1.0` に上げる
   - @voluntas
@@ -22,6 +24,12 @@
 ### misc
 
 - [ADD] `WebRTC-Video-PerSsrcKeyframes` の per-SSRC キーフレーム生成を検証する E2E テストを追加する
+  - @voluntas
+- [ADD] キーフレームを受け取る相手がいない配信者へ PLI が送られないことを検証する E2E テストを追加する
+  - @voluntas
+- [UPDATE] キーフレーム要求の E2E テストに視聴者の接続を追加する
+  - RequestKeyFrame API がキーフレームを受け取る相手がいない配信者へ PLI を送らなくなったため
+  - 視聴者が映像を受信し始めてから要求する
   - @voluntas
 
 ## 2026.1.0

@@ -336,7 +336,9 @@ NB_MODULE(sora_sdk_ext, m) {
              sora::SoraSignalingErrorCode::WEBSOCKET_ONERROR)
       .value("PEER_CONNECTION_STATE_FAILED",
              sora::SoraSignalingErrorCode::PEER_CONNECTION_STATE_FAILED)
-      .value("ICE_FAILED", sora::SoraSignalingErrorCode::ICE_FAILED);
+      .value("ICE_FAILED", sora::SoraSignalingErrorCode::ICE_FAILED)
+      .value("DATACHANNEL_CLOSED",
+             sora::SoraSignalingErrorCode::DATACHANNEL_CLOSED);
 
   nb::enum_<sora::SoraSignalingType>(m, "SoraSignalingType",
                                      nb::is_arithmetic())

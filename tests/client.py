@@ -76,6 +76,7 @@ class SoraClient:
         native_frame_output: bool = False,
         force_i420_conversion: bool | None = None,
         field_trials: str | None = None,
+        simulcast_request_rid: str | None = None,
     ):
         self._signaling_urls = settings.signaling_urls
         self._role = role.value
@@ -160,6 +161,7 @@ class SoraClient:
             role=self._role,
             channel_id=self._channel_id,
             simulcast=simulcast,
+            simulcast_request_rid=simulcast_request_rid,
             spotlight=spotlight,
             metadata=metadata,
             audio=self._audio,
@@ -278,6 +280,27 @@ class SoraClient:
     def get_stats(self):
         raw_stats = self._connection.get_stats()
         return json.loads(raw_stats)
+
+    def wait_video_received(self, timeout: float = 30.0) -> None:
+        """
+        映像を受信し始めるまで待つ。
+
+        RequestKeyFrame はキーフレームを受け取る相手がいる配信者にだけ PLI を送るため、
+        キーフレーム要求のテストでは視聴側の接続が映像を受信し始めたことを確認してから
+        要求する。デコードできない環境もあるため、受信の開始は inbound-rtp の
+        bytesReceived で判定する。
+        """
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if any(
+                s.get("type") == "inbound-rtp"
+                and s.get("kind") == "video"
+                and s.get("bytesReceived", 0) > 0
+                for s in self.get_stats()
+            ):
+                return
+            time.sleep(0.5)
+        raise AssertionError(f"映像を受信し始めなかった: timeout={timeout}")
 
     @property
     def role(self) -> str:

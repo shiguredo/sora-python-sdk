@@ -64,6 +64,29 @@ def connect_sendonly(settings, field_trials: str | None) -> SoraClient:
     return sendonly
 
 
+def connect_recvonly(settings, simulcast_request_rid: str) -> SoraClient:
+    """
+    同じチャンネルに視聴者 (recvonly) を接続する。
+
+    RequestKeyFrame はキーフレームを受け取る相手がいる配信者にだけ、その相手が
+    受信している rid へ PLI を送るため、視聴者が受信する rid を明示しておく。
+    視聴者の downstream が確定するまで固定で 5 秒待ってから返す (条件待ちはしていない)。
+    """
+    recvonly = SoraClient(
+        settings,
+        SoraRole.RECVONLY,
+        audio=False,
+        video=True,
+        simulcast_request_rid=simulcast_request_rid,
+    )
+    recvonly.connect()
+
+    # 視聴者の downstream が確定するまで待つ
+    recvonly.wait_video_received()
+
+    return recvonly
+
+
 def test_field_trials(settings):
     """
     WebRTC-Video-PerSsrcKeyframes を指定した Sora でキーフレーム要求が動作すること。
@@ -74,7 +97,7 @@ def test_field_trials(settings):
 
     期待:
     - 不正な文字列では RuntimeError になる
-    - キーフレーム要求 API の呼び出しで有効な全レイヤのキーフレーム数が増える
+    - キーフレーム要求 API の呼び出しで PLI が届いた rid のキーフレーム数が増える
     """
     # 文字列の末尾に "/" が無い場合は不正なフィールドトライアル文字列として扱われる
     with pytest.raises(RuntimeError):
@@ -84,37 +107,50 @@ def test_field_trials(settings):
         )
 
     sendonly = connect_sendonly(settings, "WebRTC-Video-PerSsrcKeyframes/Enabled/")
+    recvonly = connect_recvonly(settings, "r0")
 
     # connection_id は None になり得るため、API 呼び出しに使う前に絞り込む
     assert sendonly.connection_id is not None
 
-    before = get_key_frames_encoded(get_active_video_stats_by_rid(sendonly))
+    before_stats = get_active_video_stats_by_rid(sendonly)
+    before = get_key_frames_encoded(before_stats)
     print("キーフレーム要求前のキーフレーム数:", before)
 
     response = request_key_frame_api(settings.api_url, sendonly.channel_id, sendonly.connection_id)
 
     time.sleep(5)
 
-    after = get_key_frames_encoded(get_active_video_stats_by_rid(sendonly))
+    after_stats = get_active_video_stats_by_rid(sendonly)
+    after = get_key_frames_encoded(after_stats)
     print("キーフレーム要求後のキーフレーム数:", after)
 
     sendonly.disconnect()
+    recvonly.disconnect()
 
     # 接続を閉じてから確認する。ここで失敗しても接続が残らない
     assert response.status_code == 200, response.text
 
     # サイマルキャストの全レイヤが有効になっていること
-    assert len(after) == 3
-    # キーフレーム要求により有効な全レイヤのキーフレーム数が増えていること
-    for rid, count in before.items():
-        assert after.get(rid, 0) > count, f"rid={rid} のキーフレーム数が増えていない"
+    assert len(after_stats) == 3
+    # rid を指定しない要求は視聴者が受信している rid に PLI を送る。視聴者が受信している
+    # rid は視聴環境によって変わり得るため、PLI が届いた rid を対象にキーフレーム数を確認する
+    increased_rids = [
+        rid
+        for rid in sorted(before_stats)
+        if after_stats[rid]["pliCount"] > before_stats[rid]["pliCount"]
+    ]
+    assert increased_rids, "キーフレーム要求で PLI が届いていない"
+    for rid in increased_rids:
+        assert after[rid] > before[rid], (
+            f"rid={rid} のキーフレーム数が増えていない: before={before[rid]}, after={after[rid]}"
+        )
 
 
 @pytest.mark.parametrize(
     ("field_trials", "increased_rids"),
     [
         # フィールドトライアル有効時は PLI を受けた rid のレイヤだけがキーフレームを生成する
-        ("WebRTC-Video-PerSsrcKeyframes/Enabled/", {"r2"}),
+        ("WebRTC-Video-PerSsrcKeyframes/Enabled/", {"r0"}),
         # フィールドトライアル無効時はどの rid への PLI でも全レイヤがキーフレームを生成する
         (None, {"r0", "r1", "r2"}),
     ],
@@ -132,7 +168,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
     - RequestKeyFrame API の rid 指定は Sora 2026.2.0-canary.15 以降で利用できる
 
     期待:
-    - フィールドトライアル有効: rid=r2 のキーフレーム要求で r2 のみキーフレーム数が増える
+    - フィールドトライアル有効: rid=r0 のキーフレーム要求で r0 のみキーフレーム数が増える
     - フィールドトライアル無効: r0 / r1 / r2 すべてのキーフレーム数が増える
 
     前提が崩れた場合:
@@ -141,6 +177,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
       いない場合は skip する
     """
     sendonly = connect_sendonly(settings, field_trials)
+    recvonly = connect_recvonly(settings, "r0")
 
     # connection_id は None になり得るため、API 呼び出しに使う前に絞り込む
     assert sendonly.connection_id is not None
@@ -151,7 +188,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
 
     # rid を指定すると、その rid の SSRC にのみ PLI が送られる
     response = request_key_frame_api(
-        settings.api_url, sendonly.channel_id, sendonly.connection_id, rid="r2"
+        settings.api_url, sendonly.channel_id, sendonly.connection_id, rid="r0"
     )
 
     # Sora はキーフレームを受け取るまで 1 秒間隔で PLI を再送するため、再送が終わるまで待つ
@@ -162,6 +199,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
     print("キーフレーム要求後のキーフレーム数:", key_frames_after)
 
     sendonly.disconnect()
+    recvonly.disconnect()
 
     # 接続を閉じてから確認する。ここで失敗しても接続が残らない
     assert response.status_code == 200, response.text

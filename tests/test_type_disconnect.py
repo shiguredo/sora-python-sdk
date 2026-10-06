@@ -27,7 +27,7 @@ def test_websocket_signaling_only_disconnect(settings):
 
         assert conn.disconnect_code == SoraSignalingErrorCode.CLOSE_SUCCEEDED
         assert (
-            conn.disconnect_reason == "Succeeded to close WebSocket (DC signaling is not enabled)"
+            conn.disconnect_reason == "Succeeded to close WebSocket (DC signaling is not available)"
         )
 
 
