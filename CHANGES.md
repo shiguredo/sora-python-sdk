@@ -25,6 +25,11 @@
 
 - [ADD] `WebRTC-Video-PerSsrcKeyframes` の per-SSRC キーフレーム生成を検証する E2E テストを追加する
   - @voluntas
+- [ADD] キーフレームを受け取る相手がいない配信者へ PLI が送られないことを検証する E2E テストを追加する
+  - @voluntas
+- [UPDATE] キーフレーム要求の E2E テストに視聴者の接続を追加する
+  - RequestKeyFrame API がキーフレームを受け取る相手がいない配信者へ PLI を送らなくなったため
+  - @voluntas
 
 ## 2026.1.0
 

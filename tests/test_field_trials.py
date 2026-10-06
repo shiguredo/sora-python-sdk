@@ -64,6 +64,23 @@ def connect_sendonly(settings, field_trials: str | None) -> SoraClient:
     return sendonly
 
 
+def connect_recvonly(settings) -> SoraClient:
+    """
+    同じチャンネルに視聴者 (recvonly) を接続する。
+
+    RequestKeyFrame はキーフレームを受け取る相手がいる配信者にだけ PLI を送るため、
+    キーフレーム要求を検証するには視聴者が必要になる。視聴者の downstream が
+    確定するまで固定で 5 秒待ってから返す (条件待ちはしていない)。
+    """
+    recvonly = SoraClient(settings, SoraRole.RECVONLY, audio=False, video=True)
+    recvonly.connect()
+
+    # 視聴者の downstream が確定するまで固定で 5 秒待つ
+    time.sleep(5)
+
+    return recvonly
+
+
 def test_field_trials(settings):
     """
     WebRTC-Video-PerSsrcKeyframes を指定した Sora でキーフレーム要求が動作すること。
@@ -84,6 +101,7 @@ def test_field_trials(settings):
         )
 
     sendonly = connect_sendonly(settings, "WebRTC-Video-PerSsrcKeyframes/Enabled/")
+    recvonly = connect_recvonly(settings)
 
     # connection_id は None になり得るため、API 呼び出しに使う前に絞り込む
     assert sendonly.connection_id is not None
@@ -99,6 +117,7 @@ def test_field_trials(settings):
     print("キーフレーム要求後のキーフレーム数:", after)
 
     sendonly.disconnect()
+    recvonly.disconnect()
 
     # 接続を閉じてから確認する。ここで失敗しても接続が残らない
     assert response.status_code == 200, response.text
@@ -141,6 +160,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
       いない場合は skip する
     """
     sendonly = connect_sendonly(settings, field_trials)
+    recvonly = connect_recvonly(settings)
 
     # connection_id は None になり得るため、API 呼び出しに使う前に絞り込む
     assert sendonly.connection_id is not None
@@ -162,6 +182,7 @@ def test_per_ssrc_keyframes(settings, field_trials, increased_rids):
     print("キーフレーム要求後のキーフレーム数:", key_frames_after)
 
     sendonly.disconnect()
+    recvonly.disconnect()
 
     # 接続を閉じてから確認する。ここで失敗しても接続が残らない
     assert response.status_code == 200, response.text
