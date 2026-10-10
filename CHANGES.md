@@ -11,6 +11,13 @@
 
 ## develop
 
+- [CHANGE] `send_data_channel()` が Sora が管理するラベル (`signaling` / `stats` / `notify` / `push` / `rpc`) と offer に含まれないラベル、開いていないラベルへ送信せず `False` を返すようにする
+  - 以前はラベルを検証せず送信を試みて `True` を返していたため、これらのラベルへ送信していたアプリケーションは対応が必要になる
+  - `#` で始まるラベルでも、開く前に送っていた場合は `False` になる (`on_data_channel` が発火してチャネルが開くまで待ってから送る)
+  - Sora C++ SDK `2026.3.0-canary.8` の `SoraSignaling::SendDataChannel()` が送信先を `#` で始まるユーザー定義ラベルに制限したため
+  - `rpc` ラベルへリクエストを送る場合は `send_rpc()` を使う
+  - それ以外の Sora が管理するラベルを使っていた場合は送信をやめる
+  - @voluntas
 - [ADD] `Sora` に libwebrtc のフィールドトライアルを指定する `field_trials` 引数を追加する
   - @voluntas
 - [ADD] `SoraSignalingErrorCode` に `DATACHANNEL_CLOSED` を追加する
