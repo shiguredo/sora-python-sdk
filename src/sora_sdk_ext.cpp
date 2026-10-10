@@ -506,6 +506,8 @@ NB_MODULE(sora_sdk_ext, m) {
       .def("disconnect", &SoraConnection::Disconnect)
       .def("send_data_channel", &SoraConnection::SendDataChannel, "label"_a,
            "data"_a)
+      .def("send_rpc", &SoraConnection::SendRpc, "id"_a, "method"_a,
+           "params"_a = nb::none())
       .def("get_stats", &SoraConnection::GetStats)
       .def_rw("on_set_offer", &SoraConnection::on_set_offer_)
       .def_rw("on_ws_close", &SoraConnection::on_ws_close_)

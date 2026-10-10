@@ -1,7 +1,7 @@
 # `SoraConnection` に `send_rpc()` を追加して `rpc` ラベルへ JSON-RPC 2.0 リクエストを送れるようにする
 
 - Created: 2026-10-10
-- Completed: -
+- Completed: 2026-10-10
 - Branch: feature/add-send-rpc
 - Polished: 2026-10-10
 - Reporter: @voluntas
@@ -81,3 +81,37 @@ sora-python-sdk は `SendRpc()` を公開していないため、Python から `
 - `tests/client.py` / `tests/test_rpc.py`
 - `skills/sora-python-sdk/SKILL.md`
 - `CHANGES.md`
+
+## 解決方法
+
+- `SoraConnection` に `SendRpc(std::optional<uint64_t> id, const std::string& method, const nb::handle& params)` を追加し、`conn_->SendRpc()` へ委譲するようにした
+  - `conn_ == nullptr` の場合は `send_data_channel()` と同じ `RuntimeError` を送出する
+  - `params` に `None` を指定した場合は `std::nullopt` を渡し、`params` を含めない
+- `Sora::ConvertJsonValue()` を `src/sora_json.h` / `src/sora_json.cpp` の free 関数 `ConvertJsonValue()` へ切り出し、`Sora` と `SoraConnection` の両方から使えるようにした。`CMakeLists.txt` のソース一覧に `src/sora_json.cpp` を追加した。関数本体と例外型・メッセージは切り出し前と同一
+- `src/sora_sdk_ext.cpp` に `send_rpc(id, method, params=None)` のバインディングを追加した。生成される `sora_sdk_ext.pyi` は `send_rpc(self, id: int | None, method: str, params: object | None = None) -> bool` になり `arg0` は出力されない
+- `tests/client.py` の `SoraClient` に `on_rpc` の受信キュー、`send_rpc()`、`recv_rpc()`、`wait_rpc_ready()`、`_wait_data_channel_ready()` を追加した
+- `tests/test_rpc.py` を追加した (6 件)
+  - 応答が `on_rpc` に届き `id` が一致すること (`id` は境界値の 0 と 2^64-1 を含む)
+  - `params` に `None` と Array を指定した場合、`params` を省略した 2 引数呼び出しでも送信できること
+  - `id` に `None` を指定した Notification では応答が返らないこと
+  - `params` が Object / Array 以外の値 (文字列・整数・浮動小数点数・真偽値) の場合は送信せず `False`、JSON の値として扱えない値 (`set` / `tuple` / `bytes` / float32 で厳密に表現できない浮動小数点数) は `TypeError`、`int64` の範囲を超える整数とキーが文字列でない `dict` は `RuntimeError` になること
+  - `id` が `None` でも 0 以上 2^64-1 以下の整数でもない場合は `TypeError` になること
+  - `rpc` ラベルが無い接続 (`data_channel_signaling=False`) では送信せず `False` を返すこと
+  - `disconnect()` 後は `RuntimeError` になり SEGV しないこと
+- `skills/sora-python-sdk/SKILL.md` に `Sora の RPC` の節を追加し、利用条件 (`sora.conf` の `data_channel_rpc`)、`send_rpc()` の引数、例外、`on_rpc` での応答受信を記載した。あわせて `send_data_channel()` の送信先の制限と注意点を追記した
+- `CHANGES.md` の `## develop` に `[ADD]` エントリを追記した
+
+### あわせて修正した既存テストの不備
+
+テスト用の Sora が affinity により signaling の redirect を返すようになり、SDK が redirect 時に接続先の WebSocket を張り直して `OnWsClose(1000, "SELF-CLOSED")` を通知するため、`ws_close_code is None` を期待する `tests/test_type_switched.py` の 2 件が失敗していた (develop とその CI でも同じ 2 件が失敗)。`tests/client.py` の `SoraClient` で redirect による `SELF-CLOSED` を接続中の WebSocket のクローズとして記録しないようにし、`tests/test_type_switched.py` の docstring に前提を追記した。`CHANGES.md` の `### misc` にもエントリを追加した。
+
+### 確認したこと
+
+- `uv run pytest tests/ -n auto` が 82 passed / 98 skipped / 1 xfailed で通ること (実際の Sora に接続)
+- `uv run pytest tests/test_rpc.py -q` が 6 件すべて通ること (約 8 秒)
+- `uv run ruff check` / `uv run ruff format --check` / `uv run ty check` が通ること
+- `uv run python run.py format` が差分を出さないこと (clang-format と ruff)
+- 生成される `sora_sdk_ext.pyi` の `send_rpc` が `id` / `method` / `params` の引数名で出力されること
+- 実際の Sora で `{"jsonrpc":"2.0","id":0,"method":"9999.0.0/not_exist","params":{"key":"value"}}` が送信され、`UNSUPPORTED-JSON-RPC-METHOD` のエラー応答が同じ `id` で `on_rpc` に届くこと
+- `rpc` ラベルの準備完了は接続完了から 0.03〜0.07 秒で、`send_rpc()` の待機 (5 秒) に十分な余裕があること
+- `git diff` の `ConvertJsonValue()` の本体が切り出し前と 1 バイト一致し、既存の呼び出し側の変換結果と例外が変わらないこと

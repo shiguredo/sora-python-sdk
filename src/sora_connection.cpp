@@ -18,6 +18,7 @@
 
 #include "gil.h"
 #include "sora_call.h"
+#include "sora_json.h"
 
 namespace nb = nanobind;
 
@@ -182,6 +183,24 @@ bool SoraConnection::SendDataChannel(const std::string& label,
         "establish a new connection.");
   }
   return conn_->SendDataChannel(label, std::string(data.c_str(), data.size()));
+}
+
+bool SoraConnection::SendRpc(std::optional<uint64_t> id,
+                             const std::string& method,
+                             const nb::handle& params) {
+  // SendDataChannel() と同じく、Disconnect() 後の conn_ 参照で SEGV しないよう例外へ落とす。
+  if (conn_ == nullptr) {
+    throw std::runtime_error(
+        "Already disconnected. Please create another Sora instance to "
+        "establish a new connection.");
+  }
+  // params に None を指定した場合は params を含めない。
+  // ConvertJsonValue(None) が返す JSON null とは意味が異なる。
+  std::optional<boost::json::value> json_params;
+  if (!params.is_none()) {
+    json_params = ConvertJsonValue(params, "Invalid JSON value in params");
+  }
+  return conn_->SendRpc(id, method, json_params);
 }
 
 std::string SoraConnection::GetStats() {

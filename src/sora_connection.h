@@ -2,7 +2,9 @@
 #define SORA_CONNECTION_H_
 
 #include <condition_variable>
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <thread>
 
 // nonobind
@@ -113,6 +115,25 @@ class SoraConnection : public DisposePublisher,
    * @param data 送信するデータ
    */
   bool SendDataChannel(const std::string& label, nb::bytes& data);
+  /**
+   * rpc ラベルで JSON-RPC 2.0 のリクエストを送信する関数です。
+   *
+   * Sora の RPC 機能を利用するには data_channel_signaling を有効にして接続し、
+   * offer の data_channels に rpc ラベルが含まれている必要があります。
+   * レスポンスは on_rpc_ に JSON 文字列を内容とする nb::bytes として通知されるため、
+   * id との突き合わせはアプリケーションが行ってください。
+   *
+   * @param id リクエスト ID。None の場合は id を含めず Notification になります
+   * @param method 呼び出すメソッド
+   * @param params メソッドに渡すパラメータ。None の場合は params を含めません
+   * @return 送信できた場合は true。rpc ラベルが開いていない場合と、params が JSON の
+   *         Object でも Array でもない場合は false
+   * @throw nb::type_error params が JSON の値として扱えない型の場合
+   * @throw nb::cast_error params の int64 の範囲を超える整数やキーが文字列でない dict の場合
+   */
+  bool SendRpc(std::optional<uint64_t> id,
+               const std::string& method,
+               const nb::handle& params);
 
   /**
    * WebRTC の統計情報を取得します。

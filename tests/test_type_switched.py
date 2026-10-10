@@ -8,6 +8,8 @@ def test_websocket_signaling_only_type_switched(settings):
     """
     - WebSocket シグナリングのみ
     - type: switched 送られてこない
+    - signaling の redirect で張り直した WebSocket のクローズ (SELF-CLOSED) は
+      接続中の WebSocket のクローズではないため ws_close には記録されない
     """
 
     with SoraClient(
@@ -29,6 +31,8 @@ def test_hybrid_signaling_type_switched(settings):
     """
     - WebSocket シグナリング + DataChannel シグナリング
     - type: switched 送られてくる
+    - signaling の redirect で張り直した WebSocket のクローズ (SELF-CLOSED) は
+      接続中の WebSocket のクローズではないため ws_close には記録されない
     """
     with SoraClient(
         settings,
@@ -49,7 +53,7 @@ def test_datachannel_signaling_only_type_switched(settings):
     """
     - DataChannel シグナリングのみ
     - type: switched 送られてくる
-    - Python SDK は WebSocket を自分で切断する
+    - Python SDK は WebSocket を自分で切断する (switched によるクローズは記録される)
     """
     with SoraClient(
         settings,
