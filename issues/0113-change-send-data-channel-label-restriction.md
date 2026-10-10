@@ -1,7 +1,7 @@
 # `send_data_channel()` の送信先制限を `## develop` に `[CHANGE]` として追記する
 
 - Created: 2026-10-10
-- Completed: -
+- Completed: 2026-10-10
 - Branch: feature/change-send-data-channel-label-restriction
 - Polished: 2026-10-10
 
@@ -51,3 +51,26 @@
 ## 変更対象
 
 - `CHANGES.md`
+
+## 解決方法
+
+- `CHANGES.md` の `## develop` の先頭にトップレベル `[CHANGE]` エントリを 1 件追加した
+  - `send_data_channel()` が Sora が管理するラベル (`signaling` / `stats` / `notify` / `push` / `rpc`) と offer に含まれないラベル、開いていないラベルへ送信せず `False` を返すようになったこと
+  - 以前はラベルを検証せず送信を試みて `True` を返していたこと (後方互換のない変更であること)
+  - `#` で始まるラベルでも、開く前に送っていた場合は `False` になることと、`on_data_channel` が発火してチャネルが開くまで待ってから送るという対応
+  - Sora C++ SDK `2026.3.0-canary.8` の `SoraSignaling::SendDataChannel()` が送信先を `#` で始まるユーザー定義ラベルに制限したためであること
+  - `rpc` ラベルへリクエストを送る場合は `send_rpc()` を使うこと、それ以外の Sora が管理するラベルを使っていた場合は送信をやめること
+- `[UPDATE]` の canary.8 エントリにはサブ項目を追加していない (同じ内容を 2 か所に書かないため)
+- `skills/sora-python-sdk/SKILL.md` への送信できるラベルの制限の追記と `send_rpc()` の追加は issue 0112 のマージで完了しており、同じリリースに含まれる
+
+### 確認したこと
+
+- `uv run pytest tests/ -n auto` が 82 passed / 98 skipped / 1 xfailed で通ること (実際の Sora に接続)
+- 追加した記述が Sora C++ SDK `2026.3.0-canary.8` の実装 (`src/sora_signaling.cpp` の `SendDataChannel()` / `DoSendDataChannel()` と `src/data_channel.cpp` の `DataChannel::Send()`) と一致すること
+- canary.8 より前の実装 (`2026.3.0-canary.7` と `2026.2.1`) が `dc_->Send()` の戻り値を捨てて `true` を返していたこと
+- 実際の Sora で `send_data_channel()` が `#test` (開いた後) で `True`、`signaling` / `stats` / `notify` / `push` / `rpc`、offer に含まれないラベル、開く前の `#test` で `False` になること
+- `send_rpc()` が `rpc` ラベルへ送信でき (制限の対象外)、応答が `on_rpc` に届くこと
+- `uv run python run.py format` が差分を出さないこと
+- `git diff develop` が追加のみで、既存エントリの内容と順序が変わっていないこと
+- `CHANGES.md` に issue 番号・issue への言及が含まれていないこと
+- 追加した行に全角と半角の間の半角スペースの抜けが無いこと
