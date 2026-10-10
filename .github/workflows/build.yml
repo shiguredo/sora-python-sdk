@@ -5,6 +5,7 @@ on:
   push:
     paths-ignore:
       - "**.md"
+      - "issues/**"
       - "tests/**"
       - ".github/workflows/e2e-test.yml"
       - ".github/workflows/build-debug.yml"
