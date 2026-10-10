@@ -35,6 +35,9 @@
   - RequestKeyFrame API がキーフレームを受け取る相手がいない配信者へ PLI を送らなくなったため
   - 視聴者が映像を受信し始めてから要求する
   - @voluntas
+- [UPDATE] E2E テストが signaling の redirect を考慮するようにする
+  - redirect で WebSocket を張り直したときの `SELF-CLOSED` を、接続中の WebSocket のクローズとして扱わない
+  - @voluntas
 
 ## 2026.1.0
 

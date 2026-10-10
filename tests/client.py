@@ -197,6 +197,10 @@ class SoraClient:
         self._ws_close: bool = False
         self._ws_close_code: int | None = None
         self._ws_close_reason: str | None = None
+        # signaling の redirect を受けた回数と、redirect による WebSocket の
+        # 張り直しで通知された WebSocket クローズの回数
+        self._redirect_count: int = 0
+        self._ws_close_redirected_count: int = 0
         self._disconnected: Event = Event()
 
         self._notify_queue: queue.Queue = queue.Queue()
@@ -484,6 +488,8 @@ class SoraClient:
                 assert signaling_type == SoraSignalingType.WEBSOCKET
                 assert signaling_direction == SoraSignalingDirection.RECEIVED
                 self._redirect_message = message
+                # redirect のたびに SDK は接続先の WebSocket を張り直す
+                self._redirect_count += 1
             case "offer":
                 assert signaling_type == SoraSignalingType.WEBSOCKET
                 assert signaling_direction == SoraSignalingDirection.RECEIVED
@@ -577,6 +583,15 @@ class SoraClient:
 
     def _on_ws_close(self, code: int, reason: str) -> None:
         print(f"WebSocket closed: code={code} reason={reason}")
+
+        # signaling の redirect で接続先の WebSocket を張り直すとき、SDK は閉じた方の
+        # WebSocket について SELF-CLOSED を通知する。これは接続中の WebSocket が
+        # 閉じたわけではないため、redirect による通知として記録しない。
+        # redirect の通知のあとに SDK が閉じるので、回数で対応付ける。
+        if reason == "SELF-CLOSED" and self._ws_close_redirected_count < self._redirect_count:
+            self._ws_close_redirected_count += 1
+            return
+
         self._ws_close = True
         self._ws_close_code = code
         self._ws_close_reason = reason
