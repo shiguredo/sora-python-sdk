@@ -1,6 +1,6 @@
 ---
 name: sora-python-sdk
-description: WebRTC SFU Sora の Python クライアントライブラリ sora_sdk の利用方法リファレンス。Sora への接続 (sendonly / recvonly / sendrecv)、numpy 連携による音声・映像の送受信、データチャネルメッセージング、VAD、Encoded Transform、ビデオコーデック設定とハードウェアアクセラレーター、統計情報の取得を網羅する。sora_sdk を使ったアプリケーションを書く・レビューするときに使用する。
+description: WebRTC SFU Sora の Python クライアントライブラリ sora_sdk の利用方法リファレンス。Sora への接続 (sendonly / recvonly / sendrecv)、numpy 連携による音声・映像の送受信、データチャネルメッセージング、Sora の RPC (JSON-RPC 2.0 over DataChannel)、VAD、Encoded Transform、ビデオコーデック設定とハードウェアアクセラレーター、統計情報の取得を網羅する。sora_sdk を使ったアプリケーションを書く・レビューするときに使用する。
 ---
 
 # sora-python-sdk スキル
@@ -296,7 +296,47 @@ connection.on_message = on_message
 connection.send_data_channel("#chat", b"hello")
 ```
 
+送信できるのは `#` で始まるユーザー定義ラベルだけ。Sora が管理するラベル (`signaling` / `stats` / `notify` / `push` / `rpc`) と offer に含まれないラベル、開いていないラベルへは送信せず `False` を返す。`rpc` ラベルへリクエストを送る場合は後述の `send_rpc()` を使う。
+
 メッセージングのみの利用（音声・映像なし）は `audio=False, video=False` と `role="sendonly"` で接続する。
+
+## Sora の RPC
+
+DataChannel 経由のシグナリングを利用している場合、JSON-RPC 2.0 over DataChannel で Sora の一部の HTTP API を呼び出せる (Sora 2025.2.0 以降の実験的機能)。利用条件は次の 3 つ。詳細と利用できるメソッドの一覧は Sora のドキュメントの [RPC 機能](https://sora-doc.shiguredo.jp/RPC) を参照すること。
+
+- Sora の `sora.conf` で `data_channel_rpc` が `true` になっている
+- コネクションが DataChannel 経由のシグナリングを利用している (`data_channel_signaling=True`)
+- 認証成功時に `rpc_methods` が払い出されている (offer のシグナリングメッセージの `rpc_methods` で確認できる)
+
+`send_rpc(id, method, params)` が `{"jsonrpc":"2.0","id":<id>,"method":<method>,"params":<params>}` を組み立てて `rpc` ラベルで送信し、送信できた場合は `True` を返す。
+
+- `method` は `{RPC 経由での HTTP API の呼出が導入された Sora のバージョン}/{HTTP API 名}` 形式
+- `params` には HTTP API に渡す JSON (Object か Array) を指定する。`None` の場合は `params` を含めない
+  - Object でも Array でもない値 (文字列・数値・真偽値) は送信せず `False` を返す
+  - JSON の値として扱えない値は `TypeError` になる。tuple / set / bytes や numpy の数値・真偽値スカラー (numpy.int64 / numpy.float64 / numpy.bool_ など)、`0.1` のような float32 で厳密に表現できない浮動小数点数が該当する
+  - `int64` の範囲を超える整数と、キーが文字列でない dict は `RuntimeError` になる
+- `id` は 0 以上 2^64-1 以下の整数。`None` の場合は `id` を含めない Notification になり、Sora は応答を返さない
+- `rpc` ラベルが使えない場合 (`connect()` 前や RPC が無効な Sora) は送信せず `False` を返す。`disconnect()` 後に呼ぶと `RuntimeError` になる
+- 応答は `on_rpc(data: bytes)` に JSON 文字列を内容とする `bytes` として届く。`id` との突き合わせ・タイムアウト・エラーの解釈はアプリケーションが行う
+
+```python
+import json
+
+
+def on_rpc(data: bytes) -> None:
+    # 送信した id と突き合わせて応答を解釈する
+    response = json.loads(data)
+    ...
+
+
+connection.on_rpc = on_rpc
+
+# 応答を受け取る場合は id を指定する
+connection.send_rpc(1, "2025.2.0/RequestSimulcastRid", {"rid": "r1"})
+
+# id に None を指定すると Notification になり、応答は返らない
+connection.send_rpc(None, "2025.2.0/RequestSimulcastRid", {"rid": "r1"})
+```
 
 ## VAD (発話区間検出)
 
@@ -426,6 +466,7 @@ enable_libwebrtc_log(SoraLoggingSeverity.INFO)
 - **コールバックは SDK 内部スレッドから呼ばれる**: コールバック内でブロッキングや重い処理をしない。`queue.Queue` や `threading.Event` でアプリケーション側のスレッドに渡すのが定石
 - **`connect()` は完了を待たない**: 接続完了は `on_notify` の `connection.created`（自身の connection_id と一致するもの）で判定する
 - **`send_data_channel()` は準備完了後に呼ぶ**: 対象ラベルの `on_data_channel` 発火を待ってから送信する
+- **`rpc` ラベルへは `send_rpc()` を使う**: `send_data_channel()` が送信できるのは `#` で始まるユーザー定義ラベルだけで、Sora が管理するラベル (`signaling` / `stats` / `notify` / `push` / `rpc`) と offer に含まれないラベル、開いていないラベルへは送信せず `False` を返す
 - **`disconnect()` を必ず呼ぶ**: 例外時も含めて確実に切断する。`try` / `finally` やコンテキストマネージャーで管理する
 - **ndarray の形式を守る**: 音声は `numpy.int16` の `(サンプル数, チャネル数)`、映像は `numpy.uint8` の `(高さ, 幅, 3)` (BGR) で C 連続 (order='C') であること
 - **1 つの `Sora` から複数接続を作れる**: 複数チャネルへの同時接続は `create_connection()` を複数回呼ぶ

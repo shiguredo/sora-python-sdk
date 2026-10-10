@@ -85,6 +85,7 @@ nanobind_add_module(
   src/sora_audio_source.cpp
   src/sora_connection.cpp
   src/sora_factory.cpp
+  src/sora_json.cpp
   src/sora_log.cpp
   src/sora_sdk_ext.cpp
   src/sora_vad.cpp

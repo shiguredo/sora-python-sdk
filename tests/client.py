@@ -200,6 +200,7 @@ class SoraClient:
         self._disconnected: Event = Event()
 
         self._notify_queue: queue.Queue = queue.Queue()
+        self._rpc_queue: queue.Queue = queue.Queue()
 
         self._disconnect_error_code: int | None = None
         self._disconnect_error_message: str | None = None
@@ -226,6 +227,7 @@ class SoraClient:
         self._connection.on_track = self._on_track
         self._connection.on_data_channel = self._on_data_channel
         self._connection.on_message = self._on_message
+        self._connection.on_rpc = self._on_rpc
         self._connection.on_disconnect = self._on_disconnect
 
     def __enter__(self) -> "SoraClient":
@@ -276,6 +278,61 @@ class SoraClient:
 
     def recv_message(self, label: str, timeout: float = 5) -> bytes:
         return self._messaging_recv_queues[label].get(block=True, timeout=timeout)
+
+    def _wait_data_channel_ready(self, label: str, timeout: float) -> bool:
+        """
+        対象ラベルのデータチャネルが送信可能になるまで待つ。
+
+        ラベルが offer に含まれていない場合は待たずに False を返す。
+        """
+        event = self._data_channel_ready_events.get(label)
+        if event is None:
+            return False
+        return event.wait(timeout=timeout)
+
+    def wait_rpc_ready(self, timeout: float = 5) -> bool:
+        """
+        rpc ラベルが送信可能になるまで待つ。
+
+        rpc ラベルは Sora の RPC 機能が有効な場合にだけ offer に含まれるため、
+        含まれていない場合は待たずに False を返す。offer には含まれるのに送信可能に
+        ならない場合はテストの前提が崩れているため失敗させる。
+        """
+        if "rpc" not in self._data_channel_ready_events:
+            return False
+        assert self._wait_data_channel_ready("rpc", timeout), (
+            f"rpc ラベルが送信可能にならなかった: timeout={timeout}"
+        )
+        return True
+
+    def send_rpc(
+        self,
+        id: int | None,
+        method: str,
+        params: object | None = None,
+        timeout: float = 5,
+    ) -> bool:
+        """
+        rpc ラベルへ JSON-RPC 2.0 のリクエストを送信する。
+
+        id に None を指定した場合は Notification になり、Sora から応答は返らない。
+        params に None を指定した場合は params メンバーを含めない。
+        送信できなかった場合は False を返す。
+        """
+        print(f"RPC リクエストを送信する: id={id}, method={method}")
+
+        # on_data_channel() が呼ばれるまでは rpc ラベルの準備ができていないので待機する
+        self._wait_data_channel_ready("rpc", timeout)
+        return self._connection.send_rpc(id, method, params)
+
+    def recv_rpc(self, timeout: float = 5) -> dict[str, Any]:
+        """
+        rpc ラベルで受信した応答を JSON として返す。
+
+        応答が届いていない場合は queue.Empty になる。
+        """
+        data = self._rpc_queue.get(block=True, timeout=timeout)
+        return json.loads(data)
 
     def get_stats(self):
         raw_stats = self._connection.get_stats()
@@ -490,6 +547,10 @@ class SoraClient:
     def _on_message(self, label: str, data: bytes):
         print(f"Received message: label={label}, data={data.decode('utf-8')}")
         self._messaging_recv_queues[label].put(data)
+
+    def _on_rpc(self, data: bytes) -> None:
+        print(f"RPC メッセージを受信した: data={data!r}")
+        self._rpc_queue.put(data)
 
     def _on_data_channel(self, label: str):
         print(f"DataChannel opened: label={label}")

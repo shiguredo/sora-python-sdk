@@ -190,18 +190,6 @@ class Sora : public CountedPublisher {
 #endif
 
  private:
-  /**
-   * Python で渡された値を boost::json::value に変換します。
-   *
-   * metadata のように JSON の値として扱える内容であれば自由に指定できるものを、
-   * nanobind::handle で受け取って Sora C++ SDK で使っている boost::json::value に変換します。
-   *
-   * @param value Python から渡された値の nanobind::handle
-   * @param error_message 変換に失敗した際に nanobind::type_error で返す際のエラーメッセージ
-   * @return boost::json::value
-   */
-  boost::json::value ConvertJsonValue(nb::handle value,
-                                      const char* error_message);
   std::vector<sora::SoraSignalingConfig::DataChannel> ConvertDataChannels(
       const nb::handle value);
   std::vector<std::string> ConvertSignalingUrls(const nb::handle value);
