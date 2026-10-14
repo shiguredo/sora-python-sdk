@@ -26,8 +26,8 @@
   - Sora の RPC 機能 (JSON-RPC 2.0 over DataChannel) を利用できるようにする
   - `id` に `None` を指定すると Notification になり、`params` に `None` を指定すると `params` を含めない
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.8` に上げる
-  - WEBRTC_BUILD_VERSION を `m155.8059.4.1` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.9` に上げる
+  - 接続の終了処理の後に WebSocket の read が成功して完了するとクラッシュする問題の修正が含まれる
   - @voluntas
 - [UPDATE] nanobind を `3.1.0` に上げる
   - @voluntas
