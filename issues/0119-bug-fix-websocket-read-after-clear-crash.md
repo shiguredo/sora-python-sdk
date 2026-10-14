@@ -1,7 +1,7 @@
 # 接続の切断後に WebSocket のデータを受信すると、同梱している Sora C++ SDK がクラッシュしてプロセスが落ちる
 
 - Created: 2026-10-13
-- Completed: -
+- Completed: 2026-10-14
 - Branch: feature/fix-websocket-read-after-clear-crash
 - Polished: {YYYY-MM-DD}
 
@@ -76,4 +76,10 @@ boost::asio::post(boost::asio::strand<...>, ...)
 
 ## 解決方法
 
-（実装時に記入）
+同梱している Sora C++ SDK を、このクラッシュの原因を修正した `2026.3.0-canary.9` に上げた。このリポジトリ側のコードは変更していない。
+
+- `DEPS` の `SORA_CPP_SDK_VERSION` を `2026.3.0-canary.8` から `2026.3.0-canary.9` に変更した
+- `2026.3.0-canary.9` には、`SoraSignaling::OnRead` が接続の終了処理の後に read を再開しない修正と、`SoraSignaling::DoRead()` が null の `ws_` を参照する前に状態を確認する修正が含まれる
+- `CHANGES.md` の `## develop` に [UPDATE] エントリを追加した
+
+原因そのものの修正と C++ 層での検証は `sora-cpp-sdk` リポジトリの `issues/closed/0113-bug-fix-signaling-read-after-clear-crash.md` で完了している。同じ `SoraSignaling` を組み込むこの SDK でも同じ経路でクラッシュしなくなる。`sora` リポジトリの `e2e-test/test_cluster_hung_node_recovery.py` は、このクラッシュのために付けていたスキップを外してあり、通常の E2E テストとして実行できる状態になっている。
