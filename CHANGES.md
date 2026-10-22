@@ -43,6 +43,9 @@
 
 ### misc
 
+- [UPDATE] e2e-test ワークフローの push トリガーを削除し、手動実行と build.yml からの呼び出しだけにする
+  - wheel の artifact が無い状態で push されると E2E が必ず失敗するため
+  - @voluntas
 - [ADD] `WebRTC-Video-PerSsrcKeyframes` の per-SSRC キーフレーム生成を検証する E2E テストを追加する
   - @voluntas
 - [ADD] キーフレームを受け取る相手がいない配信者へ PLI が送られないことを検証する E2E テストを追加する
