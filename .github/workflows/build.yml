@@ -305,14 +305,20 @@ jobs:
     secrets: inherit
 
   slack_notify:
-    needs: [build_ubuntu, build_macos, build_windows, prek]
+    # e2e_test を含めることで E2E の完了を待ってから通知する。
+    # 含めないと e2e_test の完了前に slack_notify が実行され、
+    # E2E の失敗を検出できず、前回の failure を今回の success と誤判定して
+    # Fixed 通知を送ってしまう。
+    needs: [build_ubuntu, build_macos, build_windows, prek, e2e_test]
     runs-on: ubuntu-slim
     if: ${{ !cancelled() }}
     steps:
       - name: Slack Notification
         uses: shiguredo/github-actions/.github/actions/slack-notify@main # main
         with:
-          status: ${{ job.status }}
+          # job.status は依存ジョブの失敗を反映しないため、needs の結果を明示的に見る。
+          # e2e_test を含む needs のいずれかが失敗していれば failure として通知する。
+          status: ${{ contains(needs.*.result, 'failure') && 'failure' || contains(needs.*.result, 'cancelled') && 'cancelled' || job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           slack_channel: sora-python-sdk
           notify_mode: failure_and_fixed
