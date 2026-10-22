@@ -316,7 +316,9 @@ jobs:
       - name: Slack Notification
         uses: shiguredo/github-actions/.github/actions/slack-notify@main # main
         with:
-          status: ${{ job.status }}
+          # job.status は依存ジョブの失敗を反映しないため、needs の結果を明示的に見る。
+          # e2e_test を含む needs のいずれかが失敗していれば failure として通知する。
+          status: ${{ contains(needs.*.result, 'failure') && 'failure' || contains(needs.*.result, 'cancelled') && 'cancelled' || job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           slack_channel: sora-python-sdk
           notify_mode: failure_and_fixed
