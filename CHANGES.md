@@ -11,6 +11,13 @@
 
 ## develop
 
+- [CHANGE] Windows のビルドを MSVC から libwebrtc と同じ clang-cl + libc++ に変更する
+  - Sora C++ SDK `2026.3.0-canary.10` の Windows 向けバイナリが clang-cl + libc++ でビルドされるようになったため
+  - コンパイラは libwebrtc が利用するのと同じリビジョンの clang-cl、標準ライブラリは libc++、CRT は静的 (`/MT`) になる
+  - ジェネレーターは Visual Studio から Ninja に変更し、Ninja は `_install/<platform>/<config>/ninja/ninja.exe` に自動でダウンロードされる
+  - ビルド生成物の `Release/` サブディレクトリが無くなる
+  - @voluntas
+
 - [CHANGE] `send_data_channel()` が Sora が管理するラベル (`signaling` / `stats` / `notify` / `push` / `rpc`) と offer に含まれないラベル、開いていないラベルへ送信せず `False` を返すようにする
   - 以前はラベルを検証せず送信を試みて `True` を返していたため、これらのラベルへ送信していたアプリケーションは対応が必要になる
   - `#` で始まるラベルでも、開く前に送っていた場合は `False` になる (`on_data_channel` が発火してチャネルが開くまで待ってから送る)
@@ -26,8 +33,9 @@
   - Sora の RPC 機能 (JSON-RPC 2.0 over DataChannel) を利用できるようにする
   - `id` に `None` を指定すると Notification になり、`params` に `None` を指定すると `params` を含めない
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.9` に上げる
-  - 接続の終了処理の後に WebSocket の read が成功して完了するとクラッシュする問題の修正が含まれる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.10` に上げる
+  - Raspberry Pi OS の libcamera が `0.7.2+rpt20261009` 以降になると `libcamerac.so` が読み込めなくなる問題の修正が含まれる
+  - Intel VPL の AV1 デコーダーが非対応と誤判定される問題の修正が含まれる
   - @voluntas
 - [UPDATE] nanobind を `3.1.0` に上げる
   - @voluntas

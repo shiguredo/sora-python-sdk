@@ -165,8 +165,25 @@ elseif(TARGET_OS STREQUAL "raspberry-pi-os")
   target_compile_definitions(sora_sdk_ext PRIVATE USE_V4L2=1)
   set_target_properties(sora_sdk_ext PROPERTIES BUILD_RPATH "\$ORIGIN")
 elseif(TARGET_OS STREQUAL "windows")
-  # 文字コードを utf-8 として扱うのと、シンボルテーブル数を増やす
-  target_compile_options(sora_sdk_ext PRIVATE /utf-8 /bigobj)
+  # libwebrtc と同じ clang-cl と libc++ を利用する。
+  # clang-cl は MSVC 互換ドライバなので、clang ドライバ向けのオプションは /clang: を付けて渡す。
+  # また clang-cl は /EHsc を指定しないと C++ の例外処理が無効になるため、C++ の例外処理を有効にする
+  target_compile_options(sora_sdk_ext
+    PRIVATE
+      /utf-8
+      /bigobj
+      "$<$<COMPILE_LANGUAGE:CXX>:/EHsc>"
+      "$<$<COMPILE_LANGUAGE:CXX>:/clang:-nostdinc++>"
+      "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:LIBCXX_INCLUDE_DIR>>:/I${LIBCXX_INCLUDE_DIR}>"
+  )
+  target_compile_options(nanobind-static
+    PRIVATE
+      /utf-8
+      /bigobj
+      "$<$<COMPILE_LANGUAGE:CXX>:/EHsc>"
+      "$<$<COMPILE_LANGUAGE:CXX>:/clang:-nostdinc++>"
+      "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<BOOL:LIBCXX_INCLUDE_DIR>>:/I${LIBCXX_INCLUDE_DIR}>"
+  )
   # CRTライブラリを静的リンクさせる
   set_property(TARGET sora_sdk_ext PROPERTY
     MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

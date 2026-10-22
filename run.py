@@ -22,6 +22,7 @@ from buildbase import (
     get_sora_info,
     get_webrtc_info,
     get_webrtc_platform,
+    get_windows_clang_cmake_args,
     get_windows_osver,
     install_cmake,
     install_llvm,
@@ -29,12 +30,16 @@ from buildbase import (
     install_rootfs,
     install_sora_and_deps,
     install_webrtc,
+    install_windows_build_tools,
     mkdir_p,
     read_version_file,
 )
 from pypath import get_python_include_dir, get_python_version
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+# clang-cl と Ninja で利用する Windows SDK のバージョン
+WINDOWS_SDK_VERSION = "10.0.20348.0"
 
 
 def install_sysroot(config_path: str, install_dir: str, force: bool = False) -> None:
@@ -127,9 +132,13 @@ def install_deps(
     webrtc_info = get_webrtc_info(webrtc_platform, local_webrtc_build_dir, install_dir, debug)
     webrtc_version = read_version_file(webrtc_info.version_file)
 
-    if (
-        platform.build.os == "macos" or platform.build.os == "ubuntu"
-    ) and local_webrtc_build_dir is None:
+    if platform.target.os == "windows":
+        # clang-cl が利用する Ninja と Visual Studio の環境変数を用意する
+        install_windows_build_tools(
+            source_dir, install_dir, version, platform.target.arch, platform.build.arch
+        )
+
+    if platform.build.os in ("macos", "ubuntu", "windows") and local_webrtc_build_dir is None:
         # LLVM
         tools_url = webrtc_version["WEBRTC_SRC_TOOLS_URL"]
         tools_commit = webrtc_version["WEBRTC_SRC_TOOLS_COMMIT"]
@@ -407,6 +416,13 @@ def _build(
                 f"-DLIBCXXABI_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxxabi_dir, 'include'))}",
                 f"-DNB_SUFFIX=.cpython-{python_version_short.replace('.', '')}-aarch64-linux-gnu.so",
             ]
+        elif platform.target.os == "windows":
+            # libwebrtc と同じ clang-cl と libc++ を利用する
+            cmake_args.append(f"-DCMAKE_SYSTEM_VERSION={WINDOWS_SDK_VERSION}")
+            cmake_args.extend(get_windows_clang_cmake_args(webrtc_info, install_dir))
+            cmake_args.append(
+                f"-DLIBCXX_INCLUDE_DIR={cmake_path(os.path.join(webrtc_info.libcxx_dir, 'include'))}"
+            )
 
         # Windows 以外の、クロスコンパイルでない環境では pyi ファイルを生成する
         if (
@@ -417,10 +433,9 @@ def _build(
 
         sora_src_dir = os.path.join("src", "sora_sdk")
         sora_build_dir = os.path.join(build_dir, "sora_sdk")
-        if platform.target.os == "windows":
-            sora_build_target_dir = os.path.join(build_dir, "sora_sdk", configuration)
-        else:
-            sora_build_target_dir = os.path.join(build_dir, "sora_sdk")
+        # Ninja ジェネレーターはシングルコンフィグなので、Visual Studio のような
+        # configuration のサブディレクトリは作られない
+        sora_build_target_dir = os.path.join(build_dir, "sora_sdk")
 
         mkdir_p(sora_build_dir)
         with cd(sora_build_dir):

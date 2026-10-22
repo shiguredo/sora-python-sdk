@@ -30,6 +30,7 @@ import logging
 import multiprocessing
 import os
 import platform
+import re
 import shlex
 import shutil
 import stat
@@ -1231,6 +1232,121 @@ def install_llvm(
             os.path.join(llvm_dir, "buildtools", "third_party", "libc++", "__assertion_handler"),
             os.path.join(llvm_dir, "libcxx", "include", "__assertion_handler"),
         )
+
+
+def get_vsdevcmd_arch(arch: str) -> str:
+    """VsDevCmd.bat に渡すアーキテクチャ名を返す
+
+    引数:
+        arch: x86_64 または arm64
+
+    戻り値:
+        VsDevCmd.bat の -arch / -host_arch に渡す値
+    """
+    if arch == "x86_64":
+        return "x64"
+    elif arch == "arm64":
+        return "arm64"
+    raise Exception(f"Unsupported architecture: {arch}")
+
+
+def setup_visual_studio_env(install_dir: str, target_arch: str, host_arch: str):
+    # clang-cl はコンパイラとしては Visual Studio を利用しないが、MSVC のヘッダー、Windows SDK、
+    # rc.exe / mt.exe / llvm-lib.exe は Visual Studio の環境から利用するため、
+    # VsDevCmd.bat が設定する環境変数を取り込む。
+    # VsDevCmd.bat に -arch と -host_arch を渡して対象とホストのアーキテクチャを明示する
+    vswhere = os.path.join(install_dir, "vswhere", "vswhere.exe")
+    vs_install_dir = cmdcap(
+        [
+            vswhere,
+            "-latest",
+            "-products",
+            "*",
+            "-requires",
+            "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+            "-property",
+            "installationPath",
+        ]
+    )
+    if len(vs_install_dir) == 0:
+        raise Exception("Visual Studio not found")
+
+    vs_dev_cmd = os.path.join(vs_install_dir, "Common7", "Tools", "VsDevCmd.bat")
+    stdout = cmdcap(
+        [
+            "cmd",
+            "/c",
+            vs_dev_cmd,
+            f"-arch={get_vsdevcmd_arch(target_arch)}",
+            f"-host_arch={get_vsdevcmd_arch(host_arch)}",
+            "&&",
+            "set",
+        ]
+    )
+    for m in re.finditer(r"^([^=]+)=(.+)$", stdout, re.MULTILINE):
+        os.environ[m.group(1)] = m.group(2)
+
+    if "INCLUDE" not in os.environ:
+        raise Exception(f"failed to setup Visual Studio environment: {vs_dev_cmd}")
+
+
+def get_windows_clang_cmake_args(webrtc_info: WebrtcInfo, install_dir: str) -> list[str]:
+    """Windows で libwebrtc と同じコンパイラとジェネレーターを指定する CMake 引数を返す
+
+    返す引数をそのまま CMake に渡すと、libwebrtc と同じ clang-cl と Ninja が使われる。
+    リンカは CMake が clang-cl に合わせて選択するため、引数には含まれない。
+
+    引数:
+        webrtc_info: libwebrtc が利用するのと同じリビジョンの clang-cl の場所を含む情報
+        install_dir: Ninja を配置したディレクトリ
+
+    戻り値:
+        CMake に渡す引数のリスト
+
+    環境変数:
+        Visual Studio の環境変数が設定されている必要がある。
+    """
+    clang_cl = os.path.join(webrtc_info.clang_dir, "bin", "clang-cl.exe")
+    ninja = os.path.join(install_dir, "ninja", "ninja.exe")
+    return [
+        f"-DCMAKE_C_COMPILER={cmake_path(clang_cl)}",
+        f"-DCMAKE_CXX_COMPILER={cmake_path(clang_cl)}",
+        f"-DCMAKE_MAKE_PROGRAM={cmake_path(ninja)}",
+        "-G",
+        "Ninja",
+    ]
+
+
+def install_windows_build_tools(
+    source_dir: str, install_dir: str, deps: dict[str, str], target_arch: str, host_arch: str
+):
+    """Windows のビルドに必要な Ninja と vswhere をインストールし、Visual Studio の環境変数を取り込む
+
+    引数:
+        source_dir: ダウンロードしたファイルを置くディレクトリ
+        install_dir: インストール先のディレクトリ
+        deps: DEPS ファイルの内容
+        target_arch: ターゲットのアーキテクチャ (x86_64 または arm64)
+        host_arch: ビルドするマシンのアーキテクチャ (x86_64 または arm64)
+
+    環境変数:
+        Visual Studio の環境変数を os.environ に設定する
+    """
+    # ジェネレーターに Ninja を利用する
+    install_ninja(
+        version=deps["NINJA_VERSION"],
+        version_file=os.path.join(install_dir, "ninja.version"),
+        source_dir=source_dir,
+        install_dir=install_dir,
+        platform="win",
+    )
+    # Visual Studio を探すために vswhere を利用する
+    install_vswhere(
+        version=deps["VSWHERE_VERSION"],
+        version_file=os.path.join(install_dir, "vswhere.version"),
+        install_dir=install_dir,
+    )
+    setup_visual_studio_env(install_dir, target_arch, host_arch)
 
 
 def cmake_path(path: str) -> str:
