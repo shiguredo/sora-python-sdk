@@ -33,10 +33,10 @@
   - Sora の RPC 機能 (JSON-RPC 2.0 over DataChannel) を利用できるようにする
   - `id` に `None` を指定すると Notification になり、`params` に `None` を指定すると `params` を含めない
   - @voluntas
-- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.10` に上げる
+- [UPDATE] Sora C++ SDK のバージョンを `2026.3.0-canary.11` に上げる
   - Raspberry Pi OS の libcamera が `0.7.2+rpt20261009` 以降になると `libcamerac.so` が読み込めなくなる問題の修正が含まれる
   - Intel VPL の AV1 デコーダーが非対応と誤判定される問題の修正が含まれる
-  - Sora C++ SDK が libwebrtc `m156.8078.3.5` でビルドされるようになったため、libwebrtc のバージョンも `m156.8078.3.5` に上げる
+  - Sora C++ SDK が libwebrtc `m157.8103.0.0` でビルドされるようになったため、libwebrtc のバージョンも `m157.8103.0.0` に上げる
   - @voluntas
 - [UPDATE] nanobind を `3.1.0` に上げる
   - @voluntas
